@@ -7,6 +7,9 @@ class Settings(BaseSettings):
 
     database_url: str = "mysql+pymysql://myasset:myasset@127.0.0.1:3306/myasset"
 
+    api_access_log_enabled: bool = False
+    api_access_log_dir: str = "logs/api"
+
     jwt_secret_key: str = "change-this-in-production"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60

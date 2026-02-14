@@ -13,50 +13,38 @@
 - SQLAlchemy models: `users`, `households`, `household_members`
 - Alembic revision: `001_base_auth_scope`
 
-## Run backend
+### Step 4 (done): portfolios/assets/holdings CRUD + toggle
+- DB models: `portfolios`, `assets`, `holdings`
+- Alembic revision: `002_portfolio_asset_holding`
+- APIs:
+  - `GET/POST/PATCH/DELETE /api/v1/portfolios`
+  - `GET/POST/PATCH/DELETE /api/v1/assets`
+  - `GET/POST/PATCH/DELETE /api/v1/holdings`
+  - `PATCH /api/v1/holdings/{id}/hidden`
 
-```bash
-cd apps/api
-python -m venv .venv
-.venv\\Scripts\\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+### Step 5 (done): USER/HOUSEHOLD scope APIs
+- `GET /api/v1/households`
+- `GET /api/v1/households/{id}/members`
+- `GET /api/v1/holdings?scope_type=USER|HOUSEHOLD|GROUP&scope_id=...`
 
-## API quick test
+### Step 6 (done): DDL integration into Alembic (MySQL v0.5 base)
+- `003_liabilities_quotes_market`
+- `004_dashboard_media_valuation`
+- includes: liabilities, quotes/fx/market, dashboards/layouts/settings, media/snapshots, valuation_snapshots
 
-### Health
-`GET http://127.0.0.1:8000/api/v1/health`
+## MySQL first decision
+- DB name: `myasset`
+- Use Alembic as source of truth.
+- Do not run raw ChatGPT SQL directly on top of Alembic-managed DB.
+- If you want to adopt more DDL changes, add them as next Alembic revision.
 
-### Login
-`POST http://127.0.0.1:8000/api/v1/auth/login`
+## API access log toggle
+- `.env` value:
+  - `API_ACCESS_LOG_ENABLED=true` -> write daily log files
+  - `API_ACCESS_LOG_ENABLED=false` -> no file log
+- path: `API_ACCESS_LOG_DIR` (default `logs/api`)
+- file format: `YYYY-MM-DD.log` (JSON line per request)
 
-```json
-{
-  "email": "me@myasset.local",
-  "password": "pass1234"
-}
-```
-
-### Me
-`GET http://127.0.0.1:8000/api/v1/auth/me`
-
-Header: `Authorization: Bearer <access_token>`
-
-## Seed users (dev only)
-- `me@myasset.local / pass1234`
-- `wife@myasset.local / pass1234`
-- `son@myasset.local / pass1234`
-
-## Alembic (Step 3)
-
-```bash
-cd apps/api
-copy .env.example .env
-alembic upgrade head
-```
-
-Note: Step 3 creates tables only. Real auth DB integration and seed SQL insertion come in Step 4.
 ## One-command run (Windows PowerShell)
 
 From repo root:
@@ -65,9 +53,26 @@ From repo root:
 # 1) first-time setup + install
 .\run.ps1 -Setup
 
-# 2) smoke test (health/login/me)
+# 2) create MySQL DB from DATABASE_URL if missing
+.\run.ps1 -InitDb
+
+# 3) migrate schema
+.\run.ps1 -Migrate
+
+# 4) seed users/household
+.\run.ps1 -Seed
+
+# 5) quick API smoke (health/login/me)
 .\run.ps1 -Smoke
 
-# 3) start server
-.\run.ps1
+# 6) MySQL-backed smoke (CRUD + scope)
+.\run.ps1 -SmokeDb
+
+# 7) start server
+.\run.ps1 -Run
 ```
+
+## Seed users (dev only)
+- `me@myasset.local / pass1234`
+- `wife@myasset.local / pass1234`
+- `son@myasset.local / pass1234`

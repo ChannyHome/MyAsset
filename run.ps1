@@ -1,6 +1,11 @@
 param(
     [switch]$Setup,
     [switch]$Smoke,
+    [switch]$InitDb,
+    [switch]$Migrate,
+    [switch]$Seed,
+    [switch]$SmokeDb,
+    [switch]$Run,
     [int]$Port = 8000
 )
 
@@ -17,6 +22,11 @@ if (-not (Test-Path $apiDir)) {
 
 Set-Location $apiDir
 
+if (-not (Test-Path '.env') -and (Test-Path '.env.example')) {
+    Copy-Item '.env.example' '.env'
+    Write-Host '[setup] .env created from .env.example'
+}
+
 if ($Setup -or -not (Test-Path $venvPython)) {
     Write-Host '[setup] creating venv and installing requirements...'
     if (-not (Test-Path '.venv')) {
@@ -24,6 +34,24 @@ if ($Setup -or -not (Test-Path $venvPython)) {
     }
     & $venvPython -m pip install --upgrade pip
     & $venvPip install -r requirements.txt
+}
+
+if ($InitDb) {
+    Write-Host '[initdb] creating mysql database from DATABASE_URL if needed...'
+    & $venvPython -m app.scripts.init_mysql_db
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+if ($Migrate) {
+    Write-Host '[migrate] running alembic upgrade head...'
+    & $venvPython -m alembic upgrade head
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+if ($Seed) {
+    Write-Host '[seed] inserting MVP seed data...'
+    & $venvPython -m app.scripts.seed_mvp
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
 if ($Smoke) {
@@ -51,6 +79,17 @@ print('me:', me.json())
 "@
     $smokeScript | & $venvPython -
     exit $LASTEXITCODE
+}
+
+if ($SmokeDb) {
+    Write-Host '[smoke-db] running mysql-backed smoke tests...'
+    & $venvPython -m app.scripts.smoke_db
+    exit $LASTEXITCODE
+}
+
+if (($Setup -or $InitDb -or $Migrate -or $Seed) -and -not $Run) {
+    Write-Host '[done] setup/initdb/migrate/seed completed. Use .\run.ps1 -Run to start server.'
+    exit 0
 }
 
 Write-Host "[run] starting api at http://127.0.0.1:$Port"

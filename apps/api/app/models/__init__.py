@@ -1,5 +1,8 @@
 from app.models.base import Base
+from app.models.asset import Asset
 from app.models.household import Household, HouseholdMember
+from app.models.holding import Holding
+from app.models.portfolio import Portfolio
 from app.models.user import User
 
-__all__ = ["Base", "User", "Household", "HouseholdMember"]
+__all__ = ["Base", "User", "Household", "HouseholdMember", "Portfolio", "Asset", "Holding"]
