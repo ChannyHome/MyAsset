@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, Text, text
+from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -9,6 +9,14 @@ from app.models.base import Base
 
 class Holding(Base):
     __tablename__ = "holdings"
+    __table_args__ = (
+        UniqueConstraint(
+            "owner_user_id",
+            "portfolio_id",
+            "asset_id",
+            name="uq_holdings_owner_portfolio_asset",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)

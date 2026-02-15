@@ -4,6 +4,7 @@ param(
     [switch]$InitDb,
     [switch]$Migrate,
     [switch]$Seed,
+    [switch]$UpdateQuotes,
     [switch]$SmokeDb,
     [switch]$Run,
     [int]$Port = 8000
@@ -54,6 +55,12 @@ if ($Seed) {
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
+if ($UpdateQuotes) {
+    Write-Host '[quotes] updating quotes once now...'
+    & $venvPython -m app.scripts.update_quotes_once
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
 if ($Smoke) {
     Write-Host '[smoke] running api smoke tests...'
     $env:PYTHONDONTWRITEBYTECODE = '1'
@@ -87,8 +94,8 @@ if ($SmokeDb) {
     exit $LASTEXITCODE
 }
 
-if (($Setup -or $InitDb -or $Migrate -or $Seed) -and -not $Run) {
-    Write-Host '[done] setup/initdb/migrate/seed completed. Use .\run.ps1 -Run to start server.'
+if (($Setup -or $InitDb -or $Migrate -or $Seed -or $UpdateQuotes) -and -not $Run) {
+    Write-Host '[done] setup/initdb/migrate/seed/quotes completed. Use .\run.ps1 -Run to start server.'
     exit 0
 }
 

@@ -32,6 +32,16 @@
 - `004_dashboard_media_valuation`
 - includes: liabilities, quotes/fx/market, dashboards/layouts/settings, media/snapshots, valuation_snapshots
 
+### Step 7 (done): Live quote + performance
+- Quote source: `yfinance`
+- `POST /api/v1/quotes/update-now` (manual refresh)
+- `GET /api/v1/quotes/latest` (latest quotes)
+- `GET /api/v1/holdings/performance` (invested/current/pnl/pnl%)
+- Scheduler (optional): `QUOTE_AUTO_UPDATE_ENABLED=true`, default `QUOTE_UPDATE_INTERVAL_MINUTES=10`
+- Runtime interval API:
+  - `GET /api/v1/settings/quote-interval`
+  - `PUT /api/v1/settings/quote-interval`
+
 ## MySQL first decision
 - DB name: `myasset`
 - Use Alembic as source of truth.
@@ -62,13 +72,16 @@ From repo root:
 # 4) seed users/household
 .\run.ps1 -Seed
 
-# 5) quick API smoke (health/login/me)
+# 5) update quotes once
+.\run.ps1 -UpdateQuotes
+
+# 6) quick API smoke (health/login/me)
 .\run.ps1 -Smoke
 
-# 6) MySQL-backed smoke (CRUD + scope)
+# 7) MySQL-backed smoke (CRUD + scope)
 .\run.ps1 -SmokeDb
 
-# 7) start server
+# 8) start server
 .\run.ps1 -Run
 ```
 
@@ -76,3 +89,8 @@ From repo root:
 - `me@myasset.local / pass1234`
 - `wife@myasset.local / pass1234`
 - `son@myasset.local / pass1234`
+
+## Quote interval design
+- `.env` value is fallback/default only.
+- Runtime interval changes should be stored in DB (`app_settings`) via API.
+- Scheduler is rescheduled immediately when interval is updated by API.
