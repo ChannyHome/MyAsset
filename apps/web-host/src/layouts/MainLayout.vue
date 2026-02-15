@@ -101,16 +101,16 @@ function goSettings() {
     >
       <button
         type="button"
-        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-lg dark:border-slate-700"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
         aria-label="Open sidebar"
         @click="openSidebar()"
       >
         <Menu class="h-5 w-5" />
       </button>
-      <p class="text-sm font-semibold">{{ pageTitle }}</p>
+      <p class="text-base font-semibold">{{ pageTitle }}</p>
       <button
         type="button"
-        class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold dark:border-slate-700"
+        class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
         @click="uiStore.toggleTheme()"
       >
         <span class="inline-flex items-center gap-1">
@@ -124,7 +124,7 @@ function goSettings() {
     <button
       v-if="uiStore.sidebarCollapsed"
       type="button"
-      class="fixed left-4 top-4 z-30 hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-slate-700 shadow-sm backdrop-blur md:inline-flex dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200"
+      class="fixed left-4 top-4 z-30 hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-slate-700 shadow-sm backdrop-blur transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 md:inline-flex dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200 dark:hover:bg-slate-800"
       aria-label="Open sidebar"
       title="Open sidebar"
       @click="openSidebar()"
@@ -162,7 +162,7 @@ function goSettings() {
           </div>
           <button
             type="button"
-            class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700"
+            class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
             aria-label="Close sidebar"
             title="Close sidebar"
             @click="closeSidebar()"
@@ -195,7 +195,7 @@ function goSettings() {
         <div class="border-t border-slate-200 p-3 dark:border-slate-800">
           <button
             type="button"
-            class="mb-3 flex w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold dark:border-slate-700"
+            class="mb-3 flex w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
             @click="uiStore.toggleTheme()"
           >
             <span class="inline-flex items-center gap-1">
@@ -210,7 +210,7 @@ function goSettings() {
               <p class="truncate font-semibold text-slate-900 dark:text-slate-100">{{ userDisplayName }}</p>
               <button
                 type="button"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-[11px] dark:border-slate-600"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-[11px] transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-600 dark:hover:bg-slate-700"
                 aria-label="Open settings"
                 title="Settings"
                 @click="goSettings()"
@@ -224,7 +224,7 @@ function goSettings() {
 
           <button
             type="button"
-            class="mt-3 flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 dark:border-rose-900 dark:text-rose-300"
+            class="mt-3 flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
             aria-label="Logout"
             title="Logout"
             @click="logout()"
