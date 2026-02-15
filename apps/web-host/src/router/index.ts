@@ -2,11 +2,12 @@ import type { Pinia } from "pinia";
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 import MainLayout from "../layouts/MainLayout.vue";
-import { RemoteDashboardPage, RemoteHomePage, RemoteReportPage } from "../remotes";
+import { RemoteAgentPage, RemoteDashboardPage, RemoteHomePage, RemoteLabPage, RemoteReportPage } from "../remotes";
 import BudgetComingSoonPage from "../pages/BudgetComingSoonPage.vue";
 import ChatComingSoonPage from "../pages/ChatComingSoonPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import NotFoundPage from "../pages/NotFoundPage.vue";
+import SettingsPage from "../pages/SettingsPage.vue";
 import { useAuthStore } from "../stores/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -24,9 +25,12 @@ const routes: RouteRecordRaw[] = [
       { path: "", redirect: "/home" },
       { path: "home", name: "home", component: RemoteHomePage },
       { path: "dashboard", name: "dashboard", component: RemoteDashboardPage },
+      { path: "agent", name: "agent", component: RemoteAgentPage },
       { path: "report", name: "report", component: RemoteReportPage },
       { path: "chat", name: "chat", component: ChatComingSoonPage },
       { path: "budget", name: "budget", component: BudgetComingSoonPage },
+      { path: "lab", name: "lab", component: RemoteLabPage },
+      { path: "settings", name: "settings", component: SettingsPage },
     ],
   },
   {
@@ -68,4 +72,3 @@ export function createAppRouter(pinia: Pinia) {
 
   return router;
 }
-

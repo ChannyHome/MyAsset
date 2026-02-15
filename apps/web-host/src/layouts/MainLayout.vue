@@ -1,5 +1,21 @@
 <script setup lang="ts">
+import type { Component } from "vue";
 import { computed } from "vue";
+import {
+  Bot,
+  ChartColumn,
+  FlaskConical,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageCircle,
+  MoonStar,
+  Settings,
+  SunMedium,
+  Wallet,
+  X,
+} from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 
 import { useAuthStore } from "../stores/auth";
@@ -8,15 +24,17 @@ import { useUiStore } from "../stores/ui";
 type MenuItem = {
   to: string;
   label: string;
-  icon: string;
+  icon: Component;
 };
 
 const menuItems: MenuItem[] = [
-  { to: "/home", label: "Home", icon: "⌂" },
-  { to: "/dashboard", label: "Dashboard", icon: "▦" },
-  { to: "/report", label: "Report", icon: "◎" },
-  { to: "/chat", label: "Chat", icon: "✦" },
-  { to: "/budget", label: "Budget", icon: "₩" },
+  { to: "/home", label: "Home", icon: Home },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/agent", label: "Agent", icon: Bot },
+  { to: "/report", label: "Report", icon: ChartColumn },
+  { to: "/chat", label: "Chat", icon: MessageCircle },
+  { to: "/budget", label: "Budget", icon: Wallet },
+  { to: "/lab", label: "Lab", icon: FlaskConical },
 ];
 
 const route = useRoute();
@@ -25,14 +43,40 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const pageTitle = computed(() => {
+  if (route.path.startsWith("/settings")) {
+    return "Settings";
+  }
   return menuItems.find((item) => route.path.startsWith(item.to))?.label ?? "MyAsset";
 });
 
 const userDisplayName = computed(() => authStore.user?.display_name ?? "Unknown User");
-const householdName = computed(() => authStore.primaryHousehold?.name ?? "가구 미연결");
+const userEmail = computed(() => authStore.user?.email ?? "-");
+const householdName = computed(() => authStore.primaryHousehold?.name ?? "No household");
+
+function isDesktopViewport() {
+  return window.matchMedia("(min-width: 768px)").matches;
+}
+
+function openSidebar() {
+  if (isDesktopViewport()) {
+    uiStore.setSidebarCollapsed(false);
+    return;
+  }
+  uiStore.openMobileSidebar();
+}
+
+function closeSidebar() {
+  if (isDesktopViewport()) {
+    uiStore.setSidebarCollapsed(true);
+    return;
+  }
+  uiStore.closeMobileSidebar();
+}
 
 function navigate(to: string) {
-  uiStore.closeMobileSidebar();
+  if (!isDesktopViewport()) {
+    uiStore.closeMobileSidebar();
+  }
   router.push(to);
 }
 
@@ -41,19 +85,27 @@ function logout() {
   uiStore.closeMobileSidebar();
   router.push("/login");
 }
+
+function goSettings() {
+  if (!isDesktopViewport()) {
+    uiStore.closeMobileSidebar();
+  }
+  router.push("/settings");
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <header
-      class="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden dark:border-slate-800 dark:bg-slate-900/95"
+      class="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-900/95"
     >
       <button
         type="button"
         class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-lg dark:border-slate-700"
-        @click="uiStore.openMobileSidebar()"
+        aria-label="Open sidebar"
+        @click="openSidebar()"
       >
-        ☰
+        <Menu class="h-5 w-5" />
       </button>
       <p class="text-sm font-semibold">{{ pageTitle }}</p>
       <button
@@ -61,42 +113,61 @@ function logout() {
         class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold dark:border-slate-700"
         @click="uiStore.toggleTheme()"
       >
-        {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+        <span class="inline-flex items-center gap-1">
+          <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
+          <SunMedium v-else class="h-3.5 w-3.5" />
+          {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+        </span>
       </button>
     </header>
 
-    <div class="flex min-h-[calc(100vh-57px)] lg:min-h-screen">
+    <button
+      v-if="uiStore.sidebarCollapsed"
+      type="button"
+      class="fixed left-4 top-4 z-30 hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-slate-700 shadow-sm backdrop-blur md:inline-flex dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200"
+      aria-label="Open sidebar"
+      title="Open sidebar"
+      @click="openSidebar()"
+    >
+      <Menu class="h-5 w-5" />
+    </button>
+
+    <div class="flex min-h-[calc(100vh-57px)] md:min-h-screen">
       <div
         v-if="uiStore.mobileSidebarOpen"
-        class="fixed inset-0 z-30 bg-slate-900/55 lg:hidden"
+        class="fixed inset-0 z-30 bg-slate-900/55 md:hidden"
         @click="uiStore.closeMobileSidebar()"
       />
 
       <aside
-        class="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900 lg:static lg:translate-x-0"
-        :class="[
-          uiStore.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
-          uiStore.sidebarCollapsed ? 'lg:w-20' : 'lg:w-72',
-        ]"
+        class="fixed inset-y-0 left-0 z-40 flex w-[84vw] max-w-[22rem] flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900 md:w-72 md:max-w-none"
+        :class="{
+          'translate-x-0': uiStore.mobileSidebarOpen || !uiStore.sidebarCollapsed,
+          '-translate-x-full': !uiStore.mobileSidebarOpen,
+          'md:translate-x-0': !uiStore.sidebarCollapsed,
+          'md:-translate-x-full': uiStore.sidebarCollapsed,
+        }"
       >
-        <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
-          <div v-if="!uiStore.sidebarCollapsed" class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">MyAsset</p>
+        <div class="relative flex items-center border-b border-slate-200 p-4 dark:border-slate-800">
+          <div
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-base font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+          >
+            MA
+          </div>
+          <div class="ml-3 min-w-0 overflow-hidden">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+              MyAsset
+            </p>
             <p class="truncate text-sm text-slate-500 dark:text-slate-400">Personal Asset Assistant</p>
           </div>
           <button
             type="button"
-            class="hidden h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-sm lg:inline-flex dark:border-slate-700"
-            @click="uiStore.toggleSidebarCollapsed()"
+            class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 dark:border-slate-700"
+            aria-label="Close sidebar"
+            title="Close sidebar"
+            @click="closeSidebar()"
           >
-            {{ uiStore.sidebarCollapsed ? "»" : "«" }}
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 lg:hidden dark:border-slate-700"
-            @click="uiStore.closeMobileSidebar()"
-          >
-            ×
+            <X class="h-5 w-5" />
           </button>
         </div>
 
@@ -111,10 +182,13 @@ function logout() {
                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
             "
+            :aria-label="item.label"
             @click="navigate(item.to)"
           >
-            <span class="inline-flex h-6 w-6 items-center justify-center text-base">{{ item.icon }}</span>
-            <span v-if="!uiStore.sidebarCollapsed">{{ item.label }}</span>
+            <span class="inline-flex h-6 w-6 items-center justify-center">
+              <component :is="item.icon" class="h-4 w-4" />
+            </span>
+            <span>{{ item.label }}</span>
           </button>
         </nav>
 
@@ -124,37 +198,48 @@ function logout() {
             class="mb-3 flex w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold dark:border-slate-700"
             @click="uiStore.toggleTheme()"
           >
-            {{ uiStore.theme === "light" ? "Dark Theme" : "Light Theme" }}
+            <span class="inline-flex items-center gap-1">
+              <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
+              <SunMedium v-else class="h-3.5 w-3.5" />
+              {{ uiStore.theme === "light" ? "Dark Theme" : "Light Theme" }}
+            </span>
           </button>
 
-          <div
-            class="rounded-xl bg-slate-100 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-200"
-            :class="uiStore.sidebarCollapsed ? 'text-center' : ''"
-          >
-            <template v-if="uiStore.sidebarCollapsed">
-              {{ userDisplayName.slice(0, 1) }}
-            </template>
-            <template v-else>
+          <div class="rounded-xl bg-slate-100 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+            <div class="mb-1 flex items-center justify-between gap-2">
               <p class="truncate font-semibold text-slate-900 dark:text-slate-100">{{ userDisplayName }}</p>
-              <p class="truncate">{{ authStore.user?.email }}</p>
-              <p class="mt-1 truncate text-emerald-700 dark:text-emerald-300">{{ householdName }}</p>
-            </template>
+              <button
+                type="button"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-[11px] dark:border-slate-600"
+                aria-label="Open settings"
+                title="Settings"
+                @click="goSettings()"
+              >
+                <Settings class="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <p class="truncate">{{ userEmail }}</p>
+            <p class="mt-1 truncate text-emerald-700 dark:text-emerald-300">{{ householdName }}</p>
           </div>
 
           <button
             type="button"
             class="mt-3 flex w-full items-center justify-center rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 dark:border-rose-900 dark:text-rose-300"
+            aria-label="Logout"
+            title="Logout"
             @click="logout()"
           >
-            {{ uiStore.sidebarCollapsed ? "↩" : "로그아웃" }}
+            <span class="inline-flex items-center gap-1">
+              <LogOut class="h-3.5 w-3.5" />
+              <span>Logout</span>
+            </span>
           </button>
         </div>
       </aside>
 
-      <main class="flex-1 p-4 md:p-6">
+      <main class="min-w-0 flex-1 p-4 md:p-6" :class="{ 'md:ml-72': !uiStore.sidebarCollapsed }">
         <RouterView />
       </main>
     </div>
   </div>
 </template>
-

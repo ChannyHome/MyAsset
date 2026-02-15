@@ -129,6 +129,16 @@
     - drag & drop to canvas
     - simple dashboard compare modal
 
+### Step 16 (done): Agent menu + frontend runtime quality
+- LNB menu: `Home > Dashboard > Agent > Report > Chat > Budget > Lab`
+- LNB account block:
+  - settings icon (`⚙`)
+  - `/settings` placeholder page for household member/owner management
+- `Agent`/`Lab` are loaded from `web-asset` remote (host is kept thin)
+- `run.ps1` enhancements:
+  - `-KillPortOwner` option: if target port is occupied, kill existing process then start
+  - `RunAsset` now uses watch mode (`vite build --watch + vite preview`) for faster remote refresh
+
 ## MySQL first decision
 - DB name: `myasset`
 - Use Alembic as source of truth.
@@ -179,7 +189,28 @@ From repo root:
 
 # 11) start host server (separate terminal)
 .\run.ps1 -RunHost
+
+# Optional: kill existing port owner automatically then start
+.\run.ps1 -RunAsset -KillPortOwner
+.\run.ps1 -RunHost -KillPortOwner
+.\run.ps1 -Run -KillPortOwner
 ```
+
+## Quick launch scripts (3 terminals)
+If you prefer simple commands, use these wrapper scripts from repo root:
+
+```powershell
+# terminal 1: API
+.\run-api.ps1
+
+# terminal 2: Asset Remote
+.\run-asset.ps1
+
+# terminal 3: Host
+.\run-host.ps1
+```
+
+Each wrapper calls `run.ps1` with `-KillPortOwner` enabled.
 
 ## Frontend step-1 test checklist
 1. API 실행 후 `http://127.0.0.1:5173` 접속
@@ -192,9 +223,9 @@ From repo root:
 
 ## Frontend troubleshooting
 - `Remote 모듈 연결에 실패했습니다`가 보이면:
-  1. `.\run.ps1 -RunAsset` 먼저 실행 (Remote는 `build + preview` 모드로 실행됨)
+  1. `.\run.ps1 -RunAsset` 먼저 실행 (Remote는 `watch build + preview` 모드)
   2. 그 다음 `.\run.ps1 -RunHost`
-  3. 포트 충돌 시 `run.ps1`가 점유 PID를 보여주므로 해당 프로세스를 종료 후 재실행
+  3. 포트 충돌 시 `-KillPortOwner` 옵션으로 자동 종료 후 실행 가능
 
 ## Seed users (dev only)
 - `me@myasset.local / pass1234`

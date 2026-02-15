@@ -10,6 +10,7 @@ param(
     [switch]$RunHost,
     [switch]$RunAsset,
     [switch]$Run,
+    [switch]$KillPortOwner,
     [int]$Port = 8000
 )
 
@@ -34,14 +35,27 @@ function Get-PortOwnerPid([int]$Port) {
     return [int]$parts[-1]
 }
 
-function Assert-PortFree([int]$Port, [string]$Name) {
+function Ensure-PortAvailable([int]$Port, [string]$Name, [bool]$KillExisting) {
     $ownerPid = Get-PortOwnerPid -Port $Port
     if ($null -eq $ownerPid) {
         return
     }
     $process = Get-Process -Id $ownerPid -ErrorAction SilentlyContinue
     $procName = if ($process) { $process.ProcessName } else { "unknown" }
-    throw "$Name cannot start. Port $Port is already in use by PID $ownerPid ($procName). Stop it and retry."
+
+    if ($KillExisting) {
+        Write-Host "[port] $Name will stop PID $ownerPid ($procName) on port $Port..."
+        Stop-Process -Id $ownerPid -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500
+        $ownerPidAfter = Get-PortOwnerPid -Port $Port
+        if ($null -ne $ownerPidAfter) {
+            throw "$Name cannot start. Port $Port is still in use by PID $ownerPidAfter."
+        }
+        Write-Host "[port] port $Port is now free."
+        return
+    }
+
+    throw "$Name cannot start. Port $Port is already in use by PID $ownerPid ($procName). Stop it and retry, or use -KillPortOwner."
 }
 
 if (-not (Test-Path $apiDir)) {
@@ -71,7 +85,7 @@ if ($SetupWeb) {
 }
 
 if ($RunHost) {
-    Assert-PortFree -Port 5173 -Name 'web-host'
+    Ensure-PortAvailable -Port 5173 -Name 'web-host' -KillExisting:$KillPortOwner
     Set-Location $webHostDir
     Write-Host '[run-host] starting web-host at http://127.0.0.1:5173'
     npm run dev
@@ -79,9 +93,9 @@ if ($RunHost) {
 }
 
 if ($RunAsset) {
-    Assert-PortFree -Port 5174 -Name 'web-asset'
+    Ensure-PortAvailable -Port 5174 -Name 'web-asset' -KillExisting:$KillPortOwner
     Set-Location $webAssetDir
-    Write-Host '[run-asset] starting web-asset remote server at http://127.0.0.1:5174 (build + preview)'
+    Write-Host '[run-asset] starting web-asset remote server at http://127.0.0.1:5174 (watch build + preview)'
     npm run dev:remote
     exit $LASTEXITCODE
 }
@@ -169,5 +183,5 @@ if ($SetupWeb) {
 }
 
 Write-Host "[run] starting api at http://127.0.0.1:$Port"
-Assert-PortFree -Port $Port -Name 'api'
+Ensure-PortAvailable -Port $Port -Name 'api' -KillExisting:$KillPortOwner
 & $venvPython -m uvicorn app.main:app --reload --host 127.0.0.1 --port $Port
