@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-
 def run() -> None:
     client = TestClient(app)
 
@@ -27,7 +26,16 @@ def run() -> None:
 
     p_resp = client.post(
         "/api/v1/portfolios",
-        json={"name": portfolio_name, "type": "BROKER", "is_included": True},
+        json={
+            "name": portfolio_name,
+            "type": "BROKER",
+            "is_included": True,
+            "category": "KR_STOCK",
+            "memo": "smoke test portfolio",
+            "cumulative_deposit_amount": "50000000",
+            "cumulative_withdrawal_amount": "1000000",
+            "cashflow_source_type": "MANUAL",
+        },
         headers=headers,
     )
     assert p_resp.status_code == 201, p_resp.text
@@ -65,6 +73,11 @@ def run() -> None:
     )
     assert hh_scope.status_code == 200, hh_scope.text
     assert len(hh_scope.json()) >= 1, hh_scope.text
+
+    perf_resp = client.get("/api/v1/portfolios/performance", headers=headers)
+    assert perf_resp.status_code == 200, perf_resp.text
+    perf_rows = perf_resp.json()
+    assert any(item["portfolio_id"] == portfolio_id for item in perf_rows), perf_resp.text
 
     print("SMOKE_DB_OK")
     print("portfolio_id", portfolio_id)

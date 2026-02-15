@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.models.asset import Asset
-from app.models.asset_quote import AssetQuote
+from app.models.latest_quote import LatestQuote
 from app.models.household import HouseholdMember
 from app.models.holding import Holding
 from app.models.portfolio import Portfolio
@@ -100,17 +100,15 @@ def _resolve_scope_user_ids(
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="scope_type must be USER or HOUSEHOLD")
 
 
-def _latest_quote_map(db: Session, asset_ids: list[int]) -> dict[int, AssetQuote]:
+def _latest_quote_map(db: Session, asset_ids: list[int]) -> dict[int, LatestQuote]:
     if not asset_ids:
         return {}
 
     stmt = (
-        select(AssetQuote)
-        .where(AssetQuote.asset_id.in_(asset_ids))
-        .order_by(AssetQuote.asset_id.asc(), AssetQuote.as_of.desc(), AssetQuote.id.desc())
+        select(LatestQuote).where(LatestQuote.asset_id.in_(asset_ids))
     )
     rows = db.scalars(stmt).all()
-    latest: dict[int, AssetQuote] = {}
+    latest: dict[int, LatestQuote] = {}
     for quote in rows:
         if quote.asset_id not in latest:
             latest[quote.asset_id] = quote
@@ -312,3 +310,5 @@ def delete_holding(
     db.delete(holding)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+

@@ -32,7 +32,7 @@
 - `004_dashboard_media_valuation`
 - includes: liabilities, quotes/fx/market, dashboards/layouts/settings, media/snapshots, valuation_snapshots
 
-### Step 7 (done): Live quote + performance
+### Step 7 (done): Live quote + holding performance
 - Quote source: `yfinance`
 - `POST /api/v1/quotes/update-now` (manual refresh)
 - `GET /api/v1/quotes/latest` (latest quotes)
@@ -41,6 +41,21 @@
 - Runtime interval API:
   - `GET /api/v1/settings/quote-interval`
   - `PUT /api/v1/settings/quote-interval`
+
+### Step 8 (done): latest_quotes upsert + portfolio performance baseline
+- Alembic revision: `007_latest_quote_cashflow`
+- `asset_quotes` keeps full history (append)
+- `latest_quotes` keeps one latest row per asset (upsert)
+- Portfolio metadata fields added:
+  - `category` enum: `KR_STOCK`, `US_STOCK`, `CRYPTO`, `REAL_ESTATE`, `BOND`, `CASH`, `DEPOSIT_SAVING`, `ETC`
+  - `memo`
+  - `cumulative_deposit_amount`
+  - `cumulative_withdrawal_amount`
+  - `cashflow_source_type` (`MANUAL` / `AUTO`)
+- New API:
+  - `GET /api/v1/portfolios/performance`
+- Formula:
+  - `total_pnl_amount = nav_amount + cumulative_withdrawal_amount - cumulative_deposit_amount`
 
 ## MySQL first decision
 - DB name: `myasset`
@@ -94,3 +109,4 @@ From repo root:
 - `.env` value is fallback/default only.
 - Runtime interval changes should be stored in DB (`app_settings`) via API.
 - Scheduler is rescheduled immediately when interval is updated by API.
+
