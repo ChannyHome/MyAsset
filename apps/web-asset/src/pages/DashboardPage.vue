@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
+
+import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
+import { getLiabilities, type LiabilityOut } from "../api/liabilities";
 
 type WidgetType =
   | "kpi_summary"
@@ -28,21 +32,47 @@ type DashboardPreset = {
   note: string;
 };
 
+function toNumber(value: string | number | null | undefined): number {
+  if (value == null) return 0;
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatCurrency(value: number, currency = "KRW"): string {
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatPercent(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "-";
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return value;
+  return dt.toLocaleString("ko-KR");
+}
+
 const toolboxSections: Array<{ title: string; items: ToolboxItem[] }> = [
   {
-    title: "기본 위젯",
+    title: "Core",
     items: [
-      { type: "kpi_summary", label: "KPI 요약", description: "총자산/순자산/부채" },
-      { type: "market_board", label: "마켓 보드", description: "지수·코인 요약" },
+      { type: "kpi_summary", label: "KPI Summary", description: "Gross / Net / Liabilities" },
+      { type: "market_board", label: "Market Board", description: "Indexes and crypto strip (MVP stub)" },
     ],
   },
   {
-    title: "차트",
+    title: "Charts",
     items: [
-      { type: "donut_allocation", label: "도넛 비중", description: "Top N + 기타" },
-      { type: "treemap_holdings", label: "트리맵", description: "크기=평가금, 색=등락" },
-      { type: "networth_line", label: "순자산 추이", description: "일/주/월 스냅샷" },
-      { type: "dividend_bar_monthly", label: "배당 월별", description: "세금 토글 가능" },
+      { type: "donut_allocation", label: "Donut Allocation", description: "Top holdings allocation" },
+      { type: "treemap_holdings", label: "Treemap Holdings", description: "Size=value, color=PnL%" },
+      { type: "networth_line", label: "Networth Line", description: "Snapshot trend (MVP stub)" },
+      { type: "dividend_bar_monthly", label: "Dividend Bar", description: "Monthly dividend (MVP stub)" },
     ],
   },
 ];
@@ -52,19 +82,19 @@ const dashboardPresets: DashboardPreset[] = [
     id: "default-main",
     name: "Default Main",
     widgets: ["kpi_summary", "donut_allocation", "treemap_holdings", "market_board"],
-    note: "기본 홈 대시보드",
+    note: "Balanced default dashboard",
   },
   {
     id: "income-focus",
     name: "Income Focus",
     widgets: ["kpi_summary", "dividend_bar_monthly", "networth_line", "market_board"],
-    note: "현금흐름 중심",
+    note: "Cashflow and trend focus",
   },
   {
     id: "risk-focus",
     name: "Risk Focus",
     widgets: ["kpi_summary", "treemap_holdings", "networth_line"],
-    note: "변동성 확인 중심",
+    note: "Volatility/weight monitor",
   },
 ];
 
@@ -74,10 +104,11 @@ const widgetDictionary = new Map<WidgetType, ToolboxItem>(
 
 const search = ref("");
 const canvasWidgets = ref<CanvasWidget[]>([
-  { id: 1, type: "kpi_summary", label: "KPI 요약" },
-  { id: 2, type: "donut_allocation", label: "도넛 비중" },
+  { id: 1, type: "kpi_summary", label: "KPI Summary" },
+  { id: 2, type: "donut_allocation", label: "Donut Allocation" },
+  { id: 3, type: "treemap_holdings", label: "Treemap Holdings" },
 ]);
-const nextWidgetId = ref(3);
+const nextWidgetId = ref(4);
 const activeDashboardName = ref("Default Main");
 
 const compareModalOpen = ref(false);
@@ -86,18 +117,28 @@ const compare = reactive({
   right: "income-focus",
 });
 
+const dataLoading = ref(false);
+const dataError = ref("");
+const summary = ref<AnalyticsSummaryV2Out | null>(null);
+const holdings = ref<HoldingPerformanceOut[]>([]);
+const liabilities = ref<LiabilityOut[]>([]);
+
+const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+const topHoldings = computed(() =>
+  [...holdings.value].sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount)),
+);
+const top4 = computed(() => topHoldings.value.slice(0, 4));
+
 const filteredSections = computed(() => {
   const keyword = search.value.trim().toLowerCase();
-  if (!keyword) {
-    return toolboxSections;
-  }
+  if (!keyword) return toolboxSections;
+
   return toolboxSections
     .map((section) => ({
       title: section.title,
-      items: section.items.filter((item) => {
-        const target = `${item.label} ${item.description} ${item.type}`.toLowerCase();
-        return target.includes(keyword);
-      }),
+      items: section.items.filter((item) =>
+        `${item.label} ${item.description} ${item.type}`.toLowerCase().includes(keyword),
+      ),
     }))
     .filter((section) => section.items.length > 0);
 });
@@ -105,9 +146,7 @@ const filteredSections = computed(() => {
 const compareRows = computed(() => {
   const left = dashboardPresets.find((item) => item.id === compare.left);
   const right = dashboardPresets.find((item) => item.id === compare.right);
-  if (!left || !right) {
-    return [];
-  }
+  if (!left || !right) return [];
 
   const allTypes = Array.from(new Set([...left.widgets, ...right.widgets]));
   return allTypes.map((type) => ({
@@ -117,11 +156,17 @@ const compareRows = computed(() => {
   }));
 });
 
+const connectionStatus = computed(() => {
+  if (dataLoading.value) return "loading";
+  if (dataError.value) return "error";
+  if (summary.value) return "connected";
+  return "idle";
+});
+
 function buildWidgetsFromPreset(presetId: string) {
   const preset = dashboardPresets.find((item) => item.id === presetId);
-  if (!preset) {
-    return;
-  }
+  if (!preset) return;
+
   canvasWidgets.value = preset.widgets.map((type) => {
     const item = widgetDictionary.get(type);
     return {
@@ -146,67 +191,111 @@ function removeWidget(id: number) {
 }
 
 function onDragStart(event: DragEvent, item: ToolboxItem) {
-  if (!event.dataTransfer) {
-    return;
-  }
+  if (!event.dataTransfer) return;
   event.dataTransfer.setData("application/myasset-widget", item.type);
   event.dataTransfer.effectAllowed = "copy";
 }
 
 function onDropCanvas(event: DragEvent) {
   const type = event.dataTransfer?.getData("application/myasset-widget") as WidgetType;
-  if (!type) {
-    return;
-  }
+  if (!type) return;
   const item = widgetDictionary.get(type);
-  if (item) {
-    addWidget(item);
+  if (item) addWidget(item);
+}
+
+async function loadDashboardData() {
+  dataLoading.value = true;
+  dataError.value = "";
+  try {
+    const [summaryOut, holdingsOut, liabilitiesOut] = await Promise.all([
+      getSummary(),
+      getHoldingsPerformance(),
+      getLiabilities(),
+    ]);
+    summary.value = summaryOut;
+    holdings.value = holdingsOut;
+    liabilities.value = liabilitiesOut;
+  } catch (error) {
+    dataError.value = error instanceof Error ? error.message : "Failed to load dashboard data";
+  } finally {
+    dataLoading.value = false;
   }
 }
+
+onMounted(loadDashboardData);
 </script>
 
 <template>
   <section class="space-y-4">
     <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300">Dashboard</p>
-          <h1 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">대시보드 편집기</h1>
+          <h1 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Builder</h1>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            WPF 도구상자 느낌으로 차트를 더블클릭 또는 드래그해서 추가합니다.
+            WPF toolbox style editing with live asset data connection.
           </p>
         </div>
         <div class="flex gap-2">
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            @click="compareModalOpen = true"
+            @click="loadDashboardData"
           >
-            Dashboard 비교
+            {{ dataLoading ? "Loading..." : "Refresh Data" }}
           </button>
           <button
             type="button"
-            class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="compareModalOpen = true"
           >
-            저장
+            Compare
+          </button>
+          <button type="button" class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500">
+            Save
           </button>
         </div>
       </div>
-      <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">현재 편집 중: {{ activeDashboardName }}</p>
+
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span
+          class="rounded-full px-2 py-1 font-semibold"
+          :class="
+            connectionStatus === 'connected'
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+              : connectionStatus === 'error'
+                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+          "
+        >
+          Data: {{ connectionStatus }}
+        </span>
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          Holdings: {{ holdings.length }}
+        </span>
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          Liabilities: {{ liabilities.length }}
+        </span>
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          as_of: {{ formatDateTime(summary?.as_of || null) }}
+        </span>
+      </div>
+      <p v-if="dataError" class="mt-2 text-xs text-rose-600 dark:text-rose-300">Error: {{ dataError }}</p>
+      <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Current editing dashboard: {{ activeDashboardName }}</p>
     </header>
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
       <aside class="rounded-2xl border border-slate-700 bg-slate-950 text-slate-100 shadow-lg">
         <div class="border-b border-slate-700 px-4 py-3">
-          <p class="text-sm font-semibold">도구 상자</p>
-          <p class="mt-0.5 text-xs text-slate-400">차트 더블클릭 또는 캔버스로 드래그</p>
+          <p class="text-sm font-semibold">Toolbox</p>
+          <p class="mt-0.5 text-xs text-slate-400">Double-click or drag widgets to canvas</p>
         </div>
 
         <div class="border-b border-slate-700 p-3">
           <input
             v-model="search"
             type="text"
-            placeholder="검색 도구 상자"
+            placeholder="Search toolbox"
             class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-400 transition focus:ring-2"
           />
         </div>
@@ -244,7 +333,7 @@ function onDropCanvas(event: DragEvent) {
           @drop.prevent="onDropCanvas"
         >
           <div v-if="canvasWidgets.length === 0" class="flex h-[360px] items-center justify-center text-sm text-slate-500 dark:text-slate-400">
-            도구상자에서 위젯을 드래그하거나 더블클릭해서 추가하세요.
+            Drag widgets from toolbox or double-click to add.
           </div>
 
           <div v-else class="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -260,11 +349,43 @@ function onDropCanvas(event: DragEvent) {
                   class="rounded-md border border-rose-300 px-2 py-0.5 text-xs font-semibold text-rose-600 dark:border-rose-800 dark:text-rose-300"
                   @click="removeWidget(widget.id)"
                 >
-                  삭제
+                  Remove
                 </button>
               </div>
-              <div class="h-24 rounded-lg bg-slate-100 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                <div class="flex h-full items-center justify-center">type: {{ widget.type }}</div>
+
+              <div v-if="widget.type === 'kpi_summary'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                <p>Gross: {{ formatCurrency(toNumber(summary?.gross_assets_total), displayCurrency) }}</p>
+                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), displayCurrency) }}</p>
+                <p>Liabilities: {{ formatCurrency(toNumber(summary?.liabilities_total), displayCurrency) }}</p>
+              </div>
+
+              <div v-else-if="widget.type === 'donut_allocation'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                <p class="font-semibold">Top allocation</p>
+                <p v-for="item in top4" :key="item.holding_id">
+                  {{ item.asset_symbol || item.asset_name }}:
+                  {{ formatPercent((toNumber(item.evaluated_amount) / Math.max(toNumber(summary?.net_assets_total), 1)) * 100) }}
+                </p>
+                <p v-if="top4.length === 0">No data</p>
+              </div>
+
+              <div v-else-if="widget.type === 'treemap_holdings'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                <p class="font-semibold">Top holdings (value / PnL)</p>
+                <p v-for="item in top4" :key="item.holding_id">
+                  {{ item.asset_symbol || item.asset_name }} / {{ formatPercent(toNumber(item.pnl_pct)) }}
+                </p>
+                <p v-if="top4.length === 0">No data</p>
+              </div>
+
+              <div v-else-if="widget.type === 'networth_line'" class="rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                Networth snapshot line will be connected to valuation snapshots API.
+              </div>
+
+              <div v-else-if="widget.type === 'dividend_bar_monthly'" class="rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                Dividend monthly widget is a planned MVP+ item.
+              </div>
+
+              <div v-else class="rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                Market board widget is ready for market API binding.
               </div>
             </div>
           </div>
@@ -279,25 +400,25 @@ function onDropCanvas(event: DragEvent) {
     >
       <section class="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Dashboard 비교</h2>
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Dashboard Compare</h2>
           <button
             type="button"
             class="rounded-lg border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
             @click="compareModalOpen = false"
           >
-            닫기
+            Close
           </button>
         </div>
 
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label class="block text-sm">
-            <span class="mb-1 block font-medium text-slate-700 dark:text-slate-200">왼쪽</span>
+            <span class="mb-1 block font-medium text-slate-700 dark:text-slate-200">Left</span>
             <select v-model="compare.left" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
               <option v-for="preset in dashboardPresets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
             </select>
           </label>
           <label class="block text-sm">
-            <span class="mb-1 block font-medium text-slate-700 dark:text-slate-200">오른쪽</span>
+            <span class="mb-1 block font-medium text-slate-700 dark:text-slate-200">Right</span>
             <select v-model="compare.right" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
               <option v-for="preset in dashboardPresets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
             </select>
@@ -329,14 +450,14 @@ function onDropCanvas(event: DragEvent) {
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
             @click="buildWidgetsFromPreset(compare.left); compareModalOpen = false"
           >
-            왼쪽 적용
+            Apply Left
           </button>
           <button
             type="button"
             class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
             @click="buildWidgetsFromPreset(compare.right); compareModalOpen = false"
           >
-            오른쪽 적용
+            Apply Right
           </button>
         </div>
       </section>

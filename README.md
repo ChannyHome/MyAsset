@@ -227,6 +227,16 @@ Each wrapper calls `run.ps1` with `-KillPortOwner` enabled.
   2. 그 다음 `.\run.ps1 -RunHost`
   3. 포트 충돌 시 `-KillPortOwner` 옵션으로 자동 종료 후 실행 가능
 
+## Production deploy (Nginx)
+- Deployment docs: `deploy/README.md`
+- Nginx template: `deploy/nginx/myasset.conf`
+- Nginx Windows template: `deploy/nginx/myasset-windows.conf`
+- Nginx HTTPS template: `deploy/nginx/myasset-https.conf`
+- Frontend build/package script (Windows): `deploy/scripts/build-frontend.ps1`
+- Frontend copy-to-Windows-Nginx script: `deploy/scripts/deploy-frontend-windows.ps1`
+- Let's Encrypt script: `deploy/scripts/setup-letsencrypt.sh`
+- systemd docs (FastAPI + Nginx): `deploy/systemd/README.md`
+
 ## Seed users (dev only)
 - `me@myasset.local / pass1234`
 - `wife@myasset.local / pass1234`

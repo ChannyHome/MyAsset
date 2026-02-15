@@ -1,0 +1,23 @@
+[Unit]
+Description=MyAsset FastAPI API Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=myasset
+Group=myasset
+WorkingDirectory=/opt/myasset/apps/api
+EnvironmentFile=/etc/myasset/api.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/myasset/apps/api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGINT
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

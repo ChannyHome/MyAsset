@@ -74,7 +74,7 @@ function closeSidebar() {
 }
 
 function navigate(to: string) {
-  if (!isDesktopViewport()) {
+  if (uiStore.mobileSidebarOpen) {
     uiStore.closeMobileSidebar();
   }
   router.push(to);
@@ -87,7 +87,7 @@ function logout() {
 }
 
 function goSettings() {
-  if (!isDesktopViewport()) {
+  if (uiStore.mobileSidebarOpen) {
     uiStore.closeMobileSidebar();
   }
   router.push("/settings");
@@ -141,12 +141,10 @@ function goSettings() {
 
       <aside
         class="fixed inset-y-0 left-0 z-40 flex w-[84vw] max-w-[22rem] flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900 md:w-72 md:max-w-none"
-        :class="{
-          'translate-x-0': uiStore.mobileSidebarOpen || !uiStore.sidebarCollapsed,
-          '-translate-x-full': !uiStore.mobileSidebarOpen,
-          'md:translate-x-0': !uiStore.sidebarCollapsed,
-          'md:-translate-x-full': uiStore.sidebarCollapsed,
-        }"
+        :class="[
+          uiStore.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          uiStore.sidebarCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0',
+        ]"
       >
         <div class="relative flex items-center border-b border-slate-200 p-4 dark:border-slate-800">
           <div

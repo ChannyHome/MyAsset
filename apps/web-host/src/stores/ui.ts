@@ -10,7 +10,7 @@ function applyTheme(theme: ThemeName) {
 
 export const useUiStore = defineStore("ui", {
   state: () => ({
-    theme: "light" as ThemeName,
+    theme: "dark" as ThemeName,
     sidebarCollapsed: false,
     mobileSidebarOpen: false,
     initialized: false,
@@ -25,6 +25,8 @@ export const useUiStore = defineStore("ui", {
 
       if (savedTheme === "light" || savedTheme === "dark") {
         this.theme = savedTheme;
+      } else {
+        localStorage.setItem(STORAGE_KEYS.theme, this.theme);
       }
       if (savedSidebar === "true" || savedSidebar === "false") {
         this.sidebarCollapsed = savedSidebar === "true";
@@ -56,4 +58,3 @@ export const useUiStore = defineStore("ui", {
     },
   },
 });
-
