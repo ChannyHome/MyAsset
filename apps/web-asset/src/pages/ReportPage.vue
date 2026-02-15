@@ -1,0 +1,65 @@
+<template>
+  <section class="space-y-4">
+    <header class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">Report</p>
+      <h1 class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">자산 분석 (기본)</h1>
+      <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        고급 추천/백테스트 이전 단계로, 현재는 전일 변화/상승·하락 상위 자산 중심으로 제공합니다.
+      </p>
+    </header>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <p class="text-xs text-slate-500 dark:text-slate-400">전일 총자산 변화</p>
+        <p class="mt-2 text-2xl font-bold text-emerald-600">+₩1,081,369</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <p class="text-xs text-slate-500 dark:text-slate-400">전일 순자산 변화</p>
+        <p class="mt-2 text-2xl font-bold text-emerald-600">+₩812,144</p>
+      </article>
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <p class="text-xs text-slate-500 dark:text-slate-400">부채 변화</p>
+        <p class="mt-2 text-2xl font-bold text-sky-600">-₩500,000</p>
+      </article>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">상승률 상위</h2>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>NVDA</span>
+            <span class="font-semibold text-emerald-600">+3.82%</span>
+          </li>
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>SCHD</span>
+            <span class="font-semibold text-emerald-600">+1.11%</span>
+          </li>
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>삼성전자</span>
+            <span class="font-semibold text-emerald-600">+0.77%</span>
+          </li>
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">하락률 상위</h2>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>BTC</span>
+            <span class="font-semibold text-rose-600">-2.10%</span>
+          </li>
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>하이닉스</span>
+            <span class="font-semibold text-rose-600">-1.43%</span>
+          </li>
+          <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <span>QQQ</span>
+            <span class="font-semibold text-rose-600">-0.56%</span>
+          </li>
+        </ul>
+      </article>
+    </div>
+  </section>
+</template>
+

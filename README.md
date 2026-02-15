@@ -112,6 +112,23 @@
   - `principal_plus_debt_total`
   - `gross_assets_profit_total`
   - `gross_assets_return_pct`
+
+### Step 15 (done): Frontend foundation (Host + Asset Remote)
+- Stack: Vue3 + Tailwind + Module Federation
+- `apps/web-host`
+  - login/auth guard
+  - responsive LNB (mobile hamburger, desktop collapse)
+  - Light/Dark theme toggle (default Light, localStorage persisted)
+  - bottom account + household info
+  - remote loading fallback
+- `apps/web-asset`
+  - Home / Dashboard / Report remote pages
+  - Dashboard edit starter with WPF-style toolbox UX:
+    - search
+    - double-click to add widget
+    - drag & drop to canvas
+    - simple dashboard compare modal
+
 ## MySQL first decision
 - DB name: `myasset`
 - Use Alembic as source of truth.
@@ -133,27 +150,51 @@ From repo root:
 # 1) first-time setup + install
 .\run.ps1 -Setup
 
-# 2) create MySQL DB from DATABASE_URL if missing
+# 2) frontend dependency setup
+.\run.ps1 -SetupWeb
+
+# 3) create MySQL DB from DATABASE_URL if missing
 .\run.ps1 -InitDb
 
-# 3) migrate schema
+# 4) migrate schema
 .\run.ps1 -Migrate
 
-# 4) seed users/household
+# 5) seed users/household
 .\run.ps1 -Seed
 
-# 5) update quotes once
+# 6) update quotes once
 .\run.ps1 -UpdateQuotes
 
-# 6) quick API smoke (health/login/me)
+# 7) quick API smoke (health/login/me)
 .\run.ps1 -Smoke
 
-# 7) MySQL-backed smoke (CRUD + scope)
+# 8) MySQL-backed smoke (CRUD + scope)
 .\run.ps1 -SmokeDb
 
-# 8) start server
+# 9) start API server
 .\run.ps1 -Run
+
+# 10) start asset remote server (separate terminal)
+.\run.ps1 -RunAsset
+
+# 11) start host server (separate terminal)
+.\run.ps1 -RunHost
 ```
+
+## Frontend step-1 test checklist
+1. API 실행 후 `http://127.0.0.1:5173` 접속
+2. 로그인 페이지에서 `me@myasset.local / pass1234` 로그인
+3. 로그인 후 Home 진입 확인
+4. 모바일 폭(브라우저 devtools)에서 좌상단 햄버거 버튼으로 LNB 열기/닫기 확인
+5. 데스크탑에서 LNB 접기/펼치기 확인
+6. Light/Dark 전환 후 새로고침해도 유지되는지 확인
+7. `apps/web-asset`를 끄면 Host에서 remote fallback 메시지 노출되는지 확인
+
+## Frontend troubleshooting
+- `Remote 모듈 연결에 실패했습니다`가 보이면:
+  1. `.\run.ps1 -RunAsset` 먼저 실행 (Remote는 `build + preview` 모드로 실행됨)
+  2. 그 다음 `.\run.ps1 -RunHost`
+  3. 포트 충돌 시 `run.ps1`가 점유 PID를 보여주므로 해당 프로세스를 종료 후 재실행
 
 ## Seed users (dev only)
 - `me@myasset.local / pass1234`

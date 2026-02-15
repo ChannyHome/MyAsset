@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
 
     database_url: str = "mysql+pymysql://myasset:myasset@127.0.0.1:3306/myasset"
+    cors_allow_origins: str = (
+        "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174"
+    )
 
     api_access_log_enabled: bool = False
     api_access_log_dir: str = "logs/api"
@@ -19,6 +22,9 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 60
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    def cors_allow_origins_list(self) -> list[str]:
+        return [item.strip() for item in self.cors_allow_origins.split(",") if item.strip()]
 
 
 settings = Settings()
