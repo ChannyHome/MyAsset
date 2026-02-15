@@ -5,6 +5,7 @@ from app.models.household import Household, HouseholdMember
 from app.models.holding import Holding
 from app.models.app_setting import AppSetting
 from app.models.latest_quote import LatestQuote
+from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.user import User
 
@@ -18,6 +19,6 @@ __all__ = [
     "AssetQuote",
     "LatestQuote",
     "Holding",
+    "Liability",
     "AppSetting",
 ]
-

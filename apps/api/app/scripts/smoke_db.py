@@ -67,6 +67,21 @@ def run() -> None:
     )
     assert h_resp.status_code == 201, h_resp.text
 
+    l_resp = client.post(
+        "/api/v1/liabilities",
+        json={
+            "portfolio_id": portfolio_id,
+            "name": f"Smoke Liability {suffix}",
+            "liability_type": "CREDIT_LOAN",
+            "currency": "KRW",
+            "outstanding_balance": "1200000",
+            "source_type": "MANUAL",
+            "is_included": True,
+        },
+        headers=headers,
+    )
+    assert l_resp.status_code == 201, l_resp.text
+
     hh_scope = client.get(
         "/api/v1/holdings?scope_type=HOUSEHOLD&scope_id=1",
         headers=headers,
@@ -78,6 +93,16 @@ def run() -> None:
     assert perf_resp.status_code == 200, perf_resp.text
     perf_rows = perf_resp.json()
     assert any(item["portfolio_id"] == portfolio_id for item in perf_rows), perf_resp.text
+
+    summary_resp = client.get("/api/v1/analytics/summary", headers=headers)
+    assert summary_resp.status_code == 200, summary_resp.text
+    summary = summary_resp.json()
+    assert "total_assets_total" in summary and "net_worth_total" in summary, summary_resp.text
+
+    summary_v2_resp = client.get("/api/v1/analytics/summary-v2", headers=headers)
+    assert summary_v2_resp.status_code == 200, summary_v2_resp.text
+    summary_v2 = summary_v2_resp.json()
+    assert "gross_assets_total" in summary_v2 and "net_assets_total" in summary_v2, summary_v2_resp.text
 
     print("SMOKE_DB_OK")
     print("portfolio_id", portfolio_id)

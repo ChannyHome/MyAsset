@@ -57,6 +57,61 @@
 - Formula:
   - `total_pnl_amount = nav_amount + cumulative_withdrawal_amount - cumulative_deposit_amount`
 
+
+### Step 9 (done): liabilities CRUD + analytics summary
+- `GET/POST/PATCH/DELETE /api/v1/liabilities`
+- `PATCH /api/v1/liabilities/{id}/hidden`
+- `GET /api/v1/analytics/summary` (legacy)
+- `GET /api/v1/analytics/summary-v2` (recommended)
+- net worth formula:
+  - legacy `/summary`: `total_assets_total = assets_total + liabilities_total`, `net_worth_total = assets_total`
+  - recommended `/summary-v2`: `gross_assets_total = owned_assets_total + liabilities_total`, `net_assets_total = owned_assets_total`
+
+### Step 10 (done): DB views for HeidiSQL
+- Alembic revision: `009_asset_views`
+- Added reporting views:
+  - `v_user_holding_performance`
+  - `v_user_asset_class_performance`
+  - `v_user_liability_summary`
+  - `v_user_summary_v2`
+  - `v_user_portfolio_performance`
+
+### Step 11 (done): Household summary view
+- Alembic revision: `010_household_summary_view`
+- Added view:
+  - `v_household_summary_v2`
+
+### Step 12 (done): Portfolio net worth view
+- Alembic revision: `011_portfolio_networth_view`
+- Added view:
+  - `v_user_portfolio_networth_v2`
+- Core fields:
+  - `owned_assets_total`
+  - `liabilities_total`
+  - `gross_assets_total`
+  - `net_worth_total` (assets - liabilities)
+  - `net_assets_total` (legacy-compatible alias = owned_assets_total)
+
+### Step 13 (done): Summary views principal metrics
+- Alembic revision: `012_summary_principal_metrics`
+- Updated views:
+  - `v_user_summary_v2`
+  - `v_household_summary_v2`
+- Added fields:
+  - `invested_principal_total`
+  - `withdrawn_total`
+  - `principal_profit_total`
+  - `principal_return_pct`
+
+### Step 14 (done): Gross return metrics
+- Alembic revision: `013_summary_gross_return_metrics`
+- Updated views:
+  - `v_user_summary_v2`
+  - `v_household_summary_v2`
+- Added fields (`??+??` ??):
+  - `principal_plus_debt_total`
+  - `gross_assets_profit_total`
+  - `gross_assets_return_pct`
 ## MySQL first decision
 - DB name: `myasset`
 - Use Alembic as source of truth.
@@ -109,4 +164,14 @@ From repo root:
 - `.env` value is fallback/default only.
 - Runtime interval changes should be stored in DB (`app_settings`) via API.
 - Scheduler is rescheduled immediately when interval is updated by API.
+
+
+
+
+
+
+
+
+
+
 
