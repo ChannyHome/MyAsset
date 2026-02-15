@@ -61,11 +61,11 @@
 ### Step 9 (done): liabilities CRUD + analytics summary
 - `GET/POST/PATCH/DELETE /api/v1/liabilities`
 - `PATCH /api/v1/liabilities/{id}/hidden`
-- `GET /api/v1/analytics/summary` (legacy)
-- `GET /api/v1/analytics/summary-v2` (recommended)
+- `GET /api/v1/analytics/summary-old` (legacy)
+- `GET /api/v1/analytics/summary` (recommended)
 - net worth formula:
-  - legacy `/summary`: `total_assets_total = assets_total + liabilities_total`, `net_worth_total = assets_total`
-  - recommended `/summary-v2`: `gross_assets_total = owned_assets_total + liabilities_total`, `net_assets_total = owned_assets_total`
+  - legacy `/summary-old`: `total_assets_total = assets_total + liabilities_total`, `net_worth_total = assets_total`
+  - recommended `/summary`: `gross_assets_total = owned_assets_total + liabilities_total`, `net_assets_total = owned_assets_total`
 
 ### Step 10 (done): DB views for HeidiSQL
 - Alembic revision: `009_asset_views`

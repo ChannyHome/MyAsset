@@ -66,7 +66,20 @@ def _calculate_summary_values(
     include_hidden: bool,
     include_excluded_portfolios: bool,
     include_excluded_liabilities: bool,
-) -> tuple[Decimal, Decimal, Decimal, Decimal, datetime]:
+) -> tuple[
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal,
+    Decimal | None,
+    Decimal,
+    Decimal,
+    Decimal | None,
+    datetime,
+]:
     holdings_stmt = (
         select(Holding)
         .outerjoin(Portfolio, Holding.portfolio_id == Portfolio.id)
@@ -115,15 +128,50 @@ def _calculate_summary_values(
     liabilities = list(db.scalars(liabilities_stmt).all())
     liabilities_total = sum((item.outstanding_balance for item in liabilities), Decimal("0"))
 
+    portfolios_stmt = select(Portfolio).where(Portfolio.owner_user_id.in_(scope_user_ids))
+    if not include_hidden:
+        portfolios_stmt = portfolios_stmt.where(Portfolio.is_hidden.is_(False))
+    if not include_excluded_portfolios:
+        portfolios_stmt = portfolios_stmt.where(Portfolio.is_included.is_(True))
+
+    portfolios = list(db.scalars(portfolios_stmt).all())
+    invested_principal_total = sum((item.cumulative_deposit_amount for item in portfolios), Decimal("0"))
+    withdrawn_total = sum((item.cumulative_withdrawal_amount for item in portfolios), Decimal("0"))
+
     gross_assets_total = owned_assets_total + liabilities_total
     net_assets_total = owned_assets_total
+
+    principal_profit_total = owned_assets_total + withdrawn_total - invested_principal_total
+    principal_return_pct = None
+    if invested_principal_total != 0:
+        principal_return_pct = (principal_profit_total / invested_principal_total) * Decimal("100")
+
+    principal_plus_debt_total = invested_principal_total + liabilities_total
+    gross_assets_profit_total = gross_assets_total - principal_plus_debt_total
+    gross_assets_return_pct = None
+    if principal_plus_debt_total != 0:
+        gross_assets_return_pct = (gross_assets_profit_total / principal_plus_debt_total) * Decimal("100")
+
     as_of = latest_quote_as_of or datetime.now(UTC).replace(tzinfo=None)
 
-    return owned_assets_total, liabilities_total, gross_assets_total, net_assets_total, as_of
+    return (
+        owned_assets_total,
+        liabilities_total,
+        gross_assets_total,
+        net_assets_total,
+        invested_principal_total,
+        withdrawn_total,
+        principal_profit_total,
+        principal_return_pct,
+        principal_plus_debt_total,
+        gross_assets_profit_total,
+        gross_assets_return_pct,
+        as_of,
+    )
 
 
-@router.get("/summary", response_model=AnalyticsSummaryOut)
-def get_summary(
+@router.get("/summary-old", response_model=AnalyticsSummaryOut)
+def get_summary_old(
     scope_type: str | None = None,
     scope_id: int | None = None,
     include_hidden: bool = False,
@@ -139,7 +187,20 @@ def get_summary(
         scope_id=scope_id,
     )
 
-    owned_assets_total, liabilities_total, gross_assets_total, net_assets_total, as_of = _calculate_summary_values(
+    (
+        owned_assets_total,
+        liabilities_total,
+        gross_assets_total,
+        net_assets_total,
+        _invested_principal_total,
+        _withdrawn_total,
+        _principal_profit_total,
+        _principal_return_pct,
+        _principal_plus_debt_total,
+        _gross_assets_profit_total,
+        _gross_assets_return_pct,
+        as_of,
+    ) = _calculate_summary_values(
         db=db,
         scope_user_ids=scope_user_ids,
         include_hidden=include_hidden,
@@ -161,8 +222,8 @@ def get_summary(
     )
 
 
-@router.get("/summary-v2", response_model=AnalyticsSummaryV2Out)
-def get_summary_v2(
+@router.get("/summary", response_model=AnalyticsSummaryV2Out)
+def get_summary(
     scope_type: str | None = None,
     scope_id: int | None = None,
     include_hidden: bool = False,
@@ -178,7 +239,20 @@ def get_summary_v2(
         scope_id=scope_id,
     )
 
-    owned_assets_total, liabilities_total, gross_assets_total, net_assets_total, as_of = _calculate_summary_values(
+    (
+        owned_assets_total,
+        liabilities_total,
+        gross_assets_total,
+        net_assets_total,
+        invested_principal_total,
+        withdrawn_total,
+        principal_profit_total,
+        principal_return_pct,
+        principal_plus_debt_total,
+        gross_assets_profit_total,
+        gross_assets_return_pct,
+        as_of,
+    ) = _calculate_summary_values(
         db=db,
         scope_user_ids=scope_user_ids,
         include_hidden=include_hidden,
@@ -195,5 +269,12 @@ def get_summary_v2(
         liabilities_total=liabilities_total,
         gross_assets_total=gross_assets_total,
         net_assets_total=net_assets_total,
+        invested_principal_total=invested_principal_total,
+        withdrawn_total=withdrawn_total,
+        principal_profit_total=principal_profit_total,
+        principal_return_pct=principal_return_pct,
+        principal_plus_debt_total=principal_plus_debt_total,
+        gross_assets_profit_total=gross_assets_profit_total,
+        gross_assets_return_pct=gross_assets_return_pct,
         as_of=as_of,
     )
