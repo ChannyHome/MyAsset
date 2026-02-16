@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { getMe, login, type MeOut } from "../api/auth";
+import { getMe, login, signup, type MeOut } from "../api/auth";
 import { getHouseholds, type HouseholdOut } from "../api/households";
 import { STORAGE_KEYS } from "../constants/storage";
 
@@ -25,6 +25,7 @@ export const useAuthStore = defineStore("auth", {
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
     primaryHousehold: (state) => state.households[0] ?? null,
+    isGuest: (state) => state.user?.role === "GUEST",
   },
   actions: {
     initializeFromStorage() {
@@ -39,8 +40,23 @@ export const useAuthStore = defineStore("auth", {
       const result = await login({ email, password });
       this.token = result.access_token;
       localStorage.setItem(STORAGE_KEYS.token, result.access_token);
-      await this.fetchMe();
-      await this.fetchHouseholds();
+      const me = await this.fetchMe();
+      if (me.role !== "GUEST") {
+        await this.fetchHouseholds();
+      } else {
+        this.households = [];
+      }
+    },
+    async signup(email: string, displayName: string, password: string) {
+      const result = await signup({ email, display_name: displayName, password });
+      this.token = result.access_token;
+      localStorage.setItem(STORAGE_KEYS.token, result.access_token);
+      const me = await this.fetchMe();
+      if (me.role !== "GUEST") {
+        await this.fetchHouseholds();
+      } else {
+        this.households = [];
+      }
     },
     async fetchMe() {
       const me = await getMe();
@@ -60,8 +76,10 @@ export const useAuthStore = defineStore("auth", {
       if (!this.user) {
         await this.fetchMe();
       }
-      if (this.households.length === 0) {
+      if (this.user?.role !== "GUEST" && this.households.length === 0) {
         await this.fetchHouseholds();
+      } else if (this.user?.role === "GUEST") {
+        this.households = [];
       }
     },
     logout() {
@@ -73,4 +91,3 @@ export const useAuthStore = defineStore("auth", {
     },
   },
 });
-

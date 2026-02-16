@@ -18,6 +18,7 @@ import {
 } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 
+import GuestDemoPage from "../pages/GuestDemoPage.vue";
 import { useAuthStore } from "../stores/auth";
 import { useUiStore } from "../stores/ui";
 
@@ -52,6 +53,7 @@ const pageTitle = computed(() => {
 const userDisplayName = computed(() => authStore.user?.display_name ?? "Unknown User");
 const userEmail = computed(() => authStore.user?.email ?? "-");
 const householdName = computed(() => authStore.primaryHousehold?.name ?? "No household");
+const isGuestMode = computed(() => authStore.user?.role === "GUEST");
 
 function isDesktopViewport() {
   return window.matchMedia("(min-width: 768px)").matches;
@@ -236,7 +238,8 @@ function goSettings() {
       </aside>
 
       <main class="min-w-0 flex-1 p-4 md:p-6" :class="{ 'md:ml-72': !uiStore.sidebarCollapsed }">
-        <RouterView />
+        <GuestDemoPage v-if="isGuestMode" />
+        <RouterView v-else />
       </main>
     </div>
   </div>
