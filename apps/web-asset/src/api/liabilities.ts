@@ -23,8 +23,37 @@ export type LiabilitiesQuery = {
   include_excluded?: boolean;
 };
 
+export type LiabilityCreateIn = {
+  portfolio_id?: number | null;
+  name: string;
+  liability_type?: string;
+  currency?: string;
+  outstanding_balance?: string | number;
+  interest_rate?: string | number | null;
+  monthly_payment?: string | number | null;
+  source_type?: string;
+  is_included?: boolean;
+  is_hidden?: boolean;
+  memo?: string | null;
+};
+
+export type LiabilityUpdateIn = Partial<LiabilityCreateIn>;
+
 export async function getLiabilities(params: LiabilitiesQuery = {}): Promise<LiabilityOut[]> {
   const { data } = await http.get<LiabilityOut[]>("/liabilities", { params });
   return data;
 }
 
+export async function createLiability(payload: LiabilityCreateIn): Promise<LiabilityOut> {
+  const { data } = await http.post<LiabilityOut>("/liabilities", payload);
+  return data;
+}
+
+export async function updateLiability(liabilityId: number, payload: LiabilityUpdateIn): Promise<LiabilityOut> {
+  const { data } = await http.patch<LiabilityOut>(`/liabilities/${liabilityId}`, payload);
+  return data;
+}
+
+export async function deleteLiability(liabilityId: number): Promise<void> {
+  await http.delete(`/liabilities/${liabilityId}`);
+}

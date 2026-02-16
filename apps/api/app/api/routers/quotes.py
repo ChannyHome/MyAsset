@@ -4,13 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_min_role
 from app.core.db import get_db
 from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
-from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
-from app.schemas.quote import QuoteLatestOut, QuoteUpdateResult, RealEstateManualQuoteUpsertIn
+from app.schemas.quote import ManualQuoteUpsertIn, QuoteLatestOut, QuoteUpdateResult
 from app.services.quote_updater import refresh_quotes_for_supported_assets
 from app.services.user_seed import SeedUser
 
@@ -51,7 +50,7 @@ def get_latest_quotes(
 @router.post("/update-now", response_model=QuoteUpdateResult)
 def update_quotes_now(
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(get_current_user),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> QuoteUpdateResult:
     summary = refresh_quotes_for_supported_assets(db)
     return QuoteUpdateResult(
@@ -62,32 +61,21 @@ def update_quotes_now(
     )
 
 
-@router.post("/manual/real-estate", response_model=QuoteLatestOut, status_code=status.HTTP_201_CREATED)
-def upsert_manual_real_estate_quote(
-    payload: RealEstateManualQuoteUpsertIn,
+@router.post("/manual", response_model=QuoteLatestOut, status_code=status.HTTP_201_CREATED)
+def upsert_manual_quote(
+    payload: ManualQuoteUpsertIn,
     db: Session = Depends(get_db),
-    current_user: SeedUser = Depends(get_current_user),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> QuoteLatestOut:
     asset = db.scalar(select(Asset).where(Asset.id == payload.asset_id))
     if asset is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
-    if asset.asset_class != "REAL_ESTATE":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Asset class must be REAL_ESTATE")
-
-    owned_holding_exists = db.scalar(
-        select(Holding.id)
-        .where(
-            Holding.owner_user_id == current_user.id,
-            Holding.asset_id == payload.asset_id,
-        )
-        .limit(1)
-    )
-    if owned_holding_exists is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can update quotes for your own holdings only")
 
     as_of = payload.as_of or datetime.now(UTC).replace(tzinfo=None)
     currency = payload.currency.upper()
-    source = "MANUAL_REAL_ESTATE"
+    source = (payload.source or "MANUAL").strip().upper()
+    if not source:
+        source = "MANUAL"
 
     db.add(
         AssetQuote(

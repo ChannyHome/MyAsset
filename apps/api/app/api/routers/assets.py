@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_min_role
 from app.core.db import get_db
 from app.models.asset import Asset
 from app.schemas.asset import AssetCreate, AssetOut, AssetUpdate
@@ -25,7 +25,7 @@ def list_assets(
 def create_asset(
     payload: AssetCreate,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(get_current_user),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Asset:
     asset_data = payload.model_dump()
     asset_data["asset_class"] = asset_data["asset_class"].upper()
@@ -50,7 +50,7 @@ def update_asset(
     asset_id: int,
     payload: AssetUpdate,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(get_current_user),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Asset:
     asset = db.scalar(select(Asset).where(Asset.id == asset_id))
     if asset is None:
@@ -80,7 +80,7 @@ def update_asset(
 def delete_asset(
     asset_id: int,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(get_current_user),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Response:
     asset = db.scalar(select(Asset).where(Asset.id == asset_id))
     if asset is None:
