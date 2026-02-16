@@ -1,4 +1,4 @@
-import { http } from "./http";
+﻿import { http } from "./http";
 
 export type QuoteUpdateResult = {
   updated_count: number;
@@ -26,6 +26,11 @@ export type QuoteLatestOut = {
   as_of: string;
   source: string;
 };
+
+export async function getLatestQuotes(): Promise<QuoteLatestOut[]> {
+  const { data } = await http.get<QuoteLatestOut[]>("/quotes/latest");
+  return data;
+}
 
 export async function updateQuotesNow(): Promise<QuoteUpdateResult> {
   const { data } = await http.post<QuoteUpdateResult>("/quotes/update-now");
