@@ -12,7 +12,7 @@ from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
-from app.schemas.analytics import AnalyticsSummaryOut, AnalyticsSummaryV2Out
+from app.schemas.analytics import AnalyticsSummaryV2Out
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -138,19 +138,22 @@ def _calculate_summary_values(
     invested_principal_total = sum((item.cumulative_deposit_amount for item in portfolios), Decimal("0"))
     withdrawn_total = sum((item.cumulative_withdrawal_amount for item in portfolios), Decimal("0"))
 
-    gross_assets_total = owned_assets_total + liabilities_total
-    net_assets_total = owned_assets_total
+    # Canonical accounting definition:
+    # gross_assets_total: assets only
+    # net_assets_total: assets - liabilities
+    gross_assets_total = owned_assets_total
+    net_assets_total = owned_assets_total - liabilities_total
 
     principal_profit_total = owned_assets_total + withdrawn_total - invested_principal_total
     principal_return_pct = None
     if invested_principal_total != 0:
         principal_return_pct = (principal_profit_total / invested_principal_total) * Decimal("100")
 
-    principal_plus_debt_total = invested_principal_total + liabilities_total
-    gross_assets_profit_total = gross_assets_total - principal_plus_debt_total
-    gross_assets_return_pct = None
-    if principal_plus_debt_total != 0:
-        gross_assets_return_pct = (gross_assets_profit_total / principal_plus_debt_total) * Decimal("100")
+    principal_minus_debt_total = invested_principal_total - liabilities_total
+    net_assets_profit_total = net_assets_total - principal_minus_debt_total
+    net_assets_return_pct = None
+    if principal_minus_debt_total != 0:
+        net_assets_return_pct = (net_assets_profit_total / principal_minus_debt_total) * Decimal("100")
 
     as_of = latest_quote_as_of or datetime.now(UTC).replace(tzinfo=None)
 
@@ -163,62 +166,10 @@ def _calculate_summary_values(
         withdrawn_total,
         principal_profit_total,
         principal_return_pct,
-        principal_plus_debt_total,
-        gross_assets_profit_total,
-        gross_assets_return_pct,
+        principal_minus_debt_total,
+        net_assets_profit_total,
+        net_assets_return_pct,
         as_of,
-    )
-
-
-@router.get("/summary-old", response_model=AnalyticsSummaryOut)
-def get_summary_old(
-    scope_type: str | None = None,
-    scope_id: int | None = None,
-    include_hidden: bool = False,
-    include_excluded_portfolios: bool = False,
-    include_excluded_liabilities: bool = False,
-    db: Session = Depends(get_db),
-    current_user: SeedUser = Depends(get_current_user),
-) -> AnalyticsSummaryOut:
-    normalized_scope_type, normalized_scope_id, scope_user_ids = _resolve_scope_user_ids(
-        db=db,
-        current_user=current_user,
-        scope_type=scope_type,
-        scope_id=scope_id,
-    )
-
-    (
-        owned_assets_total,
-        liabilities_total,
-        gross_assets_total,
-        net_assets_total,
-        _invested_principal_total,
-        _withdrawn_total,
-        _principal_profit_total,
-        _principal_return_pct,
-        _principal_plus_debt_total,
-        _gross_assets_profit_total,
-        _gross_assets_return_pct,
-        as_of,
-    ) = _calculate_summary_values(
-        db=db,
-        scope_user_ids=scope_user_ids,
-        include_hidden=include_hidden,
-        include_excluded_portfolios=include_excluded_portfolios,
-        include_excluded_liabilities=include_excluded_liabilities,
-    )
-
-    # Legacy fields kept for backward compatibility.
-    return AnalyticsSummaryOut(
-        scope_type=normalized_scope_type,
-        scope_id=normalized_scope_id,
-        user_count=len(scope_user_ids),
-        display_currency="KRW",
-        assets_total=owned_assets_total,
-        liabilities_total=liabilities_total,
-        total_assets_total=gross_assets_total,
-        net_worth_total=net_assets_total,
-        as_of=as_of,
     )
 
 
@@ -248,9 +199,9 @@ def get_summary(
         withdrawn_total,
         principal_profit_total,
         principal_return_pct,
-        principal_plus_debt_total,
-        gross_assets_profit_total,
-        gross_assets_return_pct,
+        principal_minus_debt_total,
+        net_assets_profit_total,
+        net_assets_return_pct,
         as_of,
     ) = _calculate_summary_values(
         db=db,
@@ -273,8 +224,8 @@ def get_summary(
         withdrawn_total=withdrawn_total,
         principal_profit_total=principal_profit_total,
         principal_return_pct=principal_return_pct,
-        principal_plus_debt_total=principal_plus_debt_total,
-        gross_assets_profit_total=gross_assets_profit_total,
-        gross_assets_return_pct=gross_assets_return_pct,
+        principal_minus_debt_total=principal_minus_debt_total,
+        net_assets_profit_total=net_assets_profit_total,
+        net_assets_return_pct=net_assets_return_pct,
         as_of=as_of,
     )

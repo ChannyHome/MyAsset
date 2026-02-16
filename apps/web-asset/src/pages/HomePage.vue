@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
@@ -19,6 +19,17 @@ function formatCurrency(value: number, currency = "KRW"): string {
     currency,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatOptionalCurrency(value: string | number | null | undefined, currency = "KRW"): string {
+  if (value == null) {
+    return "-";
+  }
+  const num = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(num)) {
+    return "-";
+  }
+  return formatCurrency(num, currency);
 }
 
 function formatPercent(value: number | null | undefined): string {
@@ -49,7 +60,9 @@ const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW")
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
-const grossAssetsReturnPct = computed(() => toNumber(summary.value?.gross_assets_return_pct ?? null));
+const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
+const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
 const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
 const asOf = computed(() => formatDateTime(summary.value?.as_of));
 
@@ -135,22 +148,22 @@ onMounted(loadHomeData);
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Gross Assets (assets + liabilities)</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Gross Assets (owned assets only)</p>
         <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ formatCurrency(grossAssetsTotal, displayCurrency) }}
         </p>
-        <p class="mt-2 text-sm font-semibold" :class="grossAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          {{ formatPercent(grossAssetsReturnPct) }} vs principal + debt
+        <p class="mt-2 text-sm font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
+          {{ formatPercent(principalReturnPct) }} vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
         </p>
       </article>
 
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets (assets - liabilities)</p>
         <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ formatCurrency(netAssetsTotal, displayCurrency) }}
         </p>
-        <p class="mt-2 text-sm font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          {{ formatPercent(principalReturnPct) }} vs invested principal
+        <p class="mt-2 text-sm font-semibold" :class="netAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
+          {{ formatPercent(netAssetsReturnPct) }} vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
         </p>
       </article>
 
@@ -188,7 +201,10 @@ onMounted(loadHomeData);
               </p>
             </div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              {{ formatCurrency(toNumber(item.evaluated_amount), displayCurrency) }}
+              {{ formatOptionalCurrency(item.current_price, item.current_price_currency || displayCurrency) }}
+              /
+              {{ formatOptionalCurrency(item.avg_price, item.current_price_currency || displayCurrency) }}
+              
             </div>
           </li>
         </ul>

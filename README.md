@@ -35,6 +35,7 @@
 ### Step 7 (done): Live quote + holding performance
 - Quote source: `yfinance`
 - `POST /api/v1/quotes/update-now` (manual refresh)
+- `POST /api/v1/quotes/manual/real-estate` (manual real estate price upsert)
 - `GET /api/v1/quotes/latest` (latest quotes)
 - `GET /api/v1/holdings/performance` (invested/current/pnl/pnl%)
 - Scheduler (optional): `QUOTE_AUTO_UPDATE_ENABLED=true`, default `QUOTE_UPDATE_INTERVAL_MINUTES=10`
@@ -61,11 +62,9 @@
 ### Step 9 (done): liabilities CRUD + analytics summary
 - `GET/POST/PATCH/DELETE /api/v1/liabilities`
 - `PATCH /api/v1/liabilities/{id}/hidden`
-- `GET /api/v1/analytics/summary-old` (legacy)
-- `GET /api/v1/analytics/summary` (recommended)
+- `GET /api/v1/analytics/summary`
 - net worth formula:
-  - legacy `/summary-old`: `total_assets_total = assets_total + liabilities_total`, `net_worth_total = assets_total`
-  - recommended `/summary`: `gross_assets_total = owned_assets_total + liabilities_total`, `net_assets_total = owned_assets_total`
+  - `/summary`: `gross_assets_total = owned_assets_total`, `net_assets_total = owned_assets_total - liabilities_total`
 
 ### Step 10 (done): DB views for HeidiSQL
 - Alembic revision: `009_asset_views`
@@ -82,7 +81,7 @@
   - `v_household_summary_v2`
 
 ### Step 12 (done): Portfolio net worth view
-- Alembic revision: `011_portfolio_networth_view`
+- Alembic revisions: `011_portfolio_networth_view`, `015_portfolio_networth_align`, `016_minus_debt_views`
 - Added view:
   - `v_user_portfolio_networth_v2`
 - Core fields:
@@ -90,7 +89,10 @@
   - `liabilities_total`
   - `gross_assets_total`
   - `net_worth_total` (assets - liabilities)
-  - `net_assets_total` (legacy-compatible alias = owned_assets_total)
+  - `net_assets_total` (assets - liabilities)
+  - `principal_minus_debt_total`
+  - `net_assets_profit_total`
+  - `net_assets_return_pct`
 
 ### Step 13 (done): Summary views principal metrics
 - Alembic revision: `012_summary_principal_metrics`
@@ -103,15 +105,19 @@
   - `principal_profit_total`
   - `principal_return_pct`
 
-### Step 14 (done): Gross return metrics
-- Alembic revision: `013_summary_gross_return_metrics`
+### Step 14 (done): Net-basis return metrics
+- Alembic revisions: `013_summary_gross_return_metrics`, `016_minus_debt_views`
 - Updated views:
   - `v_user_summary_v2`
   - `v_household_summary_v2`
-- Added fields (`??+??` ??):
+- `gross`-based fields removed:
   - `principal_plus_debt_total`
   - `gross_assets_profit_total`
   - `gross_assets_return_pct`
+- Added fields (net-assets / principal-minus-debt):
+  - `principal_minus_debt_total`
+  - `net_assets_profit_total`
+  - `net_assets_return_pct`
 
 ### Step 15 (done): Frontend foundation (Host + Asset Remote)
 - Stack: Vue3 + Tailwind + Module Federation

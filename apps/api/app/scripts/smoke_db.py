@@ -94,16 +94,11 @@ def run() -> None:
     perf_rows = perf_resp.json()
     assert any(item["portfolio_id"] == portfolio_id for item in perf_rows), perf_resp.text
 
-    summary_old_resp = client.get("/api/v1/analytics/summary-old", headers=headers)
-    assert summary_old_resp.status_code == 200, summary_old_resp.text
-    summary_old = summary_old_resp.json()
-    assert "total_assets_total" in summary_old and "net_worth_total" in summary_old, summary_old_resp.text
-
     summary_resp = client.get("/api/v1/analytics/summary", headers=headers)
     assert summary_resp.status_code == 200, summary_resp.text
     summary = summary_resp.json()
     assert "gross_assets_total" in summary and "net_assets_total" in summary, summary_resp.text
-    assert "principal_plus_debt_total" in summary and "gross_assets_return_pct" in summary, summary_resp.text
+    assert "principal_minus_debt_total" in summary and "net_assets_return_pct" in summary, summary_resp.text
 
     print("SMOKE_DB_OK")
     print("portfolio_id", portfolio_id)

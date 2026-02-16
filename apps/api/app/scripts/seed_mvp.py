@@ -7,9 +7,9 @@ from app.models.user import User
 
 
 SEED_USERS = [
-    {"id": 1, "email": "me@myasset.local", "display_name": "Me", "password": "pass1234"},
-    {"id": 2, "email": "wife@myasset.local", "display_name": "Wife", "password": "pass1234"},
-    {"id": 3, "email": "son@myasset.local", "display_name": "Son", "password": "pass1234"},
+    {"id": 1, "email": "me@myasset.local", "display_name": "Me", "password": "pass1234", "role": "ADMIN"},
+    {"id": 2, "email": "wife@myasset.local", "display_name": "Wife", "password": "pass1234", "role": "USER"},
+    {"id": 3, "email": "son@myasset.local", "display_name": "Son", "password": "pass1234", "role": "USER"},
 ]
 
 
@@ -25,6 +25,9 @@ def run() -> None:
                     display_name=item["display_name"],
                     password_hash=get_password_hash(item["password"]),
                     is_active=True,
+                    role=item["role"],
+                    status="ACTIVE",
+                    must_change_password=False,
                 )
                 session.add(user)
             else:
@@ -32,6 +35,9 @@ def run() -> None:
                 user.display_name = item["display_name"]
                 user.password_hash = get_password_hash(item["password"])
                 user.is_active = True
+                user.role = item["role"]
+                user.status = "ACTIVE"
+                user.must_change_password = False
 
         household = session.scalar(select(Household).where(Household.id == 1))
         if household is None:

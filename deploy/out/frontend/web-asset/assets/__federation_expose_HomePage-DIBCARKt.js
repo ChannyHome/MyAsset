@@ -70,6 +70,16 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         maximumFractionDigits: 0
       }).format(value);
     }
+    function formatOptionalCurrency(value, currency = "KRW") {
+      if (value == null) {
+        return "-";
+      }
+      const num = typeof value === "number" ? value : Number(value);
+      if (!Number.isFinite(num)) {
+        return "-";
+      }
+      return formatCurrency(num, currency);
+    }
     function formatPercent(value) {
       if (value == null || !Number.isFinite(value)) {
         return "-";
@@ -95,7 +105,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
     const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
-    const grossAssetsReturnPct = computed(() => toNumber(summary.value?.gross_assets_return_pct ?? null));
+    const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
+    const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+    const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
     const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
     const asOf = computed(() => formatDateTime(summary.value?.as_of));
     const topHoldings = computed(
@@ -155,18 +167,18 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ])) : _createCommentVNode("", true),
         _createElementVNode("div", _hoisted_7, [
           _createElementVNode("article", _hoisted_8, [
-            _cache[1] || (_cache[1] = _createElementVNode("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Gross Assets (assets + liabilities)", -1)),
+            _cache[1] || (_cache[1] = _createElementVNode("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Gross Assets (owned assets only)", -1)),
             _createElementVNode("p", _hoisted_9, _toDisplayString(formatCurrency(grossAssetsTotal.value, displayCurrency.value)), 1),
             _createElementVNode("p", {
-              class: _normalizeClass(["mt-2 text-sm font-semibold", grossAssetsReturnPct.value >= 0 ? "text-emerald-600" : "text-rose-500"])
-            }, _toDisplayString(formatPercent(grossAssetsReturnPct.value)) + " vs principal + debt ", 3)
+              class: _normalizeClass(["mt-2 text-sm font-semibold", principalReturnPct.value >= 0 ? "text-emerald-600" : "text-rose-500"])
+            }, _toDisplayString(formatPercent(principalReturnPct.value)) + " vs invested principal (" + _toDisplayString(formatCurrency(investedPrincipalTotal.value, displayCurrency.value)) + ") ", 3)
           ]),
           _createElementVNode("article", _hoisted_10, [
-            _cache[2] || (_cache[2] = _createElementVNode("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Net Assets", -1)),
+            _cache[2] || (_cache[2] = _createElementVNode("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Net Assets (assets - liabilities)", -1)),
             _createElementVNode("p", _hoisted_11, _toDisplayString(formatCurrency(netAssetsTotal.value, displayCurrency.value)), 1),
             _createElementVNode("p", {
-              class: _normalizeClass(["mt-2 text-sm font-semibold", principalReturnPct.value >= 0 ? "text-emerald-600" : "text-rose-500"])
-            }, _toDisplayString(formatPercent(principalReturnPct.value)) + " vs invested principal ", 3)
+              class: _normalizeClass(["mt-2 text-sm font-semibold", netAssetsReturnPct.value >= 0 ? "text-emerald-600" : "text-rose-500"])
+            }, _toDisplayString(formatPercent(netAssetsReturnPct.value)) + " vs principal - debt (" + _toDisplayString(formatCurrency(principalMinusDebtTotal.value, displayCurrency.value)) + ") ", 3)
           ]),
           _createElementVNode("article", _hoisted_12, [
             _cache[3] || (_cache[3] = _createElementVNode("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Liabilities", -1)),
@@ -195,7 +207,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                     }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
                   ]),
-                  _createElementVNode("div", _hoisted_21, _toDisplayString(formatCurrency(toNumber(item.evaluated_amount), displayCurrency.value)), 1)
+                  _createElementVNode("div", _hoisted_21, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || displayCurrency.value)) + " / " + _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || displayCurrency.value)), 1)
                 ]);
               }), 128))
             ]))

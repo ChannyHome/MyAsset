@@ -3,7 +3,7 @@ const currentImports = {};
       let moduleMap = {
 "./HomePage":()=>{
       dynamicLoadingCss(["style-CbVgXe_P.css"], false, './HomePage');
-      return __federation_import('./__federation_expose_HomePage-BuJ0oQGh.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
+      return __federation_import('./__federation_expose_HomePage-DIBCARKt.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
 "./DashboardPage":()=>{
       dynamicLoadingCss(["style-CbVgXe_P.css"], false, './DashboardPage');
       return __federation_import('./__federation_expose_DashboardPage-CmE9VUBb.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},

@@ -13,9 +13,9 @@ export type AnalyticsSummaryV2Out = {
   withdrawn_total: string | number;
   principal_profit_total: string | number;
   principal_return_pct: string | number | null;
-  principal_plus_debt_total: string | number;
-  gross_assets_profit_total: string | number;
-  gross_assets_return_pct: string | number | null;
+  principal_minus_debt_total: string | number;
+  net_assets_profit_total: string | number;
+  net_assets_return_pct: string | number | null;
   as_of: string;
 };
 
@@ -31,4 +31,3 @@ export async function getSummary(params: SummaryQuery = {}): Promise<AnalyticsSu
   const { data } = await http.get<AnalyticsSummaryV2Out>("/analytics/summary", { params });
   return data;
 }
-
