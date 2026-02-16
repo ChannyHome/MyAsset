@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -7,6 +8,26 @@ from pydantic import BaseModel, ConfigDict, Field
 class AssetQuoteMode(str, Enum):
     AUTO = "AUTO"
     MANUAL = "MANUAL"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+class AssetTableSortBy(str, Enum):
+    ID = "id"
+    NAME = "name"
+    SYMBOL = "symbol"
+    PRICE = "price"
+    CURRENCY = "currency"
+    ASSET_CLASS = "asset_class"
+    UPDATED_AT = "updated_at"
+    QUOTE_MODE = "quote_mode"
+    QUOTE_AS_OF = "quote_as_of"
+    EXCHANGE_CODE = "exchange_code"
+    SOURCE = "source"
+    TRADE = "trade"
 
 
 class AssetCreate(BaseModel):
@@ -45,3 +66,20 @@ class AssetOut(BaseModel):
     meta_json: dict | None
     created_at: datetime
     updated_at: datetime
+
+
+class AssetTableRowOut(AssetOut):
+    quote_price: Decimal | None = None
+    quote_currency: str | None = None
+    quote_as_of: datetime | None = None
+    quote_source: str | None = None
+
+
+class AssetTablePageOut(BaseModel):
+    items: list[AssetTableRowOut]
+    total: int
+    page: int
+    page_size: int
+    sort_by: AssetTableSortBy
+    sort_order: SortOrder
+    q: str | None = None

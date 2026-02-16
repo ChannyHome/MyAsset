@@ -1,12 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_min_role
 from app.core.db import get_db
 from app.models.asset import Asset
-from app.schemas.asset import AssetCreate, AssetOut, AssetUpdate
+from app.models.latest_quote import LatestQuote
+from app.schemas.asset import (
+    AssetCreate,
+    AssetOut,
+    AssetTablePageOut,
+    AssetTableRowOut,
+    AssetTableSortBy,
+    AssetUpdate,
+    SortOrder,
+)
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -19,6 +28,95 @@ def list_assets(
 ) -> list[Asset]:
     stmt = select(Asset).order_by(Asset.id.desc())
     return list(db.scalars(stmt).all())
+
+
+@router.get("/table", response_model=AssetTablePageOut)
+def list_assets_table(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=200),
+    sort_by: AssetTableSortBy = Query(default=AssetTableSortBy.UPDATED_AT),
+    sort_order: SortOrder = Query(default=SortOrder.DESC),
+    q: str | None = Query(default=None, min_length=1, max_length=100),
+    db: Session = Depends(get_db),
+    _current_user: SeedUser = Depends(get_current_user),
+) -> AssetTablePageOut:
+    query_text = q.strip() if q else None
+
+    filters = []
+    if query_text:
+        like = f"%{query_text}%"
+        filters.append(
+            or_(
+                Asset.name.ilike(like),
+                Asset.symbol.ilike(like),
+                Asset.asset_class.ilike(like),
+                Asset.exchange_code.ilike(like),
+                Asset.currency.ilike(like),
+            )
+        )
+
+    count_stmt = select(func.count()).select_from(Asset)
+    if filters:
+        count_stmt = count_stmt.where(*filters)
+    total = int(db.scalar(count_stmt) or 0)
+
+    sort_column_map = {
+        AssetTableSortBy.ID: Asset.id,
+        AssetTableSortBy.NAME: Asset.name,
+        AssetTableSortBy.SYMBOL: Asset.symbol,
+        AssetTableSortBy.PRICE: LatestQuote.price,
+        AssetTableSortBy.CURRENCY: Asset.currency,
+        AssetTableSortBy.ASSET_CLASS: Asset.asset_class,
+        AssetTableSortBy.UPDATED_AT: Asset.updated_at,
+        AssetTableSortBy.QUOTE_MODE: Asset.quote_mode,
+        AssetTableSortBy.QUOTE_AS_OF: LatestQuote.as_of,
+        AssetTableSortBy.EXCHANGE_CODE: Asset.exchange_code,
+        AssetTableSortBy.SOURCE: LatestQuote.source,
+        AssetTableSortBy.TRADE: Asset.is_trade_supported,
+    }
+    sort_column = sort_column_map[sort_by]
+    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+
+    stmt = (
+        select(Asset, LatestQuote)
+        .outerjoin(LatestQuote, LatestQuote.asset_id == Asset.id)
+    )
+    if filters:
+        stmt = stmt.where(*filters)
+
+    stmt = stmt.order_by(order_expr, Asset.id.desc()).offset((page - 1) * page_size).limit(page_size)
+    rows = db.execute(stmt).all()
+
+    items = [
+        AssetTableRowOut(
+            id=asset.id,
+            asset_class=asset.asset_class,
+            symbol=asset.symbol,
+            name=asset.name,
+            currency=asset.currency,
+            quote_mode=asset.quote_mode,
+            exchange_code=asset.exchange_code,
+            is_trade_supported=asset.is_trade_supported,
+            meta_json=asset.meta_json,
+            created_at=asset.created_at,
+            updated_at=asset.updated_at,
+            quote_price=quote.price if quote else None,
+            quote_currency=quote.currency if quote else None,
+            quote_as_of=quote.as_of if quote else None,
+            quote_source=quote.source if quote else None,
+        )
+        for asset, quote in rows
+    ]
+
+    return AssetTablePageOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        q=query_text,
+    )
 
 
 @router.post("", response_model=AssetOut, status_code=status.HTTP_201_CREATED)

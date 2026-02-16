@@ -1,21 +1,45 @@
 ﻿<script setup lang="ts">
 import { AxiosError } from "axios";
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
-import { createAsset, deleteAsset, getAssets, updateAsset, type AssetCreateIn, type AssetOut } from "../api/assets";
+import {
+  createAsset,
+  deleteAsset,
+  getAssetsTable,
+  updateAsset,
+  type AssetCreateIn,
+  type AssetTableRowOut,
+  type AssetTableSortBy,
+  type SortOrder,
+} from "../api/assets";
 import { getMe, type AuthMeOut } from "../api/auth";
-import { getLatestQuotes, updateQuotesNow, upsertManualQuote, type ManualQuoteUpsertIn, type QuoteLatestOut } from "../api/quotes";
+import { updateQuotesNow, upsertManualQuote, type ManualQuoteUpsertIn } from "../api/quotes";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
 type ActionLog = { id: number; at: string; action: string; status: LogStatus; message: string };
+type AssetsQueryState = {
+  page: number;
+  pageSize: number;
+  total: number;
+  sortBy: AssetTableSortBy;
+  sortOrder: SortOrder;
+  q: string;
+};
 
 const loading = reactive({ data: false, action: false, confirm: false });
 const me = ref<AuthMeOut | null>(null);
-const assets = ref<AssetOut[]>([]);
-const latestQuotesByAssetId = ref<Record<number, QuoteLatestOut>>({});
+const assets = ref<AssetTableRowOut[]>([]);
 const logs = ref<ActionLog[]>([]);
 let nextLogId = 1;
+const assetsQuery = reactive<AssetsQueryState>({
+  page: 1,
+  pageSize: 20,
+  total: 0,
+  sortBy: "updated_at",
+  sortOrder: "desc",
+  q: "",
+});
 
 const confirmModal = reactive({ open: false, title: "", message: "" });
 const pendingAction = ref<null | (() => Promise<void>)>(null);
@@ -49,6 +73,10 @@ const isBusy = computed(() => loading.data || loading.action || loading.confirm)
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
 const quoteModeOptions = ["AUTO", "MANUAL"] as const;
+const totalPages = computed(() => Math.max(1, Math.ceil(assetsQuery.total / assetsQuery.pageSize)));
+const AUTO_SEARCH_DEBOUNCE_MS = 450;
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let refreshSequence = 0;
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "-";
@@ -91,26 +119,17 @@ function formatMoney(value: string | number, currency: string): string {
   }
 }
 
-function getQuoteByAssetId(assetId: number): QuoteLatestOut | null {
-  return latestQuotesByAssetId.value[assetId] ?? null;
+function quotePriceText(item: AssetTableRowOut): string {
+  if (item.quote_price === null || item.quote_price === undefined || !item.quote_currency) return "-";
+  return formatMoney(item.quote_price, item.quote_currency);
 }
 
-function quotePriceText(assetId: number): string {
-  const quote = getQuoteByAssetId(assetId);
-  if (!quote) return "-";
-  return formatMoney(quote.price, quote.currency);
+function quoteAsOfText(item: AssetTableRowOut): string {
+  return formatDateTime(item.quote_as_of);
 }
 
-function quoteAsOfText(assetId: number): string {
-  const quote = getQuoteByAssetId(assetId);
-  if (!quote) return "-";
-  return formatDateTime(quote.as_of);
-}
-
-function quoteSourceText(assetId: number): string {
-  const quote = getQuoteByAssetId(assetId);
-  if (!quote) return "-";
-  return quote.source;
+function quoteSourceText(item: AssetTableRowOut): string {
+  return item.quote_source || "-";
 }
 
 function getErrorMessage(error: unknown): string {
@@ -141,7 +160,7 @@ function resetAssetFormForCreate(): void {
   assetForm.meta_json_text = "";
 }
 
-function fillAssetForm(item: AssetOut): void {
+function fillAssetForm(item: AssetTableRowOut): void {
   assetForm.id = String(item.id);
   assetForm.asset_class = item.asset_class;
   assetForm.symbol = item.symbol ?? "";
@@ -163,7 +182,7 @@ function openCreateAssetModal(): void {
   assetModal.open = true;
 }
 
-function openEditAssetModal(item: AssetOut): void {
+function openEditAssetModal(item: AssetTableRowOut): void {
   if (!canManageAssets.value) {
     pushLog("Asset Edit", "ERROR", "Admin/Maintainer only");
     return;
@@ -173,7 +192,7 @@ function openEditAssetModal(item: AssetOut): void {
   assetModal.open = true;
 }
 
-function selectAssetForQuote(item: AssetOut): void {
+function selectAssetForQuote(item: AssetTableRowOut): void {
   manualQuoteForm.asset_id = String(item.id);
 }
 
@@ -277,7 +296,7 @@ function submitAssetForm(): void {
   }
 }
 
-function askDeleteAsset(item: AssetOut): void {
+function askDeleteAsset(item: AssetTableRowOut): void {
   if (!canManageAssets.value) {
     pushLog("Asset Delete", "ERROR", "Admin/Maintainer only");
     return;
@@ -316,25 +335,34 @@ function askApplyManualQuote(): void {
   });
 }
 
-async function refreshData(): Promise<void> {
+async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
+  const refreshId = ++refreshSequence;
+  const shouldLogRefresh = options?.logRefresh ?? true;
   loading.data = true;
   try {
-    const [meOut, assetsOut, latestQuotes] = await Promise.all([getMe(), getAssets(), getLatestQuotes()]);
+    const [meOut, assetsOut] = await Promise.all([
+      getMe(),
+      getAssetsTable({
+        page: assetsQuery.page,
+        page_size: assetsQuery.pageSize,
+        sort_by: assetsQuery.sortBy,
+        sort_order: assetsQuery.sortOrder,
+        q: assetsQuery.q.trim() || undefined,
+      }),
+    ]);
+    if (refreshId !== refreshSequence) return;
     me.value = meOut;
-    assets.value = assetsOut;
+    assets.value = assetsOut.items;
+    assetsQuery.total = assetsOut.total;
 
-    const quoteMap: Record<number, QuoteLatestOut> = {};
-    latestQuotes.forEach((quote) => {
-      quoteMap[quote.asset_id] = quote;
-    });
-    latestQuotesByAssetId.value = quoteMap;
-
-    const selectedStillExists = assetsOut.some((item) => String(item.id) === manualQuoteForm.asset_id);
+    const selectedStillExists = assetsOut.items.some((item) => String(item.id) === manualQuoteForm.asset_id);
     if (!selectedStillExists) {
-      manualQuoteForm.asset_id = assetsOut[0] ? String(assetsOut[0].id) : "";
+      manualQuoteForm.asset_id = assetsOut.items[0] ? String(assetsOut.items[0].id) : "";
     }
 
-    pushLog("Refresh", "INFO", "Agent data loaded");
+    if (shouldLogRefresh) {
+      pushLog("Refresh", "INFO", `Agent data loaded (page=${assetsOut.page}, total=${assetsOut.total})`);
+    }
   } catch (error) {
     pushLog("Refresh", "ERROR", getErrorMessage(error));
   } finally {
@@ -342,7 +370,64 @@ async function refreshData(): Promise<void> {
   }
 }
 
+function sortIndicator(key: AssetTableSortBy): string {
+  if (assetsQuery.sortBy !== key) return "↕";
+  return assetsQuery.sortOrder === "asc" ? "↑" : "↓";
+}
+
+async function toggleSort(key: AssetTableSortBy): Promise<void> {
+  if (assetsQuery.sortBy === key) {
+    assetsQuery.sortOrder = assetsQuery.sortOrder === "asc" ? "desc" : "asc";
+  } else {
+    assetsQuery.sortBy = key;
+    assetsQuery.sortOrder = "asc";
+  }
+  assetsQuery.page = 1;
+  await refreshData();
+}
+
+async function movePage(delta: number): Promise<void> {
+  const next = assetsQuery.page + delta;
+  if (next < 1 || next > totalPages.value) return;
+  assetsQuery.page = next;
+  await refreshData();
+}
+
+async function applySearch(): Promise<void> {
+  clearSearchDebounce();
+  assetsQuery.page = 1;
+  await refreshData();
+}
+
+async function clearSearch(): Promise<void> {
+  clearSearchDebounce();
+  if (!assetsQuery.q) return;
+  assetsQuery.q = "";
+  assetsQuery.page = 1;
+  await refreshData();
+}
+
+function clearSearchDebounce(): void {
+  if (!searchDebounceTimer) return;
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = null;
+}
+
+watch(
+  () => assetsQuery.q,
+  () => {
+    clearSearchDebounce();
+    searchDebounceTimer = setTimeout(async () => {
+      assetsQuery.page = 1;
+      await refreshData({ logRefresh: false });
+    }, AUTO_SEARCH_DEBOUNCE_MS);
+  },
+);
+
 onMounted(refreshData);
+onBeforeUnmount(() => {
+  clearSearchDebounce();
+});
 </script>
 
 <template>
@@ -358,7 +443,7 @@ onMounted(refreshData);
           type="button"
           class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           :disabled="isBusy"
-          @click="refreshData"
+          @click="refreshData()"
         >
           {{ loading.data ? "Loading..." : "Refresh Data" }}
         </button>
@@ -383,22 +468,48 @@ onMounted(refreshData);
       </div>
       <p v-if="canManageQuotes" class="mt-1 text-xs text-slate-500 dark:text-slate-400">AUTO mode인 모든 Asset 시세를 즉시 갱신합니다.</p>
 
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          v-model="assetsQuery.q"
+          type="text"
+          placeholder="Search name/symbol/exchange"
+          class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+          @keyup.enter="applySearch"
+        />
+        <button
+          type="button"
+          class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          :disabled="isBusy"
+          @click="applySearch"
+        >
+          Search
+        </button>
+        <button
+          type="button"
+          class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          :disabled="isBusy"
+          @click="clearSearch"
+        >
+          Clear
+        </button>
+      </div>
+
       <div class="mt-3 overflow-x-auto">
         <table class="w-full min-w-[1220px] text-left text-xs leading-tight">
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th class="px-2 py-1.5 whitespace-nowrap">ID</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Name</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Symbol</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Price</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Currency</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Class</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Quote</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Quote As Of</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Exchange</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Source</th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Trade</th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('id')">ID <span class="opacity-70">{{ sortIndicator("id") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('name')">Name <span class="opacity-70">{{ sortIndicator("name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('symbol')">Symbol <span class="opacity-70">{{ sortIndicator("symbol") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('price')">Price <span class="opacity-70">{{ sortIndicator("price") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('currency')">Currency <span class="opacity-70">{{ sortIndicator("currency") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('asset_class')">Class <span class="opacity-70">{{ sortIndicator("asset_class") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('updated_at')">Updated <span class="opacity-70">{{ sortIndicator("updated_at") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('quote_mode')">Quote <span class="opacity-70">{{ sortIndicator("quote_mode") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('quote_as_of')">Quote As Of <span class="opacity-70">{{ sortIndicator("quote_as_of") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('exchange_code')">Exchange <span class="opacity-70">{{ sortIndicator("exchange_code") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('source')">Source <span class="opacity-70">{{ sortIndicator("source") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('trade')">Trade <span class="opacity-70">{{ sortIndicator("trade") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
             </tr>
           </thead>
@@ -413,14 +524,14 @@ onMounted(refreshData);
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.name }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.symbol || "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ quotePriceText(item.id) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ quotePriceText(item) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.currency }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_class }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.quote_mode }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ quoteAsOfText(item.id) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ quoteAsOfText(item) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.exchange_code }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ quoteSourceText(item.id) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ quoteSourceText(item) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_trade_supported ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
@@ -443,11 +554,50 @@ onMounted(refreshData);
                 </div>
               </td>
             </tr>
+            <tr v-if="assets.length === 0">
+              <td colspan="13" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No assets found</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
       <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+          <span>Total: {{ assetsQuery.total }}</span>
+          <span>|</span>
+          <span>Page {{ assetsQuery.page }} / {{ totalPages }}</span>
+          <span>|</span>
+          <label>
+            Size
+            <select
+              v-model.number="assetsQuery.pageSize"
+              class="ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950"
+              @change="assetsQuery.page = 1; refreshData()"
+            >
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            :disabled="isBusy || assetsQuery.page <= 1"
+            @click="movePage(-1)"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            :disabled="isBusy || assetsQuery.page >= totalPages"
+            @click="movePage(1)"
+          >
+            Next
+          </button>
+        </div>
+
         <button
           type="button"
           class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
@@ -456,8 +606,8 @@ onMounted(refreshData);
         >
           Create Asset
         </button>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Create/Edit/Delete는 Admin/Maintainer 전용입니다.</p>
       </div>
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Create/Edit/Delete는 Admin/Maintainer 전용입니다.</p>
       <p
         v-if="!canManageAssets"
         class="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
@@ -646,7 +796,7 @@ onMounted(refreshData);
       <div class="mt-4 flex justify-end gap-2">
         <button
           type="button"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
           :disabled="loading.action || loading.confirm"
           @click="closeAssetModal"
         >
@@ -671,7 +821,7 @@ onMounted(refreshData);
       <div class="mt-4 flex justify-end gap-2">
         <button
           type="button"
-          class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
           :disabled="loading.confirm"
           @click="closeConfirm"
         >
@@ -689,4 +839,6 @@ onMounted(refreshData);
     </section>
   </div>
 </template>
+
+
 

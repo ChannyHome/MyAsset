@@ -16,6 +16,47 @@ export type AssetOut = {
   updated_at: string;
 };
 
+export type AssetTableSortBy =
+  | "id"
+  | "name"
+  | "symbol"
+  | "price"
+  | "currency"
+  | "asset_class"
+  | "updated_at"
+  | "quote_mode"
+  | "quote_as_of"
+  | "exchange_code"
+  | "source"
+  | "trade";
+
+export type SortOrder = "asc" | "desc";
+
+export type AssetTableRowOut = AssetOut & {
+  quote_price: string | number | null;
+  quote_currency: string | null;
+  quote_as_of: string | null;
+  quote_source: string | null;
+};
+
+export type AssetTablePageOut = {
+  items: AssetTableRowOut[];
+  total: number;
+  page: number;
+  page_size: number;
+  sort_by: AssetTableSortBy;
+  sort_order: SortOrder;
+  q: string | null;
+};
+
+export type AssetTableQuery = {
+  page?: number;
+  page_size?: number;
+  sort_by?: AssetTableSortBy;
+  sort_order?: SortOrder;
+  q?: string;
+};
+
 export type AssetCreateIn = {
   asset_class: string;
   symbol?: string | null;
@@ -31,6 +72,11 @@ export type AssetUpdateIn = Partial<AssetCreateIn>;
 
 export async function getAssets(): Promise<AssetOut[]> {
   const { data } = await http.get<AssetOut[]>("/assets");
+  return data;
+}
+
+export async function getAssetsTable(params: AssetTableQuery = {}): Promise<AssetTablePageOut> {
+  const { data } = await http.get<AssetTablePageOut>("/assets/table", { params });
   return data;
 }
 
