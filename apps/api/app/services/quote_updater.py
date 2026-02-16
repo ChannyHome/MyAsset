@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
 from app.models.latest_quote import LatestQuote
-from app.services.quote_provider import fetch_latest_quote, normalize_symbol
+from app.services.quote_provider import fetch_crypto_quote, fetch_latest_quote, normalize_symbol
 
 
 @dataclass
@@ -49,6 +49,7 @@ def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
             select(Asset).where(
                 Asset.symbol.is_not(None),
                 Asset.asset_class.in_(["STOCK", "CRYPTO"]),
+                Asset.quote_mode == "AUTO",
             )
         ).all()
     )
@@ -59,8 +60,18 @@ def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
                 summary.skipped_count += 1
                 continue
 
-            symbol = normalize_symbol(asset.asset_class, asset.symbol, asset.currency)
-            payload = fetch_latest_quote(symbol)
+            payload = None
+            if asset.asset_class == "CRYPTO":
+                payload = fetch_crypto_quote(
+                    exchange_code=asset.exchange_code,
+                    symbol=asset.symbol,
+                    asset_currency=asset.currency,
+                )
+
+            if payload is None:
+                symbol = normalize_symbol(asset.asset_class, asset.symbol, asset.currency)
+                payload = fetch_latest_quote(symbol)
+
             if payload is None:
                 summary.skipped_count += 1
                 continue

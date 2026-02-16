@@ -123,7 +123,12 @@ def create_portfolio(
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> Portfolio:
-    portfolio = Portfolio(owner_user_id=current_user.id, **payload.model_dump())
+    portfolio_data = payload.model_dump()
+    portfolio_data["base_currency"] = portfolio_data["base_currency"].upper()
+    if portfolio_data.get("exchange_code"):
+        portfolio_data["exchange_code"] = portfolio_data["exchange_code"].upper()
+
+    portfolio = Portfolio(owner_user_id=current_user.id, **portfolio_data)
     db.add(portfolio)
     db.commit()
     db.refresh(portfolio)
@@ -142,6 +147,11 @@ def update_portfolio(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
 
     updates = payload.model_dump(exclude_unset=True)
+    if "base_currency" in updates and updates["base_currency"] is not None:
+        updates["base_currency"] = updates["base_currency"].upper()
+    if "exchange_code" in updates and updates["exchange_code"] is not None:
+        updates["exchange_code"] = updates["exchange_code"].upper()
+
     for key, value in updates.items():
         setattr(portfolio, key, value)
 

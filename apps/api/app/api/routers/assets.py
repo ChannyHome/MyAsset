@@ -27,7 +27,14 @@ def create_asset(
     db: Session = Depends(get_db),
     _current_user: SeedUser = Depends(get_current_user),
 ) -> Asset:
-    asset = Asset(**payload.model_dump())
+    asset_data = payload.model_dump()
+    asset_data["asset_class"] = asset_data["asset_class"].upper()
+    asset_data["currency"] = asset_data["currency"].upper()
+    asset_data["exchange_code"] = asset_data["exchange_code"].upper()
+    if "quote_mode" not in payload.model_fields_set and asset_data["asset_class"] not in {"STOCK", "CRYPTO"}:
+        asset_data["quote_mode"] = "MANUAL"
+
+    asset = Asset(**asset_data)
     db.add(asset)
     try:
         db.commit()
@@ -50,6 +57,13 @@ def update_asset(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     updates = payload.model_dump(exclude_unset=True)
+    if "asset_class" in updates and updates["asset_class"] is not None:
+        updates["asset_class"] = updates["asset_class"].upper()
+    if "currency" in updates and updates["currency"] is not None:
+        updates["currency"] = updates["currency"].upper()
+    if "exchange_code" in updates and updates["exchange_code"] is not None:
+        updates["exchange_code"] = updates["exchange_code"].upper()
+
     for key, value in updates.items():
         setattr(asset, key, value)
 

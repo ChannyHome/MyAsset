@@ -20,6 +20,7 @@ class PortfolioCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     type: str = "ETC"
     base_currency: str = Field(default="KRW", min_length=3, max_length=3)
+    exchange_code: str | None = Field(default=None, min_length=2, max_length=20)
     category: PortfolioCategory | None = None
     memo: str | None = None
     is_included: bool = True
@@ -33,6 +34,7 @@ class PortfolioUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     type: str | None = None
     base_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    exchange_code: str | None = Field(default=None, min_length=2, max_length=20)
     category: PortfolioCategory | None = None
     memo: str | None = None
     is_included: bool | None = None
@@ -50,6 +52,7 @@ class PortfolioOut(BaseModel):
     name: str
     type: str
     base_currency: str
+    exchange_code: str | None
     category: PortfolioCategory | None
     memo: str | None
     is_included: bool

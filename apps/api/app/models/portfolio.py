@@ -19,6 +19,7 @@ class Portfolio(Base):
         server_default="ETC",
     )
     base_currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="KRW")
+    exchange_code: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
     category: Mapped[str | None] = mapped_column(
         Enum(
             "KR_STOCK",
