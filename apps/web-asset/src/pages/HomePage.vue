@@ -21,6 +21,13 @@ function formatCurrency(value: number, currency = "KRW"): string {
   }).format(value);
 }
 
+function formatSignedCurrency(value: number, currency = "KRW"): string {
+  const absText = formatCurrency(Math.abs(value), currency);
+  if (value > 0) return `+${absText}`;
+  if (value < 0) return `-${absText}`;
+  return absText;
+}
+
 function formatOptionalCurrency(value: string | number | null | undefined, currency = "KRW"): string {
   if (value == null) {
     return "-";
@@ -64,6 +71,8 @@ const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_p
 const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
 const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
 const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
+const principalProfitTotal = computed(() => toNumber(summary.value?.principal_profit_total ?? grossAssetsTotal.value - investedPrincipalTotal.value));
+const netAssetsProfitTotal = computed(() => toNumber(summary.value?.net_assets_profit_total ?? netAssetsTotal.value - principalMinusDebtTotal.value));
 const asOf = computed(() => formatDateTime(summary.value?.as_of));
 
 const topHoldings = computed(() =>
@@ -151,9 +160,12 @@ onMounted(loadHomeData);
         <p class="text-xs text-slate-500 dark:text-slate-400">Gross Assets (owned assets only)</p>
         <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ formatCurrency(grossAssetsTotal, displayCurrency) }}
+          <span class="text-base font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
+            ({{ formatPercent(principalReturnPct) }}, {{ formatSignedCurrency(principalProfitTotal, displayCurrency) }})
+          </span>
         </p>
-        <p class="mt-2 text-sm font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          {{ formatPercent(principalReturnPct) }} vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
+        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+          vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
         </p>
       </article>
 
@@ -161,9 +173,12 @@ onMounted(loadHomeData);
         <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets (assets - liabilities)</p>
         <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ formatCurrency(netAssetsTotal, displayCurrency) }}
+          <span class="text-base font-semibold" :class="netAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
+            ({{ formatPercent(netAssetsReturnPct) }}, {{ formatSignedCurrency(netAssetsProfitTotal, displayCurrency) }})
+          </span>
         </p>
-        <p class="mt-2 text-sm font-semibold" :class="netAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          {{ formatPercent(netAssetsReturnPct) }} vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
+        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+          vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
         </p>
       </article>
 
