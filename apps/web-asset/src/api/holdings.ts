@@ -1,4 +1,5 @@
 import { http } from "./http";
+import type { SortOrder } from "./assets";
 
 export type HoldingOut = {
   id: number;
@@ -34,6 +35,46 @@ export type HoldingPerformanceOut = {
   quote_as_of: string | null;
 };
 
+export type HoldingTableSortBy =
+  | "id"
+  | "portfolio_name"
+  | "asset_name"
+  | "asset_symbol"
+  | "quantity"
+  | "avg_price"
+  | "invested_amount"
+  | "current_price"
+  | "evaluated_amount"
+  | "pnl_pct"
+  | "source_type"
+  | "is_hidden"
+  | "updated_at"
+  | "quote_as_of";
+
+export type HoldingTableRowOut = HoldingOut & {
+  portfolio_name: string | null;
+  asset_name: string;
+  asset_symbol: string | null;
+  asset_class: string;
+  current_price: string | number | null;
+  current_price_currency: string | null;
+  evaluated_amount: string | number;
+  pnl_amount: string | number;
+  pnl_pct: string | number | null;
+  quote_as_of: string | null;
+  quote_source: string | null;
+};
+
+export type HoldingTablePageOut = {
+  items: HoldingTableRowOut[];
+  total: number;
+  page: number;
+  page_size: number;
+  sort_by: HoldingTableSortBy;
+  sort_order: SortOrder;
+  q: string | null;
+};
+
 export type HoldingsPerformanceQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
@@ -44,6 +85,16 @@ export type HoldingsPerformanceQuery = {
 export type HoldingsQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
+  include_hidden?: boolean;
+  include_excluded_portfolios?: boolean;
+};
+
+export type HoldingsTableQuery = {
+  page?: number;
+  page_size?: number;
+  sort_by?: HoldingTableSortBy;
+  sort_order?: SortOrder;
+  q?: string;
   include_hidden?: boolean;
   include_excluded_portfolios?: boolean;
 };
@@ -63,6 +114,11 @@ export type HoldingUpdateIn = Partial<HoldingCreateIn>;
 
 export async function getHoldings(params: HoldingsQuery = {}): Promise<HoldingOut[]> {
   const { data } = await http.get<HoldingOut[]>("/holdings", { params });
+  return data;
+}
+
+export async function getHoldingsTable(params: HoldingsTableQuery = {}): Promise<HoldingTablePageOut> {
+  const { data } = await http.get<HoldingTablePageOut>("/holdings/table", { params });
   return data;
 }
 

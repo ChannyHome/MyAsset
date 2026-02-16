@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -7,7 +7,16 @@ from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
-from app.schemas.liability import LiabilityCreate, LiabilityHiddenUpdate, LiabilityOut, LiabilityUpdate
+from app.schemas.asset import SortOrder
+from app.schemas.liability import (
+    LiabilityCreate,
+    LiabilityHiddenUpdate,
+    LiabilityOut,
+    LiabilityTablePageOut,
+    LiabilityTableRowOut,
+    LiabilityTableSortBy,
+    LiabilityUpdate,
+)
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/liabilities", tags=["liabilities"])
@@ -46,6 +55,104 @@ def list_liabilities(
 
     stmt = stmt.order_by(Liability.id.desc())
     return list(db.scalars(stmt).all())
+
+
+@router.get("/table", response_model=LiabilityTablePageOut)
+def list_liabilities_table(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=200),
+    sort_by: LiabilityTableSortBy = Query(default=LiabilityTableSortBy.UPDATED_AT),
+    sort_order: SortOrder = Query(default=SortOrder.DESC),
+    q: str | None = Query(default=None, min_length=1, max_length=100),
+    include_hidden: bool = True,
+    include_excluded: bool = True,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> LiabilityTablePageOut:
+    query_text = q.strip() if q else None
+
+    filters = [Liability.owner_user_id == current_user.id]
+    if not include_hidden:
+        filters.append(Liability.is_hidden.is_(False))
+    if not include_excluded:
+        filters.append(Liability.is_included.is_(True))
+    if query_text:
+        like = f"%{query_text}%"
+        filters.append(
+            or_(
+                Liability.name.ilike(like),
+                Liability.liability_type.ilike(like),
+                Liability.memo.ilike(like),
+                Portfolio.name.ilike(like),
+                Liability.currency.ilike(like),
+            )
+        )
+
+    count_stmt = (
+        select(func.count())
+        .select_from(Liability)
+        .outerjoin(Portfolio, Liability.portfolio_id == Portfolio.id)
+        .where(*filters)
+    )
+    total = int(db.scalar(count_stmt) or 0)
+
+    sort_column_map = {
+        LiabilityTableSortBy.ID: Liability.id,
+        LiabilityTableSortBy.NAME: Liability.name,
+        LiabilityTableSortBy.PORTFOLIO_NAME: Portfolio.name,
+        LiabilityTableSortBy.LIABILITY_TYPE: Liability.liability_type,
+        LiabilityTableSortBy.CURRENCY: Liability.currency,
+        LiabilityTableSortBy.OUTSTANDING_BALANCE: Liability.outstanding_balance,
+        LiabilityTableSortBy.INTEREST_RATE: Liability.interest_rate,
+        LiabilityTableSortBy.MONTHLY_PAYMENT: Liability.monthly_payment,
+        LiabilityTableSortBy.IS_INCLUDED: Liability.is_included,
+        LiabilityTableSortBy.IS_HIDDEN: Liability.is_hidden,
+        LiabilityTableSortBy.UPDATED_AT: Liability.updated_at,
+    }
+    sort_column = sort_column_map[sort_by]
+    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+
+    stmt = (
+        select(Liability, Portfolio.name)
+        .outerjoin(Portfolio, Liability.portfolio_id == Portfolio.id)
+        .where(*filters)
+        .order_by(order_expr, Liability.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = db.execute(stmt).all()
+
+    items = [
+        LiabilityTableRowOut(
+            id=liability.id,
+            owner_user_id=liability.owner_user_id,
+            portfolio_id=liability.portfolio_id,
+            name=liability.name,
+            liability_type=liability.liability_type,
+            currency=liability.currency,
+            outstanding_balance=liability.outstanding_balance,
+            interest_rate=liability.interest_rate,
+            monthly_payment=liability.monthly_payment,
+            source_type=liability.source_type,
+            is_included=liability.is_included,
+            is_hidden=liability.is_hidden,
+            memo=liability.memo,
+            created_at=liability.created_at,
+            updated_at=liability.updated_at,
+            portfolio_name=portfolio_name,
+        )
+        for liability, portfolio_name in rows
+    ]
+
+    return LiabilityTablePageOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        q=query_text,
+    )
 
 
 @router.post("", response_model=LiabilityOut, status_code=status.HTTP_201_CREATED)

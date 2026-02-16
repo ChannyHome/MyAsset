@@ -4,6 +4,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.asset import SortOrder
+
 
 class PortfolioCategory(str, Enum):
     KR_STOCK = "KR_STOCK"
@@ -14,6 +16,23 @@ class PortfolioCategory(str, Enum):
     CASH = "CASH"
     DEPOSIT_SAVING = "DEPOSIT_SAVING"
     ETC = "ETC"
+
+
+class PortfolioTableSortBy(str, Enum):
+    ID = "id"
+    NAME = "name"
+    TYPE = "type"
+    BASE_CURRENCY = "base_currency"
+    EXCHANGE_CODE = "exchange_code"
+    CATEGORY = "category"
+    IS_INCLUDED = "is_included"
+    IS_HIDDEN = "is_hidden"
+    DEPOSIT = "cumulative_deposit_amount"
+    WITHDRAWAL = "cumulative_withdrawal_amount"
+    CASHFLOW_SOURCE_TYPE = "cashflow_source_type"
+    UPDATED_AT = "updated_at"
+    HOLDING_COUNT = "holding_count"
+    LIABILITY_COUNT = "liability_count"
 
 
 class PortfolioCreate(BaseModel):
@@ -62,3 +81,18 @@ class PortfolioOut(BaseModel):
     cashflow_source_type: str
     created_at: datetime
     updated_at: datetime
+
+
+class PortfolioTableRowOut(PortfolioOut):
+    holding_count: int
+    liability_count: int
+
+
+class PortfolioTablePageOut(BaseModel):
+    items: list[PortfolioTableRowOut]
+    total: int
+    page: int
+    page_size: int
+    sort_by: PortfolioTableSortBy
+    sort_order: SortOrder
+    q: str | None = None

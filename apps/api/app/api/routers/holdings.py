@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import Select, or_, select
+from decimal import Decimal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,16 @@ from app.models.latest_quote import LatestQuote
 from app.models.household import HouseholdMember
 from app.models.holding import Holding
 from app.models.portfolio import Portfolio
-from app.schemas.holding import HoldingCreate, HoldingHiddenUpdate, HoldingOut, HoldingUpdate
+from app.schemas.holding import (
+    HoldingCreate,
+    HoldingHiddenUpdate,
+    HoldingOut,
+    HoldingTablePageOut,
+    HoldingTableRowOut,
+    HoldingTableSortBy,
+    HoldingUpdate,
+)
+from app.schemas.asset import SortOrder
 from app.schemas.performance import HoldingPerformanceOut
 from app.services.user_seed import SeedUser
 
@@ -145,6 +156,130 @@ def list_holdings(
 
     stmt = stmt.order_by(Holding.id.desc())
     return list(db.scalars(stmt).all())
+
+
+@router.get("/table", response_model=HoldingTablePageOut)
+def list_holdings_table(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=200),
+    sort_by: HoldingTableSortBy = Query(default=HoldingTableSortBy.UPDATED_AT),
+    sort_order: SortOrder = Query(default=SortOrder.DESC),
+    q: str | None = Query(default=None, min_length=1, max_length=100),
+    include_hidden: bool = True,
+    include_excluded_portfolios: bool = True,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> HoldingTablePageOut:
+    query_text = q.strip() if q else None
+    evaluated_expr = Holding.quantity * func.coalesce(LatestQuote.price, Holding.avg_price)
+    invested_expr = func.coalesce(Holding.invested_amount, Holding.quantity * Holding.avg_price)
+    pnl_pct_expr = ((evaluated_expr - invested_expr) / func.nullif(invested_expr, 0)) * 100
+
+    filters = [Holding.owner_user_id == current_user.id]
+    if not include_hidden:
+        filters.append(Holding.is_hidden.is_(False))
+        filters.append(or_(Holding.portfolio_id.is_(None), Portfolio.is_hidden.is_(False)))
+    if not include_excluded_portfolios:
+        filters.append(or_(Holding.portfolio_id.is_(None), Portfolio.is_included.is_(True)))
+    if query_text:
+        like = f"%{query_text}%"
+        filters.append(
+            or_(
+                Asset.name.ilike(like),
+                Asset.symbol.ilike(like),
+                Asset.asset_class.ilike(like),
+                Portfolio.name.ilike(like),
+                Holding.memo.ilike(like),
+            )
+        )
+
+    count_stmt = (
+        select(func.count())
+        .select_from(Holding)
+        .join(Asset, Asset.id == Holding.asset_id)
+        .outerjoin(Portfolio, Holding.portfolio_id == Portfolio.id)
+        .where(*filters)
+    )
+    total = int(db.scalar(count_stmt) or 0)
+
+    sort_column_map = {
+        HoldingTableSortBy.ID: Holding.id,
+        HoldingTableSortBy.PORTFOLIO_NAME: Portfolio.name,
+        HoldingTableSortBy.ASSET_NAME: Asset.name,
+        HoldingTableSortBy.ASSET_SYMBOL: Asset.symbol,
+        HoldingTableSortBy.QUANTITY: Holding.quantity,
+        HoldingTableSortBy.AVG_PRICE: Holding.avg_price,
+        HoldingTableSortBy.INVESTED_AMOUNT: invested_expr,
+        HoldingTableSortBy.CURRENT_PRICE: LatestQuote.price,
+        HoldingTableSortBy.EVALUATED_AMOUNT: evaluated_expr,
+        HoldingTableSortBy.PNL_PCT: pnl_pct_expr,
+        HoldingTableSortBy.SOURCE_TYPE: Holding.source_type,
+        HoldingTableSortBy.IS_HIDDEN: Holding.is_hidden,
+        HoldingTableSortBy.UPDATED_AT: Holding.updated_at,
+        HoldingTableSortBy.QUOTE_AS_OF: LatestQuote.as_of,
+    }
+    sort_column = sort_column_map[sort_by]
+    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+
+    stmt = (
+        select(Holding, Asset, Portfolio, LatestQuote)
+        .join(Asset, Asset.id == Holding.asset_id)
+        .outerjoin(Portfolio, Holding.portfolio_id == Portfolio.id)
+        .outerjoin(LatestQuote, LatestQuote.asset_id == Holding.asset_id)
+        .where(*filters)
+        .order_by(order_expr, Holding.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = db.execute(stmt).all()
+
+    items: list[HoldingTableRowOut] = []
+    for holding, asset, portfolio, quote in rows:
+        invested_amount = holding.invested_amount or (holding.quantity * holding.avg_price)
+        price = quote.price if quote else None
+        evaluated_amount = holding.quantity * (price if price is not None else holding.avg_price)
+        pnl_amount = evaluated_amount - invested_amount
+        pnl_pct: Decimal | None = None
+        if invested_amount != 0:
+            pnl_pct = (pnl_amount / invested_amount) * Decimal("100")
+
+        items.append(
+            HoldingTableRowOut(
+                id=holding.id,
+                owner_user_id=holding.owner_user_id,
+                portfolio_id=holding.portfolio_id,
+                asset_id=holding.asset_id,
+                quantity=holding.quantity,
+                avg_price=holding.avg_price,
+                invested_amount=invested_amount,
+                source_type=holding.source_type,
+                is_hidden=holding.is_hidden,
+                memo=holding.memo,
+                created_at=holding.created_at,
+                updated_at=holding.updated_at,
+                portfolio_name=portfolio.name if portfolio else None,
+                asset_name=asset.name,
+                asset_symbol=asset.symbol,
+                asset_class=asset.asset_class,
+                current_price=price,
+                current_price_currency=quote.currency if quote else None,
+                evaluated_amount=evaluated_amount,
+                pnl_amount=pnl_amount,
+                pnl_pct=pnl_pct,
+                quote_as_of=quote.as_of if quote else None,
+                quote_source=quote.source if quote else None,
+            )
+        )
+
+    return HoldingTablePageOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        q=query_text,
+    )
 
 
 @router.get("/performance", response_model=list[HoldingPerformanceOut])

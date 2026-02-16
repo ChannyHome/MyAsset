@@ -13,16 +13,40 @@ import {
   type SortOrder,
 } from "../api/assets";
 import { getMe, type AuthMeOut } from "../api/auth";
+import {
+  createHolding,
+  deleteHolding,
+  getHoldingsTable,
+  updateHolding,
+  type HoldingTableRowOut,
+  type HoldingTableSortBy,
+} from "../api/holdings";
+import {
+  createLiability,
+  deleteLiability,
+  getLiabilitiesTable,
+  updateLiability,
+  type LiabilityTableRowOut,
+  type LiabilityTableSortBy,
+} from "../api/liabilities";
+import {
+  createPortfolio,
+  deletePortfolio,
+  getPortfoliosTable,
+  updatePortfolio,
+  type PortfolioTableRowOut,
+  type PortfolioTableSortBy,
+} from "../api/portfolios";
 import { updateQuotesNow, upsertManualQuote, type ManualQuoteUpsertIn } from "../api/quotes";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
 type ActionLog = { id: number; at: string; action: string; status: LogStatus; message: string };
-type AssetsQueryState = {
+type TableQueryState<TSort extends string> = {
   page: number;
   pageSize: number;
   total: number;
-  sortBy: AssetTableSortBy;
+  sortBy: TSort;
   sortOrder: SortOrder;
   q: string;
 };
@@ -30,11 +54,38 @@ type AssetsQueryState = {
 const loading = reactive({ data: false, action: false, confirm: false });
 const me = ref<AuthMeOut | null>(null);
 const assets = ref<AssetTableRowOut[]>([]);
+const portfolioRows = ref<PortfolioTableRowOut[]>([]);
+const holdingRows = ref<HoldingTableRowOut[]>([]);
+const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 const logs = ref<ActionLog[]>([]);
 let nextLogId = 1;
-const assetsQuery = reactive<AssetsQueryState>({
+const assetsQuery = reactive<TableQueryState<AssetTableSortBy>>({
   page: 1,
   pageSize: 20,
+  total: 0,
+  sortBy: "updated_at",
+  sortOrder: "desc",
+  q: "",
+});
+const portfolioQuery = reactive<TableQueryState<PortfolioTableSortBy>>({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  sortBy: "updated_at",
+  sortOrder: "desc",
+  q: "",
+});
+const holdingQuery = reactive<TableQueryState<HoldingTableSortBy>>({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  sortBy: "updated_at",
+  sortOrder: "desc",
+  q: "",
+});
+const liabilityQuery = reactive<TableQueryState<LiabilityTableSortBy>>({
+  page: 1,
+  pageSize: 10,
   total: 0,
   sortBy: "updated_at",
   sortOrder: "desc",
@@ -46,6 +97,9 @@ const pendingAction = ref<null | (() => Promise<void>)>(null);
 
 const assetModal = reactive({ open: false, mode: "CREATE" as AssetModalMode });
 const quoteActionsCollapsed = ref(true);
+const quickCreatePortfolioOpen = ref(false);
+const quickCreateHoldingOpen = ref(false);
+const quickCreateLiabilityOpen = ref(false);
 
 const assetForm = reactive({
   id: "",
@@ -66,6 +120,34 @@ const manualQuoteForm = reactive({
   as_of: "",
   source: "MANUAL",
 });
+const portfolioForm = reactive({
+  name: "",
+  type: "ETC",
+  base_currency: "KRW",
+  exchange_code: "",
+  category: "ETC",
+  memo: "",
+});
+const holdingForm = reactive({
+  portfolio_id: "",
+  asset_id: "",
+  quantity: "",
+  avg_price: "",
+  invested_amount: "",
+  source_type: "MANUAL",
+  memo: "",
+});
+const liabilityForm = reactive({
+  portfolio_id: "",
+  name: "",
+  liability_type: "ETC",
+  currency: "KRW",
+  outstanding_balance: "",
+  interest_rate: "",
+  monthly_payment: "",
+  source_type: "MANUAL",
+  memo: "",
+});
 
 const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
@@ -74,8 +156,14 @@ const selectedAssetForQuote = computed(() => assets.value.find((item) => String(
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
 const quoteModeOptions = ["AUTO", "MANUAL"] as const;
 const totalPages = computed(() => Math.max(1, Math.ceil(assetsQuery.total / assetsQuery.pageSize)));
+const portfolioTotalPages = computed(() => Math.max(1, Math.ceil(portfolioQuery.total / portfolioQuery.pageSize)));
+const holdingTotalPages = computed(() => Math.max(1, Math.ceil(holdingQuery.total / holdingQuery.pageSize)));
+const liabilityTotalPages = computed(() => Math.max(1, Math.ceil(liabilityQuery.total / liabilityQuery.pageSize)));
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let portfolioSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let holdingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let liabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshSequence = 0;
 
 function formatDateTime(value: string | null | undefined): string {
@@ -335,12 +423,206 @@ function askApplyManualQuote(): void {
   });
 }
 
+function parseRequiredDecimal(value: string, field: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error(`${field} is required`);
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) throw new Error(`${field} must be a number`);
+  return trimmed;
+}
+
+function parseOptionalDecimal(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) throw new Error("Invalid number");
+  return trimmed;
+}
+
+function parseOptionalInt(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return toPositiveInt(trimmed);
+}
+
+function submitPortfolioCreate(): void {
+  if (!canManageAssets.value) {
+    pushLog("Portfolio Create", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  try {
+    const name = portfolioForm.name.trim();
+    if (!name) throw new Error("Portfolio name is required");
+    const baseCurrency = normalizeUpper(portfolioForm.base_currency);
+    if (baseCurrency.length !== 3) throw new Error("Base currency must be 3 letters");
+
+    runAction("Portfolio Create", "Create Portfolio", "새 포트폴리오를 생성할까요?", async () => {
+      await createPortfolio({
+        name,
+        type: portfolioForm.type.trim() || "ETC",
+        base_currency: baseCurrency,
+        exchange_code: normalizeUpper(portfolioForm.exchange_code) || null,
+        category: (portfolioForm.category.trim() || null) as
+          | "KR_STOCK"
+          | "US_STOCK"
+          | "CRYPTO"
+          | "REAL_ESTATE"
+          | "BOND"
+          | "CASH"
+          | "DEPOSIT_SAVING"
+          | "ETC"
+          | null,
+        memo: portfolioForm.memo.trim() || null,
+      });
+      portfolioForm.name = "";
+      portfolioForm.memo = "";
+      portfolioForm.exchange_code = "";
+      quickCreatePortfolioOpen.value = false;
+    });
+  } catch (error) {
+    pushLog("Portfolio Create", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askDeletePortfolio(item: PortfolioTableRowOut): void {
+  runAction("Portfolio Delete", "Delete Portfolio", `Portfolio #${item.id} (${item.name}) 를 삭제할까요?`, async () => {
+    await deletePortfolio(item.id);
+  });
+}
+
+function togglePortfolioIncluded(item: PortfolioTableRowOut): void {
+  runAction(
+    "Portfolio Included",
+    "Toggle Included",
+    `Portfolio #${item.id} 집계 포함 값을 ${item.is_included ? "OFF" : "ON"}로 변경할까요?`,
+    async () => {
+      await updatePortfolio(item.id, { is_included: !item.is_included });
+    },
+  );
+}
+
+function togglePortfolioHidden(item: PortfolioTableRowOut): void {
+  runAction(
+    "Portfolio Hidden",
+    "Toggle Hidden",
+    `Portfolio #${item.id} 숨김 값을 ${item.is_hidden ? "OFF" : "ON"}로 변경할까요?`,
+    async () => {
+      await updatePortfolio(item.id, { is_hidden: !item.is_hidden });
+    },
+  );
+}
+
+function submitHoldingCreate(): void {
+  try {
+    const assetId = toPositiveInt(holdingForm.asset_id.trim());
+    const quantity = parseRequiredDecimal(holdingForm.quantity, "Quantity");
+    const avgPrice = parseRequiredDecimal(holdingForm.avg_price, "Avg price");
+
+    runAction("Holding Create", "Create Holding", "새 보유자산을 생성할까요?", async () => {
+      await createHolding({
+        portfolio_id: parseOptionalInt(holdingForm.portfolio_id),
+        asset_id: assetId,
+        quantity,
+        avg_price: avgPrice,
+        invested_amount: parseOptionalDecimal(holdingForm.invested_amount),
+        source_type: holdingForm.source_type.trim() || "MANUAL",
+        memo: holdingForm.memo.trim() || null,
+      });
+      holdingForm.asset_id = "";
+      holdingForm.quantity = "";
+      holdingForm.avg_price = "";
+      holdingForm.invested_amount = "";
+      holdingForm.memo = "";
+      quickCreateHoldingOpen.value = false;
+    });
+  } catch (error) {
+    pushLog("Holding Create", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askDeleteHolding(item: HoldingTableRowOut): void {
+  runAction("Holding Delete", "Delete Holding", `Holding #${item.id} (${item.asset_name}) 를 삭제할까요?`, async () => {
+    await deleteHolding(item.id);
+  });
+}
+
+function toggleHoldingHidden(item: HoldingTableRowOut): void {
+  runAction(
+    "Holding Hidden",
+    "Toggle Hidden",
+    `Holding #${item.id} 숨김 값을 ${item.is_hidden ? "OFF" : "ON"}로 변경할까요?`,
+    async () => {
+      await updateHolding(item.id, { is_hidden: !item.is_hidden });
+    },
+  );
+}
+
+function submitLiabilityCreate(): void {
+  try {
+    const name = liabilityForm.name.trim();
+    if (!name) throw new Error("Liability name is required");
+    const balance = parseRequiredDecimal(liabilityForm.outstanding_balance, "Outstanding balance");
+    const currency = normalizeUpper(liabilityForm.currency);
+    if (currency.length !== 3) throw new Error("Currency must be 3 letters");
+
+    runAction("Liability Create", "Create Liability", "새 부채를 생성할까요?", async () => {
+      await createLiability({
+        portfolio_id: parseOptionalInt(liabilityForm.portfolio_id),
+        name,
+        liability_type: liabilityForm.liability_type.trim() || "ETC",
+        currency,
+        outstanding_balance: balance,
+        interest_rate: parseOptionalDecimal(liabilityForm.interest_rate),
+        monthly_payment: parseOptionalDecimal(liabilityForm.monthly_payment),
+        source_type: liabilityForm.source_type.trim() || "MANUAL",
+        memo: liabilityForm.memo.trim() || null,
+      });
+      liabilityForm.name = "";
+      liabilityForm.outstanding_balance = "";
+      liabilityForm.interest_rate = "";
+      liabilityForm.monthly_payment = "";
+      liabilityForm.memo = "";
+      quickCreateLiabilityOpen.value = false;
+    });
+  } catch (error) {
+    pushLog("Liability Create", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askDeleteLiability(item: LiabilityTableRowOut): void {
+  runAction("Liability Delete", "Delete Liability", `Liability #${item.id} (${item.name}) 를 삭제할까요?`, async () => {
+    await deleteLiability(item.id);
+  });
+}
+
+function toggleLiabilityIncluded(item: LiabilityTableRowOut): void {
+  runAction(
+    "Liability Included",
+    "Toggle Included",
+    `Liability #${item.id} 순자산 포함 값을 ${item.is_included ? "OFF" : "ON"}로 변경할까요?`,
+    async () => {
+      await updateLiability(item.id, { is_included: !item.is_included });
+    },
+  );
+}
+
+function toggleLiabilityHidden(item: LiabilityTableRowOut): void {
+  runAction(
+    "Liability Hidden",
+    "Toggle Hidden",
+    `Liability #${item.id} 숨김 값을 ${item.is_hidden ? "OFF" : "ON"}로 변경할까요?`,
+    async () => {
+      await updateLiability(item.id, { is_hidden: !item.is_hidden });
+    },
+  );
+}
+
 async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   const refreshId = ++refreshSequence;
   const shouldLogRefresh = options?.logRefresh ?? true;
   loading.data = true;
   try {
-    const [meOut, assetsOut] = await Promise.all([
+    const [meOut, assetsOut, portfoliosOut, holdingsOut, liabilitiesOut] = await Promise.all([
       getMe(),
       getAssetsTable({
         page: assetsQuery.page,
@@ -349,11 +631,38 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         sort_order: assetsQuery.sortOrder,
         q: assetsQuery.q.trim() || undefined,
       }),
+      getPortfoliosTable({
+        page: portfolioQuery.page,
+        page_size: portfolioQuery.pageSize,
+        sort_by: portfolioQuery.sortBy,
+        sort_order: portfolioQuery.sortOrder,
+        q: portfolioQuery.q.trim() || undefined,
+      }),
+      getHoldingsTable({
+        page: holdingQuery.page,
+        page_size: holdingQuery.pageSize,
+        sort_by: holdingQuery.sortBy,
+        sort_order: holdingQuery.sortOrder,
+        q: holdingQuery.q.trim() || undefined,
+      }),
+      getLiabilitiesTable({
+        page: liabilityQuery.page,
+        page_size: liabilityQuery.pageSize,
+        sort_by: liabilityQuery.sortBy,
+        sort_order: liabilityQuery.sortOrder,
+        q: liabilityQuery.q.trim() || undefined,
+      }),
     ]);
     if (refreshId !== refreshSequence) return;
     me.value = meOut;
     assets.value = assetsOut.items;
+    portfolioRows.value = portfoliosOut.items;
+    holdingRows.value = holdingsOut.items;
+    liabilityRows.value = liabilitiesOut.items;
     assetsQuery.total = assetsOut.total;
+    portfolioQuery.total = portfoliosOut.total;
+    holdingQuery.total = holdingsOut.total;
+    liabilityQuery.total = liabilitiesOut.total;
 
     const selectedStillExists = assetsOut.items.some((item) => String(item.id) === manualQuoteForm.asset_id);
     if (!selectedStillExists) {
@@ -361,7 +670,11 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
     }
 
     if (shouldLogRefresh) {
-      pushLog("Refresh", "INFO", `Agent data loaded (page=${assetsOut.page}, total=${assetsOut.total})`);
+      pushLog(
+        "Refresh",
+        "INFO",
+        `Agent data loaded (assets=${assetsOut.total}, portfolios=${portfoliosOut.total}, holdings=${holdingsOut.total}, liabilities=${liabilitiesOut.total})`,
+      );
     }
   } catch (error) {
     pushLog("Refresh", "ERROR", getErrorMessage(error));
@@ -370,28 +683,43 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   }
 }
 
-function sortIndicator(key: AssetTableSortBy): string {
-  if (assetsQuery.sortBy !== key) return "↕";
-  return assetsQuery.sortOrder === "asc" ? "↑" : "↓";
+function sortIndicatorFor<TSort extends string>(query: TableQueryState<TSort>, key: TSort): string {
+  if (query.sortBy !== key) return "↕";
+  return query.sortOrder === "asc" ? "↑" : "↓";
 }
 
-async function toggleSort(key: AssetTableSortBy): Promise<void> {
-  if (assetsQuery.sortBy === key) {
-    assetsQuery.sortOrder = assetsQuery.sortOrder === "asc" ? "desc" : "asc";
+async function toggleSortFor<TSort extends string>(query: TableQueryState<TSort>, key: TSort): Promise<void> {
+  if (query.sortBy === key) {
+    query.sortOrder = query.sortOrder === "asc" ? "desc" : "asc";
   } else {
-    assetsQuery.sortBy = key;
-    assetsQuery.sortOrder = "asc";
+    query.sortBy = key;
+    query.sortOrder = "asc";
   }
-  assetsQuery.page = 1;
+  query.page = 1;
   await refreshData();
 }
 
-async function movePage(delta: number): Promise<void> {
-  const next = assetsQuery.page + delta;
-  if (next < 1 || next > totalPages.value) return;
-  assetsQuery.page = next;
+async function movePageFor<TSort extends string>(query: TableQueryState<TSort>, totalPagesCount: number, delta: number): Promise<void> {
+  const next = query.page + delta;
+  if (next < 1 || next > totalPagesCount) return;
+  query.page = next;
   await refreshData();
 }
+
+const sortIndicator = (key: AssetTableSortBy): string => sortIndicatorFor(assetsQuery, key);
+const portfolioSortIndicator = (key: PortfolioTableSortBy): string => sortIndicatorFor(portfolioQuery, key);
+const holdingSortIndicator = (key: HoldingTableSortBy): string => sortIndicatorFor(holdingQuery, key);
+const liabilitySortIndicator = (key: LiabilityTableSortBy): string => sortIndicatorFor(liabilityQuery, key);
+
+const toggleSort = async (key: AssetTableSortBy): Promise<void> => toggleSortFor(assetsQuery, key);
+const togglePortfolioSort = async (key: PortfolioTableSortBy): Promise<void> => toggleSortFor(portfolioQuery, key);
+const toggleHoldingSort = async (key: HoldingTableSortBy): Promise<void> => toggleSortFor(holdingQuery, key);
+const toggleLiabilitySort = async (key: LiabilityTableSortBy): Promise<void> => toggleSortFor(liabilityQuery, key);
+
+const movePage = async (delta: number): Promise<void> => movePageFor(assetsQuery, totalPages.value, delta);
+const movePortfolioPage = async (delta: number): Promise<void> => movePageFor(portfolioQuery, portfolioTotalPages.value, delta);
+const moveHoldingPage = async (delta: number): Promise<void> => movePageFor(holdingQuery, holdingTotalPages.value, delta);
+const moveLiabilityPage = async (delta: number): Promise<void> => movePageFor(liabilityQuery, liabilityTotalPages.value, delta);
 
 async function applySearch(): Promise<void> {
   clearSearchDebounce();
@@ -413,6 +741,66 @@ function clearSearchDebounce(): void {
   searchDebounceTimer = null;
 }
 
+async function applyPortfolioSearch(): Promise<void> {
+  clearPortfolioSearchDebounce();
+  portfolioQuery.page = 1;
+  await refreshData();
+}
+
+async function clearPortfolioSearch(): Promise<void> {
+  clearPortfolioSearchDebounce();
+  if (!portfolioQuery.q) return;
+  portfolioQuery.q = "";
+  portfolioQuery.page = 1;
+  await refreshData();
+}
+
+function clearPortfolioSearchDebounce(): void {
+  if (!portfolioSearchDebounceTimer) return;
+  clearTimeout(portfolioSearchDebounceTimer);
+  portfolioSearchDebounceTimer = null;
+}
+
+async function applyHoldingSearch(): Promise<void> {
+  clearHoldingSearchDebounce();
+  holdingQuery.page = 1;
+  await refreshData();
+}
+
+async function clearHoldingSearch(): Promise<void> {
+  clearHoldingSearchDebounce();
+  if (!holdingQuery.q) return;
+  holdingQuery.q = "";
+  holdingQuery.page = 1;
+  await refreshData();
+}
+
+function clearHoldingSearchDebounce(): void {
+  if (!holdingSearchDebounceTimer) return;
+  clearTimeout(holdingSearchDebounceTimer);
+  holdingSearchDebounceTimer = null;
+}
+
+async function applyLiabilitySearch(): Promise<void> {
+  clearLiabilitySearchDebounce();
+  liabilityQuery.page = 1;
+  await refreshData();
+}
+
+async function clearLiabilitySearch(): Promise<void> {
+  clearLiabilitySearchDebounce();
+  if (!liabilityQuery.q) return;
+  liabilityQuery.q = "";
+  liabilityQuery.page = 1;
+  await refreshData();
+}
+
+function clearLiabilitySearchDebounce(): void {
+  if (!liabilitySearchDebounceTimer) return;
+  clearTimeout(liabilitySearchDebounceTimer);
+  liabilitySearchDebounceTimer = null;
+}
+
 watch(
   () => assetsQuery.q,
   () => {
@@ -423,10 +811,43 @@ watch(
     }, AUTO_SEARCH_DEBOUNCE_MS);
   },
 );
+watch(
+  () => portfolioQuery.q,
+  () => {
+    clearPortfolioSearchDebounce();
+    portfolioSearchDebounceTimer = setTimeout(async () => {
+      portfolioQuery.page = 1;
+      await refreshData({ logRefresh: false });
+    }, AUTO_SEARCH_DEBOUNCE_MS);
+  },
+);
+watch(
+  () => holdingQuery.q,
+  () => {
+    clearHoldingSearchDebounce();
+    holdingSearchDebounceTimer = setTimeout(async () => {
+      holdingQuery.page = 1;
+      await refreshData({ logRefresh: false });
+    }, AUTO_SEARCH_DEBOUNCE_MS);
+  },
+);
+watch(
+  () => liabilityQuery.q,
+  () => {
+    clearLiabilitySearchDebounce();
+    liabilitySearchDebounceTimer = setTimeout(async () => {
+      liabilityQuery.page = 1;
+      await refreshData({ logRefresh: false });
+    }, AUTO_SEARCH_DEBOUNCE_MS);
+  },
+);
 
 onMounted(refreshData);
 onBeforeUnmount(() => {
   clearSearchDebounce();
+  clearPortfolioSearchDebounce();
+  clearHoldingSearchDebounce();
+  clearLiabilitySearchDebounce();
 });
 </script>
 
@@ -685,6 +1106,280 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </template>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Portfolios Status</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="!canManageAssets || isBusy"
+          @click="quickCreatePortfolioOpen = !quickCreatePortfolioOpen"
+        >
+          {{ quickCreatePortfolioOpen ? "Close Create" : "Quick Create Portfolio" }}
+        </button>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <input
+          v-model="portfolioQuery.q"
+          type="text"
+          placeholder="Search portfolio name/type/exchange"
+          class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+          @keyup.enter="applyPortfolioSearch"
+        />
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyPortfolioSearch">Search</button>
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearPortfolioSearch">Clear</button>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full min-w-[1220px] text-left text-xs leading-tight">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('id')">ID <span class="opacity-70">{{ portfolioSortIndicator("id") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('name')">Name <span class="opacity-70">{{ portfolioSortIndicator("name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('type')">Type <span class="opacity-70">{{ portfolioSortIndicator("type") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('category')">Category <span class="opacity-70">{{ portfolioSortIndicator("category") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('exchange_code')">Exchange <span class="opacity-70">{{ portfolioSortIndicator("exchange_code") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('base_currency')">Currency <span class="opacity-70">{{ portfolioSortIndicator("base_currency") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Included</th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_deposit_amount')">Deposit <span class="opacity-70">{{ portfolioSortIndicator("cumulative_deposit_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_withdrawal_amount')">Withdrawal <span class="opacity-70">{{ portfolioSortIndicator("cumulative_withdrawal_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('holding_count')">Holdings <span class="opacity-70">{{ portfolioSortIndicator("holding_count") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liability_count')">Liabilities <span class="opacity-70">{{ portfolioSortIndicator("liability_count") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('updated_at')">Updated <span class="opacity-70">{{ portfolioSortIndicator("updated_at") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in portfolioRows" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.name }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.type }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.category || "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.exchange_code || "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.base_currency }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_included ? "Y" : "N" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_deposit_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_withdrawal_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.holding_count }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.liability_count }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
+                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
+                  <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="!canManageAssets || isBusy" @click="askDeletePortfolio(item)">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="portfolioRows.length === 0">
+              <td colspan="14" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No portfolios found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-2">
+          <span>Total: {{ portfolioQuery.total }}</span>
+          <span>|</span>
+          <span>Page {{ portfolioQuery.page }} / {{ portfolioTotalPages }}</span>
+          <span>|</span>
+          <label>Size <select v-model.number="portfolioQuery.pageSize" class="ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950" @change="portfolioQuery.page = 1; refreshData()"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || portfolioQuery.page <= 1" @click="movePortfolioPage(-1)">Prev</button>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || portfolioQuery.page >= portfolioTotalPages" @click="movePortfolioPage(1)">Next</button>
+        </div>
+      </div>
+      <div v-if="quickCreatePortfolioOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <input v-model="portfolioForm.name" placeholder="Portfolio name" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="portfolioForm.type" placeholder="Type (BROKER/EXCHANGE/...)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="portfolioForm.base_currency" placeholder="Base currency" maxlength="3" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="portfolioForm.exchange_code" placeholder="Exchange code" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="portfolioForm.category" placeholder="Category" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="portfolioForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+        </div>
+        <div class="mt-2">
+          <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="!canManageAssets || isBusy" @click="submitPortfolioCreate">Create Portfolio</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Holdings Status</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
+        </div>
+        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="quickCreateHoldingOpen = !quickCreateHoldingOpen">{{ quickCreateHoldingOpen ? "Close Create" : "Quick Create Holding" }}</button>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <input v-model="holdingQuery.q" type="text" placeholder="Search asset/portfolio/symbol" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyHoldingSearch" />
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyHoldingSearch">Search</button>
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearHoldingSearch">Clear</button>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full min-w-[1220px] text-left text-xs leading-tight">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('id')">ID <span class="opacity-70">{{ holdingSortIndicator("id") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('portfolio_name')">Portfolio <span class="opacity-70">{{ holdingSortIndicator("portfolio_name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('asset_name')">Asset <span class="opacity-70">{{ holdingSortIndicator("asset_name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('asset_symbol')">Symbol <span class="opacity-70">{{ holdingSortIndicator("asset_symbol") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('quantity')">Qty <span class="opacity-70">{{ holdingSortIndicator("quantity") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('avg_price')">Avg <span class="opacity-70">{{ holdingSortIndicator("avg_price") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('invested_amount')">Invested <span class="opacity-70">{{ holdingSortIndicator("invested_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('current_price')">Price <span class="opacity-70">{{ holdingSortIndicator("current_price") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('evaluated_amount')">Evaluated <span class="opacity-70">{{ holdingSortIndicator("evaluated_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('pnl_pct')">PnL% <span class="opacity-70">{{ holdingSortIndicator("pnl_pct") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('updated_at')">Updated <span class="opacity-70">{{ holdingSortIndicator("updated_at") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in holdingRows" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.portfolio_name || "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_name }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_symbol || "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.quantity }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.avg_price }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.invested_amount }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.current_price ?? "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.evaluated_amount }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.pnl_pct === null ? "-" : `${Number(item.pnl_pct).toFixed(2)}%` }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleHoldingHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
+                  <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteHolding(item)">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="holdingRows.length === 0">
+              <td colspan="13" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No holdings found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-2">
+          <span>Total: {{ holdingQuery.total }}</span>
+          <span>|</span>
+          <span>Page {{ holdingQuery.page }} / {{ holdingTotalPages }}</span>
+          <span>|</span>
+          <label>Size <select v-model.number="holdingQuery.pageSize" class="ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950" @change="holdingQuery.page = 1; refreshData()"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || holdingQuery.page <= 1" @click="moveHoldingPage(-1)">Prev</button>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || holdingQuery.page >= holdingTotalPages" @click="moveHoldingPage(1)">Next</button>
+        </div>
+      </div>
+      <div v-if="quickCreateHoldingOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <input v-model="holdingForm.portfolio_id" placeholder="Portfolio ID (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.asset_id" placeholder="Asset ID" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.quantity" placeholder="Quantity" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.avg_price" placeholder="Avg Price" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.invested_amount" placeholder="Invested (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.source_type" placeholder="Source type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 md:col-span-3" />
+        </div>
+        <div class="mt-2">
+          <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="isBusy" @click="submitHoldingCreate">Create Holding</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Liabilities Status</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
+        </div>
+        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="quickCreateLiabilityOpen = !quickCreateLiabilityOpen">{{ quickCreateLiabilityOpen ? "Close Create" : "Quick Create Liability" }}</button>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <input v-model="liabilityQuery.q" type="text" placeholder="Search liability/portfolio/type" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyLiabilitySearch" />
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyLiabilitySearch">Search</button>
+        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearLiabilitySearch">Clear</button>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full min-w-[1100px] text-left text-xs leading-tight">
+          <thead class="bg-slate-50 dark:bg-slate-800">
+            <tr>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('id')">ID <span class="opacity-70">{{ liabilitySortIndicator("id") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('portfolio_name')">Portfolio <span class="opacity-70">{{ liabilitySortIndicator("portfolio_name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('name')">Name <span class="opacity-70">{{ liabilitySortIndicator("name") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('liability_type')">Type <span class="opacity-70">{{ liabilitySortIndicator("liability_type") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('outstanding_balance')">Balance <span class="opacity-70">{{ liabilitySortIndicator("outstanding_balance") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Currency</th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('interest_rate')">Rate <span class="opacity-70">{{ liabilitySortIndicator("interest_rate") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('monthly_payment')">Monthly <span class="opacity-70">{{ liabilitySortIndicator("monthly_payment") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Included</th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleLiabilitySort('updated_at')">Updated <span class="opacity-70">{{ liabilitySortIndicator("updated_at") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in liabilityRows" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.portfolio_name || "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.name }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.liability_type }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.outstanding_balance, item.currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.currency }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.interest_rate ?? "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.monthly_payment ?? "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_included ? "Y" : "N" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
+                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
+                  <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteLiability(item)">Delete</button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="liabilityRows.length === 0">
+              <td colspan="12" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No liabilities found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-2">
+          <span>Total: {{ liabilityQuery.total }}</span>
+          <span>|</span>
+          <span>Page {{ liabilityQuery.page }} / {{ liabilityTotalPages }}</span>
+          <span>|</span>
+          <label>Size <select v-model.number="liabilityQuery.pageSize" class="ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950" @change="liabilityQuery.page = 1; refreshData()"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || liabilityQuery.page <= 1" @click="moveLiabilityPage(-1)">Prev</button>
+          <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || liabilityQuery.page >= liabilityTotalPages" @click="moveLiabilityPage(1)">Next</button>
+        </div>
+      </div>
+      <div v-if="quickCreateLiabilityOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <input v-model="liabilityForm.portfolio_id" placeholder="Portfolio ID (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.name" placeholder="Liability name" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.liability_type" placeholder="Type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.outstanding_balance" placeholder="Outstanding balance" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.currency" placeholder="Currency" maxlength="3" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.interest_rate" placeholder="Interest rate (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.monthly_payment" placeholder="Monthly payment (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.source_type" placeholder="Source type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="liabilityForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+        </div>
+        <div class="mt-2">
+          <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="isBusy" @click="submitLiabilityCreate">Create Liability</button>
+        </div>
+      </div>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">

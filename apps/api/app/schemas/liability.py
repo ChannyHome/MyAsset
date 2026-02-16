@@ -1,7 +1,24 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.asset import SortOrder
+
+
+class LiabilityTableSortBy(str, Enum):
+    ID = "id"
+    NAME = "name"
+    PORTFOLIO_NAME = "portfolio_name"
+    LIABILITY_TYPE = "liability_type"
+    CURRENCY = "currency"
+    OUTSTANDING_BALANCE = "outstanding_balance"
+    INTEREST_RATE = "interest_rate"
+    MONTHLY_PAYMENT = "monthly_payment"
+    IS_INCLUDED = "is_included"
+    IS_HIDDEN = "is_hidden"
+    UPDATED_AT = "updated_at"
 
 
 class LiabilityCreate(BaseModel):
@@ -54,3 +71,17 @@ class LiabilityOut(BaseModel):
     memo: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class LiabilityTableRowOut(LiabilityOut):
+    portfolio_name: str | None = None
+
+
+class LiabilityTablePageOut(BaseModel):
+    items: list[LiabilityTableRowOut]
+    total: int
+    page: int
+    page_size: int
+    sort_by: LiabilityTableSortBy
+    sort_order: SortOrder
+    q: str | None = None

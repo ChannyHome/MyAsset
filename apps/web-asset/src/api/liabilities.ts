@@ -1,4 +1,5 @@
 import { http } from "./http";
+import type { SortOrder } from "./assets";
 
 export type LiabilityOut = {
   id: number;
@@ -18,7 +19,44 @@ export type LiabilityOut = {
   updated_at: string;
 };
 
+export type LiabilityTableSortBy =
+  | "id"
+  | "name"
+  | "portfolio_name"
+  | "liability_type"
+  | "currency"
+  | "outstanding_balance"
+  | "interest_rate"
+  | "monthly_payment"
+  | "is_included"
+  | "is_hidden"
+  | "updated_at";
+
+export type LiabilityTableRowOut = LiabilityOut & {
+  portfolio_name: string | null;
+};
+
+export type LiabilityTablePageOut = {
+  items: LiabilityTableRowOut[];
+  total: number;
+  page: number;
+  page_size: number;
+  sort_by: LiabilityTableSortBy;
+  sort_order: SortOrder;
+  q: string | null;
+};
+
 export type LiabilitiesQuery = {
+  include_hidden?: boolean;
+  include_excluded?: boolean;
+};
+
+export type LiabilitiesTableQuery = {
+  page?: number;
+  page_size?: number;
+  sort_by?: LiabilityTableSortBy;
+  sort_order?: SortOrder;
+  q?: string;
   include_hidden?: boolean;
   include_excluded?: boolean;
 };
@@ -41,6 +79,11 @@ export type LiabilityUpdateIn = Partial<LiabilityCreateIn>;
 
 export async function getLiabilities(params: LiabilitiesQuery = {}): Promise<LiabilityOut[]> {
   const { data } = await http.get<LiabilityOut[]>("/liabilities", { params });
+  return data;
+}
+
+export async function getLiabilitiesTable(params: LiabilitiesTableQuery = {}): Promise<LiabilityTablePageOut> {
+  const { data } = await http.get<LiabilityTablePageOut>("/liabilities/table", { params });
   return data;
 }
 

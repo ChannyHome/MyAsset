@@ -1,4 +1,5 @@
 import { http } from "./http";
+import type { SortOrder } from "./assets";
 
 export type PortfolioCategory =
   | "KR_STOCK"
@@ -28,6 +29,47 @@ export type PortfolioOut = {
   updated_at: string;
 };
 
+export type PortfolioTableSortBy =
+  | "id"
+  | "name"
+  | "type"
+  | "base_currency"
+  | "exchange_code"
+  | "category"
+  | "is_included"
+  | "is_hidden"
+  | "cumulative_deposit_amount"
+  | "cumulative_withdrawal_amount"
+  | "cashflow_source_type"
+  | "updated_at"
+  | "holding_count"
+  | "liability_count";
+
+export type PortfolioTableRowOut = PortfolioOut & {
+  holding_count: number;
+  liability_count: number;
+};
+
+export type PortfolioTablePageOut = {
+  items: PortfolioTableRowOut[];
+  total: number;
+  page: number;
+  page_size: number;
+  sort_by: PortfolioTableSortBy;
+  sort_order: SortOrder;
+  q: string | null;
+};
+
+export type PortfoliosTableQuery = {
+  page?: number;
+  page_size?: number;
+  sort_by?: PortfolioTableSortBy;
+  sort_order?: SortOrder;
+  q?: string;
+  include_hidden?: boolean;
+  include_excluded?: boolean;
+};
+
 export type PortfolioCreateIn = {
   name: string;
   type?: string;
@@ -46,6 +88,11 @@ export type PortfolioUpdateIn = Partial<PortfolioCreateIn>;
 
 export async function getPortfolios(): Promise<PortfolioOut[]> {
   const { data } = await http.get<PortfolioOut[]>("/portfolios");
+  return data;
+}
+
+export async function getPortfoliosTable(params: PortfoliosTableQuery = {}): Promise<PortfolioTablePageOut> {
+  const { data } = await http.get<PortfolioTablePageOut>("/portfolios/table", { params });
   return data;
 }
 

@@ -1,7 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
+
+from app.schemas.asset import SortOrder
+
+
+class HoldingTableSortBy(str, Enum):
+    ID = "id"
+    PORTFOLIO_NAME = "portfolio_name"
+    ASSET_NAME = "asset_name"
+    ASSET_SYMBOL = "asset_symbol"
+    QUANTITY = "quantity"
+    AVG_PRICE = "avg_price"
+    INVESTED_AMOUNT = "invested_amount"
+    CURRENT_PRICE = "current_price"
+    EVALUATED_AMOUNT = "evaluated_amount"
+    PNL_PCT = "pnl_pct"
+    SOURCE_TYPE = "source_type"
+    IS_HIDDEN = "is_hidden"
+    UPDATED_AT = "updated_at"
+    QUOTE_AS_OF = "quote_as_of"
 
 
 class HoldingCreate(BaseModel):
@@ -45,3 +65,27 @@ class HoldingOut(BaseModel):
     memo: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class HoldingTableRowOut(HoldingOut):
+    portfolio_name: str | None = None
+    asset_name: str
+    asset_symbol: str | None = None
+    asset_class: str
+    current_price: Decimal | None = None
+    current_price_currency: str | None = None
+    evaluated_amount: Decimal
+    pnl_amount: Decimal
+    pnl_pct: Decimal | None = None
+    quote_as_of: datetime | None = None
+    quote_source: str | None = None
+
+
+class HoldingTablePageOut(BaseModel):
+    items: list[HoldingTableRowOut]
+    total: int
+    page: int
+    page_size: int
+    sort_by: HoldingTableSortBy
+    sort_order: SortOrder
+    q: str | None = None

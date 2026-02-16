@@ -1,17 +1,26 @@
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.db import get_db
 from app.models.holding import Holding
+from app.models.liability import Liability
 from app.models.latest_quote import LatestQuote
 from app.models.portfolio import Portfolio
 from app.schemas.performance import PortfolioPerformanceOut
-from app.schemas.portfolio import PortfolioCreate, PortfolioOut, PortfolioUpdate
+from app.schemas.asset import SortOrder
+from app.schemas.portfolio import (
+    PortfolioCreate,
+    PortfolioOut,
+    PortfolioTablePageOut,
+    PortfolioTableRowOut,
+    PortfolioTableSortBy,
+    PortfolioUpdate,
+)
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
@@ -32,6 +41,105 @@ def list_portfolios(
 ) -> list[Portfolio]:
     stmt = select(Portfolio).where(Portfolio.owner_user_id == current_user.id).order_by(Portfolio.id.desc())
     return list(db.scalars(stmt).all())
+
+
+@router.get("/table", response_model=PortfolioTablePageOut)
+def list_portfolios_table(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=200),
+    sort_by: PortfolioTableSortBy = Query(default=PortfolioTableSortBy.UPDATED_AT),
+    sort_order: SortOrder = Query(default=SortOrder.DESC),
+    q: str | None = Query(default=None, min_length=1, max_length=100),
+    include_hidden: bool = True,
+    include_excluded: bool = True,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> PortfolioTablePageOut:
+    query_text = q.strip() if q else None
+    holding_count_expr = select(func.count()).where(Holding.portfolio_id == Portfolio.id).scalar_subquery()
+    liability_count_expr = select(func.count()).where(Liability.portfolio_id == Portfolio.id).scalar_subquery()
+
+    filters = [Portfolio.owner_user_id == current_user.id]
+    if not include_hidden:
+        filters.append(Portfolio.is_hidden.is_(False))
+    if not include_excluded:
+        filters.append(Portfolio.is_included.is_(True))
+    if query_text:
+        like = f"%{query_text}%"
+        filters.append(
+            or_(
+                Portfolio.name.ilike(like),
+                Portfolio.type.ilike(like),
+                Portfolio.category.ilike(like),
+                Portfolio.exchange_code.ilike(like),
+                Portfolio.memo.ilike(like),
+                Portfolio.base_currency.ilike(like),
+            )
+        )
+
+    count_stmt = select(func.count()).select_from(Portfolio).where(*filters)
+    total = int(db.scalar(count_stmt) or 0)
+
+    sort_column_map = {
+        PortfolioTableSortBy.ID: Portfolio.id,
+        PortfolioTableSortBy.NAME: Portfolio.name,
+        PortfolioTableSortBy.TYPE: Portfolio.type,
+        PortfolioTableSortBy.BASE_CURRENCY: Portfolio.base_currency,
+        PortfolioTableSortBy.EXCHANGE_CODE: Portfolio.exchange_code,
+        PortfolioTableSortBy.CATEGORY: Portfolio.category,
+        PortfolioTableSortBy.IS_INCLUDED: Portfolio.is_included,
+        PortfolioTableSortBy.IS_HIDDEN: Portfolio.is_hidden,
+        PortfolioTableSortBy.DEPOSIT: Portfolio.cumulative_deposit_amount,
+        PortfolioTableSortBy.WITHDRAWAL: Portfolio.cumulative_withdrawal_amount,
+        PortfolioTableSortBy.CASHFLOW_SOURCE_TYPE: Portfolio.cashflow_source_type,
+        PortfolioTableSortBy.UPDATED_AT: Portfolio.updated_at,
+        PortfolioTableSortBy.HOLDING_COUNT: holding_count_expr,
+        PortfolioTableSortBy.LIABILITY_COUNT: liability_count_expr,
+    }
+    sort_column = sort_column_map[sort_by]
+    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+
+    stmt = (
+        select(Portfolio, holding_count_expr.label("holding_count"), liability_count_expr.label("liability_count"))
+        .where(*filters)
+        .order_by(order_expr, Portfolio.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = db.execute(stmt).all()
+
+    items = [
+        PortfolioTableRowOut(
+            id=portfolio.id,
+            owner_user_id=portfolio.owner_user_id,
+            name=portfolio.name,
+            type=portfolio.type,
+            base_currency=portfolio.base_currency,
+            exchange_code=portfolio.exchange_code,
+            category=portfolio.category,
+            memo=portfolio.memo,
+            is_included=portfolio.is_included,
+            is_hidden=portfolio.is_hidden,
+            cumulative_deposit_amount=portfolio.cumulative_deposit_amount,
+            cumulative_withdrawal_amount=portfolio.cumulative_withdrawal_amount,
+            cashflow_source_type=portfolio.cashflow_source_type,
+            created_at=portfolio.created_at,
+            updated_at=portfolio.updated_at,
+            holding_count=int(holding_count or 0),
+            liability_count=int(liability_count or 0),
+        )
+        for portfolio, holding_count, liability_count in rows
+    ]
+
+    return PortfolioTablePageOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        q=query_text,
+    )
 
 
 @router.get("/performance", response_model=list[PortfolioPerformanceOut])
