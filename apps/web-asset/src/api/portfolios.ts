@@ -40,6 +40,14 @@ export type PortfolioTableSortBy =
   | "is_hidden"
   | "cumulative_deposit_amount"
   | "cumulative_withdrawal_amount"
+  | "gross_assets_total"
+  | "liabilities_total"
+  | "net_assets_total"
+  | "principal_minus_debt_total"
+  | "net_assets_profit_total"
+  | "net_assets_return_pct"
+  | "total_pnl_amount"
+  | "total_return_pct"
   | "cashflow_source_type"
   | "updated_at"
   | "holding_count"
@@ -48,6 +56,14 @@ export type PortfolioTableSortBy =
 export type PortfolioTableRowOut = PortfolioOut & {
   holding_count: number;
   liability_count: number;
+  gross_assets_total: string | number;
+  liabilities_total: string | number;
+  net_assets_total: string | number;
+  principal_minus_debt_total: string | number;
+  net_assets_profit_total: string | number;
+  net_assets_return_pct: string | number | null;
+  total_pnl_amount: string | number;
+  total_return_pct: string | number | null;
 };
 
 export type PortfolioTablePageOut = {

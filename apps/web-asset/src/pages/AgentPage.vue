@@ -290,6 +290,13 @@ function formatQuantity(value: string | number): string {
   return fracPart ? `${grouped}.${fracPart}` : grouped;
 }
 
+function formatPct(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "-";
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  return `${amount.toFixed(2)}%`;
+}
+
 function holdingCurrencyCode(item: HoldingTableRowOut): string {
   return normalizeUpper(item.current_price_currency || item.asset_currency || "KRW");
 }
@@ -1224,7 +1231,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="mt-3 overflow-x-auto">
-        <table class="w-full min-w-[1220px] text-left text-xs leading-tight">
+        <table class="w-full min-w-[2120px] text-left text-xs leading-tight">
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('id')">ID <span class="opacity-70">{{ sortIndicator("id") }}</span></button></th>
@@ -1456,6 +1463,14 @@ onBeforeUnmount(() => {
               <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_deposit_amount')">Deposit <span class="opacity-70">{{ portfolioSortIndicator("cumulative_deposit_amount") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_withdrawal_amount')">Withdrawal <span class="opacity-70">{{ portfolioSortIndicator("cumulative_withdrawal_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('gross_assets_total')">Gross <span class="opacity-70">{{ portfolioSortIndicator("gross_assets_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liabilities_total')">Debt <span class="opacity-70">{{ portfolioSortIndicator("liabilities_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_total')">Net <span class="opacity-70">{{ portfolioSortIndicator("net_assets_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('principal_minus_debt_total')">Base(Net) <span class="opacity-70">{{ portfolioSortIndicator("principal_minus_debt_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_profit_total')">Net Profit <span class="opacity-70">{{ portfolioSortIndicator("net_assets_profit_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_return_pct')">Net Return% <span class="opacity-70">{{ portfolioSortIndicator("net_assets_return_pct") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('total_pnl_amount')">PnL <span class="opacity-70">{{ portfolioSortIndicator("total_pnl_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('total_return_pct')">Return% <span class="opacity-70">{{ portfolioSortIndicator("total_return_pct") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('holding_count')">Holdings <span class="opacity-70">{{ portfolioSortIndicator("holding_count") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liability_count')">Liabilities <span class="opacity-70">{{ portfolioSortIndicator("liability_count") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('updated_at')">Updated <span class="opacity-70">{{ portfolioSortIndicator("updated_at") }}</span></button></th>
@@ -1474,6 +1489,14 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_deposit_amount, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_withdrawal_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.gross_assets_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.liabilities_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.net_assets_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.principal_minus_debt_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.net_assets_profit_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.net_assets_return_pct) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.total_pnl_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.total_return_pct) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.holding_count }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.liability_count }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
@@ -1494,7 +1517,7 @@ onBeforeUnmount(() => {
               </td>
             </tr>
             <tr v-if="portfolioRows.length === 0">
-              <td colspan="14" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No portfolios found</td>
+              <td colspan="22" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No portfolios found</td>
             </tr>
           </tbody>
         </table>

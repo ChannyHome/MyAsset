@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -56,8 +56,63 @@ def list_portfolios_table(
     current_user: SeedUser = Depends(get_current_user),
 ) -> PortfolioTablePageOut:
     query_text = q.strip() if q else None
-    holding_count_expr = select(func.count()).where(Holding.portfolio_id == Portfolio.id).scalar_subquery()
-    liability_count_expr = select(func.count()).where(Liability.portfolio_id == Portfolio.id).scalar_subquery()
+    holding_count_expr = (
+        select(func.count())
+        .select_from(Holding)
+        .where(
+            Holding.owner_user_id == Portfolio.owner_user_id,
+            Holding.portfolio_id == Portfolio.id,
+            Holding.is_hidden.is_(False),
+        )
+        .scalar_subquery()
+    )
+    gross_assets_total_expr = (
+        select(func.coalesce(func.sum(Holding.quantity * func.coalesce(LatestQuote.price, Holding.avg_price)), 0))
+        .select_from(Holding)
+        .outerjoin(LatestQuote, LatestQuote.asset_id == Holding.asset_id)
+        .where(
+            Holding.owner_user_id == Portfolio.owner_user_id,
+            Holding.portfolio_id == Portfolio.id,
+            Holding.is_hidden.is_(False),
+        )
+        .scalar_subquery()
+    )
+    liability_count_expr = (
+        select(func.count())
+        .select_from(Liability)
+        .where(
+            Liability.owner_user_id == Portfolio.owner_user_id,
+            Liability.portfolio_id == Portfolio.id,
+            Liability.is_hidden.is_(False),
+            Liability.is_included.is_(True),
+        )
+        .scalar_subquery()
+    )
+    liabilities_total_expr = (
+        select(func.coalesce(func.sum(Liability.outstanding_balance), 0))
+        .select_from(Liability)
+        .where(
+            Liability.owner_user_id == Portfolio.owner_user_id,
+            Liability.portfolio_id == Portfolio.id,
+            Liability.is_hidden.is_(False),
+            Liability.is_included.is_(True),
+        )
+        .scalar_subquery()
+    )
+    net_assets_total_expr = gross_assets_total_expr - liabilities_total_expr
+    principal_minus_debt_total_expr = Portfolio.cumulative_deposit_amount - liabilities_total_expr
+    net_assets_profit_total_expr = net_assets_total_expr - principal_minus_debt_total_expr
+    net_assets_return_pct_expr = case(
+        (principal_minus_debt_total_expr == 0, None),
+        else_=(net_assets_profit_total_expr / func.nullif(principal_minus_debt_total_expr, 0)) * 100,
+    )
+    total_pnl_amount_expr = (
+        gross_assets_total_expr + Portfolio.cumulative_withdrawal_amount - Portfolio.cumulative_deposit_amount
+    )
+    total_return_pct_expr = case(
+        (Portfolio.cumulative_deposit_amount == 0, None),
+        else_=(total_pnl_amount_expr / func.nullif(Portfolio.cumulative_deposit_amount, 0)) * 100,
+    )
 
     filters = [Portfolio.owner_user_id == current_user.id]
     if not include_hidden:
@@ -91,6 +146,14 @@ def list_portfolios_table(
         PortfolioTableSortBy.IS_HIDDEN: Portfolio.is_hidden,
         PortfolioTableSortBy.DEPOSIT: Portfolio.cumulative_deposit_amount,
         PortfolioTableSortBy.WITHDRAWAL: Portfolio.cumulative_withdrawal_amount,
+        PortfolioTableSortBy.GROSS_ASSETS_TOTAL: gross_assets_total_expr,
+        PortfolioTableSortBy.LIABILITIES_TOTAL: liabilities_total_expr,
+        PortfolioTableSortBy.NET_ASSETS_TOTAL: net_assets_total_expr,
+        PortfolioTableSortBy.PRINCIPAL_MINUS_DEBT_TOTAL: principal_minus_debt_total_expr,
+        PortfolioTableSortBy.NET_ASSETS_PROFIT_TOTAL: net_assets_profit_total_expr,
+        PortfolioTableSortBy.NET_ASSETS_RETURN_PCT: net_assets_return_pct_expr,
+        PortfolioTableSortBy.TOTAL_PNL_AMOUNT: total_pnl_amount_expr,
+        PortfolioTableSortBy.TOTAL_RETURN_PCT: total_return_pct_expr,
         PortfolioTableSortBy.CASHFLOW_SOURCE_TYPE: Portfolio.cashflow_source_type,
         PortfolioTableSortBy.UPDATED_AT: Portfolio.updated_at,
         PortfolioTableSortBy.HOLDING_COUNT: holding_count_expr,
@@ -100,7 +163,19 @@ def list_portfolios_table(
     order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
 
     stmt = (
-        select(Portfolio, holding_count_expr.label("holding_count"), liability_count_expr.label("liability_count"))
+        select(
+            Portfolio,
+            holding_count_expr.label("holding_count"),
+            liability_count_expr.label("liability_count"),
+            gross_assets_total_expr.label("gross_assets_total"),
+            liabilities_total_expr.label("liabilities_total"),
+            net_assets_total_expr.label("net_assets_total"),
+            principal_minus_debt_total_expr.label("principal_minus_debt_total"),
+            net_assets_profit_total_expr.label("net_assets_profit_total"),
+            net_assets_return_pct_expr.label("net_assets_return_pct"),
+            total_pnl_amount_expr.label("total_pnl_amount"),
+            total_return_pct_expr.label("total_return_pct"),
+        )
         .where(*filters)
         .order_by(order_expr, Portfolio.id.desc())
         .offset((page - 1) * page_size)
@@ -127,8 +202,28 @@ def list_portfolios_table(
             updated_at=portfolio.updated_at,
             holding_count=int(holding_count or 0),
             liability_count=int(liability_count or 0),
+            gross_assets_total=gross_assets_total,
+            liabilities_total=liabilities_total,
+            net_assets_total=net_assets_total,
+            principal_minus_debt_total=principal_minus_debt_total,
+            net_assets_profit_total=net_assets_profit_total,
+            net_assets_return_pct=net_assets_return_pct,
+            total_pnl_amount=total_pnl_amount,
+            total_return_pct=total_return_pct,
         )
-        for portfolio, holding_count, liability_count in rows
+        for (
+            portfolio,
+            holding_count,
+            liability_count,
+            gross_assets_total,
+            liabilities_total,
+            net_assets_total,
+            principal_minus_debt_total,
+            net_assets_profit_total,
+            net_assets_return_pct,
+            total_pnl_amount,
+            total_return_pct,
+        ) in rows
     ]
 
     return PortfolioTablePageOut(

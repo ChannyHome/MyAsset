@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { g as getSummary } from './analytics-CM2txNIY.js';
-import { g as getHoldingsPerformance, a as getLiabilities } from './liabilities-Ca_kTHXz.js';
+import { g as getHoldingsPerformance, a as getLiabilities } from './liabilities-B_OSYowH.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

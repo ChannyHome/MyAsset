@@ -40,4 +40,4 @@ async function deleteLiability(liabilityId) {
   await http.delete(`/liabilities/${liabilityId}`);
 }
 
-export { getLiabilities as a, createLiability as b, createHolding as c, getHoldingsTable as d, getLiabilitiesTable as e, deleteHolding as f, getHoldingsPerformance as g, deleteLiability as h, updateLiability as i, updateHolding as u };
+export { getLiabilities as a, createLiability as b, createHolding as c, updateLiability as d, getHoldingsTable as e, getLiabilitiesTable as f, getHoldingsPerformance as g, deleteHolding as h, deleteLiability as i, updateHolding as u };

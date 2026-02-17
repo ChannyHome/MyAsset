@@ -81,14 +81,13 @@
   - `v_household_summary_v2`
 
 ### Step 12 (done): Portfolio net worth view
-- Alembic revisions: `011_portfolio_networth_view`, `015_portfolio_networth_align`, `016_minus_debt_views`, `020_portfolio_drop_owned`, `021_portfolio_col_order`
+- Alembic revisions: `011_portfolio_networth_view`, `015_portfolio_networth_align`, `016_minus_debt_views`, `020_portfolio_drop_owned`, `021_portfolio_col_order`, `023_portfolio_drop_networth`
 - Added view:
   - `v_user_portfolio_networth_v2`
 - Core fields:
   - `gross_assets_total`
   - `liabilities_total`
   - `net_assets_total` (assets - liabilities)
-  - `net_worth_total` (assets - liabilities)
   - `principal_minus_debt_total`
   - `net_assets_profit_total`
   - `net_assets_return_pct`
