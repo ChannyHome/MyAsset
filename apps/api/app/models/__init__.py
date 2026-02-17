@@ -1,4 +1,5 @@
-from app.models.base import Base
+﻿from app.models.base import Base
+from app.models.app_secret import AppSecret
 from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
 from app.models.household import Household, HouseholdMember
@@ -21,4 +22,5 @@ __all__ = [
     "Holding",
     "Liability",
     "AppSetting",
+    "AppSecret",
 ]

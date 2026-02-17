@@ -41,7 +41,20 @@ import {
   type PortfolioTableRowOut,
   type PortfolioTableSortBy,
 } from "../api/portfolios";
-import { updateQuotesNow, upsertManualQuote, type ManualQuoteUpsertIn } from "../api/quotes";
+import {
+  testQuoteForAsset,
+  updateQuotesNow,
+  upsertManualQuote,
+  type ManualQuoteUpsertIn,
+  type QuoteLatestOut,
+} from "../api/quotes";
+import {
+  createAppSecret,
+  deactivateAppSecret,
+  listAppSecrets,
+  updateAppSecret,
+  type AppSecretOut,
+} from "../api/adminSecrets";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
@@ -54,6 +67,40 @@ type TableQueryState<TSort extends string> = {
   sortOrder: SortOrder;
   q: string;
 };
+type CollapseState = {
+  quoteActionsCollapsed: boolean;
+  secretsVaultCollapsed: boolean;
+  assetsSectionCollapsed: boolean;
+  portfoliosSectionCollapsed: boolean;
+  holdingsSectionCollapsed: boolean;
+  liabilitiesSectionCollapsed: boolean;
+};
+
+const COLLAPSE_STATE_STORAGE_KEY = "myasset.agent.collapse.v1";
+
+function loadCollapseState(): Partial<CollapseState> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(COLLAPSE_STATE_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Partial<CollapseState>;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function saveCollapseState(next: CollapseState): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(COLLAPSE_STATE_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // ignore storage errors (private mode/quota/etc.)
+  }
+}
+
+const initialCollapseState = loadCollapseState();
 
 const loading = reactive({ data: false, action: false, confirm: false });
 const me = ref<AuthMeOut | null>(null);
@@ -63,6 +110,7 @@ const holdingPortfolioOptions = ref<PortfolioOut[]>([]);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const holdingRows = ref<HoldingTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
+const appSecrets = ref<AppSecretOut[]>([]);
 const logs = ref<ActionLog[]>([]);
 let nextLogId = 1;
 const assetsQuery = reactive<TableQueryState<AssetTableSortBy>>({
@@ -105,7 +153,13 @@ const assetModal = reactive({ open: false, mode: "CREATE" as AssetModalMode });
 const portfolioEditModal = reactive({ open: false });
 const holdingEditModal = reactive({ open: false });
 const liabilityEditModal = reactive({ open: false });
-const quoteActionsCollapsed = ref(true);
+const quoteActionsCollapsed = ref(initialCollapseState.quoteActionsCollapsed ?? true);
+const secretsVaultCollapsed = ref(initialCollapseState.secretsVaultCollapsed ?? true);
+const quoteTestingAssetId = ref<number | null>(null);
+const assetsSectionCollapsed = ref(initialCollapseState.assetsSectionCollapsed ?? true);
+const portfoliosSectionCollapsed = ref(initialCollapseState.portfoliosSectionCollapsed ?? true);
+const holdingsSectionCollapsed = ref(initialCollapseState.holdingsSectionCollapsed ?? true);
+const liabilitiesSectionCollapsed = ref(initialCollapseState.liabilitiesSectionCollapsed ?? true);
 const quickCreatePortfolioOpen = ref(false);
 const quickCreateHoldingOpen = ref(false);
 const quickCreateLiabilityOpen = ref(false);
@@ -198,9 +252,18 @@ const liabilityEditForm = reactive({
   is_hidden: false,
   memo: "",
 });
+const secretForm = reactive({
+  id: "",
+  provider: "DATA_GO_KR",
+  key_name: "",
+  secret_value: "",
+  description: "",
+  is_active: true,
+});
 
 const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
+const canManageAppSecrets = computed(() => me.value?.role === "ADMIN");
 const isBusy = computed(() => loading.data || loading.action || loading.confirm);
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
@@ -237,6 +300,15 @@ let portfolioSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let holdingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let liabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshSequence = 0;
+const realEstateMetaJsonExample = `{
+  "jibun": "1046-1",
+  "area_m2": 119.871,
+  "lawd_cd": "41117",
+  "apt_name": "청명마을삼성",
+  "lookback_months": 12
+}`;
+const assetMetaJsonPlaceholder = `예시 (부동산) :
+${realEstateMetaJsonExample}`;
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "-";
@@ -312,6 +384,20 @@ function quoteAsOfText(item: AssetTableRowOut): string {
 
 function quoteSourceText(item: AssetTableRowOut): string {
   return item.quote_source || "-";
+}
+
+function applyQuoteToAssetRow(assetId: number, quote: QuoteLatestOut): void {
+  const index = assets.value.findIndex((item) => item.id === assetId);
+  if (index < 0) return;
+
+  const current = assets.value[index];
+  assets.value[index] = {
+    ...current,
+    quote_price: quote.price,
+    quote_currency: quote.currency,
+    quote_as_of: quote.as_of,
+    quote_source: quote.source,
+  };
 }
 
 function getErrorMessage(error: unknown): string {
@@ -407,8 +493,15 @@ async function executeConfirm(): Promise<void> {
   }
 }
 
-function runAction(action: string, title: string, message: string, task: () => Promise<void>): void {
+function runAction(
+  action: string,
+  title: string,
+  message: string,
+  task: () => Promise<void>,
+  hooks?: { onStart?: () => void; onFinally?: () => void },
+): void {
   askConfirm(title, message, async () => {
+    hooks?.onStart?.();
     loading.action = true;
     try {
       await task();
@@ -418,6 +511,7 @@ function runAction(action: string, title: string, message: string, task: () => P
       pushLog(action, "ERROR", getErrorMessage(error));
     } finally {
       loading.action = false;
+      hooks?.onFinally?.();
     }
   });
 }
@@ -499,6 +593,37 @@ function askUpdateQuotesNow(): void {
   });
 }
 
+function askQuoteTestAsset(item: AssetTableRowOut): void {
+  if (!canManageQuotes.value) {
+    pushLog("Quote Test", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  if (item.quote_mode !== "AUTO") {
+    pushLog("Quote Test", "ERROR", "Quote Test is available only for AUTO mode assets");
+    return;
+  }
+
+  selectAssetForQuote(item);
+  runAction(
+    "Quote Test",
+    "Quote Test",
+    `${item.name} (${item.exchange_code}) 현재가를 단건 테스트 갱신할까요?`,
+    async () => {
+      const result = await testQuoteForAsset(item.id);
+      applyQuoteToAssetRow(item.id, result);
+      pushLog("Quote Test", "INFO", `${item.name}: ${formatMoney(result.price, result.currency)} @ ${formatDateTime(result.as_of)}`);
+    },
+    {
+      onStart: () => {
+        quoteTestingAssetId.value = item.id;
+      },
+      onFinally: () => {
+        quoteTestingAssetId.value = null;
+      },
+    },
+  );
+}
+
 function askApplyManualQuote(): void {
   if (!canManageQuotes.value) {
     pushLog("Manual Quote", "ERROR", "Admin/Maintainer only");
@@ -513,7 +638,83 @@ function askApplyManualQuote(): void {
       as_of: manualQuoteForm.as_of.trim() || null,
       source: manualQuoteForm.source.trim() || null,
     };
-    await upsertManualQuote(payload);
+    const result = await upsertManualQuote(payload);
+    applyQuoteToAssetRow(result.asset_id, result);
+  });
+}
+
+function resetSecretForm(): void {
+  secretForm.id = "";
+  secretForm.provider = "DATA_GO_KR";
+  secretForm.key_name = "";
+  secretForm.secret_value = "";
+  secretForm.description = "";
+  secretForm.is_active = true;
+}
+
+function fillSecretForm(item: AppSecretOut): void {
+  secretForm.id = String(item.id);
+  secretForm.provider = item.provider;
+  secretForm.key_name = item.key_name;
+  secretForm.secret_value = "";
+  secretForm.description = item.description || "";
+  secretForm.is_active = item.is_active;
+}
+
+function submitSecretForm(): void {
+  if (!canManageAppSecrets.value) {
+    pushLog("Secret Vault", "ERROR", "ADMIN only");
+    return;
+  }
+
+  try {
+    const provider = normalizeUpper(secretForm.provider);
+    const keyName = normalizeUpper(secretForm.key_name);
+    const secretValue = secretForm.secret_value.trim();
+    const description = secretForm.description.trim() || null;
+
+    if (!provider) throw new Error("Provider is required");
+    if (!keyName) throw new Error("Key name is required");
+
+    if (!secretForm.id) {
+      if (!secretValue) throw new Error("Secret value is required");
+      runAction("Secret Create", "Create Secret", `Create ${provider}/${keyName}?`, async () => {
+        await createAppSecret({
+          provider,
+          key_name: keyName,
+          secret_value: secretValue,
+          description,
+        });
+        resetSecretForm();
+      });
+      return;
+    }
+
+    const secretId = toPositiveInt(secretForm.id);
+    runAction("Secret Update", "Update Secret", `Update secret #${secretId}?`, async () => {
+      await updateAppSecret(secretId, {
+        secret_value: secretValue || undefined,
+        description,
+        is_active: secretForm.is_active,
+      });
+      resetSecretForm();
+    });
+  } catch (error) {
+    pushLog("Secret Vault", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askDeactivateSecret(item: AppSecretOut): void {
+  if (!canManageAppSecrets.value) {
+    pushLog("Secret Vault", "ERROR", "ADMIN only");
+    return;
+  }
+
+  runAction("Secret Deactivate", "Deactivate Secret", `Deactivate ${item.provider}/${item.key_name}?`, async () => {
+    await deactivateAppSecret(item.id);
+    if (secretForm.id === String(item.id)) {
+      resetSecretForm();
+    }
   });
 }
 
@@ -937,8 +1138,9 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   const shouldLogRefresh = options?.logRefresh ?? true;
   loading.data = true;
   try {
-    const [meOut, assetsOut, portfoliosOut, holdingsOut, liabilitiesOut] = await Promise.all([
-      getMe(),
+    const meOut = await getMe();
+
+    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, secretsOut] = await Promise.all([
       getAssetsTable({
         page: assetsQuery.page,
         page_size: assetsQuery.pageSize,
@@ -967,13 +1169,18 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         sort_order: liabilityQuery.sortOrder,
         q: liabilityQuery.q.trim() || undefined,
       }),
+      meOut.role === "ADMIN" ? listAppSecrets() : Promise.resolve([] as AppSecretOut[]),
     ]);
+
     if (refreshId !== refreshSequence) return;
+
     me.value = meOut;
     assets.value = assetsOut.items;
     portfolioRows.value = portfoliosOut.items;
     holdingRows.value = holdingsOut.items;
     liabilityRows.value = liabilitiesOut.items;
+    appSecrets.value = secretsOut;
+
     assetsQuery.total = assetsOut.total;
     portfolioQuery.total = portfoliosOut.total;
     holdingQuery.total = holdingsOut.total;
@@ -984,11 +1191,16 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
       manualQuoteForm.asset_id = assetsOut.items[0] ? String(assetsOut.items[0].id) : "";
     }
 
+    if (meOut.role !== "ADMIN") {
+      resetSecretForm();
+    }
+
     if (shouldLogRefresh) {
+      const secretInfo = meOut.role === "ADMIN" ? `, secrets=${secretsOut.length}` : "";
       pushLog(
         "Refresh",
         "INFO",
-        `Agent data loaded (assets=${assetsOut.total}, portfolios=${portfoliosOut.total}, holdings=${holdingsOut.total}, liabilities=${liabilitiesOut.total})`,
+        `Agent data loaded (assets=${assetsOut.total}, portfolios=${portfoliosOut.total}, holdings=${holdingsOut.total}, liabilities=${liabilitiesOut.total}${secretInfo})`,
       );
     }
   } catch (error) {
@@ -1156,6 +1368,34 @@ watch(
     }, AUTO_SEARCH_DEBOUNCE_MS);
   },
 );
+watch(
+  [
+    quoteActionsCollapsed,
+    secretsVaultCollapsed,
+    assetsSectionCollapsed,
+    portfoliosSectionCollapsed,
+    holdingsSectionCollapsed,
+    liabilitiesSectionCollapsed,
+  ],
+  (values) => {
+    const [
+      nextQuoteActionsCollapsed,
+      nextSecretsVaultCollapsed,
+      nextAssetsSectionCollapsed,
+      nextPortfoliosSectionCollapsed,
+      nextHoldingsSectionCollapsed,
+      nextLiabilitiesSectionCollapsed,
+    ] = values;
+    saveCollapseState({
+      quoteActionsCollapsed: nextQuoteActionsCollapsed,
+      secretsVaultCollapsed: nextSecretsVaultCollapsed,
+      assetsSectionCollapsed: nextAssetsSectionCollapsed,
+      portfoliosSectionCollapsed: nextPortfoliosSectionCollapsed,
+      holdingsSectionCollapsed: nextHoldingsSectionCollapsed,
+      liabilitiesSectionCollapsed: nextLiabilitiesSectionCollapsed,
+    });
+  },
+);
 
 onMounted(refreshData);
 onBeforeUnmount(() => {
@@ -1189,20 +1429,169 @@ onBeforeUnmount(() => {
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Secrets Vault (Admin)</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Manage exchange/broker/bank/API credentials by provider+key. List values are masked.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            v-if="canManageAppSecrets && !secretsVaultCollapsed"
+            type="button"
+            class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="resetSecretForm"
+          >
+            Reset Form
+          </button>
+          <button
+            v-if="canManageAppSecrets"
+            type="button"
+            class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="secretsVaultCollapsed = !secretsVaultCollapsed"
+          >
+            {{ secretsVaultCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
+      </div>
+
+      <p v-if="!canManageAppSecrets" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        Only ADMIN can view/create/update/deactivate secrets.
+      </p>
+      <p v-else-if="secretsVaultCollapsed" class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
+      <template v-else>
+        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <label class="text-xs"
+            >Provider
+            <input
+              v-model="secretForm.provider"
+              placeholder="e.g. DATA_GO_KR / UPBIT / KIWOOM / KORBANK"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs"
+            >Key Name
+            <input
+              v-model="secretForm.key_name"
+              placeholder="e.g. SERVICE_KEY / ACCESS_TOKEN"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs md:col-span-2"
+            >Secret Value {{ secretForm.id ? "(leave blank to keep current value)" : "" }}
+            <input
+              v-model="secretForm.secret_value"
+              type="password"
+              placeholder="actual token/key"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs md:col-span-2"
+            >Description
+            <input
+              v-model="secretForm.description"
+              placeholder="description (optional)"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs md:col-span-2">
+            <input v-model="secretForm.is_active" type="checkbox" />
+            <span class="ml-1">Active</span>
+          </label>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
+            :disabled="isBusy"
+            @click="submitSecretForm"
+          >
+            {{ secretForm.id ? "Update Secret" : "Create Secret" }}
+          </button>
+          <span v-if="secretForm.id" class="text-xs text-slate-500 dark:text-slate-400">Editing #{{ secretForm.id }}</span>
+        </div>
+
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full min-w-[980px] text-left text-xs leading-tight">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr>
+                <th class="px-2 py-1.5 whitespace-nowrap">ID</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Provider</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Key</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Masked</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Active</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in appSecrets" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.provider }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.key_name }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.masked_value }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_active ? "Y" : "N" }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+                      :disabled="isBusy"
+                      @click="fillSecretForm(item)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700"
+                      :disabled="isBusy || !item.is_active"
+                      @click="askDeactivateSecret(item)"
+                    >
+                      Disable
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="appSecrets.length === 0">
+                <td colspan="7" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No secrets registered</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Current Assets Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">현재 등록된 자산 목록과 상태입니다. 행 클릭 시 Quote Actions와 동기화됩니다.</p>
         </div>
-        <button
-          v-if="canManageQuotes"
-          type="button"
-          class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
-          :disabled="isBusy"
-          @click="askUpdateQuotesNow"
-        >
-          Update Quotes Now
-        </button>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            v-if="canManageQuotes"
+            type="button"
+            class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
+            :disabled="isBusy"
+            @click="askUpdateQuotesNow"
+          >
+            Update Quotes Now
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="assetsSectionCollapsed = !assetsSectionCollapsed"
+          >
+            {{ assetsSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
       </div>
-      <p v-if="canManageQuotes" class="mt-1 text-xs text-slate-500 dark:text-slate-400">AUTO mode인 모든 Asset 시세를 즉시 갱신합니다.</p>
+      <template v-if="!assetsSectionCollapsed">
+      <p v-if="canManageQuotes" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        AUTO mode인 모든 Asset 시세를 즉시 갱신합니다. Action 컬럼의 Quote 버튼으로 단건 테스트도 가능합니다.
+      </p>
 
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input
@@ -1280,6 +1669,21 @@ onBeforeUnmount(() => {
                     Edit
                   </button>
                   <button
+                    v-if="item.quote_mode === 'AUTO'"
+                    type="button"
+                    class="rounded border border-sky-300 px-2 py-0.5 text-sky-700 transition hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-900/20 dark:focus:ring-sky-700"
+                    :disabled="!canManageQuotes || isBusy"
+                    @click.stop="askQuoteTestAsset(item)"
+                  >
+                    <span class="inline-flex items-center gap-1">
+                      <span
+                        v-if="quoteTestingAssetId === item.id && loading.action"
+                        class="inline-block h-3 w-3 animate-spin rounded-full border border-current border-t-transparent"
+                      />
+                      <span>{{ quoteTestingAssetId === item.id && loading.action ? "Testing..." : "Quote" }}</span>
+                    </span>
+                  </button>
+                  <button
                     type="button"
                     class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700"
                     :disabled="!canManageAssets || isBusy"
@@ -1350,6 +1754,8 @@ onBeforeUnmount(() => {
       >
         USER/SUPERUSER는 Asset 생성/수정/삭제 권한이 없습니다. Admin/Maintainer에게 요청하세요.
       </p>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1429,15 +1835,26 @@ onBeforeUnmount(() => {
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Portfolios Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
         </div>
-        <button
-          type="button"
-          class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-          :disabled="!canManageAssets || isBusy"
-          @click="quickCreatePortfolioOpen = !quickCreatePortfolioOpen"
-        >
-          {{ quickCreatePortfolioOpen ? "Close Create" : "Quick Create Portfolio" }}
-        </button>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="!canManageAssets || isBusy"
+            @click="quickCreatePortfolioOpen = !quickCreatePortfolioOpen"
+          >
+            {{ quickCreatePortfolioOpen ? "Close Create" : "Quick Create Portfolio" }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="portfoliosSectionCollapsed = !portfoliosSectionCollapsed"
+          >
+            {{ portfoliosSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
       </div>
+      <template v-if="!portfoliosSectionCollapsed">
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input
           v-model="portfolioQuery.q"
@@ -1562,6 +1979,8 @@ onBeforeUnmount(() => {
           <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="!canManageAssets || isBusy" @click="submitPortfolioCreate">Create Portfolio</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1570,8 +1989,19 @@ onBeforeUnmount(() => {
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Holdings Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
         </div>
-        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateHolding">{{ quickCreateHoldingOpen ? "Close Create" : "Quick Create Holding" }}</button>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateHolding">{{ quickCreateHoldingOpen ? "Close Create" : "Quick Create Holding" }}</button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="holdingsSectionCollapsed = !holdingsSectionCollapsed"
+          >
+            {{ holdingsSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
       </div>
+      <template v-if="!holdingsSectionCollapsed">
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input v-model="holdingQuery.q" type="text" placeholder="Search asset/portfolio/symbol" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyHoldingSearch" />
         <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyHoldingSearch">Search</button>
@@ -1692,6 +2122,8 @@ onBeforeUnmount(() => {
           <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="isBusy" @click="submitHoldingCreate">Create Holding</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1700,8 +2132,19 @@ onBeforeUnmount(() => {
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Liabilities Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
         </div>
-        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateLiability">{{ quickCreateLiabilityOpen ? "Close Create" : "Quick Create Liability" }}</button>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateLiability">{{ quickCreateLiabilityOpen ? "Close Create" : "Quick Create Liability" }}</button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="liabilitiesSectionCollapsed = !liabilitiesSectionCollapsed"
+          >
+            {{ liabilitiesSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
       </div>
+      <template v-if="!liabilitiesSectionCollapsed">
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input v-model="liabilityQuery.q" type="text" placeholder="Search liability/portfolio/type" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyLiabilitySearch" />
         <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyLiabilitySearch">Search</button>
@@ -1811,6 +2254,8 @@ onBeforeUnmount(() => {
           <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="isBusy" @click="submitLiabilityCreate">Create Liability</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1913,7 +2358,7 @@ onBeforeUnmount(() => {
           <textarea
             v-model="assetForm.meta_json_text"
             rows="4"
-            placeholder='예: {"address":"경기 수원시 영통구 청명북로 33"}'
+            :placeholder="assetMetaJsonPlaceholder"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-950"
           />
         </label>

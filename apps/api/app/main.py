@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.middleware.access_log import ApiAccessLogMiddleware
+from app.api.routers.admin_secrets import router as admin_secrets_router
 from app.api.routers.admin_users import router as admin_users_router
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assets import router as assets_router
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix=settings.api_v1_prefix)
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_users_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_secrets_router, prefix=settings.api_v1_prefix)
     app.include_router(households_router, prefix=settings.api_v1_prefix)
     app.include_router(portfolios_router, prefix=settings.api_v1_prefix)
     app.include_router(assets_router, prefix=settings.api_v1_prefix)

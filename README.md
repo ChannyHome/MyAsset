@@ -261,3 +261,32 @@ Each wrapper calls `run.ps1` with `-KillPortOwner` enabled.
 
 
 
+
+### Step 17 (done): Admin Secret Vault + Real-Estate AUTO quote path
+- New env keys:
+  - `DATA_GO_KR_SERVICE_KEY`
+  - `DATA_GO_KR_APARTMENT_TRADE_URL`
+  - `DATA_GO_KR_TIMEOUT_SECONDS`
+  - `DATA_GO_KR_ROWS_PER_CALL`
+  - `DATA_GO_KR_LOOKBACK_MONTHS`
+  - `APP_SECRETS_MASTER_KEY`
+- Real estate AUTO quote behavior:
+  - `asset_class=REAL_ESTATE`, `quote_mode=AUTO`, `exchange_code=DATA_GO_KR` (or `MOLIT`/`REAL_ESTATE`)
+  - `meta_json` requires at least:
+    - `lawd_cd` (region code)
+    - `apt_name` (apartment name)
+  - optional filters:
+    - `jibun`
+    - `area_m2`
+    - `lookback_months`
+  - service key resolution order: `Secret Vault(DB)` first, `.env(DATA_GO_KR_SERVICE_KEY)` fallback
+  - DB key convention: `provider=DATA_GO_KR`, `key_name=SERVICE_KEY`, `is_active=true`
+- Admin-only Secret Vault API:
+  - `GET /api/v1/admin/secrets`
+  - `POST /api/v1/admin/secrets`
+  - `PATCH /api/v1/admin/secrets/{id}`
+  - `DELETE /api/v1/admin/secrets/{id}` (soft disable)
+- Agent page now includes `Secrets Vault (Admin)` card:
+  - masked list view
+  - create/update
+  - disable

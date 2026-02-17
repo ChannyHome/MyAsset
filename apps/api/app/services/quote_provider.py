@@ -1,9 +1,14 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
+from typing import Any
+from urllib.parse import unquote
+from xml.etree import ElementTree as ET
 
 import httpx
 import yfinance as yf
+
+from app.core.config import settings
 
 
 @dataclass
@@ -112,6 +117,177 @@ def fetch_crypto_quote(exchange_code: str | None, symbol: str, asset_currency: s
     if exchange == "KORBIT":
         return fetch_korbit_quote(symbol, asset_currency)
     return None
+
+
+def fetch_real_estate_quote(
+    exchange_code: str | None,
+    asset_currency: str,
+    meta_json: dict[str, Any] | None,
+    service_key: str | None = None,
+) -> QuotePayload | None:
+    exchange = (exchange_code or "").strip().upper()
+    if exchange not in {"DATA_GO_KR", "MOLIT", "REAL_ESTATE"}:
+        return None
+
+    resolved_service_key = _normalize_service_key(service_key or settings.data_go_kr_service_key)
+    if not resolved_service_key:
+        return None
+
+    meta = meta_json or {}
+    lawd_cd = str(meta.get("lawd_cd", "")).strip()
+    apt_name = str(meta.get("apt_name", "")).strip()
+    if not lawd_cd or not apt_name:
+        return None
+
+    jibun = str(meta.get("jibun", "")).strip()
+    area_m2 = _to_decimal(meta.get("area_m2"))
+
+    lookback_months_raw = _to_decimal(meta.get("lookback_months"))
+    lookback_months = int(lookback_months_raw) if lookback_months_raw is not None else settings.data_go_kr_lookback_months
+    if lookback_months <= 0:
+        lookback_months = settings.data_go_kr_lookback_months
+
+    now = datetime.now()
+    candidates: list[tuple[datetime, Decimal]] = []
+
+    for month_index in range(lookback_months):
+        target_ymd = _shift_yyyymm(now.year, now.month, month_index)
+        rows = _fetch_molit_apt_trade_rows(
+            service_key=resolved_service_key,
+            lawd_cd=lawd_cd,
+            deal_ymd=target_ymd,
+        )
+
+        for row in rows:
+            row_apt_name = _text_or_none(row, ["아파트", "aptNm"])
+            if row_apt_name is None or row_apt_name.strip() != apt_name:
+                continue
+
+            if jibun:
+                row_jibun = _text_or_none(row, ["지번", "jibun"])
+                if row_jibun is None or row_jibun.strip() != jibun:
+                    continue
+
+            if area_m2 is not None:
+                row_area = _to_decimal(_text_or_none(row, ["전용면적", "excluUseAr"]))
+                if row_area is None:
+                    continue
+                # Area values can include small floating-point precision differences.
+                if abs(row_area - area_m2) > Decimal("0.05"):
+                    continue
+
+            # data.go.kr apartment trade API returns dealAmount in 만원 units.
+            price = _parse_trade_amount(
+                _text_or_none(row, ["거래금액", "dealAmount"]),
+                unit_multiplier=Decimal("10000"),
+            )
+            if price is None:
+                continue
+
+            deal_dt = _parse_deal_datetime(row)
+            if deal_dt is None:
+                continue
+
+            candidates.append((deal_dt, price))
+
+    if not candidates:
+        return None
+
+    deal_dt, latest_price = max(candidates, key=lambda item: item[0])
+    return QuotePayload(
+        price=latest_price,
+        currency=asset_currency.strip().upper() or "KRW",
+        change_value=None,
+        change_pct=None,
+        as_of=deal_dt,
+        source="DATA_GO_KR_MOLIT",
+    )
+
+
+def _normalize_service_key(service_key: str) -> str:
+    key = (service_key or "").strip()
+    if not key:
+        return ""
+    # data.go.kr keys are often copied as URL-encoded values.
+    return unquote(key) if "%" in key else key
+
+
+def _shift_yyyymm(year: int, month: int, offset_months: int) -> str:
+    month_index = year * 12 + (month - 1) - offset_months
+    target_year = month_index // 12
+    target_month = (month_index % 12) + 1
+    return f"{target_year:04d}{target_month:02d}"
+
+
+def _fetch_molit_apt_trade_rows(service_key: str, lawd_cd: str, deal_ymd: str) -> list[dict[str, str]]:
+    try:
+        response = httpx.get(
+            settings.data_go_kr_apartment_trade_url,
+            params={
+                "serviceKey": service_key,
+                "LAWD_CD": lawd_cd,
+                "DEAL_YMD": deal_ymd,
+                "pageNo": 1,
+                "numOfRows": settings.data_go_kr_rows_per_call,
+            },
+            timeout=settings.data_go_kr_timeout_seconds,
+        )
+        response.raise_for_status()
+    except Exception:
+        return []
+
+    try:
+        root = ET.fromstring(response.text)
+    except ET.ParseError:
+        return []
+
+    result_code = root.findtext("./header/resultCode")
+    if result_code not in {None, "", "00", "000"}:
+        return []
+
+    rows: list[dict[str, str]] = []
+    for item in root.findall("./body/items/item"):
+        mapped: dict[str, str] = {}
+        for child in list(item):
+            if child.tag:
+                mapped[child.tag] = (child.text or "").strip()
+        if mapped:
+            rows.append(mapped)
+    return rows
+
+
+def _text_or_none(row: dict[str, str], keys: list[str]) -> str | None:
+    for key in keys:
+        value = row.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return None
+
+
+def _parse_trade_amount(value: str | None, *, unit_multiplier: Decimal = Decimal("1")) -> Decimal | None:
+    if value is None:
+        return None
+    normalized = value.replace(",", "").replace(" ", "").strip()
+    amount = _to_decimal(normalized)
+    if amount is None:
+        return None
+    return amount * unit_multiplier
+
+
+def _parse_deal_datetime(row: dict[str, str]) -> datetime | None:
+    year_text = _text_or_none(row, ["년", "dealYear"])
+    month_text = _text_or_none(row, ["월", "dealMonth"])
+    day_text = _text_or_none(row, ["일", "dealDay"])
+    if year_text is None or month_text is None or day_text is None:
+        return None
+
+    try:
+        year = int(year_text)
+        month = int(month_text)
+        day = int(day_text)
+        return datetime(year, month, day)
+    except ValueError:
+        return None
 
 
 def fetch_upbit_quote(symbol: str, asset_currency: str) -> QuotePayload | None:

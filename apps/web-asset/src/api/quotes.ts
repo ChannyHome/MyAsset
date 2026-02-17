@@ -37,6 +37,11 @@ export async function updateQuotesNow(): Promise<QuoteUpdateResult> {
   return data;
 }
 
+export async function testQuoteForAsset(assetId: number): Promise<QuoteLatestOut> {
+  const { data } = await http.post<QuoteLatestOut>(`/quotes/test/${assetId}`);
+  return data;
+}
+
 export async function upsertManualQuote(payload: ManualQuoteUpsertIn): Promise<QuoteLatestOut> {
   const { data } = await http.post<QuoteLatestOut>("/quotes/manual", payload);
   return data;

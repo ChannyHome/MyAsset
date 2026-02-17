@@ -10,7 +10,7 @@ from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
 from app.models.latest_quote import LatestQuote
 from app.schemas.quote import ManualQuoteUpsertIn, QuoteLatestOut, QuoteUpdateResult
-from app.services.quote_updater import refresh_quotes_for_supported_assets
+from app.services.quote_updater import refresh_quote_for_asset_id, refresh_quotes_for_supported_assets
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
@@ -58,6 +58,37 @@ def update_quotes_now(
         skipped_count=summary.skipped_count,
         failed_count=summary.failed_count,
         errors=summary.errors,
+    )
+
+
+@router.post("/test/{asset_id}", response_model=QuoteLatestOut)
+def test_quote_for_asset(
+    asset_id: int,
+    db: Session = Depends(get_db),
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
+) -> QuoteLatestOut:
+    latest_quote, error_message = refresh_quote_for_asset_id(db, asset_id)
+    if error_message:
+        if error_message == "Asset not found":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error_message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_message)
+    if latest_quote is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Latest quote is unavailable")
+
+    asset = db.scalar(select(Asset).where(Asset.id == asset_id))
+    if asset is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
+
+    return QuoteLatestOut(
+        asset_id=asset.id,
+        symbol=asset.symbol,
+        name=asset.name,
+        price=latest_quote.price,
+        currency=latest_quote.currency,
+        change_value=latest_quote.change_value,
+        change_pct=latest_quote.change_pct,
+        as_of=latest_quote.as_of,
+        source=latest_quote.source,
     )
 
 

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+﻿from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     quote_auto_update_enabled: bool = False
     quote_update_interval_minutes: int = 10
     quote_provider: str = "yfinance"
+
+    data_go_kr_service_key: str = ""
+    data_go_kr_apartment_trade_url: str = (
+        "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+    )
+    data_go_kr_timeout_seconds: float = 10.0
+    data_go_kr_rows_per_call: int = 1000
+    data_go_kr_lookback_months: int = 6
+
+    app_secrets_master_key: str = ""
 
     jwt_secret_key: str = "change-this-in-production"
     jwt_algorithm: str = "HS256"
