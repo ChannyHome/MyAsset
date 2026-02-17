@@ -5,17 +5,16 @@ export type AnalyticsSummaryV2Out = {
   scope_id: number;
   user_count: number;
   display_currency: string;
-  owned_assets_total: string | number;
-  liabilities_total: string | number;
   gross_assets_total: string | number;
+  liabilities_total: string | number;
   net_assets_total: string | number;
+  principal_minus_debt_total: string | number;
+  net_assets_profit_total: string | number;
+  net_assets_return_pct: string | number | null;
   invested_principal_total: string | number;
   withdrawn_total: string | number;
   principal_profit_total: string | number;
   principal_return_pct: string | number | null;
-  principal_minus_debt_total: string | number;
-  net_assets_profit_total: string | number;
-  net_assets_return_pct: string | number | null;
   as_of: string;
 };
 

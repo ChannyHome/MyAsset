@@ -117,6 +117,14 @@ onMounted(loadReportData);
       </article>
 
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <p class="text-xs text-slate-500 dark:text-slate-400">Liabilities</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
+          {{ formatCurrency(liabilitiesTotal, displayCurrency) }}
+        </p>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Included liabilities only</p>
+      </article>
+
+      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets (assets - liabilities)</p>
         <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
           {{ formatCurrency(netAssetsTotal, displayCurrency) }}
@@ -127,14 +135,6 @@ onMounted(loadReportData);
         <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
           vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
         </p>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Liabilities</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(liabilitiesTotal, displayCurrency) }}
-        </p>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Included liabilities only</p>
       </article>
     </div>
 

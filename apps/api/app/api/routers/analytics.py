@@ -73,7 +73,6 @@ def _calculate_summary_values(
     Decimal,
     Decimal,
     Decimal,
-    Decimal,
     Decimal | None,
     Decimal,
     Decimal,
@@ -96,7 +95,7 @@ def _calculate_summary_values(
     holdings = list(db.scalars(holdings_stmt).all())
     quote_map = _latest_quote_map(db, sorted({item.asset_id for item in holdings}))
 
-    owned_assets_total = Decimal("0")
+    gross_assets_total = Decimal("0")
     latest_quote_as_of = None
     for holding in holdings:
         quote = quote_map.get(holding.asset_id)
@@ -107,7 +106,7 @@ def _calculate_summary_values(
             if latest_quote_as_of is None or quote.as_of > latest_quote_as_of:
                 latest_quote_as_of = quote.as_of
 
-        owned_assets_total += holding.quantity * unit_price
+        gross_assets_total += holding.quantity * unit_price
 
     liabilities_stmt = (
         select(Liability)
@@ -141,10 +140,9 @@ def _calculate_summary_values(
     # Canonical accounting definition:
     # gross_assets_total: assets only
     # net_assets_total: assets - liabilities
-    gross_assets_total = owned_assets_total
-    net_assets_total = owned_assets_total - liabilities_total
+    net_assets_total = gross_assets_total - liabilities_total
 
-    principal_profit_total = owned_assets_total + withdrawn_total - invested_principal_total
+    principal_profit_total = gross_assets_total + withdrawn_total - invested_principal_total
     principal_return_pct = None
     if invested_principal_total != 0:
         principal_return_pct = (principal_profit_total / invested_principal_total) * Decimal("100")
@@ -158,9 +156,8 @@ def _calculate_summary_values(
     as_of = latest_quote_as_of or datetime.now(UTC).replace(tzinfo=None)
 
     return (
-        owned_assets_total,
-        liabilities_total,
         gross_assets_total,
+        liabilities_total,
         net_assets_total,
         invested_principal_total,
         withdrawn_total,
@@ -191,9 +188,8 @@ def get_summary(
     )
 
     (
-        owned_assets_total,
-        liabilities_total,
         gross_assets_total,
+        liabilities_total,
         net_assets_total,
         invested_principal_total,
         withdrawn_total,
@@ -216,16 +212,15 @@ def get_summary(
         scope_id=normalized_scope_id,
         user_count=len(scope_user_ids),
         display_currency="KRW",
-        owned_assets_total=owned_assets_total,
-        liabilities_total=liabilities_total,
         gross_assets_total=gross_assets_total,
+        liabilities_total=liabilities_total,
         net_assets_total=net_assets_total,
+        principal_minus_debt_total=principal_minus_debt_total,
+        net_assets_profit_total=net_assets_profit_total,
+        net_assets_return_pct=net_assets_return_pct,
         invested_principal_total=invested_principal_total,
         withdrawn_total=withdrawn_total,
         principal_profit_total=principal_profit_total,
         principal_return_pct=principal_return_pct,
-        principal_minus_debt_total=principal_minus_debt_total,
-        net_assets_profit_total=net_assets_profit_total,
-        net_assets_return_pct=net_assets_return_pct,
         as_of=as_of,
     )

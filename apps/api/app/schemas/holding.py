@@ -72,6 +72,7 @@ class HoldingTableRowOut(HoldingOut):
     asset_name: str
     asset_symbol: str | None = None
     asset_class: str
+    asset_currency: str
     current_price: Decimal | None = None
     current_price_currency: str | None = None
     evaluated_amount: Decimal

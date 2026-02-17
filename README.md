@@ -64,7 +64,7 @@
 - `PATCH /api/v1/liabilities/{id}/hidden`
 - `GET /api/v1/analytics/summary`
 - net worth formula:
-  - `/summary`: `gross_assets_total = owned_assets_total`, `net_assets_total = owned_assets_total - liabilities_total`
+  - `/summary`: `gross_assets_total = sum(owned assets)`, `net_assets_total = gross_assets_total - liabilities_total`
 
 ### Step 10 (done): DB views for HeidiSQL
 - Alembic revision: `009_asset_views`
@@ -81,15 +81,14 @@
   - `v_household_summary_v2`
 
 ### Step 12 (done): Portfolio net worth view
-- Alembic revisions: `011_portfolio_networth_view`, `015_portfolio_networth_align`, `016_minus_debt_views`
+- Alembic revisions: `011_portfolio_networth_view`, `015_portfolio_networth_align`, `016_minus_debt_views`, `020_portfolio_drop_owned`, `021_portfolio_col_order`
 - Added view:
   - `v_user_portfolio_networth_v2`
 - Core fields:
-  - `owned_assets_total`
-  - `liabilities_total`
   - `gross_assets_total`
-  - `net_worth_total` (assets - liabilities)
+  - `liabilities_total`
   - `net_assets_total` (assets - liabilities)
+  - `net_worth_total` (assets - liabilities)
   - `principal_minus_debt_total`
   - `net_assets_profit_total`
   - `net_assets_return_pct`
@@ -106,7 +105,7 @@
   - `principal_return_pct`
 
 ### Step 14 (done): Net-basis return metrics
-- Alembic revisions: `013_summary_gross_return_metrics`, `016_minus_debt_views`
+- Alembic revisions: `013_summary_gross_return_metrics`, `016_minus_debt_views`, `019_summary_drop_owned`, `022_summary_col_order`
 - Updated views:
   - `v_user_summary_v2`
   - `v_household_summary_v2`

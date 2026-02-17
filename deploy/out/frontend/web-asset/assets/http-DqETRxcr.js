@@ -3991,19 +3991,4 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-async function getSummary(params = {}) {
-  const { data } = await http.get("/analytics/summary", { params });
-  return data;
-}
-
-async function getHoldingsPerformance(params = {}) {
-  const { data } = await http.get("/holdings/performance", { params });
-  return data;
-}
-
-async function getLiabilities(params = {}) {
-  const { data } = await http.get("/liabilities", { params });
-  return data;
-}
-
-export { getHoldingsPerformance as a, getLiabilities as b, getSummary as g };
+export { AxiosError as A, http as h };

@@ -5,9 +5,11 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue"
 import {
   createAsset,
   deleteAsset,
+  getAssets,
   getAssetsTable,
   updateAsset,
   type AssetCreateIn,
+  type AssetOut,
   type AssetTableRowOut,
   type AssetTableSortBy,
   type SortOrder,
@@ -32,8 +34,10 @@ import {
 import {
   createPortfolio,
   deletePortfolio,
+  getPortfolios,
   getPortfoliosTable,
   updatePortfolio,
+  type PortfolioOut,
   type PortfolioTableRowOut,
   type PortfolioTableSortBy,
 } from "../api/portfolios";
@@ -54,6 +58,8 @@ type TableQueryState<TSort extends string> = {
 const loading = reactive({ data: false, action: false, confirm: false });
 const me = ref<AuthMeOut | null>(null);
 const assets = ref<AssetTableRowOut[]>([]);
+const holdingAssetOptions = ref<AssetOut[]>([]);
+const holdingPortfolioOptions = ref<PortfolioOut[]>([]);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const holdingRows = ref<HoldingTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
@@ -96,10 +102,14 @@ const confirmModal = reactive({ open: false, title: "", message: "" });
 const pendingAction = ref<null | (() => Promise<void>)>(null);
 
 const assetModal = reactive({ open: false, mode: "CREATE" as AssetModalMode });
+const portfolioEditModal = reactive({ open: false });
+const holdingEditModal = reactive({ open: false });
+const liabilityEditModal = reactive({ open: false });
 const quoteActionsCollapsed = ref(true);
 const quickCreatePortfolioOpen = ref(false);
 const quickCreateHoldingOpen = ref(false);
 const quickCreateLiabilityOpen = ref(false);
+const lookupLoading = ref(false);
 
 const assetForm = reactive({
   id: "",
@@ -126,6 +136,7 @@ const portfolioForm = reactive({
   base_currency: "KRW",
   exchange_code: "",
   category: "ETC",
+  cashflow_source_type: "MANUAL",
   memo: "",
 });
 const holdingForm = reactive({
@@ -148,6 +159,45 @@ const liabilityForm = reactive({
   source_type: "MANUAL",
   memo: "",
 });
+const portfolioEditForm = reactive({
+  id: "",
+  name: "",
+  type: "ETC",
+  base_currency: "KRW",
+  exchange_code: "",
+  category: "",
+  cashflow_source_type: "MANUAL",
+  cumulative_deposit_amount: "0",
+  cumulative_withdrawal_amount: "0",
+  is_included: true,
+  is_hidden: false,
+  memo: "",
+});
+const holdingEditForm = reactive({
+  id: "",
+  portfolio_id: "",
+  asset_id: "",
+  quantity: "",
+  avg_price: "",
+  invested_amount: "",
+  source_type: "MANUAL",
+  is_hidden: false,
+  memo: "",
+});
+const liabilityEditForm = reactive({
+  id: "",
+  portfolio_id: "",
+  name: "",
+  liability_type: "ETC",
+  currency: "KRW",
+  outstanding_balance: "",
+  interest_rate: "",
+  monthly_payment: "",
+  source_type: "MANUAL",
+  is_included: true,
+  is_hidden: false,
+  memo: "",
+});
 
 const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
@@ -155,10 +205,32 @@ const isBusy = computed(() => loading.data || loading.action || loading.confirm)
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
 const quoteModeOptions = ["AUTO", "MANUAL"] as const;
+const holdingSourceTypeOptions = ["MANUAL", "AUTO"] as const;
+const portfolioTypeOptions = ["BROKER", "EXCHANGE", "BANK", "CASH", "ETC"] as const;
+const portfolioCategoryOptions = ["KR_STOCK", "US_STOCK", "CRYPTO", "REAL_ESTATE", "BOND", "CASH", "DEPOSIT_SAVING", "ETC"] as const;
+const portfolioCashflowSourceTypeOptions = ["MANUAL", "AUTO"] as const;
+const liabilityTypeOptions = ["MORTGAGE", "CREDIT_LOAN", "CARD", "ETC"] as const;
+const liabilitySourceTypeOptions = ["MANUAL", "AUTO"] as const;
 const totalPages = computed(() => Math.max(1, Math.ceil(assetsQuery.total / assetsQuery.pageSize)));
 const portfolioTotalPages = computed(() => Math.max(1, Math.ceil(portfolioQuery.total / portfolioQuery.pageSize)));
 const holdingTotalPages = computed(() => Math.max(1, Math.ceil(holdingQuery.total / holdingQuery.pageSize)));
 const liabilityTotalPages = computed(() => Math.max(1, Math.ceil(liabilityQuery.total / liabilityQuery.pageSize)));
+const sortedHoldingAssetOptions = computed(() =>
+  [...holdingAssetOptions.value].sort((a, b) => {
+    const byName = a.name.localeCompare(b.name, "ko");
+    if (byName !== 0) return byName;
+    const byExchange = (a.exchange_code || "").localeCompare(b.exchange_code || "", "ko");
+    if (byExchange !== 0) return byExchange;
+    return a.id - b.id;
+  }),
+);
+const sortedHoldingPortfolioOptions = computed(() =>
+  [...holdingPortfolioOptions.value].sort((a, b) => {
+    const byName = a.name.localeCompare(b.name, "ko");
+    if (byName !== 0) return byName;
+    return a.id - b.id;
+  }),
+);
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let portfolioSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -205,6 +277,21 @@ function formatMoney(value: string | number, currency: string): string {
   } catch {
     return `${amount.toLocaleString("ko-KR")} ${currency}`;
   }
+}
+
+function formatQuantity(value: string | number): string {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  const fixed = amount.toFixed(8);
+  const trimmed = fixed.replace(/\.?0+$/, "");
+  const normalized = trimmed === "-0" ? "0" : trimmed;
+  const [intPart, fracPart] = normalized.split(".");
+  const grouped = Number(intPart).toLocaleString("ko-KR");
+  return fracPart ? `${grouped}.${fracPart}` : grouped;
+}
+
+function holdingCurrencyCode(item: HoldingTableRowOut): string {
+  return normalizeUpper(item.current_price_currency || item.asset_currency || "KRW");
 }
 
 function quotePriceText(item: AssetTableRowOut): string {
@@ -445,6 +532,41 @@ function parseOptionalInt(value: string): number | null {
   return toPositiveInt(trimmed);
 }
 
+async function loadHoldingLookupOptions(force = false): Promise<void> {
+  if (lookupLoading.value) return;
+  if (!force && holdingAssetOptions.value.length > 0 && holdingPortfolioOptions.value.length > 0) return;
+  lookupLoading.value = true;
+  try {
+    const [assetsOut, portfoliosOut] = await Promise.all([getAssets(), getPortfolios()]);
+    holdingAssetOptions.value = assetsOut;
+    holdingPortfolioOptions.value = portfoliosOut;
+    if (holdingForm.asset_id && !assetsOut.some((item) => String(item.id) === holdingForm.asset_id)) {
+      holdingForm.asset_id = "";
+    }
+    if (holdingForm.portfolio_id && !portfoliosOut.some((item) => String(item.id) === holdingForm.portfolio_id)) {
+      holdingForm.portfolio_id = "";
+    }
+  } catch (error) {
+    pushLog("Holding Lookup", "ERROR", getErrorMessage(error));
+  } finally {
+    lookupLoading.value = false;
+  }
+}
+
+function toggleQuickCreateHolding(): void {
+  quickCreateHoldingOpen.value = !quickCreateHoldingOpen.value;
+  if (quickCreateHoldingOpen.value) {
+    void loadHoldingLookupOptions(true);
+  }
+}
+
+function toggleQuickCreateLiability(): void {
+  quickCreateLiabilityOpen.value = !quickCreateLiabilityOpen.value;
+  if (quickCreateLiabilityOpen.value) {
+    void loadHoldingLookupOptions(true);
+  }
+}
+
 function submitPortfolioCreate(): void {
   if (!canManageAssets.value) {
     pushLog("Portfolio Create", "ERROR", "Admin/Maintainer only");
@@ -472,15 +594,93 @@ function submitPortfolioCreate(): void {
           | "DEPOSIT_SAVING"
           | "ETC"
           | null,
+        cashflow_source_type: portfolioForm.cashflow_source_type.trim() || "MANUAL",
         memo: portfolioForm.memo.trim() || null,
       });
       portfolioForm.name = "";
+      portfolioForm.type = "ETC";
+      portfolioForm.base_currency = "KRW";
+      portfolioForm.category = "ETC";
+      portfolioForm.cashflow_source_type = "MANUAL";
       portfolioForm.memo = "";
       portfolioForm.exchange_code = "";
       quickCreatePortfolioOpen.value = false;
     });
   } catch (error) {
     pushLog("Portfolio Create", "ERROR", getErrorMessage(error));
+  }
+}
+
+function fillPortfolioEditForm(item: PortfolioTableRowOut): void {
+  portfolioEditForm.id = String(item.id);
+  portfolioEditForm.name = item.name;
+  portfolioEditForm.type = item.type || "ETC";
+  portfolioEditForm.base_currency = item.base_currency || "KRW";
+  portfolioEditForm.exchange_code = item.exchange_code || "";
+  portfolioEditForm.category = item.category || "";
+  portfolioEditForm.cashflow_source_type = item.cashflow_source_type || "MANUAL";
+  portfolioEditForm.cumulative_deposit_amount = String(item.cumulative_deposit_amount ?? "0");
+  portfolioEditForm.cumulative_withdrawal_amount = String(item.cumulative_withdrawal_amount ?? "0");
+  portfolioEditForm.is_included = item.is_included;
+  portfolioEditForm.is_hidden = item.is_hidden;
+  portfolioEditForm.memo = item.memo || "";
+}
+
+function openEditPortfolioModal(item: PortfolioTableRowOut): void {
+  if (!canManageAssets.value) {
+    pushLog("Portfolio Edit", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  fillPortfolioEditForm(item);
+  portfolioEditModal.open = true;
+}
+
+function closePortfolioEditModal(): void {
+  if (loading.action || loading.confirm) return;
+  portfolioEditModal.open = false;
+}
+
+function submitPortfolioEdit(): void {
+  if (!canManageAssets.value) {
+    pushLog("Portfolio Edit", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  try {
+    const portfolioId = toPositiveInt(portfolioEditForm.id);
+    const name = portfolioEditForm.name.trim();
+    if (!name) throw new Error("Portfolio name is required");
+    const baseCurrency = normalizeUpper(portfolioEditForm.base_currency);
+    if (baseCurrency.length !== 3) throw new Error("Base currency must be 3 letters");
+    const deposit = parseRequiredDecimal(portfolioEditForm.cumulative_deposit_amount, "Cumulative deposit");
+    const withdrawal = parseRequiredDecimal(portfolioEditForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
+
+    closePortfolioEditModal();
+    runAction("Portfolio Update", "Apply Portfolio Update", `Portfolio #${portfolioId} 정보를 수정할까요?`, async () => {
+      await updatePortfolio(portfolioId, {
+        name,
+        type: portfolioEditForm.type.trim() || "ETC",
+        base_currency: baseCurrency,
+        exchange_code: normalizeUpper(portfolioEditForm.exchange_code) || null,
+        category: (portfolioEditForm.category.trim() || null) as
+          | "KR_STOCK"
+          | "US_STOCK"
+          | "CRYPTO"
+          | "REAL_ESTATE"
+          | "BOND"
+          | "CASH"
+          | "DEPOSIT_SAVING"
+          | "ETC"
+          | null,
+        cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
+        cumulative_deposit_amount: deposit,
+        cumulative_withdrawal_amount: withdrawal,
+        is_included: portfolioEditForm.is_included,
+        is_hidden: portfolioEditForm.is_hidden,
+        memo: portfolioEditForm.memo.trim() || null,
+      });
+    });
+  } catch (error) {
+    pushLog("Portfolio Edit", "ERROR", getErrorMessage(error));
   }
 }
 
@@ -540,6 +740,54 @@ function submitHoldingCreate(): void {
   }
 }
 
+function fillHoldingEditForm(item: HoldingTableRowOut): void {
+  holdingEditForm.id = String(item.id);
+  holdingEditForm.portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
+  holdingEditForm.asset_id = String(item.asset_id);
+  holdingEditForm.quantity = String(item.quantity);
+  holdingEditForm.avg_price = String(item.avg_price);
+  holdingEditForm.invested_amount = item.invested_amount === null ? "" : String(item.invested_amount);
+  holdingEditForm.source_type = item.source_type || "MANUAL";
+  holdingEditForm.is_hidden = item.is_hidden;
+  holdingEditForm.memo = item.memo || "";
+}
+
+function openEditHoldingModal(item: HoldingTableRowOut): void {
+  fillHoldingEditForm(item);
+  holdingEditModal.open = true;
+  void loadHoldingLookupOptions(true);
+}
+
+function closeHoldingEditModal(): void {
+  if (loading.action || loading.confirm) return;
+  holdingEditModal.open = false;
+}
+
+function submitHoldingEdit(): void {
+  try {
+    const holdingId = toPositiveInt(holdingEditForm.id);
+    const assetId = toPositiveInt(holdingEditForm.asset_id);
+    const quantity = parseRequiredDecimal(holdingEditForm.quantity, "Quantity");
+    const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg price");
+
+    closeHoldingEditModal();
+    runAction("Holding Update", "Apply Holding Update", `Holding #${holdingId} 정보를 수정할까요?`, async () => {
+      await updateHolding(holdingId, {
+        portfolio_id: parseOptionalInt(holdingEditForm.portfolio_id),
+        asset_id: assetId,
+        quantity,
+        avg_price: avgPrice,
+        invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
+        source_type: holdingEditForm.source_type.trim() || "MANUAL",
+        is_hidden: holdingEditForm.is_hidden,
+        memo: holdingEditForm.memo.trim() || null,
+      });
+    });
+  } catch (error) {
+    pushLog("Holding Edit", "ERROR", getErrorMessage(error));
+  }
+}
+
 function askDeleteHolding(item: HoldingTableRowOut): void {
   runAction("Holding Delete", "Delete Holding", `Holding #${item.id} (${item.asset_name}) 를 삭제할까요?`, async () => {
     await deleteHolding(item.id);
@@ -577,15 +825,75 @@ function submitLiabilityCreate(): void {
         source_type: liabilityForm.source_type.trim() || "MANUAL",
         memo: liabilityForm.memo.trim() || null,
       });
+      liabilityForm.portfolio_id = "";
       liabilityForm.name = "";
+      liabilityForm.liability_type = "ETC";
+      liabilityForm.currency = "KRW";
       liabilityForm.outstanding_balance = "";
       liabilityForm.interest_rate = "";
       liabilityForm.monthly_payment = "";
+      liabilityForm.source_type = "MANUAL";
       liabilityForm.memo = "";
       quickCreateLiabilityOpen.value = false;
     });
   } catch (error) {
     pushLog("Liability Create", "ERROR", getErrorMessage(error));
+  }
+}
+
+function fillLiabilityEditForm(item: LiabilityTableRowOut): void {
+  liabilityEditForm.id = String(item.id);
+  liabilityEditForm.portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
+  liabilityEditForm.name = item.name;
+  liabilityEditForm.liability_type = item.liability_type || "ETC";
+  liabilityEditForm.currency = item.currency || "KRW";
+  liabilityEditForm.outstanding_balance = String(item.outstanding_balance);
+  liabilityEditForm.interest_rate = item.interest_rate === null ? "" : String(item.interest_rate);
+  liabilityEditForm.monthly_payment = item.monthly_payment === null ? "" : String(item.monthly_payment);
+  liabilityEditForm.source_type = item.source_type || "MANUAL";
+  liabilityEditForm.is_included = item.is_included;
+  liabilityEditForm.is_hidden = item.is_hidden;
+  liabilityEditForm.memo = item.memo || "";
+}
+
+function openEditLiabilityModal(item: LiabilityTableRowOut): void {
+  fillLiabilityEditForm(item);
+  liabilityEditModal.open = true;
+  void loadHoldingLookupOptions(true);
+}
+
+function closeLiabilityEditModal(): void {
+  if (loading.action || loading.confirm) return;
+  liabilityEditModal.open = false;
+}
+
+function submitLiabilityEdit(): void {
+  try {
+    const liabilityId = toPositiveInt(liabilityEditForm.id);
+    const name = liabilityEditForm.name.trim();
+    if (!name) throw new Error("Liability name is required");
+    const balance = parseRequiredDecimal(liabilityEditForm.outstanding_balance, "Outstanding balance");
+    const currency = normalizeUpper(liabilityEditForm.currency);
+    if (currency.length !== 3) throw new Error("Currency must be 3 letters");
+
+    closeLiabilityEditModal();
+    runAction("Liability Update", "Apply Liability Update", `Liability #${liabilityId} 정보를 수정할까요?`, async () => {
+      await updateLiability(liabilityId, {
+        portfolio_id: parseOptionalInt(liabilityEditForm.portfolio_id),
+        name,
+        liability_type: liabilityEditForm.liability_type.trim() || "ETC",
+        currency,
+        outstanding_balance: balance,
+        interest_rate: parseOptionalDecimal(liabilityEditForm.interest_rate),
+        monthly_payment: parseOptionalDecimal(liabilityEditForm.monthly_payment),
+        source_type: liabilityEditForm.source_type.trim() || "MANUAL",
+        is_included: liabilityEditForm.is_included,
+        is_hidden: liabilityEditForm.is_hidden,
+        memo: liabilityEditForm.memo.trim() || null,
+      });
+    });
+  } catch (error) {
+    pushLog("Liability Edit", "ERROR", getErrorMessage(error));
   }
 }
 
@@ -1171,6 +1479,14 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+                    :disabled="!canManageAssets || isBusy"
+                    @click="openEditPortfolioModal(item)"
+                  >
+                    Edit
+                  </button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="!canManageAssets || isBusy" @click="askDeletePortfolio(item)">Delete</button>
@@ -1197,11 +1513,27 @@ onBeforeUnmount(() => {
       <div v-if="quickCreatePortfolioOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
         <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
           <input v-model="portfolioForm.name" placeholder="Portfolio name" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="portfolioForm.type" placeholder="Type (BROKER/EXCHANGE/...)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Type
+            <select v-model="portfolioForm.type" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in portfolioTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
           <input v-model="portfolioForm.base_currency" placeholder="Base currency" maxlength="3" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="portfolioForm.exchange_code" placeholder="Exchange code" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="portfolioForm.category" placeholder="Category" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="portfolioForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Category
+            <select v-model="portfolioForm.category" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in portfolioCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Cashflow Source
+            <select v-model="portfolioForm.cashflow_source_type" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in portfolioCashflowSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
+          <input v-model="portfolioForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 md:col-span-3" />
         </div>
         <div class="mt-2">
           <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="!canManageAssets || isBusy" @click="submitPortfolioCreate">Create Portfolio</button>
@@ -1215,7 +1547,7 @@ onBeforeUnmount(() => {
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Holdings Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
         </div>
-        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="quickCreateHoldingOpen = !quickCreateHoldingOpen">{{ quickCreateHoldingOpen ? "Close Create" : "Quick Create Holding" }}</button>
+        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateHolding">{{ quickCreateHoldingOpen ? "Close Create" : "Quick Create Holding" }}</button>
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input v-model="holdingQuery.q" type="text" placeholder="Search asset/portfolio/symbol" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyHoldingSearch" />
@@ -1247,16 +1579,28 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.portfolio_name || "-" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_name }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_symbol || "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.quantity }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.avg_price }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.invested_amount }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.current_price ?? "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.evaluated_amount }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatQuantity(item.quantity) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.avg_price, holdingCurrencyCode(item)) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                {{ item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCurrencyCode(item)) }}
+              </td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                {{ item.current_price === null ? "-" : formatMoney(item.current_price, holdingCurrencyCode(item)) }}
+              </td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.evaluated_amount, holdingCurrencyCode(item)) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.pnl_pct === null ? "-" : `${Number(item.pnl_pct).toFixed(2)}%` }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+                    :disabled="isBusy"
+                    @click="openEditHoldingModal(item)"
+                  >
+                    Edit
+                  </button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleHoldingHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteHolding(item)">Delete</button>
                 </div>
@@ -1281,12 +1625,44 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="quickCreateHoldingOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
         <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <input v-model="holdingForm.portfolio_id" placeholder="Portfolio ID (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="holdingForm.asset_id" placeholder="Asset ID" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Portfolio (optional)
+            <select
+              v-model="holdingForm.portfolio_id"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="lookupLoading || isBusy"
+            >
+              <option value="">Unassigned</option>
+              <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
+                {{ item.id }} - {{ item.name }}
+              </option>
+            </select>
+          </label>
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Asset
+            <select
+              v-model="holdingForm.asset_id"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="lookupLoading || isBusy"
+            >
+              <option value="">Select Asset</option>
+              <option v-for="item in sortedHoldingAssetOptions" :key="item.id" :value="String(item.id)">
+                {{ item.id }} - {{ item.name }} ({{ item.exchange_code }})
+              </option>
+            </select>
+          </label>
           <input v-model="holdingForm.quantity" placeholder="Quantity" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="holdingForm.avg_price" placeholder="Avg Price" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="holdingForm.invested_amount" placeholder="Invested (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="holdingForm.source_type" placeholder="Source type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Source Type
+            <select
+              v-model="holdingForm.source_type"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option v-for="opt in holdingSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
           <input v-model="holdingForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 md:col-span-3" />
         </div>
         <div class="mt-2">
@@ -1301,7 +1677,7 @@ onBeforeUnmount(() => {
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Liabilities Status</h2>
           <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Server-side sort/pagination/search 적용</p>
         </div>
-        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="quickCreateLiabilityOpen = !quickCreateLiabilityOpen">{{ quickCreateLiabilityOpen ? "Close Create" : "Quick Create Liability" }}</button>
+        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60" :disabled="isBusy" @click="toggleQuickCreateLiability">{{ quickCreateLiabilityOpen ? "Close Create" : "Quick Create Liability" }}</button>
       </div>
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <input v-model="liabilityQuery.q" type="text" placeholder="Search liability/portfolio/type" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyLiabilitySearch" />
@@ -1335,12 +1711,22 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.outstanding_balance, item.currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.currency }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.interest_rate ?? "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.monthly_payment ?? "-" }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                {{ item.monthly_payment === null ? "-" : formatMoney(item.monthly_payment, item.currency) }}
+              </td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_included ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+                    :disabled="isBusy"
+                    @click="openEditLiabilityModal(item)"
+                  >
+                    Edit
+                  </button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteLiability(item)">Delete</button>
@@ -1366,15 +1752,37 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="quickCreateLiabilityOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
         <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
-          <input v-model="liabilityForm.portfolio_id" placeholder="Portfolio ID (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Portfolio (optional)
+            <select
+              v-model="liabilityForm.portfolio_id"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="lookupLoading || isBusy"
+            >
+              <option value="">Unassigned</option>
+              <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
+                {{ item.id }} - {{ item.name }}
+              </option>
+            </select>
+          </label>
           <input v-model="liabilityForm.name" placeholder="Liability name" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="liabilityForm.liability_type" placeholder="Type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Type
+            <select v-model="liabilityForm.liability_type" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in liabilityTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
           <input v-model="liabilityForm.outstanding_balance" placeholder="Outstanding balance" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="liabilityForm.currency" placeholder="Currency" maxlength="3" class="rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="liabilityForm.interest_rate" placeholder="Interest rate (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="liabilityForm.monthly_payment" placeholder="Monthly payment (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="liabilityForm.source_type" placeholder="Source type" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="liabilityForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Source Type
+            <select v-model="liabilityForm.source_type" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in liabilitySourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
+          <input v-model="liabilityForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 md:col-span-3" />
         </div>
         <div class="mt-2">
           <button type="button" class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500" :disabled="isBusy" @click="submitLiabilityCreate">Create Liability</button>
@@ -1504,6 +1912,313 @@ onBeforeUnmount(() => {
           @click="submitAssetForm"
         >
           {{ assetModal.mode === "CREATE" ? "Create" : "Apply" }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div v-if="portfolioEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closePortfolioEditModal">
+    <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Portfolio #{{ portfolioEditForm.id }}</h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">핵심 운영값(집계 포함/숨김/입출금 누적/메모)을 수정할 수 있습니다.</p>
+
+      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+        <label class="text-xs"
+          >Name
+          <input
+            v-model="portfolioEditForm.name"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Type
+          <select
+            v-model="portfolioEditForm.type"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in portfolioTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Base Currency
+          <input
+            v-model="portfolioEditForm.base_currency"
+            maxlength="3"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Exchange Code
+          <input
+            v-model="portfolioEditForm.exchange_code"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Category
+          <select
+            v-model="portfolioEditForm.category"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option value="">(none)</option>
+            <option v-for="opt in portfolioCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Cashflow Source
+          <select
+            v-model="portfolioEditForm.cashflow_source_type"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in portfolioCashflowSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Cumulative Deposit
+          <input
+            v-model="portfolioEditForm.cumulative_deposit_amount"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Cumulative Withdrawal
+          <input
+            v-model="portfolioEditForm.cumulative_withdrawal_amount"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs md:col-span-2"
+          >Memo
+          <input
+            v-model="portfolioEditForm.memo"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs md:col-span-2 flex flex-wrap items-center gap-4">
+          <span><input v-model="portfolioEditForm.is_included" type="checkbox" /> <span class="ml-1">Included</span></span>
+          <span><input v-model="portfolioEditForm.is_hidden" type="checkbox" /> <span class="ml-1">Hidden</span></span>
+        </label>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+          :disabled="loading.action || loading.confirm"
+          @click="closePortfolioEditModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          :disabled="loading.action || loading.confirm"
+          @click="submitPortfolioEdit"
+        >
+          Apply
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div v-if="holdingEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeHoldingEditModal">
+    <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Holding #{{ holdingEditForm.id }}</h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Asset/포트폴리오/수량/평단/투입금/숨김/메모를 수정합니다.</p>
+
+      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+        <label class="text-xs"
+          >Asset
+          <select
+            v-model="holdingEditForm.asset_id"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            :disabled="lookupLoading || loading.action || loading.confirm"
+          >
+            <option value="">Select Asset</option>
+            <option v-for="item in sortedHoldingAssetOptions" :key="item.id" :value="String(item.id)">
+              {{ item.id }} - {{ item.name }} ({{ item.exchange_code }})
+            </option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Portfolio (optional)
+          <select
+            v-model="holdingEditForm.portfolio_id"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            :disabled="lookupLoading || loading.action || loading.confirm"
+          >
+            <option value="">Unassigned</option>
+            <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
+              {{ item.id }} - {{ item.name }}
+            </option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Quantity
+          <input
+            v-model="holdingEditForm.quantity"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Avg Price
+          <input
+            v-model="holdingEditForm.avg_price"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Invested Amount (optional)
+          <input
+            v-model="holdingEditForm.invested_amount"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Source Type
+          <select
+            v-model="holdingEditForm.source_type"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in holdingSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs md:col-span-2"
+          >Memo
+          <input
+            v-model="holdingEditForm.memo"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs md:col-span-2">
+          <input v-model="holdingEditForm.is_hidden" type="checkbox" />
+          <span class="ml-1">Hidden</span>
+        </label>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+          :disabled="loading.action || loading.confirm"
+          @click="closeHoldingEditModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          :disabled="loading.action || loading.confirm"
+          @click="submitHoldingEdit"
+        >
+          Apply
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div v-if="liabilityEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeLiabilityEditModal">
+    <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Liability #{{ liabilityEditForm.id }}</h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">부채 메타/잔액/금리/월납입/포함/숨김 상태를 수정합니다.</p>
+
+      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+        <label class="text-xs"
+          >Portfolio (optional)
+          <select
+            v-model="liabilityEditForm.portfolio_id"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            :disabled="lookupLoading || loading.action || loading.confirm"
+          >
+            <option value="">Unassigned</option>
+            <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
+              {{ item.id }} - {{ item.name }}
+            </option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Name
+          <input
+            v-model="liabilityEditForm.name"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Type
+          <select
+            v-model="liabilityEditForm.liability_type"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in liabilityTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs"
+          >Currency
+          <input
+            v-model="liabilityEditForm.currency"
+            maxlength="3"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Outstanding Balance
+          <input
+            v-model="liabilityEditForm.outstanding_balance"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Interest Rate (optional)
+          <input
+            v-model="liabilityEditForm.interest_rate"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Monthly Payment (optional)
+          <input
+            v-model="liabilityEditForm.monthly_payment"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs"
+          >Source Type
+          <select
+            v-model="liabilityEditForm.source_type"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in liabilitySourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs md:col-span-2"
+          >Memo
+          <input
+            v-model="liabilityEditForm.memo"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          />
+        </label>
+        <label class="text-xs md:col-span-2 flex flex-wrap items-center gap-4">
+          <span><input v-model="liabilityEditForm.is_included" type="checkbox" /> <span class="ml-1">Included</span></span>
+          <span><input v-model="liabilityEditForm.is_hidden" type="checkbox" /> <span class="ml-1">Hidden</span></span>
+        </label>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+          :disabled="loading.action || loading.confirm"
+          @click="closeLiabilityEditModal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+          :disabled="loading.action || loading.confirm"
+          @click="submitLiabilityEdit"
+        >
+          Apply
         </button>
       </div>
     </section>

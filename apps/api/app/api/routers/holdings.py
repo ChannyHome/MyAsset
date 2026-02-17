@@ -261,6 +261,7 @@ def list_holdings_table(
                 asset_name=asset.name,
                 asset_symbol=asset.symbol,
                 asset_class=asset.asset_class,
+                asset_currency=asset.currency,
                 current_price=price,
                 current_price_currency=quote.currency if quote else None,
                 evaluated_amount=evaluated_amount,

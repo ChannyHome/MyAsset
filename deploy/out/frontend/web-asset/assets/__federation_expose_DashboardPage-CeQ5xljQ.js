@@ -1,5 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { g as getSummary, a as getHoldingsPerformance, b as getLiabilities } from './liabilities-D0kItOXj.js';
+import { g as getSummary } from './analytics-CM2txNIY.js';
+import { g as getHoldingsPerformance, a as getLiabilities } from './liabilities-Ca_kTHXz.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -356,8 +357,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]),
                     widget.type === "kpi_summary" ? (_openBlock(), _createElementBlock("div", _hoisted_26, [
                       _createElementVNode("p", null, "Gross: " + _toDisplayString(formatCurrency(toNumber(summary.value?.gross_assets_total), displayCurrency.value)), 1),
-                      _createElementVNode("p", null, "Net: " + _toDisplayString(formatCurrency(toNumber(summary.value?.net_assets_total), displayCurrency.value)), 1),
-                      _createElementVNode("p", null, "Liabilities: " + _toDisplayString(formatCurrency(toNumber(summary.value?.liabilities_total), displayCurrency.value)), 1)
+                      _createElementVNode("p", null, "Liabilities: " + _toDisplayString(formatCurrency(toNumber(summary.value?.liabilities_total), displayCurrency.value)), 1),
+                      _createElementVNode("p", null, "Net: " + _toDisplayString(formatCurrency(toNumber(summary.value?.net_assets_total), displayCurrency.value)), 1)
                     ])) : widget.type === "donut_allocation" ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
                       _cache[13] || (_cache[13] = _createElementVNode("p", { class: "font-semibold" }, "Top allocation", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(top4.value, (item) => {

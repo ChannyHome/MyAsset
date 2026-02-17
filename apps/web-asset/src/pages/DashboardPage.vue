@@ -355,8 +355,8 @@ onMounted(loadDashboardData);
 
               <div v-if="widget.type === 'kpi_summary'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
                 <p>Gross: {{ formatCurrency(toNumber(summary?.gross_assets_total), displayCurrency) }}</p>
-                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), displayCurrency) }}</p>
                 <p>Liabilities: {{ formatCurrency(toNumber(summary?.liabilities_total), displayCurrency) }}</p>
+                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), displayCurrency) }}</p>
               </div>
 
               <div v-else-if="widget.type === 'donut_allocation'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
@@ -464,4 +464,3 @@ onMounted(loadDashboardData);
     </div>
   </section>
 </template>
-

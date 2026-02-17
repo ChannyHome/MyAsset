@@ -56,6 +56,7 @@ export type HoldingTableRowOut = HoldingOut & {
   asset_name: string;
   asset_symbol: string | null;
   asset_class: string;
+  asset_currency: string;
   current_price: string | number | null;
   current_price_currency: string | null;
   evaluated_amount: string | number;
