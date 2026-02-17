@@ -42,11 +42,15 @@ import {
   type PortfolioTableSortBy,
 } from "../api/portfolios";
 import {
+  getLatestUsdKrwFxRate,
+  getQuoteUpdateJobStatus,
   testQuoteForAsset,
   updateQuotesNow,
   upsertManualQuote,
+  type FxRateLatestOut,
   type ManualQuoteUpsertIn,
   type QuoteLatestOut,
+  type QuoteUpdateJobStatusOut,
 } from "../api/quotes";
 import {
   createAppSecret,
@@ -58,6 +62,7 @@ import {
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
+type QuoteJobStatus = "IDLE" | "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
 type ActionLog = { id: number; at: string; action: string; status: LogStatus; message: string };
 type TableQueryState<TSort extends string> = {
   page: number;
@@ -111,6 +116,7 @@ const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const holdingRows = ref<HoldingTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 const appSecrets = ref<AppSecretOut[]>([]);
+const usdKrwFx = ref<FxRateLatestOut | null>(null);
 const logs = ref<ActionLog[]>([]);
 let nextLogId = 1;
 const assetsQuery = reactive<TableQueryState<AssetTableSortBy>>({
@@ -295,11 +301,41 @@ const sortedHoldingPortfolioOptions = computed(() =>
   }),
 );
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
+const QUOTE_UPDATE_POLL_MS = 1500;
+const QUOTE_UPDATE_POLL_TIMEOUT_MS = 5 * 60 * 1000;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let portfolioSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let holdingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let liabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let quoteUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
 let refreshSequence = 0;
+const quoteUpdatePolling = ref(false);
+const quoteUpdateJobId = ref("");
+const quoteUpdateLastProcessed = ref<number>(-1);
+const quoteUpdateJobStatus = ref<QuoteJobStatus>("IDLE");
+const quoteUpdateProcessed = ref(0);
+const quoteUpdateTotal = ref(0);
+const quoteUpdateStatusLabel = computed(() => {
+  if (quoteUpdatePolling.value) {
+    const progress = quoteUpdateTotal.value > 0 ? ` ${quoteUpdateProcessed.value}/${quoteUpdateTotal.value}` : "";
+    return `${quoteUpdateJobStatus.value}${progress}`;
+  }
+  return quoteUpdateJobStatus.value;
+});
+const quoteUpdateStatusClass = computed(() => {
+  switch (quoteUpdateJobStatus.value) {
+    case "QUEUED":
+      return "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-200 dark:bg-amber-900/20";
+    case "RUNNING":
+      return "border-sky-300 text-sky-700 bg-sky-50 dark:border-sky-800 dark:text-sky-200 dark:bg-sky-900/20";
+    case "COMPLETED":
+      return "border-emerald-300 text-emerald-700 bg-emerald-50 dark:border-emerald-800 dark:text-emerald-200 dark:bg-emerald-900/20";
+    case "FAILED":
+      return "border-rose-300 text-rose-700 bg-rose-50 dark:border-rose-800 dark:text-rose-200 dark:bg-rose-900/20";
+    default:
+      return "border-slate-300 text-slate-600 bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-800/40";
+  }
+});
 const realEstateMetaJsonExample = `{
   "jibun": "1046-1",
   "area_m2": 119.871,
@@ -369,6 +405,15 @@ function formatPct(value: string | number | null | undefined): string {
   return `${amount.toFixed(2)}%`;
 }
 
+function formatFxRate(value: string | number): string {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  return new Intl.NumberFormat("ko-KR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(amount);
+}
+
 function holdingCurrencyCode(item: HoldingTableRowOut): string {
   return normalizeUpper(item.current_price_currency || item.asset_currency || "KRW");
 }
@@ -384,6 +429,85 @@ function quoteAsOfText(item: AssetTableRowOut): string {
 
 function quoteSourceText(item: AssetTableRowOut): string {
   return item.quote_source || "-";
+}
+
+function normalizeQuoteJobStatus(value: string | null | undefined): QuoteJobStatus {
+  const upper = String(value || "").toUpperCase();
+  if (upper === "QUEUED" || upper === "RUNNING" || upper === "COMPLETED" || upper === "FAILED") {
+    return upper;
+  }
+  return "RUNNING";
+}
+
+function clearQuoteUpdatePolling(): void {
+  if (quoteUpdatePollTimer) {
+    clearTimeout(quoteUpdatePollTimer);
+    quoteUpdatePollTimer = null;
+  }
+  quoteUpdatePolling.value = false;
+}
+
+function applyQuoteUpdateJobResult(result: QuoteUpdateJobStatusOut): void {
+  pushLog(
+    "Quote Update",
+    "SUCCESS",
+    `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`,
+  );
+  if (result.fx_rate) {
+    usdKrwFx.value = result.fx_rate;
+    pushLog(
+      "FX Update",
+      "INFO",
+      `${result.fx_rate.base_currency}/${result.fx_rate.quote_currency}=${formatFxRate(result.fx_rate.rate)} @ ${formatDateTime(result.fx_rate.as_of)}`,
+    );
+  } else if (result.fx_error) {
+    pushLog("FX Update", "ERROR", result.fx_error);
+  }
+}
+
+async function pollQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
+  try {
+    const result = await getQuoteUpdateJobStatus(jobId);
+    quoteUpdateJobStatus.value = normalizeQuoteJobStatus(result.status);
+    const processed = Number(result.processed_assets || 0);
+    const total = Number(result.total_assets || 0);
+    quoteUpdateProcessed.value = processed;
+    quoteUpdateTotal.value = total;
+
+    if (processed !== quoteUpdateLastProcessed.value) {
+      quoteUpdateLastProcessed.value = processed;
+      pushLog("Quote Update", "INFO", `progress ${processed}/${total}`);
+    }
+
+    if (result.status === "COMPLETED") {
+      clearQuoteUpdatePolling();
+      applyQuoteUpdateJobResult(result);
+      await refreshData({ logRefresh: false });
+      return;
+    }
+
+    if (result.status === "FAILED") {
+      clearQuoteUpdatePolling();
+      const message = result.errors.length > 0 ? result.errors[result.errors.length - 1] : "Quote update job failed";
+      pushLog("Quote Update", "ERROR", message);
+      return;
+    }
+
+    if (Date.now() - startedAtMs > QUOTE_UPDATE_POLL_TIMEOUT_MS) {
+      clearQuoteUpdatePolling();
+      quoteUpdateJobStatus.value = "FAILED";
+      pushLog("Quote Update", "ERROR", "Polling timeout. Check job status manually.");
+      return;
+    }
+
+    quoteUpdatePollTimer = setTimeout(() => {
+      void pollQuoteUpdateJob(jobId, startedAtMs);
+    }, QUOTE_UPDATE_POLL_MS);
+  } catch (error) {
+    clearQuoteUpdatePolling();
+    quoteUpdateJobStatus.value = "FAILED";
+    pushLog("Quote Update", "ERROR", getErrorMessage(error));
+  }
 }
 
 function applyQuoteToAssetRow(assetId: number, quote: QuoteLatestOut): void {
@@ -587,9 +711,20 @@ function askUpdateQuotesNow(): void {
     pushLog("Quote Update", "ERROR", "Admin/Maintainer only");
     return;
   }
+  if (quoteUpdatePolling.value) {
+    pushLog("Quote Update", "INFO", `Already running (job=${quoteUpdateJobId.value || "-"})`);
+    return;
+  }
   runAction("Quote Update", "Update Quotes", "AUTO 모드의 모든 자산 시세를 즉시 갱신합니다.", async () => {
-    const result = await updateQuotesNow();
-    pushLog("Quote Update", "INFO", `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`);
+    const job = await updateQuotesNow();
+    quoteUpdateJobId.value = job.job_id;
+    quoteUpdateJobStatus.value = normalizeQuoteJobStatus(job.status);
+    quoteUpdateProcessed.value = 0;
+    quoteUpdateTotal.value = Number(job.total_assets || 0);
+    quoteUpdatePolling.value = true;
+    quoteUpdateLastProcessed.value = -1;
+    pushLog("Quote Update", "INFO", `Job started: ${job.job_id} (assets=${job.total_assets})`);
+    void pollQuoteUpdateJob(job.job_id, Date.now());
   });
 }
 
@@ -1140,7 +1275,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   try {
     const meOut = await getMe();
 
-    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, secretsOut] = await Promise.all([
+    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, secretsOut] = await Promise.all([
       getAssetsTable({
         page: assetsQuery.page,
         page_size: assetsQuery.pageSize,
@@ -1169,6 +1304,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         sort_order: liabilityQuery.sortOrder,
         q: liabilityQuery.q.trim() || undefined,
       }),
+      getLatestUsdKrwFxRate().catch(() => null),
       meOut.role === "ADMIN" ? listAppSecrets() : Promise.resolve([] as AppSecretOut[]),
     ]);
 
@@ -1179,6 +1315,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
     portfolioRows.value = portfoliosOut.items;
     holdingRows.value = holdingsOut.items;
     liabilityRows.value = liabilitiesOut.items;
+    usdKrwFx.value = fxOut;
     appSecrets.value = secretsOut;
 
     assetsQuery.total = assetsOut.total;
@@ -1403,6 +1540,7 @@ onBeforeUnmount(() => {
   clearPortfolioSearchDebounce();
   clearHoldingSearchDebounce();
   clearLiabilitySearchDebounce();
+  clearQuoteUpdatePolling();
 });
 </script>
 
@@ -1573,11 +1711,18 @@ onBeforeUnmount(() => {
             v-if="canManageQuotes"
             type="button"
             class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500"
-            :disabled="isBusy"
+            :disabled="isBusy || quoteUpdatePolling"
             @click="askUpdateQuotesNow"
           >
-            Update Quotes Now
+            {{ quoteUpdatePolling ? "Update Quotes Running..." : "Update Quotes Now" }}
           </button>
+          <span
+            v-if="canManageQuotes"
+            class="inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold"
+            :class="quoteUpdateStatusClass"
+          >
+            {{ quoteUpdateStatusLabel }}
+          </span>
           <button
             type="button"
             class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -1591,6 +1736,14 @@ onBeforeUnmount(() => {
       <template v-if="!assetsSectionCollapsed">
       <p v-if="canManageQuotes" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
         AUTO mode인 모든 Asset 시세를 즉시 갱신합니다. Action 컬럼의 Quote 버튼으로 단건 테스트도 가능합니다.
+      </p>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <template v-if="usdKrwFx">
+          {{ formatDateTime(usdKrwFx.as_of) }} 기준 USD/KRW {{ formatFxRate(usdKrwFx.rate) }} (source: {{ usdKrwFx.source }})
+        </template>
+        <template v-else>
+          USD/KRW 환율 정보가 아직 없습니다. Update Quotes Now 실행 시 갱신됩니다.
+        </template>
       </p>
 
       <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -1659,7 +1812,7 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ quoteSourceText(item) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_trade_supported ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
-                <div class="flex flex-wrap gap-1">
+                <div class="flex min-w-max flex-nowrap gap-1">
                   <button
                     type="button"
                     class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
@@ -1918,7 +2071,7 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.liability_count }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
-                <div class="flex flex-wrap gap-1">
+                <div class="flex min-w-max flex-nowrap gap-1">
                   <button
                     type="button"
                     class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"

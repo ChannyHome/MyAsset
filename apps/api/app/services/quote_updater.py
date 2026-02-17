@@ -1,17 +1,21 @@
 from dataclasses import dataclass, field
+from typing import Callable
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
+from app.models.fx_rate import FxRate
 from app.models.latest_quote import LatestQuote
 from app.services.quote_provider import (
+    FxRatePayload,
     QuotePayload,
     fetch_crypto_quote,
     fetch_latest_quote,
     fetch_real_estate_quote,
+    fetch_usd_krw_rate,
     normalize_symbol,
 )
 from app.services.secret_vault import resolve_secret_value
@@ -25,6 +29,9 @@ class QuoteUpdateSummary:
     skipped_count: int = 0
     failed_count: int = 0
     errors: list[str] = field(default_factory=list)
+
+
+ProgressCallback = Callable[[int, int, QuoteUpdateSummary], None]
 
 
 def _upsert_latest_quote(db: Session, asset_id: int, quote: AssetQuote) -> None:
@@ -59,6 +66,19 @@ def _resolve_data_go_kr_service_key(db: Session) -> str | None:
         env_fallback=settings.data_go_kr_service_key,
     )
     return value
+
+
+def count_supported_auto_assets(db: Session) -> int:
+    return int(
+        db.scalar(
+            select(func.count()).select_from(Asset).where(
+                Asset.symbol.is_not(None),
+                Asset.asset_class.in_(list(SUPPORTED_AUTO_ASSET_CLASSES)),
+                Asset.quote_mode == "AUTO",
+            )
+        )
+        or 0
+    )
 
 
 def _fetch_payload_for_asset(asset: Asset, data_go_kr_service_key: str | None) -> QuotePayload | None:
@@ -130,7 +150,10 @@ def refresh_quote_for_asset_id(db: Session, asset_id: int) -> tuple[LatestQuote 
     return latest, None
 
 
-def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
+def refresh_quotes_for_supported_assets(
+    db: Session,
+    on_progress: ProgressCallback | None = None,
+) -> QuoteUpdateSummary:
     summary = QuoteUpdateSummary()
     data_go_kr_service_key = _resolve_data_go_kr_service_key(db)
 
@@ -143,6 +166,9 @@ def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
             )
         ).all()
     )
+
+    total_assets = len(assets)
+    processed = 0
 
     for asset in assets:
         try:
@@ -160,6 +186,10 @@ def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
         except Exception as exc:
             summary.failed_count += 1
             summary.errors.append(f"asset_id={asset.id}: {exc}")
+        finally:
+            processed += 1
+            if on_progress is not None:
+                on_progress(processed, total_assets, summary)
 
     if summary.updated_count > 0:
         db.commit()
@@ -167,3 +197,38 @@ def refresh_quotes_for_supported_assets(db: Session) -> QuoteUpdateSummary:
         db.rollback()
 
     return summary
+
+
+def get_latest_usd_krw_rate(db: Session) -> FxRate | None:
+    return db.scalar(
+        select(FxRate)
+        .where(
+            FxRate.base_currency == "USD",
+            FxRate.quote_currency == "KRW",
+        )
+        .order_by(FxRate.as_of.desc(), FxRate.id.desc())
+    )
+
+
+def refresh_usd_krw_rate(db: Session) -> tuple[FxRate | None, str | None]:
+    payload: FxRatePayload | None = fetch_usd_krw_rate()
+    if payload is None:
+        return None, "FX provider returned no data"
+
+    fx_row = FxRate(
+        base_currency=payload.base_currency,
+        quote_currency=payload.quote_currency,
+        rate=payload.rate,
+        as_of=payload.as_of,
+        source=payload.source,
+    )
+    db.add(fx_row)
+
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        return None, str(exc)
+
+    db.refresh(fx_row)
+    return fx_row, None

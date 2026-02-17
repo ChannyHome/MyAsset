@@ -16,11 +16,46 @@ class QuoteLatestOut(BaseModel):
     source: str
 
 
+class FxRateLatestOut(BaseModel):
+    base_currency: str
+    quote_currency: str
+    rate: Decimal
+    as_of: datetime
+    source: str
+
+
 class QuoteUpdateResult(BaseModel):
     updated_count: int
     skipped_count: int
     failed_count: int
     errors: list[str]
+    fx_updated: bool = False
+    fx_rate: FxRateLatestOut | None = None
+    fx_error: str | None = None
+
+
+class QuoteUpdateJobStartOut(BaseModel):
+    job_id: str
+    status: str
+    created_at: datetime
+    total_assets: int
+
+
+class QuoteUpdateJobStatusOut(BaseModel):
+    job_id: str
+    status: str
+    created_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    total_assets: int
+    processed_assets: int
+    updated_count: int
+    skipped_count: int
+    failed_count: int
+    errors: list[str]
+    fx_updated: bool = False
+    fx_rate: FxRateLatestOut | None = None
+    fx_error: str | None = None
 
 
 class ManualQuoteUpsertIn(BaseModel):

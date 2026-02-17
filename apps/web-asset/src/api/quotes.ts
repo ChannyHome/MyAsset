@@ -1,10 +1,10 @@
 ﻿import { http } from "./http";
 
-export type QuoteUpdateResult = {
-  updated_count: number;
-  skipped_count: number;
-  failed_count: number;
-  errors: string[];
+export type QuoteUpdateJobStartOut = {
+  job_id: string;
+  status: string;
+  created_at: string;
+  total_assets: number;
 };
 
 export type ManualQuoteUpsertIn = {
@@ -27,13 +27,43 @@ export type QuoteLatestOut = {
   source: string;
 };
 
+export type FxRateLatestOut = {
+  base_currency: string;
+  quote_currency: string;
+  rate: string | number;
+  as_of: string;
+  source: string;
+};
+
+export type QuoteUpdateJobStatusOut = {
+  job_id: string;
+  status: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  total_assets: number;
+  processed_assets: number;
+  updated_count: number;
+  skipped_count: number;
+  failed_count: number;
+  errors: string[];
+  fx_updated: boolean;
+  fx_rate: FxRateLatestOut | null;
+  fx_error: string | null;
+};
+
 export async function getLatestQuotes(): Promise<QuoteLatestOut[]> {
   const { data } = await http.get<QuoteLatestOut[]>("/quotes/latest");
   return data;
 }
 
-export async function updateQuotesNow(): Promise<QuoteUpdateResult> {
-  const { data } = await http.post<QuoteUpdateResult>("/quotes/update-now");
+export async function updateQuotesNow(): Promise<QuoteUpdateJobStartOut> {
+  const { data } = await http.post<QuoteUpdateJobStartOut>("/quotes/update-now");
+  return data;
+}
+
+export async function getQuoteUpdateJobStatus(jobId: string): Promise<QuoteUpdateJobStatusOut> {
+  const { data } = await http.get<QuoteUpdateJobStatusOut>(`/quotes/update-jobs/${jobId}`);
   return data;
 }
 
@@ -44,5 +74,10 @@ export async function testQuoteForAsset(assetId: number): Promise<QuoteLatestOut
 
 export async function upsertManualQuote(payload: ManualQuoteUpsertIn): Promise<QuoteLatestOut> {
   const { data } = await http.post<QuoteLatestOut>("/quotes/manual", payload);
+  return data;
+}
+
+export async function getLatestUsdKrwFxRate(): Promise<FxRateLatestOut> {
+  const { data } = await http.get<FxRateLatestOut>("/quotes/fx/usd-krw/latest");
   return data;
 }

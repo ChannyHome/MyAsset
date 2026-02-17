@@ -21,6 +21,15 @@ class QuotePayload:
     source: str
 
 
+@dataclass
+class FxRatePayload:
+    base_currency: str
+    quote_currency: str
+    rate: Decimal
+    as_of: datetime
+    source: str
+
+
 def _to_decimal(value: object) -> Decimal | None:
     if value is None:
         return None
@@ -65,6 +74,43 @@ def normalize_symbol(asset_class: str, symbol: str, asset_currency: str) -> str:
 
 def fetch_latest_quote(symbol: str) -> QuotePayload | None:
     return fetch_latest_quote_from_yfinance(symbol)
+
+
+def fetch_usd_krw_rate() -> FxRatePayload | None:
+    try:
+        response = httpx.get(
+            "https://open.er-api.com/v6/latest/USD",
+            timeout=8.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    result = str(payload.get("result", "")).lower()
+    if result and result != "success":
+        return None
+
+    rates = payload.get("rates")
+    if not isinstance(rates, dict):
+        return None
+
+    rate = _to_decimal(rates.get("KRW"))
+    if rate is None or rate <= 0:
+        return None
+
+    as_of = _as_utc_naive_from_epoch(payload.get("time_last_update_unix")) or datetime.now(UTC).replace(tzinfo=None)
+
+    return FxRatePayload(
+        base_currency="USD",
+        quote_currency="KRW",
+        rate=rate,
+        as_of=as_of,
+        source="open.er-api.com",
+    )
 
 
 def fetch_latest_quote_from_yfinance(symbol: str) -> QuotePayload | None:
@@ -148,8 +194,6 @@ def fetch_real_estate_quote(
         lookback_months = settings.data_go_kr_lookback_months
 
     now = datetime.now()
-    candidates: list[tuple[datetime, Decimal]] = []
-
     for month_index in range(lookback_months):
         target_ymd = _shift_yyyymm(now.year, now.month, month_index)
         rows = _fetch_molit_apt_trade_rows(
@@ -157,6 +201,7 @@ def fetch_real_estate_quote(
             lawd_cd=lawd_cd,
             deal_ymd=target_ymd,
         )
+        month_candidates: list[tuple[datetime, Decimal]] = []
 
         for row in rows:
             row_apt_name = _text_or_none(row, ["아파트", "aptNm"])
@@ -188,20 +233,22 @@ def fetch_real_estate_quote(
             if deal_dt is None:
                 continue
 
-            candidates.append((deal_dt, price))
+            month_candidates.append((deal_dt, price))
 
-    if not candidates:
-        return None
+        # We iterate from recent month to older month.
+        # As soon as we find matched trades in a month, this month is the latest period.
+        if month_candidates:
+            deal_dt, latest_price = max(month_candidates, key=lambda item: item[0])
+            return QuotePayload(
+                price=latest_price,
+                currency=asset_currency.strip().upper() or "KRW",
+                change_value=None,
+                change_pct=None,
+                as_of=deal_dt,
+                source="DATA_GO_KR_MOLIT",
+            )
 
-    deal_dt, latest_price = max(candidates, key=lambda item: item[0])
-    return QuotePayload(
-        price=latest_price,
-        currency=asset_currency.strip().upper() or "KRW",
-        change_value=None,
-        change_pct=None,
-        as_of=deal_dt,
-        source="DATA_GO_KR_MOLIT",
-    )
+    return None
 
 
 def _normalize_service_key(service_key: str) -> str:
