@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from "vue";
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilities, type LiabilityOut } from "../api/liabilities";
+import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) {
@@ -62,6 +63,7 @@ const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityOut[]>([]);
+const portfolios = ref<PortfolioTableRowOut[]>([]);
 
 const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
@@ -78,6 +80,12 @@ const asOf = computed(() => formatDateTime(summary.value?.as_of));
 const topHoldings = computed(() =>
   [...holdings.value]
     .sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount))
+    .slice(0, 6),
+);
+
+const topPortfolios = computed(() =>
+  [...portfolios.value]
+    .sort((a, b) => toNumber(b.gross_assets_total) - toNumber(a.gross_assets_total))
     .slice(0, 6),
 );
 
@@ -98,15 +106,24 @@ async function loadHomeData() {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const [summaryOut, holdingsOut, liabilitiesOut] = await Promise.all([
+    const [summaryOut, holdingsOut, liabilitiesOut, portfoliosOut] = await Promise.all([
       getSummary(),
       getHoldingsPerformance(),
       getLiabilities(),
+      getPortfoliosTable({
+        page: 1,
+        page_size: 200,
+        sort_by: "gross_assets_total",
+        sort_order: "desc",
+        include_hidden: false,
+        include_excluded: false,
+      }),
     ]);
 
     summary.value = summaryOut;
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut;
+    portfolios.value = portfoliosOut.items;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to load dashboard data: ${message}`;
@@ -190,6 +207,49 @@ onMounted(loadHomeData);
         </p>
       </article>
     </div>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Portfolios</h2>
+        <span class="text-xs text-slate-500 dark:text-slate-400">By gross assets</span>
+      </div>
+      <div
+        v-if="topPortfolios.length === 0"
+        class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+      >
+        No portfolio data.
+      </div>
+      <ul v-else class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+        <li
+          v-for="item in topPortfolios"
+          :key="item.id"
+          class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {{ item.name }}
+              <span class="text-xs font-normal text-slate-500">{{ item.type }}</span>
+            </p>
+            <p
+              class="text-xs font-semibold"
+              :class="item.total_return_pct == null ? 'text-slate-500' : toNumber(item.total_return_pct) >= 0 ? 'text-emerald-600' : 'text-rose-500'"
+            >
+              {{ formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct)) }}
+            </p>
+          </div>
+          <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || displayCurrency) }}
+            /
+            {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || displayCurrency) }}
+          </div>
+          <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Net {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || displayCurrency) }}
+            ·
+            PnL {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || displayCurrency) }}
+          </div>
+        </li>
+      </ul>
+    </article>
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
