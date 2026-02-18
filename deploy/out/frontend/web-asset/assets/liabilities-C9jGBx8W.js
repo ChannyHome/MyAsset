@@ -3980,7 +3980,7 @@ const STORAGE_TOKEN_KEY = "myasset.auth.token";
 const apiBaseUrl = "/api/v1";
 const http = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 15e3
+  timeout: 3e4
 });
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem(STORAGE_TOKEN_KEY);
@@ -3991,4 +3991,24 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-export { AxiosError as A, http as h };
+async function getLiabilities(params = {}) {
+  const { data } = await http.get("/liabilities", { params });
+  return data;
+}
+async function getLiabilitiesTable(params = {}) {
+  const { data } = await http.get("/liabilities/table", { params });
+  return data;
+}
+async function createLiability(payload) {
+  const { data } = await http.post("/liabilities", payload);
+  return data;
+}
+async function updateLiability(liabilityId, payload) {
+  const { data } = await http.patch(`/liabilities/${liabilityId}`, payload);
+  return data;
+}
+async function deleteLiability(liabilityId) {
+  await http.delete(`/liabilities/${liabilityId}`);
+}
+
+export { AxiosError as A, getLiabilities as a, createLiability as c, deleteLiability as d, getLiabilitiesTable as g, http as h, updateLiability as u };

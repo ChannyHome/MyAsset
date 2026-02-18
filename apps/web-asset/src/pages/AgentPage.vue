@@ -488,7 +488,8 @@ async function pollQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<v
 
     if (result.status === "FAILED") {
       clearQuoteUpdatePolling();
-      const message = result.errors.length > 0 ? result.errors[result.errors.length - 1] : "Quote update job failed";
+      const message =
+        result.errors.length > 0 ? (result.errors[result.errors.length - 1] ?? "Quote update job failed") : "Quote update job failed";
       pushLog("Quote Update", "ERROR", message);
       return;
     }
@@ -515,6 +516,7 @@ function applyQuoteToAssetRow(assetId: number, quote: QuoteLatestOut): void {
   if (index < 0) return;
 
   const current = assets.value[index];
+  if (!current) return;
   assets.value[index] = {
     ...current,
     quote_price: quote.price,

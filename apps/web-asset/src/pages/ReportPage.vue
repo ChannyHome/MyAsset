@@ -2,31 +2,14 @@
 import { computed, onMounted, ref } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
+import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
+import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
   const num = typeof value === "number" ? value : Number(value);
   return Number.isFinite(num) ? num : 0;
-}
-
-function formatCurrency(value: number, currency = "KRW"): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatSignedCurrency(value: number, currency = "KRW"): string {
-  const absText = formatCurrency(Math.abs(value), currency);
-  if (value > 0) return `+${absText}`;
-  if (value < 0) return `-${absText}`;
-  return absText;
-}
-
-function formatPercent(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "-";
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -39,6 +22,8 @@ function formatDateTime(value: string | null | undefined): string {
 const loading = ref(false);
 const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
+const portfolioRows = ref<PortfolioTableRowOut[]>([]);
+const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 
 const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
@@ -60,7 +45,29 @@ async function loadReportData(): Promise<void> {
   loading.value = true;
   errorMessage.value = "";
   try {
-    summary.value = await getSummary();
+    const [summaryOut, portfoliosOut, liabilitiesOut] = await Promise.all([
+      getSummary(),
+      getPortfoliosTable({
+        page: 1,
+        page_size: 200,
+        sort_by: "gross_assets_total",
+        sort_order: "desc",
+        include_hidden: false,
+        include_excluded: false,
+      }),
+      getLiabilitiesTable({
+        page: 1,
+        page_size: 200,
+        sort_by: "outstanding_balance",
+        sort_order: "desc",
+        include_hidden: false,
+        include_excluded: false,
+      }),
+    ]);
+
+    summary.value = summaryOut;
+    portfolioRows.value = portfoliosOut.items;
+    liabilityRows.value = liabilitiesOut.items;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to load report data: ${message}`;
@@ -102,41 +109,20 @@ onMounted(loadReportData);
       {{ errorMessage }}
     </article>
 
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Gross Assets (owned assets only)</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(grossAssetsTotal, displayCurrency) }}
-          <span class="text-base font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-            ({{ formatPercent(principalReturnPct) }}, {{ formatSignedCurrency(principalProfitTotal, displayCurrency) }})
-          </span>
-        </p>
-        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-          vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
-        </p>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Liabilities</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(liabilitiesTotal, displayCurrency) }}
-        </p>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Included liabilities only</p>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets (assets - liabilities)</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(netAssetsTotal, displayCurrency) }}
-          <span class="text-base font-semibold" :class="netAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-            ({{ formatPercent(netAssetsReturnPct) }}, {{ formatSignedCurrency(netAssetsProfitTotal, displayCurrency) }})
-          </span>
-        </p>
-        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-          vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
-        </p>
-      </article>
-    </div>
+    <KpiBreakdownCards
+      :display-currency="displayCurrency"
+      :gross-assets-total="grossAssetsTotal"
+      :liabilities-total="liabilitiesTotal"
+      :net-assets-total="netAssetsTotal"
+      :invested-principal-total="investedPrincipalTotal"
+      :principal-minus-debt-total="principalMinusDebtTotal"
+      :principal-return-pct="principalReturnPct"
+      :net-assets-return-pct="netAssetsReturnPct"
+      :principal-profit-total="principalProfitTotal"
+      :net-assets-profit-total="netAssetsProfitTotal"
+      :portfolios="portfolioRows"
+      :liabilities="liabilityRows"
+    />
 
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">

@@ -2,8 +2,9 @@
 import { computed, onMounted, ref } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
-import { getLiabilities, type LiabilityOut } from "../api/liabilities";
+import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 
 function toNumber(value: string | number | null | undefined): number {
@@ -62,7 +63,7 @@ const loading = ref(false);
 const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
-const liabilities = ref<LiabilityOut[]>([]);
+const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
 
 const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
@@ -109,7 +110,14 @@ async function loadHomeData() {
     const [summaryOut, holdingsOut, liabilitiesOut, portfoliosOut] = await Promise.all([
       getSummary(),
       getHoldingsPerformance(),
-      getLiabilities(),
+      getLiabilitiesTable({
+        page: 1,
+        page_size: 200,
+        sort_by: "outstanding_balance",
+        sort_order: "desc",
+        include_hidden: false,
+        include_excluded: false,
+      }),
       getPortfoliosTable({
         page: 1,
         page_size: 200,
@@ -122,7 +130,7 @@ async function loadHomeData() {
 
     summary.value = summaryOut;
     holdings.value = holdingsOut;
-    liabilities.value = liabilitiesOut;
+    liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -172,41 +180,20 @@ onMounted(loadHomeData);
       </button>
     </article>
 
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Gross Assets (owned assets only)</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(grossAssetsTotal, displayCurrency) }}
-          <span class="text-base font-semibold" :class="principalReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-            ({{ formatPercent(principalReturnPct) }}, {{ formatSignedCurrency(principalProfitTotal, displayCurrency) }})
-          </span>
-        </p>
-        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-          vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
-        </p>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Liabilities</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(liabilitiesTotal, displayCurrency) }}
-        </p>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Included liabilities only</p>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p class="text-xs text-slate-500 dark:text-slate-400">Net Assets (assets - liabilities)</p>
-        <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-          {{ formatCurrency(netAssetsTotal, displayCurrency) }}
-          <span class="text-base font-semibold" :class="netAssetsReturnPct >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-            ({{ formatPercent(netAssetsReturnPct) }}, {{ formatSignedCurrency(netAssetsProfitTotal, displayCurrency) }})
-          </span>
-        </p>
-        <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-          vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
-        </p>
-      </article>
-    </div>
+    <KpiBreakdownCards
+      :display-currency="displayCurrency"
+      :gross-assets-total="grossAssetsTotal"
+      :liabilities-total="liabilitiesTotal"
+      :net-assets-total="netAssetsTotal"
+      :invested-principal-total="investedPrincipalTotal"
+      :principal-minus-debt-total="principalMinusDebtTotal"
+      :principal-return-pct="principalReturnPct"
+      :net-assets-return-pct="netAssetsReturnPct"
+      :principal-profit-total="principalProfitTotal"
+      :net-assets-profit-total="netAssetsProfitTotal"
+      :portfolios="portfolios"
+      :liabilities="liabilities"
+    />
 
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="mb-4 flex items-center justify-between">
