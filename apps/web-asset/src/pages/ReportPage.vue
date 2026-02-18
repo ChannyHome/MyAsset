@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
+import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import { useDisplayCurrency } from "../composables/useDisplayCurrency";
+import type { DisplayCurrency } from "../api/userSettings";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -24,8 +27,9 @@ const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
+const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
-const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
@@ -46,12 +50,13 @@ async function loadReportData(): Promise<void> {
   errorMessage.value = "";
   try {
     const [summaryOut, portfoliosOut, liabilitiesOut] = await Promise.all([
-      getSummary(),
+      getSummary({ display_currency: displayCurrency.value }),
       getPortfoliosTable({
         page: 1,
         page_size: 200,
         sort_by: "gross_assets_total",
         sort_order: "desc",
+        display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       }),
@@ -60,6 +65,7 @@ async function loadReportData(): Promise<void> {
         page_size: 200,
         sort_by: "outstanding_balance",
         sort_order: "desc",
+        display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       }),
@@ -76,7 +82,28 @@ async function loadReportData(): Promise<void> {
   }
 }
 
-onMounted(loadReportData);
+async function onChangeDisplayCurrency(value: DisplayCurrency) {
+  try {
+    await setDisplayCurrency(value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    errorMessage.value = `Failed to update display currency: ${message}`;
+  }
+}
+
+onMounted(async () => {
+  await ensureInitialized();
+  await loadReportData();
+});
+
+watch(
+  () => displayCurrency.value,
+  (next, prev) => {
+    if (summary.value && prev && next !== prev) {
+      void loadReportData();
+    }
+  },
+);
 </script>
 
 <template>
@@ -90,14 +117,22 @@ onMounted(loadReportData);
             Home과 동일한 기준으로 Gross/Net/부채 및 수익률을 요약 표시합니다.
           </p>
         </div>
-        <button
-          type="button"
-          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          :disabled="loading"
-          @click="loadReportData"
-        >
-          {{ loading ? "Loading..." : "Refresh" }}
-        </button>
+        <div class="flex items-center gap-2">
+          <DisplayCurrencyToggle
+            :model-value="displayCurrency"
+            :disabled="loading || settingsSaving"
+            :loading="settingsSaving"
+            @update:model-value="onChangeDisplayCurrency"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="loading"
+            @click="loadReportData"
+          >
+            {{ loading ? "Loading..." : "Refresh" }}
+          </button>
+        </div>
       </div>
       <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">as_of: {{ asOf }}</p>
     </header>
@@ -110,7 +145,7 @@ onMounted(loadReportData);
     </article>
 
     <KpiBreakdownCards
-      :display-currency="displayCurrency"
+      :display-currency="summaryDisplayCurrency"
       :gross-assets-total="grossAssetsTotal"
       :liabilities-total="liabilitiesTotal"
       :net-assets-total="netAssetsTotal"

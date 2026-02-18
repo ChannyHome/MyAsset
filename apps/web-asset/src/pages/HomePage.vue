@@ -1,11 +1,15 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
+import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
+import { useDisplayCurrency } from "../composables/useDisplayCurrency";
+import type { DisplayCurrency } from "../api/userSettings";
+import { releaseNotes } from "../data/releaseNotes";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) {
@@ -65,8 +69,9 @@ const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
+const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
-const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
@@ -108,13 +113,14 @@ async function loadHomeData() {
   errorMessage.value = "";
   try {
     const [summaryOut, holdingsOut, liabilitiesOut, portfoliosOut] = await Promise.all([
-      getSummary(),
-      getHoldingsPerformance(),
+      getSummary({ display_currency: displayCurrency.value }),
+      getHoldingsPerformance({ display_currency: displayCurrency.value }),
       getLiabilitiesTable({
         page: 1,
         page_size: 200,
         sort_by: "outstanding_balance",
         sort_order: "desc",
+        display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       }),
@@ -123,6 +129,7 @@ async function loadHomeData() {
         page_size: 200,
         sort_by: "gross_assets_total",
         sort_order: "desc",
+        display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       }),
@@ -140,7 +147,28 @@ async function loadHomeData() {
   }
 }
 
-onMounted(loadHomeData);
+async function onChangeDisplayCurrency(value: DisplayCurrency) {
+  try {
+    await setDisplayCurrency(value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    errorMessage.value = `Failed to update display currency: ${message}`;
+  }
+}
+
+onMounted(async () => {
+  await ensureInitialized();
+  await loadHomeData();
+});
+
+watch(
+  () => displayCurrency.value,
+  (next, prev) => {
+    if (summary.value && prev && next !== prev) {
+      void loadHomeData();
+    }
+  },
+);
 </script>
 
 <template>
@@ -154,14 +182,22 @@ onMounted(loadHomeData);
             This page now uses real API data from summary, holdings performance, and liabilities.
           </p>
         </div>
-        <button
-          type="button"
-          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          :disabled="loading"
-          @click="loadHomeData"
-        >
-          {{ loading ? "Loading..." : "Refresh" }}
-        </button>
+        <div class="flex items-center gap-2">
+          <DisplayCurrencyToggle
+            :model-value="displayCurrency"
+            :disabled="loading || settingsSaving"
+            :loading="settingsSaving"
+            @update:model-value="onChangeDisplayCurrency"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="loading"
+            @click="loadHomeData"
+          >
+            {{ loading ? "Loading..." : "Refresh" }}
+          </button>
+        </div>
       </div>
       <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">as_of: {{ asOf }}</p>
     </header>
@@ -181,7 +217,7 @@ onMounted(loadHomeData);
     </article>
 
     <KpiBreakdownCards
-      :display-currency="displayCurrency"
+      :display-currency="summaryDisplayCurrency"
       :gross-assets-total="grossAssetsTotal"
       :liabilities-total="liabilitiesTotal"
       :net-assets-total="netAssetsTotal"
@@ -225,14 +261,14 @@ onMounted(loadHomeData);
             </p>
           </div>
           <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || displayCurrency) }}
+            {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency) }}
             /
-            {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || displayCurrency) }}
+            {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || summaryDisplayCurrency) }}
           </div>
           <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Net {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || displayCurrency) }}
+            Net {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency) }}
             ·
-            PnL {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || displayCurrency) }}
+            PnL {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || summaryDisplayCurrency) }}
           </div>
         </li>
       </ul>
@@ -263,9 +299,9 @@ onMounted(loadHomeData);
               </p>
             </div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              {{ formatOptionalCurrency(item.current_price, item.current_price_currency || displayCurrency) }}
+              {{ formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency) }}
               /
-              {{ formatOptionalCurrency(item.avg_price, item.current_price_currency || displayCurrency) }}
+              {{ formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency) }}
               
             </div>
           </li>
@@ -294,7 +330,7 @@ onMounted(loadHomeData);
               <p class="text-xs text-slate-500">{{ item.liability_type }}</p>
             </div>
             <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              {{ formatCurrency(toNumber(item.outstanding_balance), item.currency || displayCurrency) }}
+              {{ formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency) }}
             </div>
           </li>
         </ul>
@@ -309,6 +345,24 @@ onMounted(loadHomeData);
         </li>
         <li class="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
           Best PnL assets: {{ topPnlAssets.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-" }}
+        </li>
+      </ul>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes</h2>
+        <span class="text-xs text-slate-500 dark:text-slate-400">Latest first</span>
+      </div>
+      <ul class="space-y-2">
+        <li
+          v-for="note in releaseNotes"
+          :key="note.id"
+          class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+        >
+          <p class="text-xs text-slate-500 dark:text-slate-400">{{ formatDateTime(note.releasedAt) }}</p>
+          <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ note.title }}</p>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ note.summary }}</p>
         </li>
       </ul>
     </article>

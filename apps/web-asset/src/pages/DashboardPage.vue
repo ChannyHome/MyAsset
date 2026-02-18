@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 
 import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilities, type LiabilityOut } from "../api/liabilities";
+import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import { useDisplayCurrency } from "../composables/useDisplayCurrency";
+import type { DisplayCurrency } from "../api/userSettings";
 
 type WidgetType =
   | "kpi_summary"
@@ -122,8 +125,9 @@ const dataError = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityOut[]>([]);
+const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
-const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const topHoldings = computed(() =>
   [...holdings.value].sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount)),
 );
@@ -208,9 +212,9 @@ async function loadDashboardData() {
   dataError.value = "";
   try {
     const [summaryOut, holdingsOut, liabilitiesOut] = await Promise.all([
-      getSummary(),
-      getHoldingsPerformance(),
-      getLiabilities(),
+      getSummary({ display_currency: displayCurrency.value }),
+      getHoldingsPerformance({ display_currency: displayCurrency.value }),
+      getLiabilities({ display_currency: displayCurrency.value }),
     ]);
     summary.value = summaryOut;
     holdings.value = holdingsOut;
@@ -222,7 +226,28 @@ async function loadDashboardData() {
   }
 }
 
-onMounted(loadDashboardData);
+async function onChangeDisplayCurrency(value: DisplayCurrency) {
+  try {
+    await setDisplayCurrency(value);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update display currency";
+    dataError.value = message;
+  }
+}
+
+onMounted(async () => {
+  await ensureInitialized();
+  await loadDashboardData();
+});
+
+watch(
+  () => displayCurrency.value,
+  (next, prev) => {
+    if (summary.value && prev && next !== prev) {
+      void loadDashboardData();
+    }
+  },
+);
 </script>
 
 <template>
@@ -236,7 +261,13 @@ onMounted(loadDashboardData);
             WPF toolbox style editing with live asset data connection.
           </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <DisplayCurrencyToggle
+            :model-value="displayCurrency"
+            :disabled="dataLoading || settingsSaving"
+            :loading="settingsSaving"
+            @update:model-value="onChangeDisplayCurrency"
+          />
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -354,9 +385,9 @@ onMounted(loadDashboardData);
               </div>
 
               <div v-if="widget.type === 'kpi_summary'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
-                <p>Gross: {{ formatCurrency(toNumber(summary?.gross_assets_total), displayCurrency) }}</p>
-                <p>Liabilities: {{ formatCurrency(toNumber(summary?.liabilities_total), displayCurrency) }}</p>
-                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), displayCurrency) }}</p>
+                <p>Gross: {{ formatCurrency(toNumber(summary?.gross_assets_total), summaryDisplayCurrency) }}</p>
+                <p>Liabilities: {{ formatCurrency(toNumber(summary?.liabilities_total), summaryDisplayCurrency) }}</p>
+                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), summaryDisplayCurrency) }}</p>
               </div>
 
               <div v-else-if="widget.type === 'donut_allocation'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">

@@ -15,6 +15,9 @@ import {
   type SortOrder,
 } from "../api/assets";
 import { getMe, type AuthMeOut } from "../api/auth";
+import type { DisplayCurrency } from "../api/userSettings";
+import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import {
   createHolding,
   deleteHolding,
@@ -52,6 +55,7 @@ import {
   type QuoteLatestOut,
   type QuoteUpdateJobStatusOut,
 } from "../api/quotes";
+import { getFxStaleMinutes } from "../api/settings";
 import {
   createAppSecret,
   deactivateAppSecret,
@@ -118,6 +122,7 @@ const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 const appSecrets = ref<AppSecretOut[]>([]);
 const usdKrwFx = ref<FxRateLatestOut | null>(null);
 const logs = ref<ActionLog[]>([]);
+const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 let nextLogId = 1;
 const assetsQuery = reactive<TableQueryState<AssetTableSortBy>>({
   page: 1,
@@ -190,6 +195,8 @@ const manualQuoteForm = reactive({
   as_of: "",
   source: "MANUAL",
 });
+const fxStaleMinutesForm = ref("30");
+const fxStaleSource = ref("env");
 const portfolioForm = reactive({
   name: "",
   type: "ETC",
@@ -1270,6 +1277,14 @@ function toggleLiabilityHidden(item: LiabilityTableRowOut): void {
   );
 }
 
+async function onChangeDisplayCurrency(value: DisplayCurrency): Promise<void> {
+  try {
+    await setDisplayCurrency(value);
+  } catch (error) {
+    pushLog("Display Currency", "ERROR", getErrorMessage(error));
+  }
+}
+
 async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   const refreshId = ++refreshSequence;
   const shouldLogRefresh = options?.logRefresh ?? true;
@@ -1277,7 +1292,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   try {
     const meOut = await getMe();
 
-    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, secretsOut] = await Promise.all([
+    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, staleOut, secretsOut] = await Promise.all([
       getAssetsTable({
         page: assetsQuery.page,
         page_size: assetsQuery.pageSize,
@@ -1290,6 +1305,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         page_size: portfolioQuery.pageSize,
         sort_by: portfolioQuery.sortBy,
         sort_order: portfolioQuery.sortOrder,
+        display_currency: displayCurrency.value,
         q: portfolioQuery.q.trim() || undefined,
       }),
       getHoldingsTable({
@@ -1297,6 +1313,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         page_size: holdingQuery.pageSize,
         sort_by: holdingQuery.sortBy,
         sort_order: holdingQuery.sortOrder,
+        display_currency: displayCurrency.value,
         q: holdingQuery.q.trim() || undefined,
       }),
       getLiabilitiesTable({
@@ -1304,9 +1321,11 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
         page_size: liabilityQuery.pageSize,
         sort_by: liabilityQuery.sortBy,
         sort_order: liabilityQuery.sortOrder,
+        display_currency: displayCurrency.value,
         q: liabilityQuery.q.trim() || undefined,
       }),
       getLatestUsdKrwFxRate().catch(() => null),
+      getFxStaleMinutes().catch(() => null),
       meOut.role === "ADMIN" ? listAppSecrets() : Promise.resolve([] as AppSecretOut[]),
     ]);
 
@@ -1318,6 +1337,10 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
     holdingRows.value = holdingsOut.items;
     liabilityRows.value = liabilitiesOut.items;
     usdKrwFx.value = fxOut;
+    if (staleOut) {
+      fxStaleMinutesForm.value = String(staleOut.minutes);
+      fxStaleSource.value = staleOut.source;
+    }
     appSecrets.value = secretsOut;
 
     assetsQuery.total = assetsOut.total;
@@ -1536,7 +1559,19 @@ watch(
   },
 );
 
-onMounted(refreshData);
+watch(
+  () => displayCurrency.value,
+  (next, prev) => {
+    if (me.value && prev && next !== prev) {
+      void refreshData({ logRefresh: false });
+    }
+  },
+);
+
+onMounted(async () => {
+  await ensureInitialized();
+  await refreshData();
+});
 onBeforeUnmount(() => {
   clearSearchDebounce();
   clearPortfolioSearchDebounce();
@@ -1555,14 +1590,22 @@ onBeforeUnmount(() => {
           <h1 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Asset Control Console</h1>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Role: {{ me?.role || "-" }} / {{ me?.email || "-" }}</p>
         </div>
-        <button
-          type="button"
-          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          :disabled="isBusy"
-          @click="refreshData()"
-        >
-          {{ loading.data ? "Loading..." : "Refresh Data" }}
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <DisplayCurrencyToggle
+            :model-value="displayCurrency"
+            :disabled="isBusy || settingsSaving"
+            :loading="settingsSaving"
+            @update:model-value="onChangeDisplayCurrency"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="refreshData()"
+          >
+            {{ loading.data ? "Loading..." : "Refresh Data" }}
+          </button>
+        </div>
       </div>
     </header>
 

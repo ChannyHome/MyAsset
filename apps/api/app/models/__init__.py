@@ -10,6 +10,7 @@ from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.user import User
 from app.models.fx_rate import FxRate
+from app.models.user_setting import UserSetting
 
 __all__ = [
     "Base",
@@ -25,4 +26,5 @@ __all__ = [
     "AppSetting",
     "AppSecret",
     "FxRate",
+    "UserSetting",
 ]
