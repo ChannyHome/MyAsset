@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     quote_auto_update_enabled: bool = False
     quote_update_interval_minutes: int = 10
     quote_provider: str = "yfinance"
+    fx_strict_mode: bool = False
 
     data_go_kr_service_key: str = ""
     data_go_kr_apartment_trade_url: str = (

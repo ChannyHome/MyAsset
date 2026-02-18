@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.asset import Asset
 from app.models.latest_quote import LatestQuote
@@ -23,6 +24,7 @@ from app.schemas.holding import (
 )
 from app.schemas.asset import SortOrder
 from app.schemas.performance import HoldingPerformanceOut
+from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/holdings", tags=["holdings"])
@@ -165,6 +167,7 @@ def list_holdings_table(
     sort_by: HoldingTableSortBy = Query(default=HoldingTableSortBy.UPDATED_AT),
     sort_order: SortOrder = Query(default=SortOrder.DESC),
     q: str | None = Query(default=None, min_length=1, max_length=100),
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = True,
     include_excluded_portfolios: bool = True,
     db: Session = Depends(get_db),
@@ -234,43 +237,99 @@ def list_holdings_table(
     rows = db.execute(stmt).all()
 
     items: list[HoldingTableRowOut] = []
-    for holding, asset, portfolio, quote in rows:
-        invested_amount = holding.invested_amount or (holding.quantity * holding.avg_price)
-        price = quote.price if quote else None
-        evaluated_amount = holding.quantity * (price if price is not None else holding.avg_price)
-        pnl_amount = evaluated_amount - invested_amount
-        pnl_pct: Decimal | None = None
-        if invested_amount != 0:
-            pnl_pct = (pnl_amount / invested_amount) * Decimal("100")
+    target_currency = (display_currency or "").upper()
+    fx_cache: FxCache = {}
+    try:
+        for holding, asset, portfolio, quote in rows:
+            invested_amount = holding.invested_amount or (holding.quantity * holding.avg_price)
+            invested_currency = holding.invested_amount_currency if holding.invested_amount is not None else holding.avg_price_currency
+            price = quote.price if quote else None
+            price_currency = quote.currency if quote else holding.avg_price_currency
+            evaluated_amount = holding.quantity * (price if price is not None else holding.avg_price)
 
-        items.append(
-            HoldingTableRowOut(
-                id=holding.id,
-                owner_user_id=holding.owner_user_id,
-                portfolio_id=holding.portfolio_id,
-                asset_id=holding.asset_id,
-                quantity=holding.quantity,
-                avg_price=holding.avg_price,
-                invested_amount=invested_amount,
-                source_type=holding.source_type,
-                is_hidden=holding.is_hidden,
-                memo=holding.memo,
-                created_at=holding.created_at,
-                updated_at=holding.updated_at,
-                portfolio_name=portfolio.name if portfolio else None,
-                asset_name=asset.name,
-                asset_symbol=asset.symbol,
-                asset_class=asset.asset_class,
-                asset_currency=asset.currency,
-                current_price=price,
-                current_price_currency=quote.currency if quote else None,
-                evaluated_amount=evaluated_amount,
-                pnl_amount=pnl_amount,
-                pnl_pct=pnl_pct,
-                quote_as_of=quote.as_of if quote else None,
-                quote_source=quote.source if quote else None,
+            avg_price = holding.avg_price
+            avg_price_currency = holding.avg_price_currency
+            current_price = price
+            current_price_currency = quote.currency if quote else None
+
+            if target_currency:
+                avg_price = convert_amount(
+                    db=db,
+                    amount=holding.avg_price,
+                    from_currency=holding.avg_price_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                avg_price_currency = target_currency
+                invested_amount = convert_amount(
+                    db=db,
+                    amount=invested_amount,
+                    from_currency=invested_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                invested_currency = target_currency
+                evaluated_amount = convert_amount(
+                    db=db,
+                    amount=evaluated_amount,
+                    from_currency=price_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                if current_price is not None and current_price_currency is not None:
+                    current_price = convert_amount(
+                        db=db,
+                        amount=current_price,
+                        from_currency=current_price_currency,
+                        to_currency=target_currency,
+                        cache=fx_cache,
+                        strict=settings.fx_strict_mode,
+                    )
+                    current_price_currency = target_currency
+
+            pnl_amount = evaluated_amount - invested_amount
+            pnl_pct: Decimal | None = None
+            if invested_amount != 0:
+                pnl_pct = (pnl_amount / invested_amount) * Decimal("100")
+
+            items.append(
+                HoldingTableRowOut(
+                    id=holding.id,
+                    owner_user_id=holding.owner_user_id,
+                    portfolio_id=holding.portfolio_id,
+                    asset_id=holding.asset_id,
+                    quantity=holding.quantity,
+                    avg_price=avg_price,
+                    avg_price_currency=avg_price_currency,
+                    invested_amount=invested_amount,
+                    invested_amount_currency=invested_currency,
+                    source_type=holding.source_type,
+                    is_hidden=holding.is_hidden,
+                    memo=holding.memo,
+                    created_at=holding.created_at,
+                    updated_at=holding.updated_at,
+                    portfolio_name=portfolio.name if portfolio else None,
+                    asset_name=asset.name,
+                    asset_symbol=asset.symbol,
+                    asset_class=asset.asset_class,
+                    asset_currency=asset.currency,
+                    current_price=current_price,
+                    current_price_currency=current_price_currency,
+                    evaluated_amount=evaluated_amount,
+                    pnl_amount=pnl_amount,
+                    pnl_pct=pnl_pct,
+                    quote_as_of=quote.as_of if quote else None,
+                    quote_source=quote.source if quote else None,
+                )
             )
-        )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
 
     return HoldingTablePageOut(
         items=items,
@@ -287,6 +346,7 @@ def list_holdings_table(
 def list_holdings_performance(
     scope_type: str | None = None,
     scope_id: int | None = None,
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = False,
     include_excluded_portfolios: bool = False,
     db: Session = Depends(get_db),
@@ -315,40 +375,95 @@ def list_holdings_performance(
 
     rows = db.execute(stmt.order_by(Holding.id.desc())).all()
     quote_map = _latest_quote_map(db, [asset.id for _, asset in rows])
+    target_currency = (display_currency or "").upper()
+    fx_cache: FxCache = {}
 
     result: list[HoldingPerformanceOut] = []
-    for holding, asset in rows:
-        invested = holding.invested_amount or (holding.quantity * holding.avg_price)
-        quote = quote_map.get(asset.id)
-
-        current_price = quote.price if quote else None
-        current_ccy = quote.currency if quote else None
-        quote_as_of = quote.as_of if quote else None
-
-        evaluated_amount = (holding.quantity * current_price) if current_price is not None else None
-        pnl_amount = (evaluated_amount - invested) if evaluated_amount is not None else None
-        pnl_pct = ((pnl_amount / invested) * 100) if (pnl_amount is not None and invested != 0) else None
-
-        result.append(
-            HoldingPerformanceOut(
-                holding_id=holding.id,
-                owner_user_id=holding.owner_user_id,
-                portfolio_id=holding.portfolio_id,
-                asset_id=asset.id,
-                asset_symbol=asset.symbol,
-                asset_name=asset.name,
-                asset_class=asset.asset_class,
-                quantity=holding.quantity,
-                avg_price=holding.avg_price,
-                invested_amount=invested,
-                current_price=current_price,
-                current_price_currency=current_ccy,
-                evaluated_amount=evaluated_amount,
-                pnl_amount=pnl_amount,
-                pnl_pct=pnl_pct,
-                quote_as_of=quote_as_of,
+    try:
+        for holding, asset in rows:
+            invested = holding.invested_amount or (holding.quantity * holding.avg_price)
+            invested_currency = (
+                holding.invested_amount_currency if holding.invested_amount is not None else holding.avg_price_currency
             )
-        )
+            quote = quote_map.get(asset.id)
+
+            current_price = quote.price if quote else None
+            current_ccy = quote.currency if quote else None
+            quote_as_of = quote.as_of if quote else None
+
+            evaluated_amount = (holding.quantity * current_price) if current_price is not None else None
+
+            avg_price = holding.avg_price
+            avg_price_currency = holding.avg_price_currency
+            if target_currency:
+                avg_price = convert_amount(
+                    db=db,
+                    amount=holding.avg_price,
+                    from_currency=holding.avg_price_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                avg_price_currency = target_currency
+                invested = convert_amount(
+                    db=db,
+                    amount=invested,
+                    from_currency=invested_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                invested_currency = target_currency
+                if current_price is not None and current_ccy is not None:
+                    current_price = convert_amount(
+                        db=db,
+                        amount=current_price,
+                        from_currency=current_ccy,
+                        to_currency=target_currency,
+                        cache=fx_cache,
+                        strict=settings.fx_strict_mode,
+                    )
+                    current_ccy = target_currency
+                if evaluated_amount is not None and quote is not None:
+                    evaluated_amount = convert_amount(
+                        db=db,
+                        amount=evaluated_amount,
+                        from_currency=quote.currency or asset.currency,
+                        to_currency=target_currency,
+                        cache=fx_cache,
+                        strict=settings.fx_strict_mode,
+                    )
+
+            pnl_amount = (evaluated_amount - invested) if evaluated_amount is not None else None
+            pnl_pct = ((pnl_amount / invested) * 100) if (pnl_amount is not None and invested != 0) else None
+
+            result.append(
+                HoldingPerformanceOut(
+                    holding_id=holding.id,
+                    owner_user_id=holding.owner_user_id,
+                    portfolio_id=holding.portfolio_id,
+                    asset_id=asset.id,
+                    asset_symbol=asset.symbol,
+                    asset_name=asset.name,
+                    asset_class=asset.asset_class,
+                    quantity=holding.quantity,
+                    avg_price=avg_price,
+                    avg_price_currency=avg_price_currency,
+                    invested_amount=invested,
+                    invested_amount_currency=invested_currency,
+                    current_price=current_price,
+                    current_price_currency=current_ccy,
+                    evaluated_amount=evaluated_amount,
+                    pnl_amount=pnl_amount,
+                    pnl_pct=pnl_pct,
+                    quote_as_of=quote_as_of,
+                )
+            )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
 
     return result
 
@@ -360,6 +475,8 @@ def create_holding(
     current_user: SeedUser = Depends(get_current_user),
 ) -> Holding:
     data = payload.model_dump()
+    data["avg_price_currency"] = (data.get("avg_price_currency") or "KRW").upper()
+    data["invested_amount_currency"] = (data.get("invested_amount_currency") or "KRW").upper()
     _validate_references(
         db=db,
         owner_user_id=current_user.id,
@@ -393,6 +510,10 @@ def update_holding(
 ) -> Holding:
     holding = _get_owned_holding(db, holding_id, current_user.id)
     updates = payload.model_dump(exclude_unset=True)
+    if "avg_price_currency" in updates and updates["avg_price_currency"] is not None:
+        updates["avg_price_currency"] = updates["avg_price_currency"].upper()
+    if "invested_amount_currency" in updates and updates["invested_amount_currency"] is not None:
+        updates["invested_amount_currency"] = updates["invested_amount_currency"].upper()
 
     next_asset_id = updates.get("asset_id", holding.asset_id)
     next_portfolio_id = updates.get("portfolio_id", holding.portfolio_id)

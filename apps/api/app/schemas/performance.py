@@ -16,7 +16,9 @@ class HoldingPerformanceOut(BaseModel):
     asset_class: str
     quantity: Decimal
     avg_price: Decimal
+    avg_price_currency: str
     invested_amount: Decimal
+    invested_amount_currency: str
     current_price: Decimal | None
     current_price_currency: str | None
     evaluated_amount: Decimal | None

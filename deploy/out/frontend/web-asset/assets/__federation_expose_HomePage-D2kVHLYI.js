@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { g as getSummary } from './analytics-CbRmvasB.js';
-import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CB7SW8tJ.js';
+import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
 import { g as getHoldingsPerformance } from './holdings-BmSSXcn1.js';
 import { g as getLiabilitiesTable } from './liabilities-C9jGBx8W.js';
 import { g as getPortfoliosTable } from './portfolios-DH2MjKkA.js';

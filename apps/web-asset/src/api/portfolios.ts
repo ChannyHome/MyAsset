@@ -82,6 +82,7 @@ export type PortfoliosTableQuery = {
   sort_by?: PortfolioTableSortBy;
   sort_order?: SortOrder;
   q?: string;
+  display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded?: boolean;
 };

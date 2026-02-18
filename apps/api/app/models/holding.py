@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, Text, UniqueConstraint, text
+from sqlalchemy import DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -24,7 +24,9 @@ class Holding(Base):
     asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
     quantity: Mapped[Decimal] = mapped_column(Numeric(24, 8), nullable=False, server_default=text("0"))
     avg_price: Mapped[Decimal] = mapped_column(Numeric(24, 8), nullable=False, server_default=text("0"))
+    avg_price_currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="KRW")
     invested_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    invested_amount_currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="KRW")
     source_type: Mapped[str] = mapped_column(
         Enum("MANUAL", "AUTO", name="holding_source_type"),
         nullable=False,

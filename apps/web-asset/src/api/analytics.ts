@@ -21,6 +21,7 @@ export type AnalyticsSummaryV2Out = {
 export type SummaryQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
+  display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded_portfolios?: boolean;
   include_excluded_liabilities?: boolean;

@@ -8,7 +8,9 @@ export type HoldingOut = {
   asset_id: number;
   quantity: string | number;
   avg_price: string | number;
+  avg_price_currency: string;
   invested_amount: string | number | null;
+  invested_amount_currency: string;
   source_type: string;
   is_hidden: boolean;
   memo: string | null;
@@ -26,7 +28,9 @@ export type HoldingPerformanceOut = {
   asset_class: string;
   quantity: string | number;
   avg_price: string | number;
+  avg_price_currency: string;
   invested_amount: string | number;
+  invested_amount_currency: string;
   current_price: string | number | null;
   current_price_currency: string | null;
   evaluated_amount: string | number | null;
@@ -79,6 +83,7 @@ export type HoldingTablePageOut = {
 export type HoldingsPerformanceQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
+  display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded_portfolios?: boolean;
 };
@@ -96,6 +101,7 @@ export type HoldingsTableQuery = {
   sort_by?: HoldingTableSortBy;
   sort_order?: SortOrder;
   q?: string;
+  display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded_portfolios?: boolean;
 };
@@ -105,7 +111,9 @@ export type HoldingCreateIn = {
   asset_id: number;
   quantity: string | number;
   avg_price: string | number;
+  avg_price_currency?: string;
   invested_amount?: string | number | null;
+  invested_amount_currency?: string;
   source_type?: string;
   is_hidden?: boolean;
   memo?: string | null;

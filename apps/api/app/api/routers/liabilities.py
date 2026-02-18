@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
@@ -17,6 +18,7 @@ from app.schemas.liability import (
     LiabilityTableSortBy,
     LiabilityUpdate,
 )
+from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/liabilities", tags=["liabilities"])
@@ -42,9 +44,10 @@ def _get_owned_liability(db: Session, liability_id: int, owner_user_id: int) -> 
 def list_liabilities(
     include_hidden: bool = False,
     include_excluded: bool = False,
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
-) -> list[Liability]:
+) -> list[LiabilityOut]:
     stmt = select(Liability).where(Liability.owner_user_id == current_user.id)
 
     if not include_hidden:
@@ -54,7 +57,59 @@ def list_liabilities(
         stmt = stmt.where(Liability.is_included.is_(True))
 
     stmt = stmt.order_by(Liability.id.desc())
-    return list(db.scalars(stmt).all())
+    rows = list(db.scalars(stmt).all())
+    target_currency = (display_currency or "").upper()
+    if not target_currency:
+        return [LiabilityOut.model_validate(row) for row in rows]
+
+    fx_cache: FxCache = {}
+    try:
+        converted_rows: list[LiabilityOut] = []
+        for row in rows:
+            outstanding_balance = convert_amount(
+                db=db,
+                amount=row.outstanding_balance,
+                from_currency=row.currency,
+                to_currency=target_currency,
+                cache=fx_cache,
+                strict=settings.fx_strict_mode,
+            )
+            monthly_payment = row.monthly_payment
+            if monthly_payment is not None:
+                monthly_payment = convert_amount(
+                    db=db,
+                    amount=monthly_payment,
+                    from_currency=row.currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+            converted_rows.append(
+                LiabilityOut(
+                    id=row.id,
+                    owner_user_id=row.owner_user_id,
+                    portfolio_id=row.portfolio_id,
+                    name=row.name,
+                    liability_type=row.liability_type,
+                    currency=target_currency,
+                    outstanding_balance=outstanding_balance,
+                    interest_rate=row.interest_rate,
+                    monthly_payment=monthly_payment,
+                    source_type=row.source_type,
+                    is_included=row.is_included,
+                    is_hidden=row.is_hidden,
+                    memo=row.memo,
+                    created_at=row.created_at,
+                    updated_at=row.updated_at,
+                )
+            )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+
+    return converted_rows
 
 
 @router.get("/table", response_model=LiabilityTablePageOut)
@@ -64,6 +119,7 @@ def list_liabilities_table(
     sort_by: LiabilityTableSortBy = Query(default=LiabilityTableSortBy.UPDATED_AT),
     sort_order: SortOrder = Query(default=SortOrder.DESC),
     q: str | None = Query(default=None, min_length=1, max_length=100),
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = True,
     include_excluded: bool = True,
     db: Session = Depends(get_db),
@@ -122,27 +178,59 @@ def list_liabilities_table(
     )
     rows = db.execute(stmt).all()
 
-    items = [
-        LiabilityTableRowOut(
-            id=liability.id,
-            owner_user_id=liability.owner_user_id,
-            portfolio_id=liability.portfolio_id,
-            name=liability.name,
-            liability_type=liability.liability_type,
-            currency=liability.currency,
-            outstanding_balance=liability.outstanding_balance,
-            interest_rate=liability.interest_rate,
-            monthly_payment=liability.monthly_payment,
-            source_type=liability.source_type,
-            is_included=liability.is_included,
-            is_hidden=liability.is_hidden,
-            memo=liability.memo,
-            created_at=liability.created_at,
-            updated_at=liability.updated_at,
-            portfolio_name=portfolio_name,
-        )
-        for liability, portfolio_name in rows
-    ]
+    target_currency = (display_currency or "").upper()
+    fx_cache: FxCache = {}
+    items: list[LiabilityTableRowOut] = []
+    try:
+        for liability, portfolio_name in rows:
+            row_currency = liability.currency
+            outstanding_balance = liability.outstanding_balance
+            monthly_payment = liability.monthly_payment
+            if target_currency:
+                outstanding_balance = convert_amount(
+                    db=db,
+                    amount=outstanding_balance,
+                    from_currency=row_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+                if monthly_payment is not None:
+                    monthly_payment = convert_amount(
+                        db=db,
+                        amount=monthly_payment,
+                        from_currency=row_currency,
+                        to_currency=target_currency,
+                        cache=fx_cache,
+                        strict=settings.fx_strict_mode,
+                    )
+                row_currency = target_currency
+
+            items.append(
+                LiabilityTableRowOut(
+                    id=liability.id,
+                    owner_user_id=liability.owner_user_id,
+                    portfolio_id=liability.portfolio_id,
+                    name=liability.name,
+                    liability_type=liability.liability_type,
+                    currency=row_currency,
+                    outstanding_balance=outstanding_balance,
+                    interest_rate=liability.interest_rate,
+                    monthly_payment=monthly_payment,
+                    source_type=liability.source_type,
+                    is_included=liability.is_included,
+                    is_hidden=liability.is_hidden,
+                    memo=liability.memo,
+                    created_at=liability.created_at,
+                    updated_at=liability.updated_at,
+                    portfolio_name=portfolio_name,
+                )
+            )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
 
     return LiabilityTablePageOut(
         items=items,

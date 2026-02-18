@@ -29,6 +29,12 @@ function toNumber(value: string | number | null | undefined): number {
   return Number.isFinite(num) ? num : 0;
 }
 
+function toOptionalNumber(value: string | number | null | undefined): number | null {
+  if (value == null) return null;
+  const num = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
 function formatCurrency(value: number, currency = "KRW"): string {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
@@ -47,6 +53,13 @@ function formatSignedCurrency(value: number, currency = "KRW"): string {
 function formatPercent(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "-";
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function signedValueClass(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) {
+    return "text-slate-500 dark:text-slate-400";
+  }
+  return value >= 0 ? "text-emerald-600" : "text-rose-500";
 }
 
 const grossPortfolioRows = computed(() =>
@@ -95,6 +108,8 @@ const sortedLiabilityRows = computed(() =>
                 <th class="px-3 py-2">Portfolio</th>
                 <th class="px-3 py-2 text-right">Current</th>
                 <th class="px-3 py-2 text-right">Principal</th>
+                <th class="px-3 py-2 text-right">Profit</th>
+                <th class="px-3 py-2 text-right">Return</th>
               </tr>
             </thead>
             <tbody>
@@ -108,6 +123,12 @@ const sortedLiabilityRows = computed(() =>
                 </td>
                 <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
                   {{ formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || displayCurrency) }}
+                </td>
+                <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.total_pnl_amount))">
+                  {{ formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || displayCurrency) }}
+                </td>
+                <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toOptionalNumber(row.total_return_pct))">
+                  {{ formatPercent(toOptionalNumber(row.total_return_pct)) }}
                 </td>
               </tr>
             </tbody>
@@ -191,6 +212,8 @@ const sortedLiabilityRows = computed(() =>
                 <th class="px-3 py-2">Portfolio</th>
                 <th class="px-3 py-2 text-right">Net Current</th>
                 <th class="px-3 py-2 text-right">Net Principal</th>
+                <th class="px-3 py-2 text-right">Profit</th>
+                <th class="px-3 py-2 text-right">Return</th>
               </tr>
             </thead>
             <tbody>
@@ -204,6 +227,12 @@ const sortedLiabilityRows = computed(() =>
                 </td>
                 <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
                   {{ formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || displayCurrency) }}
+                </td>
+                <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.net_assets_profit_total))">
+                  {{ formatSignedCurrency(toNumber(row.net_assets_profit_total), row.base_currency || displayCurrency) }}
+                </td>
+                <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toOptionalNumber(row.net_assets_return_pct))">
+                  {{ formatPercent(toOptionalNumber(row.net_assets_return_pct)) }}
                 </td>
               </tr>
             </tbody>

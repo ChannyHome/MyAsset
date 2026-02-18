@@ -97,6 +97,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       const num = typeof value === "number" ? value : Number(value);
       return Number.isFinite(num) ? num : 0;
     }
+    function toOptionalNumber(value) {
+      if (value == null) return null;
+      const num = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(num) ? num : null;
+    }
     function formatCurrency(value, currency = "KRW") {
       return new Intl.NumberFormat("ko-KR", {
         style: "currency",
@@ -113,6 +118,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function formatPercent(value) {
       if (value == null || !Number.isFinite(value)) return "-";
       return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+    }
+    function signedValueClass(value) {
+      if (value == null || !Number.isFinite(value)) {
+        return "text-slate-500 dark:text-slate-400";
+      }
+      return value >= 0 ? "text-emerald-600" : "text-rose-500";
     }
     const grossPortfolioRows = computed(
       () => [...props.portfolios].sort((a, b) => toNumber(b.gross_assets_total) - toNumber(a.gross_assets_total))
@@ -149,7 +160,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   _createElementVNode("tr", null, [
                     _createElementVNode("th", { class: "px-3 py-2" }, "Portfolio"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Current"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Principal")
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Principal"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Profit"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Return")
                   ])
                 ], -1)),
                 _createElementVNode("tbody", null, [
@@ -163,7 +176,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         _createElementVNode("p", _hoisted_12, _toDisplayString(row.type), 1)
                       ]),
                       _createElementVNode("td", _hoisted_13, _toDisplayString(formatCurrency(toNumber(row.gross_assets_total), row.base_currency || __props.displayCurrency)), 1),
-                      _createElementVNode("td", _hoisted_14, _toDisplayString(formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || __props.displayCurrency)), 1)
+                      _createElementVNode("td", _hoisted_14, _toDisplayString(formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || __props.displayCurrency)), 1),
+                      _createElementVNode("td", {
+                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toNumber(row.total_pnl_amount))])
+                      }, _toDisplayString(formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || __props.displayCurrency)), 3),
+                      _createElementVNode("td", {
+                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toOptionalNumber(row.total_return_pct))])
+                      }, _toDisplayString(formatPercent(toOptionalNumber(row.total_return_pct))), 3)
                     ]);
                   }), 128))
                 ])
@@ -235,7 +254,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   _createElementVNode("tr", null, [
                     _createElementVNode("th", { class: "px-3 py-2" }, "Portfolio"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Current"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Principal")
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Principal"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Profit"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Return")
                   ])
                 ], -1)),
                 _createElementVNode("tbody", null, [
@@ -249,7 +270,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         _createElementVNode("p", _hoisted_36, _toDisplayString(row.type), 1)
                       ]),
                       _createElementVNode("td", _hoisted_37, _toDisplayString(formatCurrency(toNumber(row.net_assets_total), row.base_currency || __props.displayCurrency)), 1),
-                      _createElementVNode("td", _hoisted_38, _toDisplayString(formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || __props.displayCurrency)), 1)
+                      _createElementVNode("td", _hoisted_38, _toDisplayString(formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || __props.displayCurrency)), 1),
+                      _createElementVNode("td", {
+                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toNumber(row.net_assets_profit_total))])
+                      }, _toDisplayString(formatSignedCurrency(toNumber(row.net_assets_profit_total), row.base_currency || __props.displayCurrency)), 3),
+                      _createElementVNode("td", {
+                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toOptionalNumber(row.net_assets_return_pct))])
+                      }, _toDisplayString(formatPercent(toOptionalNumber(row.net_assets_return_pct))), 3)
                     ]);
                   }), 128))
                 ])

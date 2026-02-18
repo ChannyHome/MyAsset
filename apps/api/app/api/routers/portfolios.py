@@ -1,11 +1,12 @@
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.holding import Holding
 from app.models.liability import Liability
@@ -21,6 +22,7 @@ from app.schemas.portfolio import (
     PortfolioTableSortBy,
     PortfolioUpdate,
 )
+from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
@@ -32,6 +34,16 @@ def _latest_quote_map(db: Session, asset_ids: list[int]) -> dict[int, LatestQuot
 
     rows = db.scalars(select(LatestQuote).where(LatestQuote.asset_id.in_(asset_ids))).all()
     return {row.asset_id: row for row in rows}
+
+
+def _normalize_sort_value(value: object) -> tuple[int, object]:
+    if value is None:
+        return (1, "")
+    if isinstance(value, str):
+        return (0, value.lower())
+    if isinstance(value, bool):
+        return (0, int(value))
+    return (0, value)
 
 
 @router.get("", response_model=list[PortfolioOut])
@@ -50,70 +62,13 @@ def list_portfolios_table(
     sort_by: PortfolioTableSortBy = Query(default=PortfolioTableSortBy.UPDATED_AT),
     sort_order: SortOrder = Query(default=SortOrder.DESC),
     q: str | None = Query(default=None, min_length=1, max_length=100),
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = True,
     include_excluded: bool = True,
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> PortfolioTablePageOut:
     query_text = q.strip() if q else None
-    holding_count_expr = (
-        select(func.count())
-        .select_from(Holding)
-        .where(
-            Holding.owner_user_id == Portfolio.owner_user_id,
-            Holding.portfolio_id == Portfolio.id,
-            Holding.is_hidden.is_(False),
-        )
-        .scalar_subquery()
-    )
-    gross_assets_total_expr = (
-        select(func.coalesce(func.sum(Holding.quantity * func.coalesce(LatestQuote.price, Holding.avg_price)), 0))
-        .select_from(Holding)
-        .outerjoin(LatestQuote, LatestQuote.asset_id == Holding.asset_id)
-        .where(
-            Holding.owner_user_id == Portfolio.owner_user_id,
-            Holding.portfolio_id == Portfolio.id,
-            Holding.is_hidden.is_(False),
-        )
-        .scalar_subquery()
-    )
-    liability_count_expr = (
-        select(func.count())
-        .select_from(Liability)
-        .where(
-            Liability.owner_user_id == Portfolio.owner_user_id,
-            Liability.portfolio_id == Portfolio.id,
-            Liability.is_hidden.is_(False),
-            Liability.is_included.is_(True),
-        )
-        .scalar_subquery()
-    )
-    liabilities_total_expr = (
-        select(func.coalesce(func.sum(Liability.outstanding_balance), 0))
-        .select_from(Liability)
-        .where(
-            Liability.owner_user_id == Portfolio.owner_user_id,
-            Liability.portfolio_id == Portfolio.id,
-            Liability.is_hidden.is_(False),
-            Liability.is_included.is_(True),
-        )
-        .scalar_subquery()
-    )
-    net_assets_total_expr = gross_assets_total_expr - liabilities_total_expr
-    principal_minus_debt_total_expr = Portfolio.cumulative_deposit_amount - liabilities_total_expr
-    net_assets_profit_total_expr = net_assets_total_expr - principal_minus_debt_total_expr
-    net_assets_return_pct_expr = case(
-        (principal_minus_debt_total_expr == 0, None),
-        else_=(net_assets_profit_total_expr / func.nullif(principal_minus_debt_total_expr, 0)) * 100,
-    )
-    total_pnl_amount_expr = (
-        gross_assets_total_expr + Portfolio.cumulative_withdrawal_amount - Portfolio.cumulative_deposit_amount
-    )
-    total_return_pct_expr = case(
-        (Portfolio.cumulative_deposit_amount == 0, None),
-        else_=(total_pnl_amount_expr / func.nullif(Portfolio.cumulative_deposit_amount, 0)) * 100,
-    )
-
     filters = [Portfolio.owner_user_id == current_user.id]
     if not include_hidden:
         filters.append(Portfolio.is_hidden.is_(False))
@@ -132,102 +87,171 @@ def list_portfolios_table(
             )
         )
 
-    count_stmt = select(func.count()).select_from(Portfolio).where(*filters)
-    total = int(db.scalar(count_stmt) or 0)
-
-    sort_column_map = {
-        PortfolioTableSortBy.ID: Portfolio.id,
-        PortfolioTableSortBy.NAME: Portfolio.name,
-        PortfolioTableSortBy.TYPE: Portfolio.type,
-        PortfolioTableSortBy.BASE_CURRENCY: Portfolio.base_currency,
-        PortfolioTableSortBy.EXCHANGE_CODE: Portfolio.exchange_code,
-        PortfolioTableSortBy.CATEGORY: Portfolio.category,
-        PortfolioTableSortBy.IS_INCLUDED: Portfolio.is_included,
-        PortfolioTableSortBy.IS_HIDDEN: Portfolio.is_hidden,
-        PortfolioTableSortBy.DEPOSIT: Portfolio.cumulative_deposit_amount,
-        PortfolioTableSortBy.WITHDRAWAL: Portfolio.cumulative_withdrawal_amount,
-        PortfolioTableSortBy.GROSS_ASSETS_TOTAL: gross_assets_total_expr,
-        PortfolioTableSortBy.LIABILITIES_TOTAL: liabilities_total_expr,
-        PortfolioTableSortBy.NET_ASSETS_TOTAL: net_assets_total_expr,
-        PortfolioTableSortBy.PRINCIPAL_MINUS_DEBT_TOTAL: principal_minus_debt_total_expr,
-        PortfolioTableSortBy.NET_ASSETS_PROFIT_TOTAL: net_assets_profit_total_expr,
-        PortfolioTableSortBy.NET_ASSETS_RETURN_PCT: net_assets_return_pct_expr,
-        PortfolioTableSortBy.TOTAL_PNL_AMOUNT: total_pnl_amount_expr,
-        PortfolioTableSortBy.TOTAL_RETURN_PCT: total_return_pct_expr,
-        PortfolioTableSortBy.CASHFLOW_SOURCE_TYPE: Portfolio.cashflow_source_type,
-        PortfolioTableSortBy.UPDATED_AT: Portfolio.updated_at,
-        PortfolioTableSortBy.HOLDING_COUNT: holding_count_expr,
-        PortfolioTableSortBy.LIABILITY_COUNT: liability_count_expr,
-    }
-    sort_column = sort_column_map[sort_by]
-    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
-
-    stmt = (
-        select(
-            Portfolio,
-            holding_count_expr.label("holding_count"),
-            liability_count_expr.label("liability_count"),
-            gross_assets_total_expr.label("gross_assets_total"),
-            liabilities_total_expr.label("liabilities_total"),
-            net_assets_total_expr.label("net_assets_total"),
-            principal_minus_debt_total_expr.label("principal_minus_debt_total"),
-            net_assets_profit_total_expr.label("net_assets_profit_total"),
-            net_assets_return_pct_expr.label("net_assets_return_pct"),
-            total_pnl_amount_expr.label("total_pnl_amount"),
-            total_return_pct_expr.label("total_return_pct"),
+    portfolios = list(db.scalars(select(Portfolio).where(*filters)).all())
+    total = len(portfolios)
+    if total == 0:
+        return PortfolioTablePageOut(
+            items=[],
+            total=0,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_order=sort_order,
+            q=query_text,
         )
-        .where(*filters)
-        .order_by(order_expr, Portfolio.id.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
+
+    portfolio_ids = [p.id for p in portfolios]
+    holdings = list(
+        db.scalars(
+            select(Holding).where(
+                Holding.owner_user_id == current_user.id,
+                Holding.portfolio_id.in_(portfolio_ids),
+                Holding.is_hidden.is_(False),
+            )
+        ).all()
     )
-    rows = db.execute(stmt).all()
+    liabilities = list(
+        db.scalars(
+            select(Liability).where(
+                Liability.owner_user_id == current_user.id,
+                Liability.portfolio_id.in_(portfolio_ids),
+                Liability.is_hidden.is_(False),
+                Liability.is_included.is_(True),
+            )
+        ).all()
+    )
 
-    items = [
-        PortfolioTableRowOut(
-            id=portfolio.id,
-            owner_user_id=portfolio.owner_user_id,
-            name=portfolio.name,
-            type=portfolio.type,
-            base_currency=portfolio.base_currency,
-            exchange_code=portfolio.exchange_code,
-            category=portfolio.category,
-            memo=portfolio.memo,
-            is_included=portfolio.is_included,
-            is_hidden=portfolio.is_hidden,
-            cumulative_deposit_amount=portfolio.cumulative_deposit_amount,
-            cumulative_withdrawal_amount=portfolio.cumulative_withdrawal_amount,
-            cashflow_source_type=portfolio.cashflow_source_type,
-            created_at=portfolio.created_at,
-            updated_at=portfolio.updated_at,
-            holding_count=int(holding_count or 0),
-            liability_count=int(liability_count or 0),
-            gross_assets_total=gross_assets_total,
-            liabilities_total=liabilities_total,
-            net_assets_total=net_assets_total,
-            principal_minus_debt_total=principal_minus_debt_total,
-            net_assets_profit_total=net_assets_profit_total,
-            net_assets_return_pct=net_assets_return_pct,
-            total_pnl_amount=total_pnl_amount,
-            total_return_pct=total_return_pct,
-        )
-        for (
-            portfolio,
-            holding_count,
-            liability_count,
-            gross_assets_total,
-            liabilities_total,
-            net_assets_total,
-            principal_minus_debt_total,
-            net_assets_profit_total,
-            net_assets_return_pct,
-            total_pnl_amount,
-            total_return_pct,
-        ) in rows
-    ]
+    quote_map = _latest_quote_map(db, sorted({item.asset_id for item in holdings}))
+    fx_cache: FxCache = {}
+
+    holdings_by_portfolio: dict[int, list[Holding]] = {pid: [] for pid in portfolio_ids}
+    for holding in holdings:
+        if holding.portfolio_id is None:
+            continue
+        holdings_by_portfolio.setdefault(holding.portfolio_id, []).append(holding)
+
+    liabilities_by_portfolio: dict[int, list[Liability]] = {pid: [] for pid in portfolio_ids}
+    for liability in liabilities:
+        if liability.portfolio_id is None:
+            continue
+        liabilities_by_portfolio.setdefault(liability.portfolio_id, []).append(liability)
+
+    items: list[PortfolioTableRowOut] = []
+    try:
+        for portfolio in portfolios:
+            target_currency = (display_currency or portfolio.base_currency or "KRW").upper()
+            portfolio_holdings = holdings_by_portfolio.get(portfolio.id, [])
+            portfolio_liabilities = liabilities_by_portfolio.get(portfolio.id, [])
+
+            gross_assets_total = Decimal("0")
+            for holding in portfolio_holdings:
+                quote = quote_map.get(holding.asset_id)
+                if quote is None:
+                    unit_price = holding.avg_price
+                    unit_currency = holding.avg_price_currency
+                else:
+                    unit_price = quote.price
+                    unit_currency = quote.currency or holding.avg_price_currency
+
+                holding_value = holding.quantity * unit_price
+                gross_assets_total += convert_amount(
+                    db=db,
+                    amount=holding_value,
+                    from_currency=unit_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+
+            liabilities_total = Decimal("0")
+            for liability in portfolio_liabilities:
+                liabilities_total += convert_amount(
+                    db=db,
+                    amount=liability.outstanding_balance,
+                    from_currency=liability.currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
+
+            converted_deposit = convert_amount(
+                db=db,
+                amount=portfolio.cumulative_deposit_amount,
+                from_currency=portfolio.base_currency,
+                to_currency=target_currency,
+                cache=fx_cache,
+                strict=settings.fx_strict_mode,
+            )
+            converted_withdrawal = convert_amount(
+                db=db,
+                amount=portfolio.cumulative_withdrawal_amount,
+                from_currency=portfolio.base_currency,
+                to_currency=target_currency,
+                cache=fx_cache,
+                strict=settings.fx_strict_mode,
+            )
+
+            net_assets_total = gross_assets_total - liabilities_total
+            principal_minus_debt_total = converted_deposit - liabilities_total
+            net_assets_profit_total = net_assets_total - principal_minus_debt_total
+
+            net_assets_return_pct = None
+            if principal_minus_debt_total != 0:
+                net_assets_return_pct = (net_assets_profit_total / principal_minus_debt_total) * Decimal("100")
+
+            total_pnl_amount = gross_assets_total + converted_withdrawal - converted_deposit
+            total_return_pct = None
+            if converted_deposit != 0:
+                total_return_pct = (total_pnl_amount / converted_deposit) * Decimal("100")
+
+            items.append(
+                PortfolioTableRowOut(
+                    id=portfolio.id,
+                    owner_user_id=portfolio.owner_user_id,
+                    name=portfolio.name,
+                    type=portfolio.type,
+                    base_currency=target_currency,
+                    exchange_code=portfolio.exchange_code,
+                    category=portfolio.category,
+                    memo=portfolio.memo,
+                    is_included=portfolio.is_included,
+                    is_hidden=portfolio.is_hidden,
+                    cumulative_deposit_amount=converted_deposit,
+                    cumulative_withdrawal_amount=converted_withdrawal,
+                    cashflow_source_type=portfolio.cashflow_source_type,
+                    created_at=portfolio.created_at,
+                    updated_at=portfolio.updated_at,
+                    holding_count=len(portfolio_holdings),
+                    liability_count=len(portfolio_liabilities),
+                    gross_assets_total=gross_assets_total,
+                    liabilities_total=liabilities_total,
+                    net_assets_total=net_assets_total,
+                    principal_minus_debt_total=principal_minus_debt_total,
+                    net_assets_profit_total=net_assets_profit_total,
+                    net_assets_return_pct=net_assets_return_pct,
+                    total_pnl_amount=total_pnl_amount,
+                    total_return_pct=total_return_pct,
+                )
+            )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+
+    # Keep secondary ordering by id desc for ties.
+    items.sort(key=lambda row: row.id, reverse=True)
+    items.sort(
+        key=lambda row: _normalize_sort_value(getattr(row, sort_by.value, None)),
+        reverse=(sort_order == SortOrder.DESC),
+    )
+
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged_items = items[start:end]
 
     return PortfolioTablePageOut(
-        items=items,
+        items=paged_items,
         total=total,
         page=page,
         page_size=page_size,
@@ -239,6 +263,7 @@ def list_portfolios_table(
 
 @router.get("/performance", response_model=list[PortfolioPerformanceOut])
 def list_portfolios_performance(
+    display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = Query(default=False),
     include_excluded: bool = Query(default=False),
     db: Session = Depends(get_db),
@@ -264,6 +289,7 @@ def list_portfolios_performance(
 
     holdings = list(db.scalars(holdings_stmt).all())
     quote_map = _latest_quote_map(db, sorted({item.asset_id for item in holdings}))
+    fx_cache: FxCache = {}
 
     holdings_by_portfolio: dict[int, list[Holding]] = {p.id: [] for p in portfolios}
     for holding in holdings:
@@ -272,50 +298,84 @@ def list_portfolios_performance(
         holdings_by_portfolio.setdefault(holding.portfolio_id, []).append(holding)
 
     result: list[PortfolioPerformanceOut] = []
-    for portfolio in portfolios:
-        nav_amount = Decimal("0")
-        missing_quote_count = 0
-        latest_quote_as_of = None
+    try:
+        for portfolio in portfolios:
+            target_currency = (display_currency or portfolio.base_currency or "KRW").upper()
+            nav_amount = Decimal("0")
+            missing_quote_count = 0
+            latest_quote_as_of = None
 
-        rows = holdings_by_portfolio.get(portfolio.id, [])
-        for holding in rows:
-            quote = quote_map.get(holding.asset_id)
-            if quote is None:
-                missing_quote_count += 1
-                unit_price = holding.avg_price
-            else:
-                unit_price = quote.price
-                if latest_quote_as_of is None or quote.as_of > latest_quote_as_of:
-                    latest_quote_as_of = quote.as_of
+            rows = holdings_by_portfolio.get(portfolio.id, [])
+            for holding in rows:
+                quote = quote_map.get(holding.asset_id)
+                if quote is None:
+                    missing_quote_count += 1
+                    unit_price = holding.avg_price
+                    unit_currency = holding.avg_price_currency
+                else:
+                    unit_price = quote.price
+                    unit_currency = quote.currency or holding.avg_price_currency
+                    if latest_quote_as_of is None or quote.as_of > latest_quote_as_of:
+                        latest_quote_as_of = quote.as_of
 
-            nav_amount += holding.quantity * unit_price
+                holding_value = holding.quantity * unit_price
+                nav_amount += convert_amount(
+                    db=db,
+                    amount=holding_value,
+                    from_currency=unit_currency,
+                    to_currency=target_currency,
+                    cache=fx_cache,
+                    strict=settings.fx_strict_mode,
+                )
 
-        total_pnl_amount = nav_amount + portfolio.cumulative_withdrawal_amount - portfolio.cumulative_deposit_amount
-        total_return_pct = None
-        if portfolio.cumulative_deposit_amount != 0:
-            total_return_pct = (total_pnl_amount / portfolio.cumulative_deposit_amount) * Decimal("100")
-
-        result.append(
-            PortfolioPerformanceOut(
-                portfolio_id=portfolio.id,
-                name=portfolio.name,
-                type=portfolio.type,
-                base_currency=portfolio.base_currency,
-                category=portfolio.category,
-                memo=portfolio.memo,
-                is_included=portfolio.is_included,
-                is_hidden=portfolio.is_hidden,
-                cashflow_source_type=portfolio.cashflow_source_type,
-                cumulative_deposit_amount=portfolio.cumulative_deposit_amount,
-                cumulative_withdrawal_amount=portfolio.cumulative_withdrawal_amount,
-                nav_amount=nav_amount,
-                total_pnl_amount=total_pnl_amount,
-                total_return_pct=total_return_pct,
-                holding_count=len(rows),
-                missing_quote_count=missing_quote_count,
-                latest_quote_as_of=latest_quote_as_of,
+            converted_deposit = convert_amount(
+                db=db,
+                amount=portfolio.cumulative_deposit_amount,
+                from_currency=portfolio.base_currency,
+                to_currency=target_currency,
+                cache=fx_cache,
+                strict=settings.fx_strict_mode,
             )
-        )
+            converted_withdrawal = convert_amount(
+                db=db,
+                amount=portfolio.cumulative_withdrawal_amount,
+                from_currency=portfolio.base_currency,
+                to_currency=target_currency,
+                cache=fx_cache,
+                strict=settings.fx_strict_mode,
+            )
+
+            total_pnl_amount = nav_amount + converted_withdrawal - converted_deposit
+            total_return_pct = None
+            if converted_deposit != 0:
+                total_return_pct = (total_pnl_amount / converted_deposit) * Decimal("100")
+
+            result.append(
+                PortfolioPerformanceOut(
+                    portfolio_id=portfolio.id,
+                    name=portfolio.name,
+                    type=portfolio.type,
+                    base_currency=target_currency,
+                    category=portfolio.category,
+                    memo=portfolio.memo,
+                    is_included=portfolio.is_included,
+                    is_hidden=portfolio.is_hidden,
+                    cashflow_source_type=portfolio.cashflow_source_type,
+                    cumulative_deposit_amount=converted_deposit,
+                    cumulative_withdrawal_amount=converted_withdrawal,
+                    nav_amount=nav_amount,
+                    total_pnl_amount=total_pnl_amount,
+                    total_return_pct=total_return_pct,
+                    holding_count=len(rows),
+                    missing_quote_count=missing_quote_count,
+                    latest_quote_as_of=latest_quote_as_of,
+                )
+            )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
 
     return result
 

@@ -29,7 +29,9 @@ class HoldingCreate(BaseModel):
     asset_id: int
     quantity: Decimal
     avg_price: Decimal
+    avg_price_currency: str = "KRW"
     invested_amount: Decimal | None = None
+    invested_amount_currency: str = "KRW"
     source_type: str = "MANUAL"
     is_hidden: bool = False
     memo: str | None = None
@@ -40,7 +42,9 @@ class HoldingUpdate(BaseModel):
     asset_id: int | None = None
     quantity: Decimal | None = None
     avg_price: Decimal | None = None
+    avg_price_currency: str | None = None
     invested_amount: Decimal | None = None
+    invested_amount_currency: str | None = None
     source_type: str | None = None
     is_hidden: bool | None = None
     memo: str | None = None
@@ -59,7 +63,9 @@ class HoldingOut(BaseModel):
     asset_id: int
     quantity: Decimal
     avg_price: Decimal
+    avg_price_currency: str
     invested_amount: Decimal | None
+    invested_amount_currency: str
     source_type: str
     is_hidden: bool
     memo: str | None
