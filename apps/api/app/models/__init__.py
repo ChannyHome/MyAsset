@@ -1,4 +1,5 @@
-﻿from app.models.base import Base
+from app.models.base import Base
+from app.models.api_audit_log import ApiAuditLog
 from app.models.app_secret import AppSecret
 from app.models.asset import Asset
 from app.models.asset_quote import AssetQuote
@@ -15,6 +16,7 @@ from app.models.user_setting import UserSetting
 
 __all__ = [
     "Base",
+    "ApiAuditLog",
     "User",
     "Household",
     "HouseholdMember",

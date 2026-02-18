@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -33,6 +35,9 @@ def list_release_notes(
     db: Session = Depends(get_db),
     _current_user: User = Depends(get_current_user_any),
 ) -> list[ReleaseNote]:
+    if include_unpublished and _current_user.role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
+
     stmt = select(ReleaseNote)
     if not include_unpublished:
         stmt = stmt.where(ReleaseNote.is_published.is_(True))
@@ -44,10 +49,10 @@ def list_release_notes(
 def create_release_note(
     payload: ReleaseNoteCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_min_role("MAINTAINER")),
+    current_user: User = Depends(require_min_role("ADMIN")),
 ) -> ReleaseNote:
     row = ReleaseNote(
-        released_at=payload.released_at,
+        released_at=payload.released_at or datetime.now(UTC).replace(tzinfo=None),
         title=_normalize_title(payload.title),
         summary=_normalize_summary(payload.summary),
         is_published=payload.is_published,
@@ -65,7 +70,7 @@ def update_release_note(
     release_note_id: int,
     payload: ReleaseNoteUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_min_role("MAINTAINER")),
+    current_user: User = Depends(require_min_role("ADMIN")),
 ) -> ReleaseNote:
     row = db.scalar(select(ReleaseNote).where(ReleaseNote.id == release_note_id))
     if row is None:
@@ -90,7 +95,7 @@ def update_release_note(
 def delete_release_note(
     release_note_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_min_role("MAINTAINER")),
+    current_user: User = Depends(require_min_role("ADMIN")),
 ) -> ReleaseNote:
     row = db.scalar(select(ReleaseNote).where(ReleaseNote.id == release_note_id))
     if row is None:

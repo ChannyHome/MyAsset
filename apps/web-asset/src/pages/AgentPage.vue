@@ -63,6 +63,13 @@ import {
   updateAppSecret,
   type AppSecretOut,
 } from "../api/adminSecrets";
+import {
+  createReleaseNote,
+  getReleaseNotes,
+  unpublishReleaseNote,
+  updateReleaseNote,
+  type ReleaseNoteOut,
+} from "../api/releaseNotes";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
@@ -79,6 +86,7 @@ type TableQueryState<TSort extends string> = {
 type CollapseState = {
   quoteActionsCollapsed: boolean;
   secretsVaultCollapsed: boolean;
+  releaseNotesSectionCollapsed: boolean;
   assetsSectionCollapsed: boolean;
   portfoliosSectionCollapsed: boolean;
   holdingsSectionCollapsed: boolean;
@@ -120,6 +128,7 @@ const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const holdingRows = ref<HoldingTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 const appSecrets = ref<AppSecretOut[]>([]);
+const releaseNotes = ref<ReleaseNoteOut[]>([]);
 const usdKrwFx = ref<FxRateLatestOut | null>(null);
 const logs = ref<ActionLog[]>([]);
 const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
@@ -166,6 +175,7 @@ const holdingEditModal = reactive({ open: false });
 const liabilityEditModal = reactive({ open: false });
 const quoteActionsCollapsed = ref(initialCollapseState.quoteActionsCollapsed ?? true);
 const secretsVaultCollapsed = ref(initialCollapseState.secretsVaultCollapsed ?? true);
+const releaseNotesSectionCollapsed = ref(initialCollapseState.releaseNotesSectionCollapsed ?? true);
 const quoteTestingAssetId = ref<number | null>(null);
 const assetsSectionCollapsed = ref(initialCollapseState.assetsSectionCollapsed ?? true);
 const portfoliosSectionCollapsed = ref(initialCollapseState.portfoliosSectionCollapsed ?? true);
@@ -277,10 +287,18 @@ const secretForm = reactive({
   description: "",
   is_active: true,
 });
+const releaseNoteForm = reactive({
+  id: "",
+  released_at: "",
+  title: "",
+  summary: "",
+  is_published: true,
+});
 
 const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageAppSecrets = computed(() => me.value?.role === "ADMIN");
+const canManageReleaseNotes = computed(() => me.value?.role === "ADMIN");
 const isBusy = computed(() => loading.data || loading.action || loading.confirm);
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
@@ -363,6 +381,18 @@ function formatDateTime(value: string | null | undefined): string {
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return value;
   return dt.toLocaleString("ko-KR");
+}
+
+function formatDateTimeLocalInput(value: string | null | undefined): string {
+  if (!value) return "";
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return "";
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, "0");
+  const day = String(dt.getDate()).padStart(2, "0");
+  const hour = String(dt.getHours()).padStart(2, "0");
+  const minute = String(dt.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
 function normalizeUpper(value: string): string {
@@ -867,6 +897,74 @@ function askDeactivateSecret(item: AppSecretOut): void {
   });
 }
 
+function resetReleaseNoteForm(): void {
+  releaseNoteForm.id = "";
+  releaseNoteForm.released_at = "";
+  releaseNoteForm.title = "";
+  releaseNoteForm.summary = "";
+  releaseNoteForm.is_published = true;
+}
+
+function fillReleaseNoteForm(item: ReleaseNoteOut): void {
+  releaseNoteForm.id = String(item.id);
+  releaseNoteForm.released_at = formatDateTimeLocalInput(item.released_at);
+  releaseNoteForm.title = item.title;
+  releaseNoteForm.summary = item.summary;
+  releaseNoteForm.is_published = item.is_published;
+}
+
+function submitReleaseNoteForm(): void {
+  if (!canManageReleaseNotes.value) {
+    pushLog("Release Note", "ERROR", "ADMIN only");
+    return;
+  }
+
+  try {
+    const title = releaseNoteForm.title.trim();
+    const summary = releaseNoteForm.summary.trim();
+    if (!title) throw new Error("Title is required");
+    if (!summary) throw new Error("Summary is required");
+
+    const releasedAt = releaseNoteForm.released_at.trim();
+    const payload = {
+      released_at: releasedAt ? new Date(releasedAt).toISOString() : null,
+      title,
+      summary,
+      is_published: releaseNoteForm.is_published,
+    };
+
+    if (!releaseNoteForm.id) {
+      runAction("Release Note Create", "Create Release Note", "새 Release Note를 생성할까요?", async () => {
+        await createReleaseNote(payload);
+        resetReleaseNoteForm();
+      });
+      return;
+    }
+
+    const releaseNoteId = toPositiveInt(releaseNoteForm.id);
+    runAction("Release Note Update", "Update Release Note", `Release Note #${releaseNoteId}를 수정할까요?`, async () => {
+      await updateReleaseNote(releaseNoteId, payload);
+      resetReleaseNoteForm();
+    });
+  } catch (error) {
+    pushLog("Release Note", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askUnpublishReleaseNote(item: ReleaseNoteOut): void {
+  if (!canManageReleaseNotes.value) {
+    pushLog("Release Note", "ERROR", "ADMIN only");
+    return;
+  }
+
+  runAction("Release Note Unpublish", "Unpublish Release Note", `Release Note #${item.id}를 비공개 처리할까요?`, async () => {
+    await unpublishReleaseNote(item.id);
+    if (releaseNoteForm.id === String(item.id)) {
+      resetReleaseNoteForm();
+    }
+  });
+}
+
 function parseRequiredDecimal(value: string, field: string): string {
   const trimmed = value.trim();
   if (!trimmed) throw new Error(`${field} is required`);
@@ -1305,7 +1403,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   try {
     const meOut = await getMe();
 
-    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, staleOut, secretsOut] = await Promise.all([
+    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, staleOut, secretsOut, releaseNotesOut] = await Promise.all([
       getAssetsTable({
         page: assetsQuery.page,
         page_size: assetsQuery.pageSize,
@@ -1340,6 +1438,9 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
       getLatestUsdKrwFxRate().catch(() => null),
       getFxStaleMinutes().catch(() => null),
       meOut.role === "ADMIN" ? listAppSecrets() : Promise.resolve([] as AppSecretOut[]),
+      meOut.role === "ADMIN"
+        ? getReleaseNotes({ limit: 100, offset: 0, include_unpublished: true })
+        : Promise.resolve([] as ReleaseNoteOut[]),
     ]);
 
     if (refreshId !== refreshSequence) return;
@@ -1355,6 +1456,7 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
       fxStaleSource.value = staleOut.source;
     }
     appSecrets.value = secretsOut;
+    releaseNotes.value = releaseNotesOut;
 
     assetsQuery.total = assetsOut.total;
     portfolioQuery.total = portfoliosOut.total;
@@ -1368,14 +1470,15 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
 
     if (meOut.role !== "ADMIN") {
       resetSecretForm();
+      resetReleaseNoteForm();
     }
 
     if (shouldLogRefresh) {
-      const secretInfo = meOut.role === "ADMIN" ? `, secrets=${secretsOut.length}` : "";
+      const adminInfo = meOut.role === "ADMIN" ? `, secrets=${secretsOut.length}, release_notes=${releaseNotesOut.length}` : "";
       pushLog(
         "Refresh",
         "INFO",
-        `Agent data loaded (assets=${assetsOut.total}, portfolios=${portfoliosOut.total}, holdings=${holdingsOut.total}, liabilities=${liabilitiesOut.total}${secretInfo})`,
+        `Agent data loaded (assets=${assetsOut.total}, portfolios=${portfoliosOut.total}, holdings=${holdingsOut.total}, liabilities=${liabilitiesOut.total}${adminInfo})`,
       );
     }
   } catch (error) {
@@ -1547,6 +1650,7 @@ watch(
   [
     quoteActionsCollapsed,
     secretsVaultCollapsed,
+    releaseNotesSectionCollapsed,
     assetsSectionCollapsed,
     portfoliosSectionCollapsed,
     holdingsSectionCollapsed,
@@ -1556,6 +1660,7 @@ watch(
     const [
       nextQuoteActionsCollapsed,
       nextSecretsVaultCollapsed,
+      nextReleaseNotesSectionCollapsed,
       nextAssetsSectionCollapsed,
       nextPortfoliosSectionCollapsed,
       nextHoldingsSectionCollapsed,
@@ -1564,6 +1669,7 @@ watch(
     saveCollapseState({
       quoteActionsCollapsed: nextQuoteActionsCollapsed,
       secretsVaultCollapsed: nextSecretsVaultCollapsed,
+      releaseNotesSectionCollapsed: nextReleaseNotesSectionCollapsed,
       assetsSectionCollapsed: nextAssetsSectionCollapsed,
       portfoliosSectionCollapsed: nextPortfoliosSectionCollapsed,
       holdingsSectionCollapsed: nextHoldingsSectionCollapsed,
@@ -1967,6 +2073,133 @@ onBeforeUnmount(() => {
       </p>
       </template>
       <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes (Admin)</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Home 하단 Release Notes 카드를 Agent에서 직접 관리합니다.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            v-if="canManageReleaseNotes && !releaseNotesSectionCollapsed"
+            type="button"
+            class="rounded border border-slate-300 px-2.5 py-1.5 text-xs transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+            :disabled="isBusy"
+            @click="resetReleaseNoteForm"
+          >
+            Reset Form
+          </button>
+          <button
+            v-if="canManageReleaseNotes"
+            type="button"
+            class="rounded border border-slate-300 px-2.5 py-1.5 text-xs transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+            :disabled="isBusy"
+            @click="releaseNotesSectionCollapsed = !releaseNotesSectionCollapsed"
+          >
+            {{ releaseNotesSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
+      </div>
+
+      <p v-if="!canManageReleaseNotes" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        Only ADMIN can view/create/update/unpublish release notes.
+      </p>
+      <p v-else-if="releaseNotesSectionCollapsed" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.
+      </p>
+      <template v-else>
+        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <label class="text-xs"
+            >Released At (optional)
+            <input
+              v-model="releaseNoteForm.released_at"
+              type="datetime-local"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs"
+            >Title
+            <input
+              v-model="releaseNoteForm.title"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs md:col-span-2"
+            >Summary
+            <textarea
+              v-model="releaseNoteForm.summary"
+              rows="3"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs md:col-span-2">
+            <input v-model="releaseNoteForm.is_published" type="checkbox" />
+            <span class="ml-1">Published</span>
+          </label>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500"
+            :disabled="isBusy"
+            @click="submitReleaseNoteForm"
+          >
+            {{ releaseNoteForm.id ? "Update Release Note" : "Create Release Note" }}
+          </button>
+          <span v-if="releaseNoteForm.id" class="text-xs text-slate-500 dark:text-slate-400">Editing #{{ releaseNoteForm.id }}</span>
+        </div>
+
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full min-w-[980px] text-left text-xs leading-tight">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr>
+                <th class="px-2 py-1.5 whitespace-nowrap">ID</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Released At</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Title</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Summary</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Published</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in releaseNotes" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.released_at) }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.title }}</td>
+                <td class="px-2 py-1.5">{{ item.summary }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_published ? "Y" : "N" }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+                      :disabled="isBusy"
+                      @click="fillReleaseNoteForm(item)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700"
+                      :disabled="isBusy || !item.is_published"
+                      @click="askUnpublishReleaseNote(item)"
+                    >
+                      Unpublish
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="releaseNotes.length === 0">
+                <td colspan="7" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No release notes</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">

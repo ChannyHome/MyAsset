@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     api_access_log_enabled: bool = False
     api_access_log_dir: str = "logs/api"
+    api_audit_log_enabled: bool = True
+    api_audit_log_max_body_chars: int = 4096
 
     quote_auto_update_enabled: bool = False
     quote_update_interval_minutes: int = 10

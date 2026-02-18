@@ -18,7 +18,36 @@ export type ReleaseNotesQuery = {
   include_unpublished?: boolean;
 };
 
+export type ReleaseNoteCreateIn = {
+  released_at?: string | null;
+  title: string;
+  summary: string;
+  is_published?: boolean;
+};
+
+export type ReleaseNoteUpdateIn = {
+  released_at?: string | null;
+  title?: string;
+  summary?: string;
+  is_published?: boolean;
+};
+
 export async function getReleaseNotes(params: ReleaseNotesQuery = {}): Promise<ReleaseNoteOut[]> {
   const { data } = await http.get<ReleaseNoteOut[]>("/release-notes", { params });
+  return data;
+}
+
+export async function createReleaseNote(payload: ReleaseNoteCreateIn): Promise<ReleaseNoteOut> {
+  const { data } = await http.post<ReleaseNoteOut>("/release-notes", payload);
+  return data;
+}
+
+export async function updateReleaseNote(releaseNoteId: number, payload: ReleaseNoteUpdateIn): Promise<ReleaseNoteOut> {
+  const { data } = await http.patch<ReleaseNoteOut>(`/release-notes/${releaseNoteId}`, payload);
+  return data;
+}
+
+export async function unpublishReleaseNote(releaseNoteId: number): Promise<ReleaseNoteOut> {
+  const { data } = await http.delete<ReleaseNoteOut>(`/release-notes/${releaseNoteId}`);
   return data;
 }
