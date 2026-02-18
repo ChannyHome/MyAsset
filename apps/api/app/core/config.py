@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     quote_provider: str = "yfinance"
     fx_strict_mode: bool = False
     fx_stale_minutes: int = 30
+    valuation_snapshot_auto_collect_enabled: bool = True
+    valuation_snapshot_collect_currency: str = "KRW"
 
     data_go_kr_service_key: str = ""
     data_go_kr_apartment_trade_url: str = (

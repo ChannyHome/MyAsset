@@ -1,7 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { g as getSummary } from './analytics-nG83f7RO.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1, g as getLiabilitiesTable } from './useDisplayCurrency-BZ-Ikfwn.js';
-import { g as getPortfoliosTable } from './portfolios-BgDo5vhb.js';
+import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CfKM0Xv_.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1, a as getPortfoliosTable, g as getLiabilitiesTable } from './useDisplayCurrency-BOX_gs28.js';
 import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
@@ -36,6 +35,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const loading = ref(false);
     const errorMessage = ref("");
     const summary = ref(null);
+    const networthSeries = ref(null);
     const portfolioRows = ref([]);
     const liabilityRows = ref([]);
     const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
@@ -54,12 +54,25 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       () => toNumber(summary.value?.net_assets_profit_total ?? netAssetsTotal.value - principalMinusDebtTotal.value)
     );
     const asOf = computed(() => formatDateTime(summary.value?.as_of));
+    const trendPoints = computed(
+      () => (networthSeries.value?.points ?? []).map((point) => ({
+        label: point.snapshot_date,
+        gross: toNumber(point.gross_assets_total),
+        liabilities: toNumber(point.liabilities_total),
+        net: toNumber(point.net_assets_total)
+      }))
+    );
     async function loadReportData() {
       loading.value = true;
       errorMessage.value = "";
       try {
-        const [summaryOut, portfoliosOut, liabilitiesOut] = await Promise.all([
+        const [summaryOut, seriesOut, portfoliosOut, liabilitiesOut] = await Promise.all([
           getSummary({ display_currency: displayCurrency.value }),
+          getNetworthSeries({
+            display_currency: displayCurrency.value,
+            bucket: "DAY",
+            limit: 90
+          }),
           getPortfoliosTable({
             page: 1,
             page_size: 200,
@@ -80,6 +93,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           })
         ]);
         summary.value = summaryOut;
+        networthSeries.value = seriesOut;
         portfolioRows.value = portfoliosOut.items;
         liabilityRows.value = liabilitiesOut.items;
       } catch (error) {
@@ -115,8 +129,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           _createElementVNode("div", _hoisted_3, [
             _cache[0] || (_cache[0] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300" }, "Report"),
-              _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "자산 분석 (기본)"),
-              _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " Home과 동일한 기준으로 Gross/Net/부채 및 수익률을 요약 표시합니다. ")
+              _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Asset Report (Core)"),
+              _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " KPI breakdown + valuation snapshot trend connected to analytics APIs. ")
             ], -1)),
             _createElementVNode("div", _hoisted_4, [
               _createVNode(_sfc_main$1, {
@@ -150,7 +164,15 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           portfolios: portfolioRows.value,
           liabilities: liabilityRows.value
         }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities"]),
-        _cache[1] || (_cache[1] = _createStaticVNode('<div class="grid grid-cols-1 gap-4 xl:grid-cols-2"><article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">상승률 상위</h2><ul class="mt-3 space-y-2 text-sm"><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>NVDA</span><span class="font-semibold text-emerald-600">+3.82%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>SCHD</span><span class="font-semibold text-emerald-600">+1.11%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>삼성전자</span><span class="font-semibold text-emerald-600">+0.77%</span></li></ul></article><article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">하락률 상위</h2><ul class="mt-3 space-y-2 text-sm"><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>BTC</span><span class="font-semibold text-rose-600">-2.10%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>하이닉스</span><span class="font-semibold text-rose-600">-1.43%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>QQQ</span><span class="font-semibold text-rose-600">-0.56%</span></li></ul></article></div>', 1))
+        _createVNode(_sfc_main$3, {
+          title: "Networth Trend",
+          subtitle: "Connected to valuation_snapshots (bucket=DAY)",
+          currency: summaryDisplayCurrency.value,
+          points: trendPoints.value,
+          loading: loading.value,
+          error: errorMessage.value
+        }, null, 8, ["currency", "points", "loading", "error"]),
+        _cache[1] || (_cache[1] = _createStaticVNode('<div class="grid grid-cols-1 gap-4 xl:grid-cols-2"><article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Gainers (sample)</h2><ul class="mt-3 space-y-2 text-sm"><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>NVDA</span><span class="font-semibold text-emerald-600">+3.82%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>SCHD</span><span class="font-semibold text-emerald-600">+1.11%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>005930</span><span class="font-semibold text-emerald-600">+0.77%</span></li></ul></article><article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Losers (sample)</h2><ul class="mt-3 space-y-2 text-sm"><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>BTC</span><span class="font-semibold text-rose-600">-2.10%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>TSLA</span><span class="font-semibold text-rose-600">-1.43%</span></li><li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800"><span>QQQ</span><span class="font-semibold text-rose-600">-0.56%</span></li></ul></article></div>', 1))
       ]);
     };
   }

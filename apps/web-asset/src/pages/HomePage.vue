@@ -1,9 +1,20 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 
-import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import {
+  getAllocation,
+  getNetworthSeries,
+  getSummary,
+  type AnalyticsAllocationOut,
+  type AnalyticsNetworthSeriesOut,
+  type AnalyticsSummaryV2Out,
+} from "../api/analytics";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import AllocationDonutCard from "../components/AllocationDonutCard.vue";
+import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
+import NetworthTrendCard from "../components/NetworthTrendCard.vue";
+import KpiSummaryCard from "../components/KpiSummaryCard.vue";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
@@ -11,6 +22,39 @@ import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
 import type { ReleaseNoteItem } from "../data/releaseNotes";
+
+type AllocationUiItem = {
+  key: string;
+  label: string;
+  value: number;
+  ratioPct: number;
+  returnPct?: number | null;
+};
+
+type Html2CanvasFn = (
+  element: HTMLElement,
+  options?: {
+    backgroundColor?: string | null;
+    scale?: number;
+    useCORS?: boolean;
+    foreignObjectRendering?: boolean;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    windowWidth?: number;
+    windowHeight?: number;
+    scrollX?: number;
+    scrollY?: number;
+    onclone?: (clonedDocument: Document) => void;
+  },
+) => Promise<HTMLCanvasElement>;
+
+declare global {
+  interface Window {
+    html2canvas?: Html2CanvasFn;
+  }
+}
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) {
@@ -71,6 +115,18 @@ const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
 const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
+const liveDashboardExpanded = ref(false);
+const exportingImage = ref(false);
+const liveDonutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
+const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
+const liveTreemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
+const livePortfolioKey = ref("ALL");
+const liveDashboardRef = ref<HTMLElement | null>(null);
+const allocationGross = ref<AnalyticsAllocationOut | null>(null);
+const allocationLiabilities = ref<AnalyticsAllocationOut | null>(null);
+const allocationNet = ref<AnalyticsAllocationOut | null>(null);
+const allocationHoldings = ref<AnalyticsAllocationOut | null>(null);
+const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
 const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
@@ -84,6 +140,118 @@ const principalReturnPct = computed(() => toNumber(summary.value?.principal_retu
 const principalProfitTotal = computed(() => toNumber(summary.value?.principal_profit_total ?? grossAssetsTotal.value - investedPrincipalTotal.value));
 const netAssetsProfitTotal = computed(() => toNumber(summary.value?.net_assets_profit_total ?? netAssetsTotal.value - principalMinusDebtTotal.value));
 const asOf = computed(() => formatDateTime(summary.value?.as_of));
+
+const livePortfolioId = computed<number | undefined>(() => {
+  if (livePortfolioKey.value === "ALL") return undefined;
+  const parsed = Number(livePortfolioKey.value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+});
+
+const livePortfolioLabel = computed(() => {
+  if (livePortfolioId.value == null) return "All portfolios";
+  const target = portfolios.value.find((item) => item.id === livePortfolioId.value);
+  return target ? target.name : `Portfolio #${livePortfolioId.value}`;
+});
+
+const donutData = computed(() => {
+  if (liveDonutTarget.value === "GROSS") return allocationGross.value;
+  if (liveDonutTarget.value === "LIABILITIES") return allocationLiabilities.value;
+  if (liveDonutTarget.value === "NET") return allocationNet.value;
+  return allocationHoldings.value;
+});
+
+const donutItems = computed<AllocationUiItem[]>(() =>
+  (donutData.value?.items ?? []).map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: toNumber(item.value),
+    ratioPct: toNumber(item.ratio_pct),
+    returnPct: null,
+  })),
+);
+
+const portfolioReturnById = computed(() => {
+  const map = new Map<number, number>();
+  for (const item of portfolios.value) {
+    const pct = toNumber(item.total_return_pct);
+    if (Number.isFinite(pct)) {
+      map.set(item.id, pct);
+    }
+  }
+  return map;
+});
+
+const holdingReturnByAssetId = computed(() => {
+  const agg = new Map<number, { invested: number; pnl: number; fallbackPct: number }>();
+  for (const row of holdings.value) {
+    const assetId = row.asset_id;
+    const invested = toNumber(row.invested_amount);
+    const pnl = toNumber(row.pnl_amount);
+    const fallbackPct = toNumber(row.pnl_pct);
+    const prev = agg.get(assetId);
+    if (!prev) {
+      agg.set(assetId, {
+        invested: Math.max(0, invested),
+        pnl,
+        fallbackPct,
+      });
+      continue;
+    }
+    prev.invested += Math.max(0, invested);
+    prev.pnl += pnl;
+    prev.fallbackPct = Number.isFinite(prev.fallbackPct) ? prev.fallbackPct : fallbackPct;
+  }
+  const map = new Map<number, number>();
+  for (const [assetId, value] of agg.entries()) {
+    if (value.invested > 0) {
+      map.set(assetId, (value.pnl / value.invested) * 100);
+    } else if (Number.isFinite(value.fallbackPct)) {
+      map.set(assetId, value.fallbackPct);
+    }
+  }
+  return map;
+});
+
+const liveTreemapItems = computed<AllocationUiItem[]>(() =>
+  (
+    liveTreemapTarget.value === "GROSS" ? allocationGross.value?.items ?? [] : allocationHoldings.value?.items ?? []
+  ).map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: toNumber(item.value),
+    ratioPct: toNumber(item.ratio_pct),
+    returnPct:
+      liveTreemapTarget.value === "GROSS"
+        ? (() => {
+            const match = item.key.match(/^portfolio:(\d+)$/);
+            if (!match) return null;
+            return portfolioReturnById.value.get(Number(match[1])) ?? null;
+          })()
+        : (() => {
+            const match = item.key.match(/^asset:(\d+)$/);
+            if (!match) return null;
+            return holdingReturnByAssetId.value.get(Number(match[1])) ?? null;
+          })(),
+  })),
+);
+
+const trendPoints = computed(() =>
+  (networthSeries.value?.points ?? []).map((point) => ({
+    label: point.snapshot_date,
+    gross: toNumber(point.gross_assets_total),
+    liabilities: toNumber(point.liabilities_total),
+    net: toNumber(point.net_assets_total),
+  })),
+);
+
+const kpiGrossReturnPct = computed(() => (summary.value?.principal_return_pct == null ? null : toNumber(summary.value.principal_return_pct)));
+const kpiNetReturnPct = computed(() => (summary.value?.net_assets_return_pct == null ? null : toNumber(summary.value.net_assets_return_pct)));
+const kpiGrossProfitTotal = computed(() =>
+  toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total)),
+);
+const kpiNetProfitTotal = computed(() =>
+  toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total)),
+);
 
 const topHoldings = computed(() =>
   [...holdings.value]
@@ -123,7 +291,17 @@ async function loadHomeData() {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const [summaryOut, holdingsOut, liabilitiesOut, portfoliosOut] = await Promise.all([
+    const [
+      summaryOut,
+      holdingsOut,
+      liabilitiesOut,
+      portfoliosOut,
+      grossAllocationOut,
+      liabilitiesAllocationOut,
+      netAllocationOut,
+      holdingsAllocationOut,
+      networthSeriesOut,
+    ] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
       getHoldingsPerformance({ display_currency: displayCurrency.value }),
       getLiabilitiesTable({
@@ -144,12 +322,50 @@ async function loadHomeData() {
         include_hidden: false,
         include_excluded: false,
       }),
+      getAllocation({
+        target: "GROSS",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "LIABILITIES",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "NET",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "HOLDINGS",
+        group_by: "ASSET",
+        top_n: 10,
+        portfolio_id: livePortfolioId.value,
+        display_currency: displayCurrency.value,
+      }),
+      getNetworthSeries({
+        display_currency: displayCurrency.value,
+        bucket: "DAY",
+        limit: 90,
+      }),
     ]);
 
     summary.value = summaryOut;
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
+    allocationGross.value = grossAllocationOut;
+    allocationLiabilities.value = liabilitiesAllocationOut;
+    allocationNet.value = netAllocationOut;
+    allocationHoldings.value = holdingsAllocationOut;
+    networthSeries.value = networthSeriesOut;
+    if (livePortfolioKey.value !== "ALL" && !portfoliosOut.items.some((item) => String(item.id) === livePortfolioKey.value)) {
+      livePortfolioKey.value = "ALL";
+    }
     try {
       const noteRows = await getReleaseNotes({ limit: 20 });
       const mapped = mapReleaseNotes(noteRows);
@@ -174,6 +390,177 @@ async function onChangeDisplayCurrency(value: DisplayCurrency) {
   }
 }
 
+function toggleLiveDashboard() {
+  liveDashboardExpanded.value = !liveDashboardExpanded.value;
+}
+
+function printLiveDashboard() {
+  window.print();
+}
+
+function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
+  if (canvas.width === 0 || canvas.height === 0) {
+    return true;
+  }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return true;
+  }
+  const sampleW = Math.min(canvas.width, 128);
+  const sampleH = Math.min(canvas.height, 128);
+  const pixels = ctx.getImageData(0, 0, sampleW, sampleH).data;
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (pixels[i + 3] !== 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function drawDonutForExport(documentRef: Document): void {
+  const donutNodes = documentRef.querySelectorAll<HTMLElement>("[data-export-donut='1']");
+  donutNodes.forEach((node) => {
+    const rawStops = node.dataset.donutStops ?? "";
+    const startAngleDeg = Number(node.dataset.donutStartAngle ?? "0");
+    const segments = rawStops
+      .split("|")
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0)
+      .map((token) => {
+        const [ratioText, color] = token.split(":");
+        const ratio = Number(ratioText);
+        return {
+          ratioPct: Number.isFinite(ratio) ? Math.max(0, Math.min(100, ratio)) : 0,
+          color: color || "#334155",
+        };
+      })
+      .filter((item) => item.ratioPct > 0);
+
+    const rect = node.getBoundingClientRect();
+    const width = Math.max(1, Math.floor(node.clientWidth || rect.width || 1));
+    const height = Math.max(1, Math.floor(node.clientHeight || rect.height || 1));
+    const size = Math.max(1, Math.min(width, height));
+    const canvas = documentRef.createElement("canvas");
+    canvas.width = size * 2;
+    canvas.height = size * 2;
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.display = "block";
+    canvas.style.borderRadius = "9999px";
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+    ctx.scale(2, 2);
+    const center = size / 2;
+    const outerRadius = center;
+    const innerRadius = center * 0.5;
+    let cursor = ((startAngleDeg - 90) * Math.PI) / 180;
+    if (segments.length === 0) {
+      ctx.beginPath();
+      ctx.arc(center, center, outerRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#334155";
+      ctx.fill();
+    } else {
+      for (const segment of segments) {
+        const angle = (segment.ratioPct / 100) * Math.PI * 2;
+        const next = cursor + angle;
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(center, center, outerRadius, cursor, next);
+        ctx.closePath();
+        ctx.fillStyle = segment.color;
+        ctx.fill();
+        cursor = next;
+      }
+    }
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(center, center, innerRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+
+    node.style.background = "none";
+    node.replaceChildren(canvas);
+  });
+}
+
+async function ensureHtml2Canvas(): Promise<Html2CanvasFn> {
+  if (window.html2canvas) {
+    return window.html2canvas;
+  }
+  await new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-myasset-html2canvas="1"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Failed to load html2canvas")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js";
+    script.async = true;
+    script.dataset.myassetHtml2canvas = "1";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load html2canvas"));
+    document.head.appendChild(script);
+  });
+  if (!window.html2canvas) {
+    throw new Error("html2canvas not available");
+  }
+  return window.html2canvas;
+}
+
+async function exportLiveDashboardImage() {
+  if (!liveDashboardRef.value) return;
+  exportingImage.value = true;
+  try {
+    await nextTick();
+    const target = liveDashboardRef.value;
+    const rect = target.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) {
+      throw new Error("Live dashboard panel is not visible.");
+    }
+
+    const html2canvas = await ensureHtml2Canvas();
+    const baseOptions = {
+      backgroundColor: "#020617",
+      scale: 2,
+      useCORS: true,
+      windowWidth: Math.max(document.documentElement.clientWidth, Math.ceil(rect.width)),
+      windowHeight: Math.max(document.documentElement.clientHeight, Math.ceil(rect.height)),
+    };
+
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await html2canvas(target, {
+        ...baseOptions,
+        foreignObjectRendering: false,
+        onclone: drawDonutForExport,
+      });
+    } catch {
+      canvas = await html2canvas(target, {
+        ...baseOptions,
+        foreignObjectRendering: true,
+        onclone: drawDonutForExport,
+      });
+    }
+
+    if (isCanvasBlank(canvas)) {
+      throw new Error("Captured image is blank. Retry after keeping panel fully visible.");
+    }
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `myasset-live-dashboard-${new Date().toISOString().replace(/[:.]/g, "-")}.png`;
+    link.click();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    errorMessage.value = `Failed to export image: ${message}. Try Print as fallback.`;
+  } finally {
+    exportingImage.value = false;
+  }
+}
+
 onMounted(async () => {
   await ensureInitialized();
   await loadHomeData();
@@ -183,6 +570,16 @@ watch(
   () => displayCurrency.value,
   (next, prev) => {
     if (summary.value && prev && next !== prev) {
+      void loadHomeData();
+    }
+  },
+);
+
+watch(
+  () => livePortfolioKey.value,
+  (next, prev) => {
+    if (!summary.value) return;
+    if (next !== prev) {
       void loadHomeData();
     }
   },
@@ -232,6 +629,191 @@ watch(
       >
         Retry
       </button>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Live Dashboard Panel</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Default is collapsed. Expand to preview dashboard widgets and export image.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="toggleLiveDashboard"
+        >
+          {{ liveDashboardExpanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
+
+      <div v-if="liveDashboardExpanded" class="mt-4 space-y-3">
+        <div class="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+          <div class="flex items-center gap-1">
+            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Donut</span>
+            <button
+              v-for="mode in ['GROSS', 'LIABILITIES', 'NET', 'PORTFOLIOS']"
+              :key="`home-donut-${mode}`"
+              type="button"
+              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+              :class="
+                liveDonutTarget === mode
+                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+              "
+              @click="liveDonutTarget = mode as 'GROSS' | 'LIABILITIES' | 'NET' | 'PORTFOLIOS'"
+            >
+              {{ mode }}
+            </button>
+          </div>
+          <div class="mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" />
+          <div class="flex items-center gap-1">
+            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Start</span>
+            <button
+              v-for="pos in ['TOP', 'RIGHT', 'LEFT']"
+              :key="`home-donut-start-${pos}`"
+              type="button"
+              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+              :class="
+                liveDonutStartPosition === pos
+                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+              "
+              @click="liveDonutStartPosition = pos as 'TOP' | 'RIGHT' | 'LEFT'"
+            >
+              {{ pos }}
+            </button>
+          </div>
+
+          <div v-if="liveDonutTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
+            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+            <select
+              v-model="livePortfolioKey"
+              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            >
+              <option value="ALL">All</option>
+              <option v-for="item in portfolios" :key="`home-donut-portfolio-${item.id}`" :value="String(item.id)">
+                {{ item.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mx-2 h-5 w-px bg-slate-300 dark:bg-slate-700" />
+
+          <div class="flex items-center gap-1">
+            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Treemap</span>
+            <button
+              v-for="mode in ['GROSS', 'PORTFOLIOS']"
+              :key="`home-treemap-${mode}`"
+              type="button"
+              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+              :class="
+                liveTreemapTarget === mode
+                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+              "
+              @click="liveTreemapTarget = mode as 'GROSS' | 'PORTFOLIOS'"
+            >
+              {{ mode }}
+            </button>
+          </div>
+
+          <div v-if="liveTreemapTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
+            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+            <select
+              v-model="livePortfolioKey"
+              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            >
+              <option value="ALL">All</option>
+              <option v-for="item in portfolios" :key="`home-treemap-portfolio-${item.id}`" :value="String(item.id)">
+                {{ item.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              @click="printLiveDashboard"
+            >
+              Print
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+              :disabled="exportingImage || loading"
+              @click="exportLiveDashboardImage"
+            >
+              {{ exportingImage ? "Exporting..." : "Export PNG" }}
+            </button>
+          </div>
+        </div>
+
+        <div ref="liveDashboardRef" class="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <div class="xl:col-span-2">
+            <KpiSummaryCard
+              title="KPI Summary"
+              subtitle="Included in print/snapshot"
+              :currency="summaryDisplayCurrency"
+              :gross-assets-total="grossAssetsTotal"
+              :liabilities-total="liabilitiesTotal"
+              :net-assets-total="netAssetsTotal"
+              :invested-principal-total="investedPrincipalTotal"
+              :principal-minus-debt-total="principalMinusDebtTotal"
+              :gross-return-pct="kpiGrossReturnPct"
+              :net-return-pct="kpiNetReturnPct"
+              :gross-profit-total="kpiGrossProfitTotal"
+              :net-profit-total="kpiNetProfitTotal"
+              :as-of="asOf"
+            />
+          </div>
+
+          <AllocationDonutCard
+            :title="`Allocation | ${liveDonutTarget}`"
+            :subtitle="
+              liveDonutTarget === 'PORTFOLIOS'
+                ? `HOLDINGS by ${livePortfolioLabel}`
+                : 'Top N + Others (grouped by Portfolio)'
+            "
+            :currency="summaryDisplayCurrency"
+            :total="toNumber(donutData?.total)"
+            :items="donutItems"
+            :start-position="liveDonutStartPosition"
+            :loading="loading"
+            :error="errorMessage"
+          />
+
+          <AllocationTreemapCard
+            title="Treemap Holdings"
+            :subtitle="
+              liveTreemapTarget === 'GROSS'
+                ? 'Target=GROSS | group_by=PORTFOLIO | color=return'
+                : `Target=HOLDINGS | group_by=ASSET | ${livePortfolioLabel} | color=return`
+            "
+            :currency="summaryDisplayCurrency"
+            :items="liveTreemapItems"
+            :loading="loading"
+            :error="errorMessage"
+          />
+
+          <div class="xl:col-span-2">
+            <NetworthTrendCard
+              title="Networth Trend"
+              subtitle="valuation_snapshots | bucket=DAY"
+              :currency="summaryDisplayCurrency"
+              :points="trendPoints"
+              :loading="loading"
+              :error="errorMessage"
+            />
+          </div>
+        </div>
+      </div>
+
+      <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        Collapsed. Click <span class="font-semibold">Expand</span> to preview and export.
+      </p>
     </article>
 
     <KpiBreakdownCards

@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -20,3 +21,45 @@ class AnalyticsSummaryV2Out(BaseModel):
     principal_profit_total: Decimal
     principal_return_pct: Decimal | None
     as_of: datetime
+
+
+class AnalyticsAllocationItemOut(BaseModel):
+    key: str
+    label: str
+    value: Decimal
+    ratio_pct: Decimal
+
+
+class AnalyticsAllocationOut(BaseModel):
+    target: Literal["GROSS", "LIABILITIES", "NET", "HOLDINGS"]
+    group_by: Literal["PORTFOLIO", "ASSET_CLASS", "ASSET", "LIABILITY_TYPE"]
+    scope_type: str
+    scope_id: int
+    display_currency: str
+    total: Decimal
+    items: list[AnalyticsAllocationItemOut]
+    as_of: datetime
+
+
+class AnalyticsNetworthSeriesPointOut(BaseModel):
+    snapshot_date: str
+    gross_assets_total: Decimal
+    liabilities_total: Decimal
+    net_assets_total: Decimal
+    as_of: datetime
+    source: str
+
+
+class AnalyticsNetworthSeriesOut(BaseModel):
+    scope_type: str
+    scope_id: int
+    display_currency: str
+    points: list[AnalyticsNetworthSeriesPointOut]
+
+
+class AnalyticsSnapshotCollectOut(BaseModel):
+    snapshot_date: str
+    display_currency: str
+    user_scopes_collected: int
+    household_scopes_collected: int
+    upserted_rows: int

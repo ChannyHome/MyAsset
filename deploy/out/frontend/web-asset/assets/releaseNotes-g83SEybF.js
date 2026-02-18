@@ -1,4 +1,4 @@
-import { h as http } from './useDisplayCurrency-BZ-Ikfwn.js';
+import { h as http } from './http-nYGPWehe.js';
 
 async function getReleaseNotes(params = {}) {
   const { data } = await http.get("/release-notes", { params });

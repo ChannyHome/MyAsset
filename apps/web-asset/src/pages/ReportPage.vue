@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 
-import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import { getNetworthSeries, getSummary, type AnalyticsNetworthSeriesOut, type AnalyticsSummaryV2Out } from "../api/analytics";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
-import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
+import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
 
@@ -25,6 +26,7 @@ function formatDateTime(value: string | null | undefined): string {
 const loading = ref(false);
 const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
+const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
 const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
@@ -45,12 +47,26 @@ const netAssetsProfitTotal = computed(
 );
 const asOf = computed(() => formatDateTime(summary.value?.as_of));
 
+const trendPoints = computed(() =>
+  (networthSeries.value?.points ?? []).map((point) => ({
+    label: point.snapshot_date,
+    gross: toNumber(point.gross_assets_total),
+    liabilities: toNumber(point.liabilities_total),
+    net: toNumber(point.net_assets_total),
+  })),
+);
+
 async function loadReportData(): Promise<void> {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const [summaryOut, portfoliosOut, liabilitiesOut] = await Promise.all([
+    const [summaryOut, seriesOut, portfoliosOut, liabilitiesOut] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
+      getNetworthSeries({
+        display_currency: displayCurrency.value,
+        bucket: "DAY",
+        limit: 90,
+      }),
       getPortfoliosTable({
         page: 1,
         page_size: 200,
@@ -72,6 +88,7 @@ async function loadReportData(): Promise<void> {
     ]);
 
     summary.value = summaryOut;
+    networthSeries.value = seriesOut;
     portfolioRows.value = portfoliosOut.items;
     liabilityRows.value = liabilitiesOut.items;
   } catch (error) {
@@ -112,9 +129,9 @@ watch(
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">Report</p>
-          <h1 class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">자산 분석 (기본)</h1>
+          <h1 class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Asset Report (Core)</h1>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Home과 동일한 기준으로 Gross/Net/부채 및 수익률을 요약 표시합니다.
+            KPI breakdown + valuation snapshot trend connected to analytics APIs.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -159,9 +176,18 @@ watch(
       :liabilities="liabilityRows"
     />
 
+    <NetworthTrendCard
+      title="Networth Trend"
+      subtitle="Connected to valuation_snapshots (bucket=DAY)"
+      :currency="summaryDisplayCurrency"
+      :points="trendPoints"
+      :loading="loading"
+      :error="errorMessage"
+    />
+
     <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">상승률 상위</h2>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Gainers (sample)</h2>
         <ul class="mt-3 space-y-2 text-sm">
           <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
             <span>NVDA</span>
@@ -172,21 +198,21 @@ watch(
             <span class="font-semibold text-emerald-600">+1.11%</span>
           </li>
           <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
-            <span>삼성전자</span>
+            <span>005930</span>
             <span class="font-semibold text-emerald-600">+0.77%</span>
           </li>
         </ul>
       </article>
 
       <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">하락률 상위</h2>
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Losers (sample)</h2>
         <ul class="mt-3 space-y-2 text-sm">
           <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
             <span>BTC</span>
             <span class="font-semibold text-rose-600">-2.10%</span>
           </li>
           <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
-            <span>하이닉스</span>
+            <span>TSLA</span>
             <span class="font-semibold text-rose-600">-1.43%</span>
           </li>
           <li class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">

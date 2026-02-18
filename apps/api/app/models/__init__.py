@@ -13,6 +13,7 @@ from app.models.release_note import ReleaseNote
 from app.models.user import User
 from app.models.fx_rate import FxRate
 from app.models.user_setting import UserSetting
+from app.models.valuation_snapshot import ValuationSnapshot
 
 __all__ = [
     "Base",
@@ -31,4 +32,5 @@ __all__ = [
     "AppSecret",
     "FxRate",
     "UserSetting",
+    "ValuationSnapshot",
 ]

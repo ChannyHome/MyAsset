@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from threading import Lock
 from uuid import uuid4
 
+from app.core.config import settings
 from app.core.db import get_session_maker
 from app.services.quote_updater import (
     count_supported_auto_assets,
     refresh_quotes_for_supported_assets,
     refresh_usd_krw_rate,
 )
+from app.services.valuation_snapshots import collect_valuation_snapshots_batch
 
 
 @dataclass
@@ -34,6 +36,13 @@ class QuoteUpdateJobState:
     fx_as_of: datetime | None = None
     fx_source: str | None = None
     fx_error: str | None = None
+    snapshot_collected: bool = False
+    snapshot_currency: str | None = None
+    snapshot_date: date | None = None
+    snapshot_user_scopes: int = 0
+    snapshot_household_scopes: int = 0
+    snapshot_upserted_rows: int = 0
+    snapshot_error: str | None = None
 
 
 _jobs: dict[str, QuoteUpdateJobState] = {}
@@ -117,6 +126,19 @@ def run_quote_update_job(job_id: str) -> None:
 
         summary = refresh_quotes_for_supported_assets(session, on_progress=on_progress)
         fx_row, fx_error = refresh_usd_krw_rate(session)
+        snapshot_result = None
+        snapshot_error = None
+        if settings.valuation_snapshot_auto_collect_enabled:
+            try:
+                snapshot_result = collect_valuation_snapshots_batch(
+                    db=session,
+                    display_currency=settings.valuation_snapshot_collect_currency,
+                    include_users=True,
+                    include_households=True,
+                )
+            except Exception as exc:
+                session.rollback()
+                snapshot_error = str(exc)
 
         with _jobs_lock:
             current = _jobs.get(job_id)
@@ -136,6 +158,14 @@ def run_quote_update_job(job_id: str) -> None:
                 current.fx_rate = fx_row.rate
                 current.fx_as_of = fx_row.as_of
                 current.fx_source = fx_row.source
+            current.snapshot_error = snapshot_error
+            if snapshot_result is not None:
+                current.snapshot_collected = True
+                current.snapshot_currency = snapshot_result.display_currency
+                current.snapshot_date = snapshot_result.snapshot_date
+                current.snapshot_user_scopes = snapshot_result.user_scopes_collected
+                current.snapshot_household_scopes = snapshot_result.household_scopes_collected
+                current.snapshot_upserted_rows = snapshot_result.upserted_rows
             current.status = "COMPLETED"
             current.finished_at = datetime.now(UTC).replace(tzinfo=None)
     except Exception as exc:

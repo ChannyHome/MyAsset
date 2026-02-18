@@ -1,10 +1,28 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 
-import { getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
+import {
+  collectSnapshots,
+  getAllocation,
+  getNetworthSeries,
+  getSummary,
+  type AnalyticsAllocationOut,
+  type AnalyticsNetworthSeriesOut,
+  type AnalyticsSummaryV2Out,
+} from "../api/analytics";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilities, type LiabilityOut } from "../api/liabilities";
+import {
+  getPortfolios,
+  getPortfoliosTable,
+  type PortfolioOut,
+  type PortfolioTableRowOut,
+} from "../api/portfolios";
 import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
+import AllocationDonutCard from "../components/AllocationDonutCard.vue";
+import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
+import NetworthTrendCard from "../components/NetworthTrendCard.vue";
+import KpiSummaryCard from "../components/KpiSummaryCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
 
@@ -35,23 +53,18 @@ type DashboardPreset = {
   note: string;
 };
 
+type AllocationUiItem = {
+  key: string;
+  label: string;
+  value: number;
+  ratioPct: number;
+  returnPct?: number | null;
+};
+
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
   const num = typeof value === "number" ? value : Number(value);
   return Number.isFinite(num) ? num : 0;
-}
-
-function formatCurrency(value: number, currency = "KRW"): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatPercent(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) return "-";
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -72,9 +85,9 @@ const toolboxSections: Array<{ title: string; items: ToolboxItem[] }> = [
   {
     title: "Charts",
     items: [
-      { type: "donut_allocation", label: "Donut Allocation", description: "Top holdings allocation" },
-      { type: "treemap_holdings", label: "Treemap Holdings", description: "Size=value, color=PnL%" },
-      { type: "networth_line", label: "Networth Line", description: "Snapshot trend (MVP stub)" },
+      { type: "donut_allocation", label: "Donut Allocation", description: "Gross / liabilities / net allocation" },
+      { type: "treemap_holdings", label: "Treemap Holdings", description: "Holdings allocation blocks" },
+      { type: "networth_line", label: "Networth Line", description: "valuation_snapshots trend line" },
       { type: "dividend_bar_monthly", label: "Dividend Bar", description: "Monthly dividend (MVP stub)" },
     ],
   },
@@ -84,20 +97,20 @@ const dashboardPresets: DashboardPreset[] = [
   {
     id: "default-main",
     name: "Default Main",
-    widgets: ["kpi_summary", "donut_allocation", "treemap_holdings", "market_board"],
+    widgets: ["kpi_summary", "donut_allocation", "treemap_holdings", "networth_line"],
     note: "Balanced default dashboard",
   },
   {
-    id: "income-focus",
-    name: "Income Focus",
-    widgets: ["kpi_summary", "dividend_bar_monthly", "networth_line", "market_board"],
-    note: "Cashflow and trend focus",
+    id: "allocation-focus",
+    name: "Allocation Focus",
+    widgets: ["kpi_summary", "donut_allocation", "treemap_holdings", "market_board"],
+    note: "Allocation and composition focus",
   },
   {
-    id: "risk-focus",
-    name: "Risk Focus",
-    widgets: ["kpi_summary", "treemap_holdings", "networth_line"],
-    note: "Volatility/weight monitor",
+    id: "trend-focus",
+    name: "Trend Focus",
+    widgets: ["kpi_summary", "networth_line", "donut_allocation"],
+    note: "Snapshot trend and KPI focus",
   },
 ];
 
@@ -110,28 +123,38 @@ const canvasWidgets = ref<CanvasWidget[]>([
   { id: 1, type: "kpi_summary", label: "KPI Summary" },
   { id: 2, type: "donut_allocation", label: "Donut Allocation" },
   { id: 3, type: "treemap_holdings", label: "Treemap Holdings" },
+  { id: 4, type: "networth_line", label: "Networth Line" },
 ]);
-const nextWidgetId = ref(4);
+const nextWidgetId = ref(5);
 const activeDashboardName = ref("Default Main");
 
 const compareModalOpen = ref(false);
 const compare = reactive({
   left: "default-main",
-  right: "income-focus",
+  right: "allocation-focus",
 });
+
+const donutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
+const donutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
+const treemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
+const collectingSnapshot = ref(false);
 
 const dataLoading = ref(false);
 const dataError = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityOut[]>([]);
+const portfolios = ref<PortfolioOut[]>([]);
+const portfolioStats = ref<PortfolioTableRowOut[]>([]);
+const allocationGross = ref<AnalyticsAllocationOut | null>(null);
+const allocationLiabilities = ref<AnalyticsAllocationOut | null>(null);
+const allocationNet = ref<AnalyticsAllocationOut | null>(null);
+const allocationHoldings = ref<AnalyticsAllocationOut | null>(null);
+const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
+const treemapPortfolioKey = ref("ALL");
 const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
-const topHoldings = computed(() =>
-  [...holdings.value].sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount)),
-);
-const top4 = computed(() => topHoldings.value.slice(0, 4));
 
 const filteredSections = computed(() => {
   const keyword = search.value.trim().toLowerCase();
@@ -166,6 +189,118 @@ const connectionStatus = computed(() => {
   if (summary.value) return "connected";
   return "idle";
 });
+
+const donutData = computed(() => {
+  if (donutTarget.value === "GROSS") return allocationGross.value;
+  if (donutTarget.value === "LIABILITIES") return allocationLiabilities.value;
+  if (donutTarget.value === "NET") return allocationNet.value;
+  return allocationHoldings.value;
+});
+
+const donutItems = computed<AllocationUiItem[]>(() =>
+  (donutData.value?.items ?? []).map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: toNumber(item.value),
+    ratioPct: toNumber(item.ratio_pct),
+    returnPct: null,
+  })),
+);
+
+const portfolioReturnById = computed(() => {
+  const map = new Map<number, number>();
+  for (const item of portfolioStats.value) {
+    const pct = toNumber(item.total_return_pct);
+    if (Number.isFinite(pct)) {
+      map.set(item.id, pct);
+    }
+  }
+  return map;
+});
+
+const holdingReturnByAssetId = computed(() => {
+  const agg = new Map<number, { invested: number; pnl: number; fallbackPct: number }>();
+  for (const row of holdings.value) {
+    const assetId = row.asset_id;
+    const invested = toNumber(row.invested_amount);
+    const pnl = toNumber(row.pnl_amount);
+    const fallbackPct = toNumber(row.pnl_pct);
+    const prev = agg.get(assetId);
+    if (!prev) {
+      agg.set(assetId, {
+        invested: Math.max(0, invested),
+        pnl,
+        fallbackPct,
+      });
+      continue;
+    }
+    prev.invested += Math.max(0, invested);
+    prev.pnl += pnl;
+    prev.fallbackPct = Number.isFinite(prev.fallbackPct) ? prev.fallbackPct : fallbackPct;
+  }
+  const map = new Map<number, number>();
+  for (const [assetId, value] of agg.entries()) {
+    if (value.invested > 0) {
+      map.set(assetId, (value.pnl / value.invested) * 100);
+    } else if (Number.isFinite(value.fallbackPct)) {
+      map.set(assetId, value.fallbackPct);
+    }
+  }
+  return map;
+});
+
+const holdingsTreemapItems = computed<AllocationUiItem[]>(() =>
+  (
+    treemapTarget.value === "GROSS" ? allocationGross.value?.items ?? [] : allocationHoldings.value?.items ?? []
+  ).map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: toNumber(item.value),
+    ratioPct: toNumber(item.ratio_pct),
+    returnPct:
+      treemapTarget.value === "GROSS"
+        ? (() => {
+            const match = item.key.match(/^portfolio:(\d+)$/);
+            if (!match) return null;
+            return portfolioReturnById.value.get(Number(match[1])) ?? null;
+          })()
+        : (() => {
+            const match = item.key.match(/^asset:(\d+)$/);
+            if (!match) return null;
+            return holdingReturnByAssetId.value.get(Number(match[1])) ?? null;
+          })(),
+  })),
+);
+
+const treemapPortfolioId = computed<number | undefined>(() => {
+  if (treemapPortfolioKey.value === "ALL") return undefined;
+  const parsed = Number(treemapPortfolioKey.value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+});
+
+const treemapPortfolioLabel = computed(() => {
+  if (treemapPortfolioId.value == null) return "All portfolios";
+  const target = portfolios.value.find((item) => item.id === treemapPortfolioId.value);
+  return target ? target.name : `Portfolio #${treemapPortfolioId.value}`;
+});
+
+const trendPoints = computed(() =>
+  (networthSeries.value?.points ?? []).map((point) => ({
+    label: point.snapshot_date,
+    gross: toNumber(point.gross_assets_total),
+    liabilities: toNumber(point.liabilities_total),
+    net: toNumber(point.net_assets_total),
+  })),
+);
+
+const kpiGrossReturnPct = computed(() => (summary.value?.principal_return_pct == null ? null : toNumber(summary.value.principal_return_pct)));
+const kpiNetReturnPct = computed(() => (summary.value?.net_assets_return_pct == null ? null : toNumber(summary.value.net_assets_return_pct)));
+const kpiGrossProfitTotal = computed(() =>
+  toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total)),
+);
+const kpiNetProfitTotal = computed(() =>
+  toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total)),
+);
 
 function buildWidgetsFromPreset(presetId: string) {
   const preset = dashboardPresets.find((item) => item.id === presetId);
@@ -211,18 +346,92 @@ async function loadDashboardData() {
   dataLoading.value = true;
   dataError.value = "";
   try {
-    const [summaryOut, holdingsOut, liabilitiesOut] = await Promise.all([
+    const [
+      summaryOut,
+      holdingsOut,
+      liabilitiesOut,
+      grossAllocationOut,
+      liabilitiesAllocationOut,
+      netAllocationOut,
+      holdingsAllocationOut,
+      networthSeriesOut,
+      portfoliosOut,
+      portfoliosTableOut,
+    ] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
       getHoldingsPerformance({ display_currency: displayCurrency.value }),
       getLiabilities({ display_currency: displayCurrency.value }),
+      getAllocation({
+        target: "GROSS",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "LIABILITIES",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "NET",
+        group_by: "PORTFOLIO",
+        top_n: 10,
+        display_currency: displayCurrency.value,
+      }),
+      getAllocation({
+        target: "HOLDINGS",
+        group_by: "ASSET",
+        top_n: 12,
+        portfolio_id: treemapPortfolioId.value,
+        display_currency: displayCurrency.value,
+      }),
+      getNetworthSeries({
+        display_currency: displayCurrency.value,
+        bucket: "DAY",
+        limit: 90,
+      }),
+      getPortfolios(),
+      getPortfoliosTable({
+        page: 1,
+        page_size: 200,
+        sort_by: "id",
+        sort_order: "asc",
+        display_currency: displayCurrency.value,
+        include_hidden: false,
+        include_excluded: false,
+      }),
     ]);
+
     summary.value = summaryOut;
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut;
+    allocationGross.value = grossAllocationOut;
+    allocationLiabilities.value = liabilitiesAllocationOut;
+    allocationNet.value = netAllocationOut;
+    allocationHoldings.value = holdingsAllocationOut;
+    networthSeries.value = networthSeriesOut;
+    portfolios.value = portfoliosOut;
+    portfolioStats.value = portfoliosTableOut.items;
+    if (treemapPortfolioKey.value !== "ALL" && !portfoliosOut.some((item) => String(item.id) === treemapPortfolioKey.value)) {
+      treemapPortfolioKey.value = "ALL";
+    }
   } catch (error) {
     dataError.value = error instanceof Error ? error.message : "Failed to load dashboard data";
   } finally {
     dataLoading.value = false;
+  }
+}
+
+async function collectSnapshotNow() {
+  collectingSnapshot.value = true;
+  try {
+    await collectSnapshots({ display_currency: displayCurrency.value });
+    await loadDashboardData();
+  } catch (error) {
+    dataError.value = error instanceof Error ? error.message : "Failed to collect valuation snapshot";
+  } finally {
+    collectingSnapshot.value = false;
   }
 }
 
@@ -248,6 +457,16 @@ watch(
     }
   },
 );
+
+watch(
+  () => treemapPortfolioKey.value,
+  (next, prev) => {
+    if (!summary.value) return;
+    if (next !== prev) {
+      void loadDashboardData();
+    }
+  },
+);
 </script>
 
 <template>
@@ -258,7 +477,7 @@ watch(
           <p class="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300">Dashboard</p>
           <h1 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard Builder</h1>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            WPF toolbox style editing with live asset data connection.
+            Allocation widgets + valuation snapshot trend are now connected to live analytics APIs.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -274,6 +493,14 @@ watch(
             @click="loadDashboardData"
           >
             {{ dataLoading ? "Loading..." : "Refresh Data" }}
+          </button>
+          <button
+            type="button"
+            class="rounded-xl border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+            :disabled="collectingSnapshot"
+            @click="collectSnapshotNow"
+          >
+            {{ collectingSnapshot ? "Collecting..." : "Collect Snapshot" }}
           </button>
           <button
             type="button"
@@ -384,31 +611,136 @@ watch(
                 </button>
               </div>
 
-              <div v-if="widget.type === 'kpi_summary'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
-                <p>Gross: {{ formatCurrency(toNumber(summary?.gross_assets_total), summaryDisplayCurrency) }}</p>
-                <p>Liabilities: {{ formatCurrency(toNumber(summary?.liabilities_total), summaryDisplayCurrency) }}</p>
-                <p>Net: {{ formatCurrency(toNumber(summary?.net_assets_total), summaryDisplayCurrency) }}</p>
+              <KpiSummaryCard
+                v-if="widget.type === 'kpi_summary'"
+                title="KPI Summary"
+                subtitle="Gross / Liabilities / Net"
+                :currency="summaryDisplayCurrency"
+                :gross-assets-total="toNumber(summary?.gross_assets_total)"
+                :liabilities-total="toNumber(summary?.liabilities_total)"
+                :net-assets-total="toNumber(summary?.net_assets_total)"
+                :invested-principal-total="toNumber(summary?.invested_principal_total)"
+                :principal-minus-debt-total="toNumber(summary?.principal_minus_debt_total)"
+                :gross-return-pct="kpiGrossReturnPct"
+                :net-return-pct="kpiNetReturnPct"
+                :gross-profit-total="kpiGrossProfitTotal"
+                :net-profit-total="kpiNetProfitTotal"
+                :as-of="formatDateTime(summary?.as_of || null)"
+              />
+
+              <div v-else-if="widget.type === 'donut_allocation'" class="space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-1">
+                    <button
+                      v-for="mode in ['GROSS', 'LIABILITIES', 'NET', 'PORTFOLIOS']"
+                      :key="mode"
+                      type="button"
+                      class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+                      :class="
+                        donutTarget === mode
+                          ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                          : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+                      "
+                      @click="donutTarget = mode as 'GROSS' | 'LIABILITIES' | 'NET' | 'PORTFOLIOS'"
+                    >
+                      {{ mode }}
+                    </button>
+                  </div>
+                  <div class="mx-1 hidden h-4 w-px bg-slate-300 dark:bg-slate-700 sm:block" />
+                  <div class="flex flex-wrap items-center gap-1">
+                    <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Start</span>
+                    <button
+                      v-for="pos in ['TOP', 'RIGHT', 'LEFT']"
+                      :key="`donut-start-${pos}`"
+                      type="button"
+                      class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+                      :class="
+                        donutStartPosition === pos
+                          ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                          : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+                      "
+                      @click="donutStartPosition = pos as 'TOP' | 'RIGHT' | 'LEFT'"
+                    >
+                      {{ pos }}
+                    </button>
+                  </div>
+                </div>
+                <div v-if="donutTarget === 'PORTFOLIOS'" class="mb-1 flex items-center gap-2">
+                  <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+                  <select
+                    v-model="treemapPortfolioKey"
+                    class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                  >
+                    <option value="ALL">All</option>
+                    <option v-for="item in portfolios" :key="`donut-${item.id}`" :value="String(item.id)">
+                      {{ item.name }}
+                    </option>
+                  </select>
+                </div>
+                <AllocationDonutCard
+                  :title="`Allocation | ${donutTarget}`"
+                  :subtitle="
+                    donutTarget === 'PORTFOLIOS'
+                      ? `HOLDINGS by ${treemapPortfolioLabel}`
+                      : 'Top N + Others (grouped by Portfolio)'
+                  "
+                  :currency="summaryDisplayCurrency"
+                  :total="toNumber(donutData?.total)"
+                  :items="donutItems"
+                  :start-position="donutStartPosition"
+                />
               </div>
 
-              <div v-else-if="widget.type === 'donut_allocation'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
-                <p class="font-semibold">Top allocation</p>
-                <p v-for="item in top4" :key="item.holding_id">
-                  {{ item.asset_symbol || item.asset_name }}:
-                  {{ formatPercent((toNumber(item.evaluated_amount) / Math.max(toNumber(summary?.net_assets_total), 1)) * 100) }}
-                </p>
-                <p v-if="top4.length === 0">No data</p>
+              <div v-else-if="widget.type === 'treemap_holdings'">
+                <div class="mb-2 flex flex-wrap items-center gap-2">
+                  <div class="flex items-center gap-1">
+                    <button
+                      v-for="mode in ['GROSS', 'PORTFOLIOS']"
+                      :key="`treemap-${mode}`"
+                      type="button"
+                      class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+                      :class="
+                        treemapTarget === mode
+                          ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                          : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+                      "
+                      @click="treemapTarget = mode as 'GROSS' | 'PORTFOLIOS'"
+                    >
+                      {{ mode }}
+                    </button>
+                  </div>
+                  <template v-if="treemapTarget === 'PORTFOLIOS'">
+                    <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+                    <select
+                      v-model="treemapPortfolioKey"
+                      class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                    >
+                      <option value="ALL">All</option>
+                      <option v-for="item in portfolios" :key="item.id" :value="String(item.id)">
+                        {{ item.name }}
+                      </option>
+                    </select>
+                  </template>
+                </div>
+                <AllocationTreemapCard
+                  title="Holdings Treemap"
+                  :subtitle="
+                    treemapTarget === 'GROSS'
+                      ? 'Target=GROSS | group_by=PORTFOLIO'
+                      : `Target=HOLDINGS | group_by=ASSET | ${treemapPortfolioLabel}`
+                  "
+                  :currency="summaryDisplayCurrency"
+                  :items="holdingsTreemapItems"
+                />
               </div>
 
-              <div v-else-if="widget.type === 'treemap_holdings'" class="space-y-1 rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
-                <p class="font-semibold">Top holdings (value / PnL)</p>
-                <p v-for="item in top4" :key="item.holding_id">
-                  {{ item.asset_symbol || item.asset_name }} / {{ formatPercent(toNumber(item.pnl_pct)) }}
-                </p>
-                <p v-if="top4.length === 0">No data</p>
-              </div>
-
-              <div v-else-if="widget.type === 'networth_line'" class="rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">
-                Networth snapshot line will be connected to valuation snapshots API.
+              <div v-else-if="widget.type === 'networth_line'">
+                <NetworthTrendCard
+                  title="Networth Line"
+                  subtitle="valuation_snapshots | bucket=DAY"
+                  :currency="summaryDisplayCurrency"
+                  :points="trendPoints"
+                />
               </div>
 
               <div v-else-if="widget.type === 'dividend_bar_monthly'" class="rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800">

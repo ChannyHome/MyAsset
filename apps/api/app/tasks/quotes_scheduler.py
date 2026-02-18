@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_session_maker
 from app.services.app_settings import get_quote_interval_minutes
-from app.services.quote_updater import refresh_quotes_for_supported_assets
+from app.services.quote_updater import refresh_quotes_for_supported_assets, refresh_usd_krw_rate
+from app.services.valuation_snapshots import collect_valuation_snapshots_batch
 
 _scheduler: BackgroundScheduler | None = None
 
@@ -15,6 +16,14 @@ def _run_quote_job() -> None:
     db: Session = session_maker()
     try:
         refresh_quotes_for_supported_assets(db)
+        refresh_usd_krw_rate(db)
+        if settings.valuation_snapshot_auto_collect_enabled:
+            collect_valuation_snapshots_batch(
+                db=db,
+                display_currency=settings.valuation_snapshot_collect_currency,
+                include_users=True,
+                include_households=True,
+            )
     finally:
         db.close()
 

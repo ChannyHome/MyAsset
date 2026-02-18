@@ -1,8 +1,8 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http, u as useDisplayCurrency, _ as _sfc_main$1, c as createLiability, b as updateLiability, g as getLiabilitiesTable, d as getLatestUsdKrwFxRate, e as getFxStaleMinutes, A as AxiosError, f as updateQuotesNow, t as testQuoteForAsset, i as upsertManualQuote, j as deleteLiability, k as getQuoteUpdateJobStatus } from './useDisplayCurrency-BZ-Ikfwn.js';
-import { c as createHolding, u as updateHolding, a as getHoldingsTable, d as deleteHolding } from './holdings-0W50Tt_V.js';
-import { c as createPortfolio, u as updatePortfolio, g as getPortfoliosTable, a as getPortfolios, d as deletePortfolio } from './portfolios-BgDo5vhb.js';
-import { c as createReleaseNote, u as updateReleaseNote, g as getReleaseNotes, a as unpublishReleaseNote } from './releaseNotes-BlDYVT2V.js';
+import { h as http, A as AxiosError } from './http-nYGPWehe.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1, d as createPortfolio, e as updatePortfolio, f as createLiability, h as updateLiability, a as getPortfoliosTable, g as getLiabilitiesTable, i as getLatestUsdKrwFxRate, j as getFxStaleMinutes, c as getPortfolios, k as updateQuotesNow, t as testQuoteForAsset, l as upsertManualQuote, m as deletePortfolio, n as deleteLiability, o as getQuoteUpdateJobStatus } from './useDisplayCurrency-BOX_gs28.js';
+import { c as createHolding, u as updateHolding, a as getHoldingsTable, d as deleteHolding } from './holdings-PVaHh3Rj.js';
+import { c as createReleaseNote, u as updateReleaseNote, g as getReleaseNotes, a as unpublishReleaseNote } from './releaseNotes-g83SEybF.js';
 
 async function getAssets() {
   const { data } = await http.get("/assets");
@@ -172,65 +172,65 @@ const _hoisted_100 = {
   class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
 };
 const _hoisted_101 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_102 = { class: "flex flex-wrap items-start justify-between gap-2" };
-const _hoisted_103 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_104 = ["disabled"];
-const _hoisted_105 = ["disabled"];
-const _hoisted_106 = {
-  key: 0,
-  class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
-};
-const _hoisted_107 = {
-  key: 1,
-  class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
-};
-const _hoisted_108 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_109 = { class: "text-xs" };
-const _hoisted_110 = { class: "text-xs" };
-const _hoisted_111 = { class: "text-xs md:col-span-2" };
-const _hoisted_112 = { class: "text-xs md:col-span-2" };
-const _hoisted_113 = { class: "mt-3 flex flex-wrap items-center gap-2" };
-const _hoisted_114 = ["disabled"];
-const _hoisted_115 = {
-  key: 0,
-  class: "text-xs text-slate-500 dark:text-slate-400"
-};
-const _hoisted_116 = { class: "mt-3 overflow-x-auto" };
-const _hoisted_117 = { class: "w-full min-w-[980px] text-left text-xs leading-tight" };
-const _hoisted_118 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_119 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_120 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_121 = { class: "px-2 py-1.5" };
-const _hoisted_122 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_123 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_124 = { class: "px-2 py-1.5 whitespace-nowrap" };
-const _hoisted_125 = { class: "flex flex-wrap gap-1" };
-const _hoisted_126 = ["disabled", "onClick"];
-const _hoisted_127 = ["disabled", "onClick"];
-const _hoisted_128 = { key: 0 };
-const _hoisted_129 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_130 = { class: "flex flex-wrap items-center justify-between gap-2" };
-const _hoisted_131 = ["disabled"];
-const _hoisted_132 = {
+const _hoisted_102 = { class: "flex flex-wrap items-center justify-between gap-2" };
+const _hoisted_103 = ["disabled"];
+const _hoisted_104 = {
   key: 0,
   class: "mt-1 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_133 = {
+const _hoisted_105 = {
   key: 1,
   class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_134 = {
+const _hoisted_106 = {
   key: 2,
   class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_135 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_136 = { class: "text-xs" };
-const _hoisted_137 = ["value"];
-const _hoisted_138 = { class: "text-xs" };
-const _hoisted_139 = { class: "text-xs" };
-const _hoisted_140 = { class: "text-xs" };
-const _hoisted_141 = { class: "mt-3" };
-const _hoisted_142 = ["disabled"];
+const _hoisted_107 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_108 = { class: "text-xs" };
+const _hoisted_109 = ["value"];
+const _hoisted_110 = { class: "text-xs" };
+const _hoisted_111 = { class: "text-xs" };
+const _hoisted_112 = { class: "text-xs" };
+const _hoisted_113 = { class: "mt-3" };
+const _hoisted_114 = ["disabled"];
+const _hoisted_115 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_116 = { class: "flex flex-wrap items-start justify-between gap-2" };
+const _hoisted_117 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_118 = ["disabled"];
+const _hoisted_119 = ["disabled"];
+const _hoisted_120 = {
+  key: 0,
+  class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
+};
+const _hoisted_121 = {
+  key: 1,
+  class: "mt-2 text-xs text-slate-500 dark:text-slate-400"
+};
+const _hoisted_122 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_123 = { class: "text-xs" };
+const _hoisted_124 = { class: "text-xs" };
+const _hoisted_125 = { class: "text-xs md:col-span-2" };
+const _hoisted_126 = { class: "text-xs md:col-span-2" };
+const _hoisted_127 = { class: "mt-3 flex flex-wrap items-center gap-2" };
+const _hoisted_128 = ["disabled"];
+const _hoisted_129 = {
+  key: 0,
+  class: "text-xs text-slate-500 dark:text-slate-400"
+};
+const _hoisted_130 = { class: "mt-3 overflow-x-auto" };
+const _hoisted_131 = { class: "w-full min-w-[980px] text-left text-xs leading-tight" };
+const _hoisted_132 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_133 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_134 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_135 = { class: "px-2 py-1.5" };
+const _hoisted_136 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_137 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_138 = { class: "px-2 py-1.5 whitespace-nowrap" };
+const _hoisted_139 = { class: "flex flex-wrap gap-1" };
+const _hoisted_140 = ["disabled", "onClick"];
+const _hoisted_141 = ["disabled", "onClick"];
+const _hoisted_142 = { key: 0 };
 const _hoisted_143 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_144 = { class: "flex flex-wrap items-start justify-between gap-2" };
 const _hoisted_145 = { class: "ml-auto flex flex-wrap items-center gap-2" };
@@ -2464,80 +2464,153 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_101, [
             _createElementVNode("div", _hoisted_102, [
-              _cache[186] || (_cache[186] = _createElementVNode("div", null, [
+              _cache[186] || (_cache[186] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quote Actions (Admin/Maintainer)", -1)),
+              canManageQuotes.value ? (_openBlock(), _createElementBlock("button", {
+                key: 0,
+                type: "button",
+                class: "rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                disabled: isBusy.value,
+                onClick: _cache[25] || (_cache[25] = ($event) => quoteActionsCollapsed.value = !quoteActionsCollapsed.value)
+              }, _toDisplayString(quoteActionsCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_103)) : _createCommentVNode("", true)
+            ]),
+            selectedAssetForQuote.value ? (_openBlock(), _createElementBlock("p", _hoisted_104, " Selected: " + _toDisplayString(selectedAssetForQuote.value.name) + " (" + _toDisplayString(selectedAssetForQuote.value.exchange_code) + ") ", 1)) : _createCommentVNode("", true),
+            !canManageQuotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_105, "권한이 없어 조회만 가능합니다.")) : quoteActionsCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_106, "폼이 접혀 있습니다. Expand 버튼으로 열어주세요.")) : (_openBlock(), _createElementBlock(_Fragment, { key: 3 }, [
+              _createElementVNode("div", _hoisted_107, [
+                _createElementVNode("label", _hoisted_108, [
+                  _cache[188] || (_cache[188] = _createTextVNode("Asset ", -1)),
+                  _withDirectives(_createElementVNode("select", {
+                    "onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => manualQuoteForm.asset_id = $event),
+                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+                  }, [
+                    _cache[187] || (_cache[187] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(assets.value, (item) => {
+                      return _openBlock(), _createElementBlock("option", {
+                        key: item.id,
+                        value: String(item.id)
+                      }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name) + " (" + _toDisplayString(item.exchange_code) + ")", 9, _hoisted_109);
+                    }), 128))
+                  ], 512), [
+                    [_vModelSelect, manualQuoteForm.asset_id]
+                  ])
+                ]),
+                _createElementVNode("label", _hoisted_110, [
+                  _cache[189] || (_cache[189] = _createTextVNode("Price ", -1)),
+                  _withDirectives(_createElementVNode("input", {
+                    "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => manualQuoteForm.price = $event),
+                    placeholder: "예: 810000000",
+                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+                  }, null, 512), [
+                    [_vModelText, manualQuoteForm.price]
+                  ])
+                ]),
+                _createElementVNode("label", _hoisted_111, [
+                  _cache[190] || (_cache[190] = _createTextVNode("Currency ", -1)),
+                  _withDirectives(_createElementVNode("input", {
+                    "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => manualQuoteForm.currency = $event),
+                    maxlength: "3",
+                    placeholder: "KRW",
+                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+                  }, null, 512), [
+                    [_vModelText, manualQuoteForm.currency]
+                  ])
+                ]),
+                _createElementVNode("label", _hoisted_112, [
+                  _cache[191] || (_cache[191] = _createTextVNode("As Of ", -1)),
+                  _withDirectives(_createElementVNode("input", {
+                    "onUpdate:modelValue": _cache[29] || (_cache[29] = ($event) => manualQuoteForm.as_of = $event),
+                    type: "datetime-local",
+                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+                  }, null, 512), [
+                    [_vModelText, manualQuoteForm.as_of]
+                  ])
+                ])
+              ]),
+              _createElementVNode("div", _hoisted_113, [
+                _createElementVNode("button", {
+                  type: "button",
+                  class: "rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500",
+                  disabled: isBusy.value,
+                  onClick: askApplyManualQuote
+                }, " Apply Manual Quote ", 8, _hoisted_114)
+              ])
+            ], 64))
+          ]),
+          _createElementVNode("article", _hoisted_115, [
+            _createElementVNode("div", _hoisted_116, [
+              _cache[192] || (_cache[192] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes (Admin)"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Home 하단 Release Notes 카드를 Agent에서 직접 관리합니다.")
               ], -1)),
-              _createElementVNode("div", _hoisted_103, [
+              _createElementVNode("div", _hoisted_117, [
                 canManageReleaseNotes.value && !releaseNotesSectionCollapsed.value ? (_openBlock(), _createElementBlock("button", {
                   key: 0,
                   type: "button",
                   class: "rounded border border-slate-300 px-2.5 py-1.5 text-xs transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                   disabled: isBusy.value,
                   onClick: resetReleaseNoteForm
-                }, " Reset Form ", 8, _hoisted_104)) : _createCommentVNode("", true),
+                }, " Reset Form ", 8, _hoisted_118)) : _createCommentVNode("", true),
                 canManageReleaseNotes.value ? (_openBlock(), _createElementBlock("button", {
                   key: 1,
                   type: "button",
                   class: "rounded border border-slate-300 px-2.5 py-1.5 text-xs transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                   disabled: isBusy.value,
-                  onClick: _cache[25] || (_cache[25] = ($event) => releaseNotesSectionCollapsed.value = !releaseNotesSectionCollapsed.value)
-                }, _toDisplayString(releaseNotesSectionCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_105)) : _createCommentVNode("", true)
+                  onClick: _cache[30] || (_cache[30] = ($event) => releaseNotesSectionCollapsed.value = !releaseNotesSectionCollapsed.value)
+                }, _toDisplayString(releaseNotesSectionCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_119)) : _createCommentVNode("", true)
               ])
             ]),
-            !canManageReleaseNotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_106, " Only ADMIN can view/create/update/unpublish release notes. ")) : releaseNotesSectionCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_107, " 섹션이 접혀 있습니다. Expand 버튼으로 열어주세요. ")) : (_openBlock(), _createElementBlock(_Fragment, { key: 2 }, [
-              _createElementVNode("div", _hoisted_108, [
-                _createElementVNode("label", _hoisted_109, [
-                  _cache[187] || (_cache[187] = _createTextVNode("Released At (optional) ", -1)),
+            !canManageReleaseNotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_120, " Only ADMIN can view/create/update/unpublish release notes. ")) : releaseNotesSectionCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_121, " 섹션이 접혀 있습니다. Expand 버튼으로 열어주세요. ")) : (_openBlock(), _createElementBlock(_Fragment, { key: 2 }, [
+              _createElementVNode("div", _hoisted_122, [
+                _createElementVNode("label", _hoisted_123, [
+                  _cache[193] || (_cache[193] = _createTextVNode("Released At (optional) ", -1)),
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => releaseNoteForm.released_at = $event),
+                    "onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => releaseNoteForm.released_at = $event),
                     type: "datetime-local",
                     class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                   }, null, 512), [
                     [_vModelText, releaseNoteForm.released_at]
                   ])
                 ]),
-                _createElementVNode("label", _hoisted_110, [
-                  _cache[188] || (_cache[188] = _createTextVNode("Title ", -1)),
+                _createElementVNode("label", _hoisted_124, [
+                  _cache[194] || (_cache[194] = _createTextVNode("Title ", -1)),
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => releaseNoteForm.title = $event),
+                    "onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => releaseNoteForm.title = $event),
                     class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                   }, null, 512), [
                     [_vModelText, releaseNoteForm.title]
                   ])
                 ]),
-                _createElementVNode("label", _hoisted_111, [
-                  _cache[189] || (_cache[189] = _createTextVNode("Summary ", -1)),
+                _createElementVNode("label", _hoisted_125, [
+                  _cache[195] || (_cache[195] = _createTextVNode("Summary ", -1)),
                   _withDirectives(_createElementVNode("textarea", {
-                    "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => releaseNoteForm.summary = $event),
+                    "onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => releaseNoteForm.summary = $event),
                     rows: "3",
                     class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                   }, null, 512), [
                     [_vModelText, releaseNoteForm.summary]
                   ])
                 ]),
-                _createElementVNode("label", _hoisted_112, [
+                _createElementVNode("label", _hoisted_126, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[29] || (_cache[29] = ($event) => releaseNoteForm.is_published = $event),
+                    "onUpdate:modelValue": _cache[34] || (_cache[34] = ($event) => releaseNoteForm.is_published = $event),
                     type: "checkbox"
                   }, null, 512), [
                     [_vModelCheckbox, releaseNoteForm.is_published]
                   ]),
-                  _cache[190] || (_cache[190] = _createElementVNode("span", { class: "ml-1" }, "Published", -1))
+                  _cache[196] || (_cache[196] = _createElementVNode("span", { class: "ml-1" }, "Published", -1))
                 ])
               ]),
-              _createElementVNode("div", _hoisted_113, [
+              _createElementVNode("div", _hoisted_127, [
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500",
                   disabled: isBusy.value,
                   onClick: submitReleaseNoteForm
-                }, _toDisplayString(releaseNoteForm.id ? "Update Release Note" : "Create Release Note"), 9, _hoisted_114),
-                releaseNoteForm.id ? (_openBlock(), _createElementBlock("span", _hoisted_115, "Editing #" + _toDisplayString(releaseNoteForm.id), 1)) : _createCommentVNode("", true)
+                }, _toDisplayString(releaseNoteForm.id ? "Update Release Note" : "Create Release Note"), 9, _hoisted_128),
+                releaseNoteForm.id ? (_openBlock(), _createElementBlock("span", _hoisted_129, "Editing #" + _toDisplayString(releaseNoteForm.id), 1)) : _createCommentVNode("", true)
               ]),
-              _createElementVNode("div", _hoisted_116, [
-                _createElementVNode("table", _hoisted_117, [
-                  _cache[192] || (_cache[192] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
+              _createElementVNode("div", _hoisted_130, [
+                _createElementVNode("table", _hoisted_131, [
+                  _cache[198] || (_cache[198] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
                     _createElementVNode("tr", null, [
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "ID"),
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Released At"),
@@ -2554,31 +2627,31 @@ ${realEstateMetaJsonExample}`;
                         key: item.id,
                         class: "border-t border-slate-200 dark:border-slate-700"
                       }, [
-                        _createElementVNode("td", _hoisted_118, _toDisplayString(item.id), 1),
-                        _createElementVNode("td", _hoisted_119, _toDisplayString(formatDateTime(item.released_at)), 1),
-                        _createElementVNode("td", _hoisted_120, _toDisplayString(item.title), 1),
-                        _createElementVNode("td", _hoisted_121, _toDisplayString(item.summary), 1),
-                        _createElementVNode("td", _hoisted_122, _toDisplayString(item.is_published ? "Y" : "N"), 1),
-                        _createElementVNode("td", _hoisted_123, _toDisplayString(formatDateTime(item.updated_at)), 1),
-                        _createElementVNode("td", _hoisted_124, [
-                          _createElementVNode("div", _hoisted_125, [
+                        _createElementVNode("td", _hoisted_132, _toDisplayString(item.id), 1),
+                        _createElementVNode("td", _hoisted_133, _toDisplayString(formatDateTime(item.released_at)), 1),
+                        _createElementVNode("td", _hoisted_134, _toDisplayString(item.title), 1),
+                        _createElementVNode("td", _hoisted_135, _toDisplayString(item.summary), 1),
+                        _createElementVNode("td", _hoisted_136, _toDisplayString(item.is_published ? "Y" : "N"), 1),
+                        _createElementVNode("td", _hoisted_137, _toDisplayString(formatDateTime(item.updated_at)), 1),
+                        _createElementVNode("td", _hoisted_138, [
+                          _createElementVNode("div", _hoisted_139, [
                             _createElementVNode("button", {
                               type: "button",
                               class: "rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                               disabled: isBusy.value,
                               onClick: ($event) => fillReleaseNoteForm(item)
-                            }, " Edit ", 8, _hoisted_126),
+                            }, " Edit ", 8, _hoisted_140),
                             _createElementVNode("button", {
                               type: "button",
                               class: "rounded border border-rose-300 px-2 py-0.5 text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700",
                               disabled: isBusy.value || !item.is_published,
                               onClick: ($event) => askUnpublishReleaseNote(item)
-                            }, " Unpublish ", 8, _hoisted_127)
+                            }, " Unpublish ", 8, _hoisted_141)
                           ])
                         ])
                       ]);
                     }), 128)),
-                    releaseNotes.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_128, [..._cache[191] || (_cache[191] = [
+                    releaseNotes.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_142, [..._cache[197] || (_cache[197] = [
                       _createElementVNode("td", {
                         colspan: "7",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -2586,79 +2659,6 @@ ${realEstateMetaJsonExample}`;
                     ])])) : _createCommentVNode("", true)
                   ])
                 ])
-              ])
-            ], 64))
-          ]),
-          _createElementVNode("article", _hoisted_129, [
-            _createElementVNode("div", _hoisted_130, [
-              _cache[193] || (_cache[193] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quote Actions (Admin/Maintainer)", -1)),
-              canManageQuotes.value ? (_openBlock(), _createElementBlock("button", {
-                key: 0,
-                type: "button",
-                class: "rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-                disabled: isBusy.value,
-                onClick: _cache[30] || (_cache[30] = ($event) => quoteActionsCollapsed.value = !quoteActionsCollapsed.value)
-              }, _toDisplayString(quoteActionsCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_131)) : _createCommentVNode("", true)
-            ]),
-            selectedAssetForQuote.value ? (_openBlock(), _createElementBlock("p", _hoisted_132, " Selected: " + _toDisplayString(selectedAssetForQuote.value.name) + " (" + _toDisplayString(selectedAssetForQuote.value.exchange_code) + ") ", 1)) : _createCommentVNode("", true),
-            !canManageQuotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_133, "권한이 없어 조회만 가능합니다.")) : quoteActionsCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_134, "폼이 접혀 있습니다. Expand 버튼으로 열어주세요.")) : (_openBlock(), _createElementBlock(_Fragment, { key: 3 }, [
-              _createElementVNode("div", _hoisted_135, [
-                _createElementVNode("label", _hoisted_136, [
-                  _cache[195] || (_cache[195] = _createTextVNode("Asset ", -1)),
-                  _withDirectives(_createElementVNode("select", {
-                    "onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => manualQuoteForm.asset_id = $event),
-                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-                  }, [
-                    _cache[194] || (_cache[194] = _createElementVNode("option", { value: "" }, "Select", -1)),
-                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(assets.value, (item) => {
-                      return _openBlock(), _createElementBlock("option", {
-                        key: item.id,
-                        value: String(item.id)
-                      }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name) + " (" + _toDisplayString(item.exchange_code) + ")", 9, _hoisted_137);
-                    }), 128))
-                  ], 512), [
-                    [_vModelSelect, manualQuoteForm.asset_id]
-                  ])
-                ]),
-                _createElementVNode("label", _hoisted_138, [
-                  _cache[196] || (_cache[196] = _createTextVNode("Price ", -1)),
-                  _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => manualQuoteForm.price = $event),
-                    placeholder: "예: 810000000",
-                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-                  }, null, 512), [
-                    [_vModelText, manualQuoteForm.price]
-                  ])
-                ]),
-                _createElementVNode("label", _hoisted_139, [
-                  _cache[197] || (_cache[197] = _createTextVNode("Currency ", -1)),
-                  _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => manualQuoteForm.currency = $event),
-                    maxlength: "3",
-                    placeholder: "KRW",
-                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
-                  }, null, 512), [
-                    [_vModelText, manualQuoteForm.currency]
-                  ])
-                ]),
-                _createElementVNode("label", _hoisted_140, [
-                  _cache[198] || (_cache[198] = _createTextVNode("As Of ", -1)),
-                  _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[34] || (_cache[34] = ($event) => manualQuoteForm.as_of = $event),
-                    type: "datetime-local",
-                    class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-                  }, null, 512), [
-                    [_vModelText, manualQuoteForm.as_of]
-                  ])
-                ])
-              ]),
-              _createElementVNode("div", _hoisted_141, [
-                _createElementVNode("button", {
-                  type: "button",
-                  class: "rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500",
-                  disabled: isBusy.value,
-                  onClick: askApplyManualQuote
-                }, " Apply Manual Quote ", 8, _hoisted_142)
               ])
             ], 64))
           ]),
