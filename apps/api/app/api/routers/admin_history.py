@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -8,7 +9,7 @@ from app.api.deps import require_min_role
 from app.core.db import get_db
 from app.models.api_audit_log import ApiAuditLog
 from app.models.user import User
-from app.schemas.admin_history import AdminHistoryPageOut
+from app.schemas.admin_history import AdminHistoryItemOut, AdminHistoryPageOut
 
 router = APIRouter(prefix="/admin/history", tags=["admin-history"])
 
@@ -51,5 +52,25 @@ def list_admin_history(
     stmt = stmt.order_by(ApiAuditLog.timestamp.desc(), ApiAuditLog.id.desc())
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
 
-    items = list(db.scalars(stmt).all())
+    rows = list(db.scalars(stmt).all())
+    user_ids = sorted({row.user_id for row in rows if row.user_id is not None})
+    email_by_user_id: dict[int, str] = {}
+    if user_ids:
+        for uid, email in db.execute(select(User.id, User.email).where(User.id.in_(user_ids))).all():
+            email_by_user_id[int(uid)] = str(email)
+
+    items: list[AdminHistoryItemOut] = []
+    for row in rows:
+        item = AdminHistoryItemOut.model_validate(row, from_attributes=True)
+        item.actor_email = email_by_user_id.get(int(row.user_id)) if row.user_id is not None else None
+        if item.actor_email is None and row.path.endswith("/auth/login") and row.request_body_masked:
+            try:
+                parsed = json.loads(row.request_body_masked)
+                email_value = parsed.get("email") if isinstance(parsed, dict) else None
+                if isinstance(email_value, str) and email_value:
+                    item.actor_email = email_value.strip().lower()
+            except Exception:
+                pass
+        items.append(item)
+
     return AdminHistoryPageOut(items=items, total=total, page=page, page_size=page_size)

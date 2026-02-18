@@ -44,6 +44,15 @@ def _derive_resource(path: str) -> tuple[str | None, int | None]:
     return resource_type, resource_id
 
 
+def _derive_action_name(method: str, path: str) -> str:
+    upper_method = method.upper().strip()
+    if upper_method == "POST" and path.endswith("/auth/login"):
+        return "AUTH_LOGIN"
+    if upper_method == "POST" and path.endswith("/auth/logout"):
+        return "AUTH_LOGOUT"
+    return f"{upper_method} {path}"
+
+
 class ApiAccessLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start = time.perf_counter()
@@ -85,7 +94,7 @@ class ApiAccessLogMiddleware(BaseHTTPMiddleware):
                 response_body_masked = None
 
             result = "SUCCESS" if 200 <= status_code < 400 else "ERROR"
-            action_name = f"{request.method} {request.url.path}"
+            action_name = _derive_action_name(request.method, request.url.path)
 
             file_log_entry = {
                 "timestamp": timestamp_now.isoformat(),

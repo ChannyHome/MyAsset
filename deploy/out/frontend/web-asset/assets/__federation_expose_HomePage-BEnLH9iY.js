@@ -1,14 +1,10 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { g as getSummary } from './analytics-nG83f7RO.js';
 import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
-import { h as http, u as useDisplayCurrency, _ as _sfc_main$1, g as getLiabilitiesTable } from './useDisplayCurrency-BZ-Ikfwn.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1, g as getLiabilitiesTable } from './useDisplayCurrency-BZ-Ikfwn.js';
 import { g as getHoldingsPerformance } from './holdings-0W50Tt_V.js';
 import { g as getPortfoliosTable } from './portfolios-BgDo5vhb.js';
-
-async function getReleaseNotes(params = {}) {
-  const { data } = await http.get("/release-notes", { params });
-  return data;
-}
+import { g as getReleaseNotes } from './releaseNotes-BlDYVT2V.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

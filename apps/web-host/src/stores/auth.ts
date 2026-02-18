@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-import { getMe, login, signup, type MeOut } from "../api/auth";
+import { getMe, login, logout as logoutApi, signup, type MeOut } from "../api/auth";
 import { getHouseholds, type HouseholdOut } from "../api/households";
 import { STORAGE_KEYS } from "../constants/storage";
 
@@ -88,6 +88,16 @@ export const useAuthStore = defineStore("auth", {
       this.households = [];
       localStorage.removeItem(STORAGE_KEYS.token);
       localStorage.removeItem(STORAGE_KEYS.user);
+    },
+    async logoutWithAudit() {
+      if (this.token) {
+        try {
+          await logoutApi();
+        } catch {
+          // ignore API errors; local session clear still needed
+        }
+      }
+      this.logout();
     },
   },
 });

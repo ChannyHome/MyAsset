@@ -18,3 +18,4 @@ export const RemoteDashboardPage = createRemotePage(() => import("web_asset/Dash
 export const RemoteAgentPage = createRemotePage(() => import("web_asset/AgentPage"));
 export const RemoteReportPage = createRemotePage(() => import("web_asset/ReportPage"));
 export const RemoteLabPage = createRemotePage(() => import("web_asset/LabPage"));
+export const RemoteHistoryPage = createRemotePage(() => import("web_asset/HistoryPage"));

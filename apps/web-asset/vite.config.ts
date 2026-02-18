@@ -16,6 +16,7 @@ export default defineConfig({
         "./ReportPage": "./src/pages/ReportPage.vue",
         "./AgentPage": "./src/pages/AgentPage.vue",
         "./LabPage": "./src/pages/LabPage.vue",
+        "./HistoryPage": "./src/pages/HistoryPage.vue",
       },
       shared: ["vue", "pinia", "vue-router"],
     }),

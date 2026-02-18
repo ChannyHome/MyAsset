@@ -27,3 +27,9 @@ declare module "web_asset/LabPage" {
   const component: DefineComponent<object, object, unknown>;
   export default component;
 }
+
+declare module "web_asset/HistoryPage" {
+  import type { DefineComponent } from "vue";
+  const component: DefineComponent<object, object, unknown>;
+  export default component;
+}

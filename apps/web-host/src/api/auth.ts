@@ -39,3 +39,7 @@ export async function getMe(): Promise<MeOut> {
   const { data } = await http.get<MeOut>("/auth/me");
   return data;
 }
+
+export async function logout(): Promise<void> {
+  await http.post("/auth/logout");
+}

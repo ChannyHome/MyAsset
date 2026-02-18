@@ -61,3 +61,10 @@ def me(current_user: User = Depends(get_current_user_any)) -> MeResponse:
         status=current_user.status,
         must_change_password=current_user.must_change_password,
     )
+
+
+@router.post("/logout")
+def logout(_current_user: User = Depends(get_current_user_any)) -> dict[str, str]:
+    # JWT is stateless in MVP; client-side token disposal is the actual logout.
+    # This endpoint exists for explicit audit trail entries.
+    return {"detail": "Logged out"}

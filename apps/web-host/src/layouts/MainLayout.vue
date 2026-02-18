@@ -6,6 +6,7 @@ import {
   ChartColumn,
   FlaskConical,
   Home,
+  History as HistoryIcon,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ type MenuItem = {
   to: string;
   label: string;
   icon: Component;
+  minRole?: "MAINTAINER" | "ADMIN";
 };
 
 const menuItems: MenuItem[] = [
@@ -33,6 +35,7 @@ const menuItems: MenuItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/agent", label: "Agent", icon: Bot },
   { to: "/report", label: "Report", icon: ChartColumn },
+  { to: "/history", label: "History", icon: HistoryIcon, minRole: "MAINTAINER" },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/budget", label: "Budget", icon: Wallet },
   { to: "/lab", label: "Lab", icon: FlaskConical },
@@ -44,6 +47,9 @@ const authStore = useAuthStore();
 const uiStore = useUiStore();
 
 const pageTitle = computed(() => {
+  if (route.path.startsWith("/forbidden")) {
+    return "Forbidden";
+  }
   if (route.path.startsWith("/settings")) {
     return "Settings";
   }
@@ -54,6 +60,13 @@ const userDisplayName = computed(() => authStore.user?.display_name ?? "Unknown 
 const userEmail = computed(() => authStore.user?.email ?? "-");
 const householdName = computed(() => authStore.primaryHousehold?.name ?? "No household");
 const isGuestMode = computed(() => authStore.user?.role === "GUEST");
+const showGuestDemo = computed(() => isGuestMode.value && !route.path.startsWith("/forbidden"));
+const isMaintainerOrAdmin = computed(
+  () => authStore.user?.role === "MAINTAINER" || authStore.user?.role === "ADMIN",
+);
+const visibleMenuItems = computed(() =>
+  menuItems.filter((item) => (item.minRole === "MAINTAINER" ? isMaintainerOrAdmin.value : true)),
+);
 
 function isDesktopViewport() {
   return window.matchMedia("(min-width: 768px)").matches;
@@ -82,8 +95,8 @@ function navigate(to: string) {
   router.push(to);
 }
 
-function logout() {
-  authStore.logout();
+async function logout() {
+  await authStore.logoutWithAudit();
   uiStore.closeMobileSidebar();
   router.push("/login");
 }
@@ -173,7 +186,7 @@ function goSettings() {
 
         <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           <button
-            v-for="item in menuItems"
+            v-for="item in visibleMenuItems"
             :key="item.to"
             type="button"
             class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition"
@@ -238,7 +251,7 @@ function goSettings() {
       </aside>
 
       <main class="min-w-0 flex-1 p-4 md:p-6" :class="{ 'md:ml-72': !uiStore.sidebarCollapsed }">
-        <GuestDemoPage v-if="isGuestMode" />
+        <GuestDemoPage v-if="showGuestDemo" />
         <RouterView v-else />
       </main>
     </div>

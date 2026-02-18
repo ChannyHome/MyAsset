@@ -2076,6 +2076,77 @@ onBeforeUnmount(() => {
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Quote Actions (Admin/Maintainer)</h2>
+        <button
+          v-if="canManageQuotes"
+          type="button"
+          class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          :disabled="isBusy"
+          @click="quoteActionsCollapsed = !quoteActionsCollapsed"
+        >
+          {{ quoteActionsCollapsed ? "Expand" : "Collapse" }}
+        </button>
+      </div>
+
+      <p v-if="selectedAssetForQuote" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Selected: {{ selectedAssetForQuote.name }} ({{ selectedAssetForQuote.exchange_code }})
+      </p>
+
+      <p v-if="!canManageQuotes" class="mt-2 text-xs text-slate-500 dark:text-slate-400">권한이 없어 조회만 가능합니다.</p>
+      <p v-else-if="quoteActionsCollapsed" class="mt-2 text-xs text-slate-500 dark:text-slate-400">폼이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
+      <template v-else>
+        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <label class="text-xs"
+            >Asset
+            <select
+              v-model="manualQuoteForm.asset_id"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            >
+              <option value="">Select</option>
+              <option v-for="item in assets" :key="item.id" :value="String(item.id)">{{ item.id }} - {{ item.name }} ({{ item.exchange_code }})</option>
+            </select>
+          </label>
+          <label class="text-xs"
+            >Price
+            <input
+              v-model="manualQuoteForm.price"
+              placeholder="예: 810000000"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs"
+            >Currency
+            <input
+              v-model="manualQuoteForm.currency"
+              maxlength="3"
+              placeholder="KRW"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+          <label class="text-xs"
+            >As Of
+            <input
+              v-model="manualQuoteForm.as_of"
+              type="datetime-local"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+          </label>
+        </div>
+        <div class="mt-3">
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
+            :disabled="isBusy"
+            @click="askApplyManualQuote"
+          >
+            Apply Manual Quote
+          </button>
+        </div>
+      </template>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes (Admin)</h2>
@@ -2198,77 +2269,6 @@ onBeforeUnmount(() => {
               </tr>
             </tbody>
           </table>
-        </div>
-      </template>
-    </article>
-
-    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Quote Actions (Admin/Maintainer)</h2>
-        <button
-          v-if="canManageQuotes"
-          type="button"
-          class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          :disabled="isBusy"
-          @click="quoteActionsCollapsed = !quoteActionsCollapsed"
-        >
-          {{ quoteActionsCollapsed ? "Expand" : "Collapse" }}
-        </button>
-      </div>
-
-      <p v-if="selectedAssetForQuote" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Selected: {{ selectedAssetForQuote.name }} ({{ selectedAssetForQuote.exchange_code }})
-      </p>
-
-      <p v-if="!canManageQuotes" class="mt-2 text-xs text-slate-500 dark:text-slate-400">권한이 없어 조회만 가능합니다.</p>
-      <p v-else-if="quoteActionsCollapsed" class="mt-2 text-xs text-slate-500 dark:text-slate-400">폼이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
-      <template v-else>
-        <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-          <label class="text-xs"
-            >Asset
-            <select
-              v-model="manualQuoteForm.asset_id"
-              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            >
-              <option value="">Select</option>
-              <option v-for="item in assets" :key="item.id" :value="String(item.id)">{{ item.id }} - {{ item.name }} ({{ item.exchange_code }})</option>
-            </select>
-          </label>
-          <label class="text-xs"
-            >Price
-            <input
-              v-model="manualQuoteForm.price"
-              placeholder="예: 810000000"
-              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            />
-          </label>
-          <label class="text-xs"
-            >Currency
-            <input
-              v-model="manualQuoteForm.currency"
-              maxlength="3"
-              placeholder="KRW"
-              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
-            />
-          </label>
-          <label class="text-xs"
-            >As Of
-            <input
-              v-model="manualQuoteForm.as_of"
-              type="datetime-local"
-              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            />
-          </label>
-        </div>
-        <div class="mt-3">
-          <button
-            type="button"
-            class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500"
-            :disabled="isBusy"
-            @click="askApplyManualQuote"
-          >
-            Apply Manual Quote
-          </button>
         </div>
       </template>
     </article>

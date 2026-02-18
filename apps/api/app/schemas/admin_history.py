@@ -10,6 +10,7 @@ class AdminHistoryItemOut(BaseModel):
     timestamp: datetime
     user_id: int | None
     role: str | None
+    actor_email: str | None = None
     method: str
     path: str
     query: str | None
