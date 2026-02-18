@@ -8,6 +8,7 @@ from app.models.app_setting import AppSetting
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
+from app.models.release_note import ReleaseNote
 from app.models.user import User
 from app.models.fx_rate import FxRate
 from app.models.user_setting import UserSetting
@@ -18,6 +19,7 @@ __all__ = [
     "Household",
     "HouseholdMember",
     "Portfolio",
+    "ReleaseNote",
     "Asset",
     "AssetQuote",
     "LatestQuote",

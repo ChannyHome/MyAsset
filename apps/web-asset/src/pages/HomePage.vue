@@ -7,9 +7,10 @@ import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
+import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
-import { releaseNotes } from "../data/releaseNotes";
+import type { ReleaseNoteItem } from "../data/releaseNotes";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) {
@@ -69,6 +70,7 @@ const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
+const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
 const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
@@ -108,6 +110,15 @@ const topPnlAssets = computed(() =>
     .slice(0, 3),
 );
 
+function mapReleaseNotes(notes: ReleaseNoteOut[]): ReleaseNoteItem[] {
+  return notes.map((note) => ({
+    id: String(note.id),
+    releasedAt: note.released_at,
+    title: note.title,
+    summary: note.summary,
+  }));
+}
+
 async function loadHomeData() {
   loading.value = true;
   errorMessage.value = "";
@@ -139,6 +150,13 @@ async function loadHomeData() {
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
+    try {
+      const noteRows = await getReleaseNotes({ limit: 20 });
+      const mapped = mapReleaseNotes(noteRows);
+      releaseNoteItems.value = mapped;
+    } catch {
+      releaseNoteItems.value = [];
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to load dashboard data: ${message}`;
@@ -354,9 +372,15 @@ watch(
         <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes</h2>
         <span class="text-xs text-slate-500 dark:text-slate-400">Latest first</span>
       </div>
-      <ul class="space-y-2">
+      <div
+        v-if="releaseNoteItems.length === 0"
+        class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+      >
+        No release notes yet.
+      </div>
+      <ul v-else class="space-y-2">
         <li
-          v-for="note in releaseNotes"
+          v-for="note in releaseNoteItems"
           :key="note.id"
           class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
         >

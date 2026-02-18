@@ -1,4 +1,4 @@
-import { h as http } from './liabilities-C9jGBx8W.js';
+import { h as http } from './useDisplayCurrency-BZ-Ikfwn.js';
 
 async function getHoldingsTable(params = {}) {
   const { data } = await http.get("/holdings/table", { params });

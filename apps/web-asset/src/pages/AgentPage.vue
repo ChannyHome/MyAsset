@@ -211,7 +211,9 @@ const holdingForm = reactive({
   asset_id: "",
   quantity: "",
   avg_price: "",
+  avg_price_currency: "KRW",
   invested_amount: "",
+  invested_amount_currency: "KRW",
   source_type: "MANUAL",
   memo: "",
 });
@@ -246,7 +248,9 @@ const holdingEditForm = reactive({
   asset_id: "",
   quantity: "",
   avg_price: "",
+  avg_price_currency: "KRW",
   invested_amount: "",
+  invested_amount_currency: "KRW",
   source_type: "MANUAL",
   is_hidden: false,
   memo: "",
@@ -282,6 +286,7 @@ const selectedAssetForQuote = computed(() => assets.value.find((item) => String(
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
 const quoteModeOptions = ["AUTO", "MANUAL"] as const;
 const holdingSourceTypeOptions = ["MANUAL", "AUTO"] as const;
+const holdingCurrencyOptions = ["KRW", "USD"] as const;
 const portfolioTypeOptions = ["BROKER", "EXCHANGE", "BANK", "CASH", "ETC"] as const;
 const portfolioCategoryOptions = ["KR_STOCK", "US_STOCK", "CRYPTO", "REAL_ESTATE", "BOND", "CASH", "DEPOSIT_SAVING", "ETC"] as const;
 const portfolioCashflowSourceTypeOptions = ["MANUAL", "AUTO"] as const;
@@ -1076,14 +1081,18 @@ function submitHoldingCreate(): void {
         asset_id: assetId,
         quantity,
         avg_price: avgPrice,
+        avg_price_currency: normalizeUpper(holdingForm.avg_price_currency) || "KRW",
         invested_amount: parseOptionalDecimal(holdingForm.invested_amount),
+        invested_amount_currency: normalizeUpper(holdingForm.invested_amount_currency) || "KRW",
         source_type: holdingForm.source_type.trim() || "MANUAL",
         memo: holdingForm.memo.trim() || null,
       });
       holdingForm.asset_id = "";
       holdingForm.quantity = "";
       holdingForm.avg_price = "";
+      holdingForm.avg_price_currency = "KRW";
       holdingForm.invested_amount = "";
+      holdingForm.invested_amount_currency = "KRW";
       holdingForm.memo = "";
       quickCreateHoldingOpen.value = false;
     });
@@ -1098,7 +1107,9 @@ function fillHoldingEditForm(item: HoldingTableRowOut): void {
   holdingEditForm.asset_id = String(item.asset_id);
   holdingEditForm.quantity = String(item.quantity);
   holdingEditForm.avg_price = String(item.avg_price);
+  holdingEditForm.avg_price_currency = item.avg_price_currency || "KRW";
   holdingEditForm.invested_amount = item.invested_amount === null ? "" : String(item.invested_amount);
+  holdingEditForm.invested_amount_currency = item.invested_amount_currency || "KRW";
   holdingEditForm.source_type = item.source_type || "MANUAL";
   holdingEditForm.is_hidden = item.is_hidden;
   holdingEditForm.memo = item.memo || "";
@@ -1129,7 +1140,9 @@ function submitHoldingEdit(): void {
         asset_id: assetId,
         quantity,
         avg_price: avgPrice,
+        avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
         invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
+        invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
         source_type: holdingEditForm.source_type.trim() || "MANUAL",
         is_hidden: holdingEditForm.is_hidden,
         memo: holdingEditForm.memo.trim() || null,
@@ -2304,7 +2317,27 @@ onBeforeUnmount(() => {
           </label>
           <input v-model="holdingForm.quantity" placeholder="Quantity" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="holdingForm.avg_price" placeholder="Avg Price" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Avg Price Currency
+            <select
+              v-model="holdingForm.avg_price_currency"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="isBusy"
+            >
+              <option v-for="opt in holdingCurrencyOptions" :key="`holding-create-avg-${opt}`" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
           <input v-model="holdingForm.invested_amount" placeholder="Invested (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Invested Currency
+            <select
+              v-model="holdingForm.invested_amount_currency"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="isBusy"
+            >
+              <option v-for="opt in holdingCurrencyOptions" :key="`holding-create-invested-${opt}`" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
           <label class="text-xs text-slate-600 dark:text-slate-300">
             Source Type
             <select
@@ -2734,11 +2767,29 @@ onBeforeUnmount(() => {
           />
         </label>
         <label class="text-xs"
+          >Avg Price Currency
+          <select
+            v-model="holdingEditForm.avg_price_currency"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in holdingCurrencyOptions" :key="`holding-edit-avg-${opt}`" :value="opt">{{ opt }}</option>
+          </select>
+        </label>
+        <label class="text-xs"
           >Invested Amount (optional)
           <input
             v-model="holdingEditForm.invested_amount"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
           />
+        </label>
+        <label class="text-xs"
+          >Invested Currency
+          <select
+            v-model="holdingEditForm.invested_amount_currency"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+          >
+            <option v-for="opt in holdingCurrencyOptions" :key="`holding-edit-invested-${opt}`" :value="opt">{{ opt }}</option>
+          </select>
         </label>
         <label class="text-xs"
           >Source Type

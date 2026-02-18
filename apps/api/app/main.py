@@ -13,6 +13,7 @@ from app.api.routers.households import router as households_router
 from app.api.routers.liabilities import router as liabilities_router
 from app.api.routers.portfolios import router as portfolios_router
 from app.api.routers.quotes import router as quotes_router
+from app.api.routers.release_notes import router as release_notes_router
 from app.api.routers.settings import router as settings_router
 from app.api.routers.user_settings import router as user_settings_router
 from app.core.config import settings
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(holdings_router, prefix=settings.api_v1_prefix)
     app.include_router(liabilities_router, prefix=settings.api_v1_prefix)
     app.include_router(quotes_router, prefix=settings.api_v1_prefix)
+    app.include_router(release_notes_router, prefix=settings.api_v1_prefix)
     app.include_router(settings_router, prefix=settings.api_v1_prefix)
     app.include_router(user_settings_router, prefix=settings.api_v1_prefix)
     app.include_router(analytics_router, prefix=settings.api_v1_prefix)

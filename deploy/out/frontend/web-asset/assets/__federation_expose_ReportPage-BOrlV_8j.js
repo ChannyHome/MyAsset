@@ -1,23 +1,24 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { g as getSummary } from './analytics-CbRmvasB.js';
-import { g as getLiabilitiesTable } from './liabilities-C9jGBx8W.js';
-import { g as getPortfoliosTable } from './portfolios-DH2MjKkA.js';
-import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
+import { g as getSummary } from './analytics-nG83f7RO.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1, g as getLiabilitiesTable } from './useDisplayCurrency-BZ-Ikfwn.js';
+import { g as getPortfoliosTable } from './portfolios-BgDo5vhb.js';
+import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createVNode:_createVNode,createStaticVNode:_createStaticVNode} = await importShared('vue');
+const {createElementVNode:_createElementVNode,unref:_unref,createVNode:_createVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createStaticVNode:_createStaticVNode} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_3 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_4 = ["disabled"];
-const _hoisted_5 = { class: "mt-3 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_6 = {
+const _hoisted_4 = { class: "flex items-center gap-2" };
+const _hoisted_5 = ["disabled"];
+const _hoisted_6 = { class: "mt-3 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_7 = {
   key: 0,
   class: "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
 };
-const {computed,onMounted,ref} = await importShared('vue');
+const {computed,onMounted,ref,watch} = await importShared('vue');
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "ReportPage",
   setup(__props) {
@@ -37,7 +38,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const summary = ref(null);
     const portfolioRows = ref([]);
     const liabilityRows = ref([]);
-    const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
     const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
     const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
@@ -57,12 +59,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       errorMessage.value = "";
       try {
         const [summaryOut, portfoliosOut, liabilitiesOut] = await Promise.all([
-          getSummary(),
+          getSummary({ display_currency: displayCurrency.value }),
           getPortfoliosTable({
             page: 1,
             page_size: 200,
             sort_by: "gross_assets_total",
             sort_order: "desc",
+            display_currency: displayCurrency.value,
             include_hidden: false,
             include_excluded: false
           }),
@@ -71,6 +74,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             page_size: 200,
             sort_by: "outstanding_balance",
             sort_order: "desc",
+            display_currency: displayCurrency.value,
             include_hidden: false,
             include_excluded: false
           })
@@ -85,7 +89,26 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         loading.value = false;
       }
     }
-    onMounted(loadReportData);
+    async function onChangeDisplayCurrency(value) {
+      try {
+        await setDisplayCurrency(value);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        errorMessage.value = `Failed to update display currency: ${message}`;
+      }
+    }
+    onMounted(async () => {
+      await ensureInitialized();
+      await loadReportData();
+    });
+    watch(
+      () => displayCurrency.value,
+      (next, prev) => {
+        if (summary.value && prev && next !== prev) {
+          void loadReportData();
+        }
+      }
+    );
     return (_ctx, _cache) => {
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
@@ -95,18 +118,26 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "자산 분석 (기본)"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " Home과 동일한 기준으로 Gross/Net/부채 및 수익률을 요약 표시합니다. ")
             ], -1)),
-            _createElementVNode("button", {
-              type: "button",
-              class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-              disabled: loading.value,
-              onClick: loadReportData
-            }, _toDisplayString(loading.value ? "Loading..." : "Refresh"), 9, _hoisted_4)
+            _createElementVNode("div", _hoisted_4, [
+              _createVNode(_sfc_main$1, {
+                "model-value": _unref(displayCurrency),
+                disabled: loading.value || _unref(settingsSaving),
+                loading: _unref(settingsSaving),
+                "onUpdate:modelValue": onChangeDisplayCurrency
+              }, null, 8, ["model-value", "disabled", "loading"]),
+              _createElementVNode("button", {
+                type: "button",
+                class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                disabled: loading.value,
+                onClick: loadReportData
+              }, _toDisplayString(loading.value ? "Loading..." : "Refresh"), 9, _hoisted_5)
+            ])
           ]),
-          _createElementVNode("p", _hoisted_5, "as_of: " + _toDisplayString(asOf.value), 1)
+          _createElementVNode("p", _hoisted_6, "as_of: " + _toDisplayString(asOf.value), 1)
         ]),
-        errorMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_6, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true),
-        _createVNode(_sfc_main$1, {
-          "display-currency": displayCurrency.value,
+        errorMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_7, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true),
+        _createVNode(_sfc_main$2, {
+          "display-currency": summaryDisplayCurrency.value,
           "gross-assets-total": grossAssetsTotal.value,
           "liabilities-total": liabilitiesTotal.value,
           "net-assets-total": netAssetsTotal.value,

@@ -548,6 +548,10 @@
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
+  .flex-col {
+    flex-direction: column;
+  }
+
   .flex-nowrap {
     flex-wrap: nowrap;
   }
@@ -787,6 +791,10 @@
     background-color: var(--color-white);
   }
 
+  .p-1 {
+    padding: calc(var(--spacing) * 1);
+  }
+
   .p-3 {
     padding: calc(var(--spacing) * 3);
   }
@@ -809,6 +817,10 @@
 
   .px-1 {
     padding-inline: calc(var(--spacing) * 1);
+  }
+
+  .px-1\.5 {
+    padding-inline: calc(var(--spacing) * 1.5);
   }
 
   .px-2 {
@@ -853,6 +865,10 @@
 
   .pt-3 {
     padding-top: calc(var(--spacing) * 3);
+  }
+
+  .pl-1 {
+    padding-left: calc(var(--spacing) * 1);
   }
 
   .text-center {
@@ -1353,6 +1369,10 @@
 
   .dark\:text-amber-200:where(.dark, .dark *) {
     color: var(--color-amber-200);
+  }
+
+  .dark\:text-amber-300:where(.dark, .dark *) {
+    color: var(--color-amber-300);
   }
 
   .dark\:text-cyan-300:where(.dark, .dark *) {

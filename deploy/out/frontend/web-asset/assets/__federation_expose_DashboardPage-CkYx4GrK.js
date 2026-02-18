@@ -1,16 +1,16 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { g as getSummary } from './analytics-CbRmvasB.js';
-import { g as getHoldingsPerformance } from './holdings-BmSSXcn1.js';
-import { a as getLiabilities } from './liabilities-C9jGBx8W.js';
+import { g as getSummary } from './analytics-nG83f7RO.js';
+import { g as getHoldingsPerformance } from './holdings-0W50Tt_V.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1, a as getLiabilities } from './useDisplayCurrency-BZ-Ikfwn.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,renderList:_renderList,Fragment:_Fragment,withModifiers:_withModifiers,vModelSelect:_vModelSelect} = await importShared('vue');
+const {createElementVNode:_createElementVNode,unref:_unref,createVNode:_createVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,renderList:_renderList,Fragment:_Fragment,withModifiers:_withModifiers,vModelSelect:_vModelSelect} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_3 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_4 = { class: "flex gap-2" };
+const _hoisted_4 = { class: "flex flex-wrap items-center gap-2" };
 const _hoisted_5 = { class: "mt-3 flex flex-wrap items-center gap-2 text-xs" };
 const _hoisted_6 = { class: "rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" };
 const _hoisted_7 = { class: "rounded-full bg-slate-100 px-2 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" };
@@ -80,7 +80,7 @@ const _hoisted_43 = { class: "px-3 py-2" };
 const _hoisted_44 = { class: "px-3 py-2" };
 const _hoisted_45 = { class: "px-3 py-2" };
 const _hoisted_46 = { class: "mt-4 flex flex-wrap justify-end gap-2" };
-const {computed,onMounted,reactive,ref} = await importShared('vue');
+const {computed,onMounted,reactive,ref,watch} = await importShared('vue');
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "DashboardPage",
   setup(__props) {
@@ -165,7 +165,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const summary = ref(null);
     const holdings = ref([]);
     const liabilities = ref([]);
-    const displayCurrency = computed(() => summary.value?.display_currency ?? "KRW");
+    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
     const topHoldings = computed(
       () => [...holdings.value].sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount))
     );
@@ -236,9 +237,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       dataError.value = "";
       try {
         const [summaryOut, holdingsOut, liabilitiesOut] = await Promise.all([
-          getSummary(),
-          getHoldingsPerformance(),
-          getLiabilities()
+          getSummary({ display_currency: displayCurrency.value }),
+          getHoldingsPerformance({ display_currency: displayCurrency.value }),
+          getLiabilities({ display_currency: displayCurrency.value })
         ]);
         summary.value = summaryOut;
         holdings.value = holdingsOut;
@@ -249,7 +250,26 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         dataLoading.value = false;
       }
     }
-    onMounted(loadDashboardData);
+    async function onChangeDisplayCurrency(value) {
+      try {
+        await setDisplayCurrency(value);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to update display currency";
+        dataError.value = message;
+      }
+    }
+    onMounted(async () => {
+      await ensureInitialized();
+      await loadDashboardData();
+    });
+    watch(
+      () => displayCurrency.value,
+      (next, prev) => {
+        if (summary.value && prev && next !== prev) {
+          void loadDashboardData();
+        }
+      }
+    );
     return (_ctx, _cache) => {
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
@@ -260,6 +280,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " WPF toolbox style editing with live asset data connection. ")
             ], -1)),
             _createElementVNode("div", _hoisted_4, [
+              _createVNode(_sfc_main$1, {
+                "model-value": _unref(displayCurrency),
+                disabled: dataLoading.value || _unref(settingsSaving),
+                loading: _unref(settingsSaving),
+                "onUpdate:modelValue": onChangeDisplayCurrency
+              }, null, 8, ["model-value", "disabled", "loading"]),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
@@ -357,9 +383,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       }, " Remove ", 8, _hoisted_25)
                     ]),
                     widget.type === "kpi_summary" ? (_openBlock(), _createElementBlock("div", _hoisted_26, [
-                      _createElementVNode("p", null, "Gross: " + _toDisplayString(formatCurrency(toNumber(summary.value?.gross_assets_total), displayCurrency.value)), 1),
-                      _createElementVNode("p", null, "Liabilities: " + _toDisplayString(formatCurrency(toNumber(summary.value?.liabilities_total), displayCurrency.value)), 1),
-                      _createElementVNode("p", null, "Net: " + _toDisplayString(formatCurrency(toNumber(summary.value?.net_assets_total), displayCurrency.value)), 1)
+                      _createElementVNode("p", null, "Gross: " + _toDisplayString(formatCurrency(toNumber(summary.value?.gross_assets_total), summaryDisplayCurrency.value)), 1),
+                      _createElementVNode("p", null, "Liabilities: " + _toDisplayString(formatCurrency(toNumber(summary.value?.liabilities_total), summaryDisplayCurrency.value)), 1),
+                      _createElementVNode("p", null, "Net: " + _toDisplayString(formatCurrency(toNumber(summary.value?.net_assets_total), summaryDisplayCurrency.value)), 1)
                     ])) : widget.type === "donut_allocation" ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
                       _cache[13] || (_cache[13] = _createElementVNode("p", { class: "font-semibold" }, "Top allocation", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(top4.value, (item) => {
