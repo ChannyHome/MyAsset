@@ -114,8 +114,8 @@ const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)
               <tr>
                 <th class="px-3 py-2">Portfolio</th>
                 <th class="px-3 py-2 text-right">Current</th>
-                <th class="px-3 py-2 text-right">Principal</th>
-                <th class="px-3 py-2 text-right">Profit</th>
+                <th class="px-3 py-2 text-right">Invested Principal</th>
+                <th class="px-3 py-2 text-right">Portfolio Profit</th>
                 <th class="px-3 py-2 text-right">Return</th>
               </tr>
             </thead>
@@ -135,9 +135,12 @@ const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)
                     {{ formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || displayCurrency) }}
                   </span>
                 </td>
-                <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.total_pnl_amount))">
+                <td
+                  class="px-3 py-2 text-right font-semibold"
+                  :class="signedValueClass(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount))"
+                >
                   <span :style="amountMaskStyle">
-                    {{ formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || displayCurrency) }}
+                    {{ formatSignedCurrency(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount), row.base_currency || displayCurrency) }}
                   </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toOptionalNumber(row.total_return_pct))">
@@ -217,7 +220,7 @@ const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)
         </span>
       </p>
       <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-        vs principal - debt
+        vs debt-adjusted principal
         <span :style="amountMaskStyle">({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})</span>
       </p>
 
@@ -230,8 +233,8 @@ const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)
               <tr>
                 <th class="px-3 py-2">Portfolio</th>
                 <th class="px-3 py-2 text-right">Net Current</th>
-                <th class="px-3 py-2 text-right">Net Principal</th>
-                <th class="px-3 py-2 text-right">Profit</th>
+                <th class="px-3 py-2 text-right">Debt-Adjusted Principal</th>
+                <th class="px-3 py-2 text-right">Net Profit</th>
                 <th class="px-3 py-2 text-right">Return</th>
               </tr>
             </thead>
@@ -248,7 +251,7 @@ const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)
                 </td>
                 <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
                   <span :style="amountMaskStyle">
-                    {{ formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || displayCurrency) }}
+                    {{ formatCurrency(toNumber(row.debt_adjusted_principal_total ?? row.principal_minus_debt_total), row.base_currency || displayCurrency) }}
                   </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.net_assets_profit_total))">

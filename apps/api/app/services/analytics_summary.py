@@ -21,6 +21,7 @@ class SummaryValues:
     net_assets_total: Decimal
     invested_principal_total: Decimal
     withdrawn_total: Decimal
+    net_contribution_total: Decimal
     principal_profit_total: Decimal
     principal_return_pct: Decimal | None
     principal_minus_debt_total: Decimal
@@ -144,6 +145,7 @@ def calculate_summary_values(
     if invested_principal_total != 0:
         principal_return_pct = (principal_profit_total / invested_principal_total) * Decimal("100")
 
+    net_contribution_total = invested_principal_total - withdrawn_total
     principal_minus_debt_total = invested_principal_total - liabilities_total
     net_assets_profit_total = net_assets_total - principal_minus_debt_total
     net_assets_return_pct = None
@@ -158,6 +160,7 @@ def calculate_summary_values(
         net_assets_total=net_assets_total,
         invested_principal_total=invested_principal_total,
         withdrawn_total=withdrawn_total,
+        net_contribution_total=net_contribution_total,
         principal_profit_total=principal_profit_total,
         principal_return_pct=principal_return_pct,
         principal_minus_debt_total=principal_minus_debt_total,

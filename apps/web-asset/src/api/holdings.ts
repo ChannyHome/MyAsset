@@ -29,8 +29,12 @@ export type HoldingPerformanceOut = {
   quantity: string | number;
   avg_price: string | number;
   avg_price_currency: string;
+  avg_cost: string | number;
+  avg_cost_currency: string;
   invested_amount: string | number;
   invested_amount_currency: string;
+  cost_basis_total: string | number;
+  cost_basis_currency: string;
   current_price: string | number | null;
   current_price_currency: string | null;
   evaluated_amount: string | number | null;
@@ -63,6 +67,10 @@ export type HoldingTableRowOut = HoldingOut & {
   asset_currency: string;
   current_price: string | number | null;
   current_price_currency: string | null;
+  avg_cost: string | number;
+  avg_cost_currency: string;
+  cost_basis_total: string | number;
+  cost_basis_currency: string;
   evaluated_amount: string | number;
   pnl_amount: string | number;
   pnl_pct: string | number | null;

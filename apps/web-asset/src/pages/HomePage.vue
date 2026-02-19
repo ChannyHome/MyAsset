@@ -139,7 +139,9 @@ const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_tot
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
 const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
-const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+const principalMinusDebtTotal = computed(() =>
+  toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
+);
 const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
 const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
 const principalProfitTotal = computed(() => toNumber(summary.value?.principal_profit_total ?? grossAssetsTotal.value - investedPrincipalTotal.value));
@@ -255,7 +257,11 @@ const kpiGrossProfitTotal = computed(() =>
   toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total)),
 );
 const kpiNetProfitTotal = computed(() =>
-  toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total)),
+  toNumber(
+    summary.value?.net_assets_profit_total ??
+      toNumber(summary.value?.net_assets_total) -
+        toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
+  ),
 );
 
 const topHoldings = computed(() =>
@@ -966,9 +972,14 @@ watch(
                   {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency) }}
                 </span>
                 /
-                Base(Net)
+                Debt-Adjusted Principal
                 <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                  {{ formatCurrency(toNumber(item.principal_minus_debt_total), item.base_currency || summaryDisplayCurrency) }}
+                  {{
+                    formatCurrency(
+                      toNumber(item.debt_adjusted_principal_total ?? item.principal_minus_debt_total),
+                      item.base_currency || summaryDisplayCurrency,
+                    )
+                  }}
                 </span>
               </div>
               <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
@@ -977,9 +988,14 @@ watch(
                   {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency) }}
                 </span>
                 ·
-                PnL
+                Portfolio Profit
                 <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                  {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || summaryDisplayCurrency) }}
+                  {{
+                    formatSignedCurrency(
+                      toNumber(item.portfolio_profit_total ?? item.total_pnl_amount),
+                      item.base_currency || summaryDisplayCurrency,
+                    )
+                  }}
                 </span>
               </div>
             </li>
@@ -1070,7 +1086,7 @@ watch(
           Scope: {{ summary?.scope_type || "-" }} (users: {{ summary?.user_count || 0 }})
         </li>
         <li class="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
-          Best PnL assets: {{ topPnlAssets.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-" }}
+          Best Profit assets: {{ topPnlAssets.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-" }}
         </li>
       </ul>
     </article>

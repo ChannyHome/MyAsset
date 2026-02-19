@@ -81,6 +81,10 @@ class HoldingTableRowOut(HoldingOut):
     asset_currency: str
     current_price: Decimal | None = None
     current_price_currency: str | None = None
+    avg_cost: Decimal
+    avg_cost_currency: str
+    cost_basis_total: Decimal
+    cost_basis_currency: str
     evaluated_amount: Decimal
     pnl_amount: Decimal
     pnl_pct: Decimal | None = None

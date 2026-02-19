@@ -36,7 +36,9 @@ const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_tot
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
 const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
-const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+const principalMinusDebtTotal = computed(() =>
+  toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
+);
 const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
 const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
 const principalProfitTotal = computed(

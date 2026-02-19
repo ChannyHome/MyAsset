@@ -508,6 +508,11 @@ function applyQuoteUpdateJobResult(result: QuoteUpdateJobStatusOut): void {
 }
 
 function formatPortfolioPrincipalNet(item: PortfolioTableRowOut): string {
+  const aliased = Number(item.net_contribution_total);
+  if (Number.isFinite(aliased)) {
+    return formatMoney(aliased, item.base_currency);
+  }
+
   const deposit = typeof item.cumulative_deposit_amount === "number"
     ? item.cumulative_deposit_amount
     : Number(item.cumulative_deposit_amount);
@@ -1183,7 +1188,7 @@ function submitHoldingCreate(): void {
   try {
     const assetId = toPositiveInt(holdingForm.asset_id.trim());
     const quantity = parseRequiredDecimal(holdingForm.quantity, "Quantity");
-    const avgPrice = parseRequiredDecimal(holdingForm.avg_price, "Avg price");
+    const avgPrice = parseRequiredDecimal(holdingForm.avg_price, "Avg cost");
 
     runAction("Holding Create", "Create Holding", "새 보유자산을 생성할까요?", async () => {
       await createHolding({
@@ -1241,7 +1246,7 @@ function submitHoldingEdit(): void {
     const holdingId = toPositiveInt(holdingEditForm.id);
     const assetId = toPositiveInt(holdingEditForm.asset_id);
     const quantity = parseRequiredDecimal(holdingEditForm.quantity, "Quantity");
-    const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg price");
+    const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg cost");
 
     closeHoldingEditModal();
     runAction("Holding Update", "Apply Holding Update", `Holding #${holdingId} 정보를 수정할까요?`, async () => {
@@ -2350,14 +2355,14 @@ onBeforeUnmount(() => {
               <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_deposit_amount')">Deposit <span class="opacity-70">{{ portfolioSortIndicator("cumulative_deposit_amount") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_withdrawal_amount')">Withdrawal <span class="opacity-70">{{ portfolioSortIndicator("cumulative_withdrawal_amount") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Principal(Net)</th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('gross_assets_total')">Gross <span class="opacity-70">{{ portfolioSortIndicator("gross_assets_total") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liabilities_total')">Debt <span class="opacity-70">{{ portfolioSortIndicator("liabilities_total") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_total')">Net <span class="opacity-70">{{ portfolioSortIndicator("net_assets_total") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('principal_minus_debt_total')">Base(Net) <span class="opacity-70">{{ portfolioSortIndicator("principal_minus_debt_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('principal_net')">Net Contribution <span class="opacity-70">{{ portfolioSortIndicator("principal_net") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('gross_assets_total')">Gross Assets <span class="opacity-70">{{ portfolioSortIndicator("gross_assets_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liabilities_total')">Liabilities <span class="opacity-70">{{ portfolioSortIndicator("liabilities_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_total')">Net Assets <span class="opacity-70">{{ portfolioSortIndicator("net_assets_total") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('debt_adjusted_principal_total')">Debt-Adjusted Principal <span class="opacity-70">{{ portfolioSortIndicator("debt_adjusted_principal_total") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_profit_total')">Net Profit <span class="opacity-70">{{ portfolioSortIndicator("net_assets_profit_total") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_return_pct')">Net Return% <span class="opacity-70">{{ portfolioSortIndicator("net_assets_return_pct") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('total_pnl_amount')">PnL <span class="opacity-70">{{ portfolioSortIndicator("total_pnl_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('portfolio_profit_total')">Portfolio Profit <span class="opacity-70">{{ portfolioSortIndicator("portfolio_profit_total") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('total_return_pct')">Return% <span class="opacity-70">{{ portfolioSortIndicator("total_return_pct") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('holding_count')">Holdings <span class="opacity-70">{{ portfolioSortIndicator("holding_count") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liability_count')">Liabilities <span class="opacity-70">{{ portfolioSortIndicator("liability_count") }}</span></button></th>
@@ -2381,10 +2386,10 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.gross_assets_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.liabilities_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.net_assets_total, item.base_currency) }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.principal_minus_debt_total, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.debt_adjusted_principal_total ?? item.principal_minus_debt_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.net_assets_profit_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.net_assets_return_pct) }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.total_pnl_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.portfolio_profit_total ?? item.total_pnl_amount, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.total_return_pct) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.holding_count }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.liability_count }}</td>
@@ -2488,11 +2493,11 @@ onBeforeUnmount(() => {
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('asset_name')">Asset <span class="opacity-70">{{ holdingSortIndicator("asset_name") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('asset_symbol')">Symbol <span class="opacity-70">{{ holdingSortIndicator("asset_symbol") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('quantity')">Qty <span class="opacity-70">{{ holdingSortIndicator("quantity") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('avg_price')">Avg <span class="opacity-70">{{ holdingSortIndicator("avg_price") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('invested_amount')">Invested <span class="opacity-70">{{ holdingSortIndicator("invested_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('avg_price')">Avg Cost <span class="opacity-70">{{ holdingSortIndicator("avg_price") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('invested_amount')">Cost Basis <span class="opacity-70">{{ holdingSortIndicator("invested_amount") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('current_price')">Price <span class="opacity-70">{{ holdingSortIndicator("current_price") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('evaluated_amount')">Evaluated <span class="opacity-70">{{ holdingSortIndicator("evaluated_amount") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('pnl_pct')">PnL% <span class="opacity-70">{{ holdingSortIndicator("pnl_pct") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('pnl_pct')">Profit % <span class="opacity-70">{{ holdingSortIndicator("pnl_pct") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleHoldingSort('updated_at')">Updated <span class="opacity-70">{{ holdingSortIndicator("updated_at") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
@@ -2505,9 +2510,13 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_name }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_symbol || "-" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatQuantity(item.quantity) }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.avg_price, holdingCurrencyCode(item)) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.avg_cost ?? item.avg_price, holdingCurrencyCode(item)) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
-                {{ item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCurrencyCode(item)) }}
+                {{
+                  item.cost_basis_total === null || item.cost_basis_total === undefined
+                    ? (item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCurrencyCode(item)))
+                    : formatMoney(item.cost_basis_total, holdingCurrencyCode(item))
+                }}
               </td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 {{ item.current_price === null ? "-" : formatMoney(item.current_price, holdingCurrencyCode(item)) }}
@@ -2577,9 +2586,9 @@ onBeforeUnmount(() => {
             </select>
           </label>
           <input v-model="holdingForm.quantity" placeholder="Quantity" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="holdingForm.avg_price" placeholder="Avg Price" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.avg_price" placeholder="Avg Cost" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <label class="text-xs text-slate-600 dark:text-slate-300">
-            Avg Price Currency
+            Avg Cost Currency
             <select
               v-model="holdingForm.avg_price_currency"
               class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -2588,9 +2597,9 @@ onBeforeUnmount(() => {
               <option v-for="opt in holdingCurrencyOptions" :key="`holding-create-avg-${opt}`" :value="opt">{{ opt }}</option>
             </select>
           </label>
-          <input v-model="holdingForm.invested_amount" placeholder="Invested (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="holdingForm.invested_amount" placeholder="Cost Basis (optional)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <label class="text-xs text-slate-600 dark:text-slate-300">
-            Invested Currency
+            Cost Basis Currency
             <select
               v-model="holdingForm.invested_amount_currency"
               class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -3021,14 +3030,14 @@ onBeforeUnmount(() => {
           />
         </label>
         <label class="text-xs"
-          >Avg Price
+          >Avg Cost
           <input
             v-model="holdingEditForm.avg_price"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
           />
         </label>
         <label class="text-xs"
-          >Avg Price Currency
+          >Avg Cost Currency
           <select
             v-model="holdingEditForm.avg_price_currency"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
@@ -3037,14 +3046,14 @@ onBeforeUnmount(() => {
           </select>
         </label>
         <label class="text-xs"
-          >Invested Amount (optional)
+          >Cost Basis (optional)
           <input
             v-model="holdingEditForm.invested_amount"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
           />
         </label>
         <label class="text-xs"
-          >Invested Currency
+          >Cost Basis Currency
           <select
             v-model="holdingEditForm.invested_amount_currency"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"

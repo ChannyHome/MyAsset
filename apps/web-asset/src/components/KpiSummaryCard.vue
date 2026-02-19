@@ -118,7 +118,7 @@ function toneClass(value: NullableNumber): string {
           </span>
         </p>
         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          vs principal - debt
+          vs debt-adjusted principal
           <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             ({{ formatCurrency(principalMinusDebtTotal, currency) }})
           </span>

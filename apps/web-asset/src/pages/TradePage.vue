@@ -619,7 +619,7 @@ onMounted(async () => {
         </label>
         <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
           <input v-model="transferForm.auto_apply_portfolio_cashflow" type="checkbox" class="h-4 w-4" />
-          <span>Auto apply to portfolio principal</span>
+          <span>Auto apply to net contribution</span>
         </label>
       </div>
 
@@ -717,7 +717,7 @@ onMounted(async () => {
           </label>
           <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
             <input v-model="form.auto_apply_portfolio_cashflow" type="checkbox" class="h-4 w-4" />
-            <span>Auto apply to portfolio principal</span>
+            <span>Auto apply to net contribution</span>
           </label>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -909,7 +909,7 @@ onMounted(async () => {
                   </button>
                 </th>
                 <th class="px-2 py-2 text-center">Auto Cash</th>
-                <th class="px-2 py-2 text-center">Auto Principal</th>
+                <th class="px-2 py-2 text-center">Auto Net Contribution</th>
                 <th class="px-2 py-2 text-center">
                   <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('status')">
                     Status <span class="opacity-70">{{ sortIndicator("status") }}</span>

@@ -14,10 +14,12 @@ class AnalyticsSummaryV2Out(BaseModel):
     liabilities_total: Decimal
     net_assets_total: Decimal
     principal_minus_debt_total: Decimal
+    debt_adjusted_principal_total: Decimal
     net_assets_profit_total: Decimal
     net_assets_return_pct: Decimal | None
     invested_principal_total: Decimal
     withdrawn_total: Decimal
+    net_contribution_total: Decimal
     principal_profit_total: Decimal
     principal_return_pct: Decimal | None
     as_of: datetime

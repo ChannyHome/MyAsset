@@ -299,7 +299,11 @@ const kpiGrossProfitTotal = computed(() =>
   toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total)),
 );
 const kpiNetProfitTotal = computed(() =>
-  toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total)),
+  toNumber(
+    summary.value?.net_assets_profit_total ??
+      toNumber(summary.value?.net_assets_total) -
+        toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
+  ),
 );
 
 function buildWidgetsFromPreset(presetId: string) {
@@ -620,7 +624,9 @@ watch(
                 :liabilities-total="toNumber(summary?.liabilities_total)"
                 :net-assets-total="toNumber(summary?.net_assets_total)"
                 :invested-principal-total="toNumber(summary?.invested_principal_total)"
-                :principal-minus-debt-total="toNumber(summary?.principal_minus_debt_total)"
+                :principal-minus-debt-total="
+                  toNumber(summary?.debt_adjusted_principal_total ?? summary?.principal_minus_debt_total)
+                "
                 :gross-return-pct="kpiGrossReturnPct"
                 :net-return-pct="kpiNetReturnPct"
                 :gross-profit-total="kpiGrossProfitTotal"

@@ -194,6 +194,7 @@ def list_portfolios_table(
             )
 
             net_assets_total = gross_assets_total - liabilities_total
+            net_contribution_total = converted_deposit - converted_withdrawal
             principal_minus_debt_total = converted_deposit - liabilities_total
             net_assets_profit_total = net_assets_total - principal_minus_debt_total
 
@@ -228,10 +229,13 @@ def list_portfolios_table(
                     gross_assets_total=gross_assets_total,
                     liabilities_total=liabilities_total,
                     net_assets_total=net_assets_total,
+                    net_contribution_total=net_contribution_total,
                     principal_minus_debt_total=principal_minus_debt_total,
+                    debt_adjusted_principal_total=principal_minus_debt_total,
                     net_assets_profit_total=net_assets_profit_total,
                     net_assets_return_pct=net_assets_return_pct,
                     total_pnl_amount=total_pnl_amount,
+                    portfolio_profit_total=total_pnl_amount,
                     total_return_pct=total_return_pct,
                 )
             )
@@ -243,10 +247,16 @@ def list_portfolios_table(
 
     # Keep secondary ordering by id desc for ties.
     items.sort(key=lambda row: row.id, reverse=True)
-    items.sort(
-        key=lambda row: _normalize_sort_value(getattr(row, sort_by.value, None)),
-        reverse=(sort_order == SortOrder.DESC),
-    )
+    if sort_by in {PortfolioTableSortBy.PRINCIPAL_NET, PortfolioTableSortBy.NET_CONTRIBUTION_TOTAL}:
+        items.sort(
+            key=lambda row: _normalize_sort_value(row.cumulative_deposit_amount - row.cumulative_withdrawal_amount),
+            reverse=(sort_order == SortOrder.DESC),
+        )
+    else:
+        items.sort(
+            key=lambda row: _normalize_sort_value(getattr(row, sort_by.value, None)),
+            reverse=(sort_order == SortOrder.DESC),
+        )
 
     start = (page - 1) * page_size
     end = start + page_size
@@ -346,6 +356,7 @@ def list_portfolios_performance(
                 cache=fx_cache,
                 strict=settings.fx_strict_mode,
             )
+            net_contribution_total = converted_deposit - converted_withdrawal
 
             total_pnl_amount = nav_amount + converted_withdrawal - converted_deposit
             total_return_pct = None
@@ -365,8 +376,10 @@ def list_portfolios_performance(
                     cashflow_source_type=portfolio.cashflow_source_type,
                     cumulative_deposit_amount=converted_deposit,
                     cumulative_withdrawal_amount=converted_withdrawal,
+                    net_contribution_total=net_contribution_total,
                     nav_amount=nav_amount,
                     total_pnl_amount=total_pnl_amount,
+                    portfolio_profit_total=total_pnl_amount,
                     total_return_pct=total_return_pct,
                     holding_count=len(rows),
                     missing_quote_count=missing_quote_count,

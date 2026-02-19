@@ -17,8 +17,12 @@ class HoldingPerformanceOut(BaseModel):
     quantity: Decimal
     avg_price: Decimal
     avg_price_currency: str
+    avg_cost: Decimal
+    avg_cost_currency: str
     invested_amount: Decimal
     invested_amount_currency: str
+    cost_basis_total: Decimal
+    cost_basis_currency: str
     current_price: Decimal | None
     current_price_currency: str | None
     evaluated_amount: Decimal | None
@@ -39,8 +43,10 @@ class PortfolioPerformanceOut(BaseModel):
     cashflow_source_type: str
     cumulative_deposit_amount: Decimal
     cumulative_withdrawal_amount: Decimal
+    net_contribution_total: Decimal
     nav_amount: Decimal
     total_pnl_amount: Decimal
+    portfolio_profit_total: Decimal
     total_return_pct: Decimal | None
     holding_count: int
     missing_quote_count: int

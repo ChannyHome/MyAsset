@@ -30,13 +30,16 @@ class PortfolioTableSortBy(str, Enum):
     DEPOSIT = "cumulative_deposit_amount"
     WITHDRAWAL = "cumulative_withdrawal_amount"
     PRINCIPAL_NET = "principal_net"
+    NET_CONTRIBUTION_TOTAL = "net_contribution_total"
     GROSS_ASSETS_TOTAL = "gross_assets_total"
     LIABILITIES_TOTAL = "liabilities_total"
     NET_ASSETS_TOTAL = "net_assets_total"
     PRINCIPAL_MINUS_DEBT_TOTAL = "principal_minus_debt_total"
+    DEBT_ADJUSTED_PRINCIPAL_TOTAL = "debt_adjusted_principal_total"
     NET_ASSETS_PROFIT_TOTAL = "net_assets_profit_total"
     NET_ASSETS_RETURN_PCT = "net_assets_return_pct"
     TOTAL_PNL_AMOUNT = "total_pnl_amount"
+    PORTFOLIO_PROFIT_TOTAL = "portfolio_profit_total"
     TOTAL_RETURN_PCT = "total_return_pct"
     CASHFLOW_SOURCE_TYPE = "cashflow_source_type"
     UPDATED_AT = "updated_at"
@@ -98,10 +101,13 @@ class PortfolioTableRowOut(PortfolioOut):
     gross_assets_total: Decimal
     liabilities_total: Decimal
     net_assets_total: Decimal
+    net_contribution_total: Decimal
     principal_minus_debt_total: Decimal
+    debt_adjusted_principal_total: Decimal
     net_assets_profit_total: Decimal
     net_assets_return_pct: Decimal | None
     total_pnl_amount: Decimal
+    portfolio_profit_total: Decimal
     total_return_pct: Decimal | None
 
 

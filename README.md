@@ -159,7 +159,7 @@
   - `POST /api/v1/trades/rebuild`
 - Sync behavior:
   - BUY/SELL sync holding qty/avg/invested (moving average)
-  - DEPOSIT/WITHDRAW sync portfolio principal (cumulative deposit/withdraw)
+  - DEPOSIT/WITHDRAW sync portfolio net contribution (`cumulative_deposit_amount`/`cumulative_withdrawal_amount`)
   - Optional auto cash-holding sync by portfolio+currency for BUY/SELL/DEPOSIT/WITHDRAW/DIVIDEND/FEE/ADJUSTMENT
 - Frontend:
   - New LNB menu + page: `/trade`
@@ -167,8 +167,37 @@
   - Filtered journal table with server-side pagination
 - Role policy:
   - `Trade`: USER/SUPERUSER/MAINTAINER/ADMIN
-  - `Lab`: MAINTAINER/ADMIN only
-  - `Guest`: blocked from real-data trade endpoints (403)
+- `Lab`: MAINTAINER/ADMIN only
+- `Guest`: blocked from real-data trade endpoints (403)
+
+## KPI / Accounting Standard (Commercial Terms)
+The UI and API now use the same KPI vocabulary across `Home / Report / Agent / Trade`.
+
+- `gross_assets_total`
+  - Definition: total owned asset value.
+- `liabilities_total`
+  - Definition: total included liabilities.
+- `net_assets_total`
+  - Definition: `gross_assets_total - liabilities_total`.
+- `net_contribution_total`
+  - Definition: portfolio net contribution.
+  - Formula: `cumulative_deposit_amount - cumulative_withdrawal_amount`.
+- `debt_adjusted_principal_total`
+  - Definition: principal baseline adjusted by liabilities.
+  - Formula: `invested_principal_total - liabilities_total`.
+- `portfolio_profit_total`
+  - Definition: portfolio profit value for display.
+  - Formula (alias): same as `total_pnl_amount`.
+
+### API Compatibility Aliases
+For backward compatibility, old and new names are both served in key responses.
+
+- `principal_minus_debt_total` + `debt_adjusted_principal_total`
+- `total_pnl_amount` + `portfolio_profit_total`
+- `avg_price` + `avg_cost`
+- `invested_amount` + `cost_basis_total`
+- Portfolio table server sort keys include both `principal_net` and `net_contribution_total`
+  (same formula: `cumulative_deposit_amount - cumulative_withdrawal_amount`).
 
 ## MySQL first decision
 - DB name: `myasset`
