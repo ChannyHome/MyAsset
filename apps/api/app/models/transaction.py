@@ -14,6 +14,7 @@ class Transaction(Base):
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     portfolio_id: Mapped[int] = mapped_column(ForeignKey("portfolios.id"), nullable=False, index=True)
     asset_id: Mapped[int | None] = mapped_column(ForeignKey("assets.id"), nullable=True, index=True)
+    liability_id: Mapped[int | None] = mapped_column(ForeignKey("liabilities.id"), nullable=True, index=True)
     txn_type: Mapped[str] = mapped_column(
         Enum(
             "BUY",
@@ -23,6 +24,8 @@ class Transaction(Base):
             "DIVIDEND",
             "FEE",
             "ADJUSTMENT",
+            "LOAN_BORROW",
+            "LOAN_REPAY",
             name="transaction_type",
         ),
         nullable=False,

@@ -11,6 +11,7 @@ from app.models.asset import Asset
 from app.models.fx_rate import FxRate
 from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
+from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.transaction import Transaction
 from app.services.currency import MissingFxRateError
@@ -18,6 +19,20 @@ from app.services.currency import MissingFxRateError
 _MONEY_Q = Decimal("0.01")
 _PRICE_Q = Decimal("0.00000001")
 _QTY_Q = Decimal("0.00000001")
+_BUY_SELL_TYPES = {"BUY", "SELL"}
+_PORTFOLIO_CASHFLOW_TYPES = {"DEPOSIT", "WITHDRAW"}
+_LOAN_TYPES = {"LOAN_BORROW", "LOAN_REPAY"}
+_CASH_APPLY_TYPES = {
+    "BUY",
+    "SELL",
+    "DEPOSIT",
+    "WITHDRAW",
+    "DIVIDEND",
+    "FEE",
+    "ADJUSTMENT",
+    "LOAN_BORROW",
+    "LOAN_REPAY",
+}
 
 
 class TradeSyncError(RuntimeError):
@@ -28,6 +43,7 @@ class TradeSyncError(RuntimeError):
 class RebuildResult:
     affected_portfolios: int
     affected_holdings: int
+    affected_liabilities: int
 
 
 def _quantize_money(value: Decimal) -> Decimal:
@@ -73,6 +89,17 @@ def _get_asset(db: Session, asset_id: int | None) -> Asset | None:
     return db.scalar(select(Asset).where(Asset.id == asset_id))
 
 
+def _get_owned_liability(db: Session, owner_user_id: int, liability_id: int | None) -> Liability | None:
+    if liability_id is None:
+        return None
+    return db.scalar(
+        select(Liability).where(
+            Liability.id == liability_id,
+            Liability.owner_user_id == owner_user_id,
+        )
+    )
+
+
 def _is_cash_balance_asset(asset: Asset) -> bool:
     meta = asset.meta_json if isinstance(asset.meta_json, dict) else {}
     subtype = str(meta.get("asset_subtype") or "").upper()
@@ -108,6 +135,74 @@ def _find_cash_holding_for_currency(
     return None
 
 
+def _get_or_create_cash_asset(
+    db: Session,
+    *,
+    currency: str,
+) -> Asset:
+    normalized_currency = _normalize_currency(currency)
+    symbol = f"CASH_AUTO_{normalized_currency}"
+    asset = db.scalar(
+        select(Asset).where(
+            Asset.asset_class == "ETC",
+            Asset.symbol == symbol,
+            Asset.exchange_code == "GLOBAL",
+        )
+    )
+    if asset is not None:
+        return asset
+
+    asset = Asset(
+        asset_class="ETC",
+        symbol=symbol,
+        name=f"Auto Cash Balance ({normalized_currency})",
+        currency=normalized_currency,
+        quote_mode="MANUAL",
+        exchange_code="GLOBAL",
+        is_trade_supported=False,
+        meta_json={"asset_subtype": "CASH_BALANCE", "auto_generated": True},
+    )
+    db.add(asset)
+    db.flush()
+    return asset
+
+
+def _ensure_cash_holding_for_currency(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+) -> tuple[Holding, Asset]:
+    normalized_currency = _normalize_currency(currency)
+    existing = _find_cash_holding_for_currency(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+    )
+    if existing is not None:
+        return existing
+
+    asset = _get_or_create_cash_asset(db, currency=normalized_currency)
+    holding = Holding(
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        asset_id=asset.id,
+        quantity=_quantize_qty(Decimal("1")),
+        avg_price=Decimal("0"),
+        avg_price_currency=normalized_currency,
+        invested_amount=Decimal("0"),
+        invested_amount_currency=normalized_currency,
+        source_type="AUTO",
+        is_hidden=False,
+        memo="Auto-created cash balance holding",
+    )
+    db.add(holding)
+    db.flush()
+    return holding, asset
+
+
 def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
     if txn.status != "POSTED" or not txn.auto_apply_cash_holding:
         return None
@@ -127,6 +222,10 @@ def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
         return -amount
     if txn.txn_type == "ADJUSTMENT":
         return amount
+    if txn.txn_type == "LOAN_BORROW":
+        return amount
+    if txn.txn_type == "LOAN_REPAY":
+        return -amount
     return None
 
 
@@ -178,9 +277,7 @@ def rebuild_cash_holding_from_trades(
                 Transaction.currency == normalized_currency,
                 Transaction.status == "POSTED",
                 Transaction.auto_apply_cash_holding.is_(True),
-                Transaction.txn_type.in_(
-                    ["BUY", "SELL", "DEPOSIT", "WITHDRAW", "DIVIDEND", "FEE", "ADJUSTMENT"]
-                ),
+                Transaction.txn_type.in_(list(_CASH_APPLY_TYPES)),
             )
             .order_by(Transaction.executed_at.asc(), Transaction.id.asc())
         ).all()
@@ -200,15 +297,14 @@ def rebuild_cash_holding_from_trades(
         currency=normalized_currency,
     )
     if cash_ref is None:
-        if txns:
-            raise TradeSyncError(
-                "No CASH_BALANCE holding found for "
-                f"portfolio_id={portfolio_id}, currency={normalized_currency}. "
-                "Create one or disable auto cash apply."
-            )
-        return False
-
-    cash_holding, cash_asset = cash_ref
+        cash_holding, cash_asset = _ensure_cash_holding_for_currency(
+            db,
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio_id,
+            currency=normalized_currency,
+        )
+    else:
+        cash_holding, cash_asset = cash_ref
     cash_holding.quantity = _quantize_qty(Decimal("1"))
     cash_holding.avg_price = _quantize_price(balance)
     cash_holding.avg_price_currency = normalized_currency
@@ -239,9 +335,7 @@ def rebuild_cash_holdings_for_portfolio(
                 Transaction.portfolio_id == portfolio_id,
                 Transaction.status == "POSTED",
                 Transaction.auto_apply_cash_holding.is_(True),
-                Transaction.txn_type.in_(
-                    ["BUY", "SELL", "DEPOSIT", "WITHDRAW", "DIVIDEND", "FEE", "ADJUSTMENT"]
-                ),
+                Transaction.txn_type.in_(list(_CASH_APPLY_TYPES)),
             )
             .distinct()
         ).all()
@@ -258,10 +352,18 @@ def rebuild_cash_holdings_for_portfolio(
             )
         ).all()
     ]
+    liability_currencies = list(
+        db.scalars(
+            select(Liability.currency).where(
+                Liability.owner_user_id == owner_user_id,
+                Liability.portfolio_id == portfolio_id,
+            )
+        ).all()
+    )
 
     currencies = {
         _normalize_currency(ccy)
-        for ccy in [*txn_currencies, *auto_cash_holding_currencies]
+        for ccy in [*txn_currencies, *auto_cash_holding_currencies, *liability_currencies]
         if ccy is not None
     }
     affected = 0
@@ -328,8 +430,12 @@ def normalize_trade_payload(
     portfolio_id = int(normalized["portfolio_id"])
     portfolio = _get_owned_portfolio(db, owner_user_id, portfolio_id)
 
-    txn_type = str(normalized["txn_type"]).upper().strip()
-    if txn_type not in {"BUY", "SELL", "DEPOSIT", "WITHDRAW", "DIVIDEND", "FEE", "ADJUSTMENT"}:
+    raw_txn_type = normalized.get("txn_type")
+    if hasattr(raw_txn_type, "value"):
+        raw_txn_type = raw_txn_type.value
+    txn_type = str(raw_txn_type).upper().strip()
+    allowed_types = _BUY_SELL_TYPES | _PORTFOLIO_CASHFLOW_TYPES | _LOAN_TYPES | {"DIVIDEND", "FEE", "ADJUSTMENT"}
+    if txn_type not in allowed_types:
         raise TradeSyncError("txn_type is invalid")
 
     normalized["txn_type"] = txn_type
@@ -340,9 +446,17 @@ def normalize_trade_payload(
         asset_id = int(asset_id)
     normalized["asset_id"] = asset_id
 
+    liability_id = normalized.get("liability_id")
+    if liability_id is not None:
+        liability_id = int(liability_id)
+    normalized["liability_id"] = liability_id
+
     asset = _get_asset(db, asset_id)
     if asset_id is not None and asset is None:
         raise TradeSyncError("Asset does not exist")
+    liability = _get_owned_liability(db, owner_user_id, liability_id)
+    if liability_id is not None and liability is None:
+        raise TradeSyncError("Liability does not exist")
 
     currency = _normalize_currency(normalized.get("currency"), default=portfolio.base_currency)
     normalized["currency"] = currency
@@ -359,7 +473,7 @@ def normalize_trade_payload(
 
     auto_apply_portfolio_cashflow = normalized.get("auto_apply_portfolio_cashflow")
     if auto_apply_portfolio_cashflow is None:
-        auto_apply_portfolio_cashflow = txn_type in {"DEPOSIT", "WITHDRAW"}
+        auto_apply_portfolio_cashflow = txn_type in _PORTFOLIO_CASHFLOW_TYPES
     normalized["auto_apply_portfolio_cashflow"] = bool(auto_apply_portfolio_cashflow)
 
     executed_at = normalized.get("executed_at")
@@ -377,9 +491,11 @@ def normalize_trade_payload(
     if amount is not None:
         amount = Decimal(amount)
 
-    if txn_type in {"BUY", "SELL"}:
+    if txn_type in _BUY_SELL_TYPES:
         if asset is None:
             raise TradeSyncError("asset_id is required for BUY/SELL")
+        if liability_id is not None:
+            raise TradeSyncError("liability_id must be null for BUY/SELL")
         if currency != _normalize_currency(asset.currency):
             raise TradeSyncError("BUY/SELL currency must match asset currency")
 
@@ -387,9 +503,41 @@ def normalize_trade_payload(
         unit_price = _validate_positive(unit_price, "unit_price")
         amount = amount if amount is not None else (quantity * unit_price)
         amount = _validate_positive(amount, "amount")
-    elif txn_type in {"DEPOSIT", "WITHDRAW"}:
+    elif txn_type in _PORTFOLIO_CASHFLOW_TYPES:
         if asset_id is not None:
             raise TradeSyncError("asset_id must be null for DEPOSIT/WITHDRAW")
+        if liability_id is not None:
+            raise TradeSyncError("liability_id must be null for DEPOSIT/WITHDRAW")
+        amount = _validate_positive(amount, "amount")
+        quantity = None
+        unit_price = None
+    elif txn_type in _LOAN_TYPES:
+        if asset_id is not None:
+            raise TradeSyncError("asset_id must be null for LOAN_BORROW/LOAN_REPAY")
+        if liability is None:
+            raise TradeSyncError("liability_id is required for LOAN_BORROW/LOAN_REPAY")
+        if liability.portfolio_id != portfolio_id:
+            raise TradeSyncError("Liability must be linked to the same portfolio")
+        if currency != _normalize_currency(liability.currency):
+            raise TradeSyncError("Loan transaction currency must match liability currency")
+        amount = _validate_positive(amount, "amount")
+        quantity = None
+        unit_price = None
+    elif txn_type == "DIVIDEND":
+        if liability_id is not None:
+            raise TradeSyncError("liability_id must be null for DIVIDEND")
+        if asset is not None:
+            if currency != _normalize_currency(asset.currency):
+                raise TradeSyncError("DIVIDEND currency must match selected asset currency")
+            has_holding = db.scalar(
+                select(Holding.id).where(
+                    Holding.owner_user_id == owner_user_id,
+                    Holding.portfolio_id == portfolio_id,
+                    Holding.asset_id == asset_id,
+                )
+            )
+            if has_holding is None:
+                raise TradeSyncError("Selected dividend asset is not held in this portfolio")
         amount = _validate_positive(amount, "amount")
         quantity = None
         unit_price = None
@@ -397,11 +545,15 @@ def normalize_trade_payload(
         if amount is None or Decimal(amount) == 0:
             raise TradeSyncError("amount is required and must not be 0 for ADJUSTMENT")
         amount = Decimal(amount)
+        if asset_id is not None or liability_id is not None:
+            raise TradeSyncError("asset_id/liability_id must be null for ADJUSTMENT")
         quantity = None
         unit_price = None
     else:
         # MVP scope: these types are stored and can affect cash holding only.
         amount = _validate_positive(amount, "amount")
+        if asset_id is not None or liability_id is not None:
+            raise TradeSyncError("asset_id/liability_id must be null for this txn_type")
         quantity = None
         unit_price = None
 
@@ -422,6 +574,260 @@ def normalize_trade_payload(
     normalized["fx_source"] = fx_source
     normalized["status"] = "POSTED"
     return normalized
+
+
+def ensure_liability_baseline_transaction(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    liability_id: int | None,
+    executed_at: datetime,
+    strict_fx: bool,
+    exclude_transaction_id: int | None = None,
+) -> bool:
+    if liability_id is None:
+        return False
+
+    liability = _get_owned_liability(db, owner_user_id, liability_id)
+    if liability is None:
+        raise TradeSyncError("Liability does not exist")
+    if liability.portfolio_id != portfolio_id:
+        raise TradeSyncError("Liability must be linked to the same portfolio")
+    existing_stmt = select(Transaction.id).where(
+        Transaction.owner_user_id == owner_user_id,
+        Transaction.liability_id == liability_id,
+        Transaction.status == "POSTED",
+        Transaction.txn_type.in_(list(_LOAN_TYPES)),
+    )
+    if exclude_transaction_id is not None:
+        existing_stmt = existing_stmt.where(Transaction.id != exclude_transaction_id)
+    existing_id = db.scalar(existing_stmt.limit(1))
+    if existing_id is not None:
+        return False
+
+    opening_balance = _quantize_money(Decimal(liability.outstanding_balance or 0))
+    if opening_balance <= 0:
+        return False
+
+    portfolio = _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    fx_rate_used, fx_as_of, fx_source, fx_rate_raw = _resolve_fx_for_portfolio_currency(
+        db,
+        from_currency=liability.currency,
+        to_currency=portfolio.base_currency,
+        strict=strict_fx,
+    )
+    amount_in_portfolio_currency = _quantize_money(opening_balance * fx_rate_raw)
+
+    baseline_txn = Transaction(
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        asset_id=None,
+        liability_id=liability_id,
+        txn_type="LOAN_BORROW",
+        quantity=None,
+        unit_price=None,
+        amount=opening_balance,
+        currency=_normalize_currency(liability.currency),
+        amount_in_portfolio_currency=amount_in_portfolio_currency,
+        fx_rate_used=fx_rate_used,
+        fx_as_of=fx_as_of,
+        fx_source=fx_source or "BASELINE",
+        executed_at=executed_at,
+        memo=f"SYSTEM_BASELINE liability_id={liability_id}",
+        source_type="AUTO",
+        auto_apply_cash_holding=False,
+        auto_apply_portfolio_cashflow=False,
+        status="POSTED",
+    )
+    db.add(baseline_txn)
+    db.flush()
+    return True
+
+
+def ensure_portfolio_cashflow_baseline_transactions(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    executed_at: datetime,
+    exclude_transaction_id: int | None = None,
+) -> int:
+    portfolio = _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    base_currency = _normalize_currency(portfolio.base_currency)
+
+    counts_stmt = (
+        select(Transaction.txn_type, func.count())
+        .where(
+            Transaction.owner_user_id == owner_user_id,
+            Transaction.portfolio_id == portfolio_id,
+            Transaction.status == "POSTED",
+            Transaction.auto_apply_portfolio_cashflow.is_(True),
+            Transaction.txn_type.in_(list(_PORTFOLIO_CASHFLOW_TYPES)),
+        )
+        .group_by(Transaction.txn_type)
+    )
+    if exclude_transaction_id is not None:
+        counts_stmt = counts_stmt.where(Transaction.id != exclude_transaction_id)
+
+    counts = dict(db.execute(counts_stmt).all())
+
+    has_deposit = int(counts.get("DEPOSIT", 0)) > 0
+    has_withdraw = int(counts.get("WITHDRAW", 0)) > 0
+
+    created = 0
+    cumulative_deposit = _quantize_money(Decimal(portfolio.cumulative_deposit_amount or 0))
+    cumulative_withdraw = _quantize_money(Decimal(portfolio.cumulative_withdrawal_amount or 0))
+
+    if not has_deposit and cumulative_deposit > 0:
+        db.add(
+            Transaction(
+                owner_user_id=owner_user_id,
+                portfolio_id=portfolio_id,
+                asset_id=None,
+                liability_id=None,
+                txn_type="DEPOSIT",
+                quantity=None,
+                unit_price=None,
+                amount=cumulative_deposit,
+                currency=base_currency,
+                amount_in_portfolio_currency=cumulative_deposit,
+                fx_rate_used=Decimal("1"),
+                fx_as_of=None,
+                fx_source="BASELINE",
+                executed_at=executed_at,
+                memo=f"SYSTEM_BASELINE portfolio_deposit portfolio_id={portfolio_id}",
+                source_type="AUTO",
+                auto_apply_cash_holding=False,
+                auto_apply_portfolio_cashflow=True,
+                status="POSTED",
+            )
+        )
+        created += 1
+
+    if not has_withdraw and cumulative_withdraw > 0:
+        db.add(
+            Transaction(
+                owner_user_id=owner_user_id,
+                portfolio_id=portfolio_id,
+                asset_id=None,
+                liability_id=None,
+                txn_type="WITHDRAW",
+                quantity=None,
+                unit_price=None,
+                amount=cumulative_withdraw,
+                currency=base_currency,
+                amount_in_portfolio_currency=cumulative_withdraw,
+                fx_rate_used=Decimal("1"),
+                fx_as_of=None,
+                fx_source="BASELINE",
+                executed_at=executed_at,
+                memo=f"SYSTEM_BASELINE portfolio_withdraw portfolio_id={portfolio_id}",
+                source_type="AUTO",
+                auto_apply_cash_holding=False,
+                auto_apply_portfolio_cashflow=True,
+                status="POSTED",
+            )
+        )
+        created += 1
+
+    if created > 0:
+        db.flush()
+    return created
+
+
+def ensure_holding_baseline_transaction(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    asset_id: int | None,
+    executed_at: datetime,
+    strict_fx: bool,
+    exclude_transaction_id: int | None = None,
+) -> bool:
+    if asset_id is None:
+        return False
+
+    asset = _get_asset(db, asset_id)
+    if asset is None:
+        raise TradeSyncError("Asset does not exist")
+
+    existing_stmt = select(Transaction.id).where(
+        Transaction.owner_user_id == owner_user_id,
+        Transaction.portfolio_id == portfolio_id,
+        Transaction.asset_id == asset_id,
+        Transaction.status == "POSTED",
+        Transaction.txn_type.in_(list(_BUY_SELL_TYPES)),
+    )
+    if exclude_transaction_id is not None:
+        existing_stmt = existing_stmt.where(Transaction.id != exclude_transaction_id)
+    existing_id = db.scalar(existing_stmt.limit(1))
+    if existing_id is not None:
+        return False
+
+    holding = db.scalar(
+        select(Holding).where(
+            Holding.owner_user_id == owner_user_id,
+            Holding.portfolio_id == portfolio_id,
+            Holding.asset_id == asset_id,
+        )
+    )
+    if holding is None:
+        return False
+
+    qty = _quantize_qty(Decimal(holding.quantity or 0))
+    if qty <= 0:
+        return False
+
+    invested_raw = Decimal(holding.invested_amount or 0)
+    if invested_raw <= 0:
+        invested_raw = Decimal(holding.avg_price or 0) * qty
+    invested = _quantize_money(invested_raw)
+    if invested <= 0:
+        return False
+
+    txn_currency = _normalize_currency(
+        getattr(holding, "invested_amount_currency", None)
+        or getattr(holding, "avg_price_currency", None)
+        or asset.currency
+    )
+    unit_price = _quantize_price(invested / qty)
+
+    portfolio = _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    fx_rate_used, fx_as_of, fx_source, fx_rate_raw = _resolve_fx_for_portfolio_currency(
+        db,
+        from_currency=txn_currency,
+        to_currency=portfolio.base_currency,
+        strict=strict_fx,
+    )
+    amount_in_portfolio_currency = _quantize_money(invested * fx_rate_raw)
+
+    db.add(
+        Transaction(
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio_id,
+            asset_id=asset_id,
+            liability_id=None,
+            txn_type="BUY",
+            quantity=qty,
+            unit_price=unit_price,
+            amount=invested,
+            currency=txn_currency,
+            amount_in_portfolio_currency=amount_in_portfolio_currency,
+            fx_rate_used=fx_rate_used,
+            fx_as_of=fx_as_of,
+            fx_source=fx_source or "BASELINE",
+            executed_at=executed_at,
+            memo=f"SYSTEM_BASELINE holding_id={holding.id}",
+            source_type="AUTO",
+            auto_apply_cash_holding=False,
+            auto_apply_portfolio_cashflow=False,
+            status="POSTED",
+        )
+    )
+    db.flush()
+    return True
 
 
 def rebuild_portfolio_cashflow(
@@ -456,6 +862,45 @@ def rebuild_portfolio_cashflow(
     portfolio.cumulative_withdrawal_amount = _quantize_money(Decimal(withdraw_total or 0))
 
 
+def rebuild_liability_from_trades(
+    db: Session,
+    *,
+    owner_user_id: int,
+    liability_id: int,
+) -> bool:
+    liability = _get_owned_liability(db, owner_user_id, liability_id)
+    if liability is None:
+        raise TradeSyncError("Liability not found while rebuilding")
+
+    txns = list(
+        db.scalars(
+            select(Transaction)
+            .where(
+                Transaction.owner_user_id == owner_user_id,
+                Transaction.liability_id == liability_id,
+                Transaction.status == "POSTED",
+                Transaction.txn_type.in_(list(_LOAN_TYPES)),
+            )
+            .order_by(Transaction.executed_at.asc(), Transaction.id.asc())
+        ).all()
+    )
+
+    outstanding = Decimal("0")
+    for txn in txns:
+        amount = Decimal(txn.amount)
+        if txn.txn_type == "LOAN_BORROW":
+            outstanding += amount
+            continue
+        if amount > outstanding:
+            raise TradeSyncError(
+                f"LOAN_REPAY exceeds outstanding balance for liability_id={liability_id}"
+            )
+        outstanding -= amount
+
+    liability.outstanding_balance = _quantize_money(outstanding)
+    return True
+
+
 def rebuild_holding_from_trades(
     db: Session,
     *,
@@ -475,7 +920,7 @@ def rebuild_holding_from_trades(
                 Transaction.portfolio_id == portfolio_id,
                 Transaction.asset_id == asset_id,
                 Transaction.status == "POSTED",
-                Transaction.txn_type.in_(["BUY", "SELL"]),
+                Transaction.txn_type.in_(list(_BUY_SELL_TYPES)),
             )
             .order_by(Transaction.executed_at.asc(), Transaction.id.asc())
         ).all()
@@ -549,7 +994,14 @@ def sync_single_trade_scope(
     owner_user_id: int,
     portfolio_id: int,
     asset_id: int | None,
+    liability_id: int | None,
 ) -> None:
+    ensure_portfolio_cashflow_baseline_transactions(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        executed_at=datetime.now(UTC).replace(tzinfo=None),
+    )
     rebuild_portfolio_cashflow(db, owner_user_id=owner_user_id, portfolio_id=portfolio_id)
     rebuild_cash_holdings_for_portfolio(db, owner_user_id=owner_user_id, portfolio_id=portfolio_id)
     if asset_id is not None:
@@ -559,6 +1011,12 @@ def sync_single_trade_scope(
             portfolio_id=portfolio_id,
             asset_id=asset_id,
         )
+    if liability_id is not None:
+        rebuild_liability_from_trades(
+            db,
+            owner_user_id=owner_user_id,
+            liability_id=liability_id,
+        )
 
 
 def rebuild_trade_scope(
@@ -567,6 +1025,7 @@ def rebuild_trade_scope(
     owner_user_id: int,
     portfolio_id: int | None = None,
     asset_id: int | None = None,
+    liability_id: int | None = None,
 ) -> RebuildResult:
     if portfolio_id is not None:
         portfolio_ids = [portfolio_id]
@@ -576,6 +1035,12 @@ def rebuild_trade_scope(
         )
 
     for pid in portfolio_ids:
+        ensure_portfolio_cashflow_baseline_transactions(
+            db,
+            owner_user_id=owner_user_id,
+            portfolio_id=pid,
+            executed_at=datetime.now(UTC).replace(tzinfo=None),
+        )
         rebuild_portfolio_cashflow(db, owner_user_id=owner_user_id, portfolio_id=pid)
         rebuild_cash_holdings_for_portfolio(db, owner_user_id=owner_user_id, portfolio_id=pid)
 
@@ -585,7 +1050,7 @@ def rebuild_trade_scope(
             .where(
                 Transaction.owner_user_id == owner_user_id,
                 Transaction.status == "POSTED",
-                Transaction.txn_type.in_(["BUY", "SELL"]),
+                Transaction.txn_type.in_(list(_BUY_SELL_TYPES)),
                 Transaction.asset_id.is_not(None),
             )
             .where(Transaction.portfolio_id == portfolio_id if portfolio_id is not None else True)
@@ -622,7 +1087,45 @@ def rebuild_trade_scope(
             asset_id=aid,
         )
 
+    txn_liability_ids = list(
+        db.scalars(
+            select(Transaction.liability_id)
+            .where(
+                Transaction.owner_user_id == owner_user_id,
+                Transaction.status == "POSTED",
+                Transaction.txn_type.in_(list(_LOAN_TYPES)),
+                Transaction.liability_id.is_not(None),
+            )
+            .where(Transaction.portfolio_id == portfolio_id if portfolio_id is not None else True)
+            .where(Transaction.liability_id == liability_id if liability_id is not None else True)
+            .distinct()
+        ).all()
+    )
+    auto_liability_ids = list(
+        db.scalars(
+            select(Liability.id)
+            .where(
+                Liability.owner_user_id == owner_user_id,
+            )
+            .where(Liability.portfolio_id == portfolio_id if portfolio_id is not None else True)
+            .where(Liability.id == liability_id if liability_id is not None else True)
+            .distinct()
+        ).all()
+    )
+    liability_set = {
+        int(lid)
+        for lid in [*txn_liability_ids, *auto_liability_ids]
+        if lid is not None
+    }
+    for lid in liability_set:
+        rebuild_liability_from_trades(
+            db,
+            owner_user_id=owner_user_id,
+            liability_id=lid,
+        )
+
     return RebuildResult(
         affected_portfolios=len(portfolio_ids),
         affected_holdings=len(pair_set),
+        affected_liabilities=len(liability_set),
     )

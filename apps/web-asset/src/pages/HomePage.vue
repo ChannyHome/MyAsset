@@ -961,12 +961,14 @@ watch(
                 </p>
               </div>
               <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                Gross
                 <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
                   {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency) }}
                 </span>
                 /
+                Base(Net)
                 <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                  {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || summaryDisplayCurrency) }}
+                  {{ formatCurrency(toNumber(item.principal_minus_debt_total), item.base_currency || summaryDisplayCurrency) }}
                 </span>
               </div>
               <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">

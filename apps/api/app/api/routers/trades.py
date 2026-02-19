@@ -8,6 +8,7 @@ from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.db import get_db
 from app.models.asset import Asset
+from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.transaction import Transaction
 from app.schemas.asset import SortOrder
@@ -24,6 +25,9 @@ from app.schemas.trade import (
 from app.services.currency import MissingFxRateError
 from app.services.trade_ledger import (
     TradeSyncError,
+    ensure_holding_baseline_transaction,
+    ensure_liability_baseline_transaction,
+    ensure_portfolio_cashflow_baseline_transactions,
     normalize_trade_payload,
     rebuild_trade_scope,
     sync_single_trade_scope,
@@ -31,6 +35,11 @@ from app.services.trade_ledger import (
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/trades", tags=["trades"])
+_TXN_GROUP_MAP: dict[str, tuple[str, ...]] = {
+    "LOAN": ("LOAN_BORROW", "LOAN_REPAY"),
+    "CASHFLOW": ("DEPOSIT", "WITHDRAW"),
+    "BUYSELL": ("BUY", "SELL"),
+}
 
 
 def _get_owned_transaction(db: Session, owner_user_id: int, transaction_id: int) -> Transaction:
@@ -58,7 +67,9 @@ def list_trades(
     q: str | None = Query(default=None, min_length=1, max_length=100),
     portfolio_id: int | None = Query(default=None, ge=1),
     asset_id: int | None = Query(default=None, ge=1),
+    liability_id: int | None = Query(default=None, ge=1),
     txn_type: str | None = Query(default=None, min_length=3, max_length=20),
+    txn_group: str | None = Query(default=None, min_length=3, max_length=20),
     status_filter: str | None = Query(default=None, alias="status", min_length=4, max_length=20),
     from_at: datetime | None = Query(default=None, alias="from"),
     to_at: datetime | None = Query(default=None, alias="to"),
@@ -72,6 +83,14 @@ def list_trades(
         filters.append(Transaction.portfolio_id == portfolio_id)
     if asset_id is not None:
         filters.append(Transaction.asset_id == asset_id)
+    if liability_id is not None:
+        filters.append(Transaction.liability_id == liability_id)
+    if txn_group:
+        group_key = txn_group.upper().strip()
+        group_types = _TXN_GROUP_MAP.get(group_key)
+        if group_types is None:
+            raise HTTPException(status_code=400, detail="Invalid txn_group. Use LOAN, CASHFLOW, BUYSELL")
+        filters.append(Transaction.txn_type.in_(group_types))
     if txn_type:
         filters.append(Transaction.txn_type == txn_type.upper().strip())
     if status_filter:
@@ -90,6 +109,7 @@ def list_trades(
                 Portfolio.name.ilike(like),
                 Asset.name.ilike(like),
                 Asset.symbol.ilike(like),
+                Liability.name.ilike(like),
             )
         )
 
@@ -98,6 +118,7 @@ def list_trades(
         .select_from(Transaction)
         .join(Portfolio, Portfolio.id == Transaction.portfolio_id)
         .outerjoin(Asset, Asset.id == Transaction.asset_id)
+        .outerjoin(Liability, Liability.id == Transaction.liability_id)
         .where(*filters)
     )
     total = int(db.scalar(count_stmt) or 0)
@@ -110,6 +131,8 @@ def list_trades(
         TransactionSortBy.PORTFOLIO_NAME: Portfolio.name,
         TransactionSortBy.ASSET_ID: Transaction.asset_id,
         TransactionSortBy.ASSET_NAME: Asset.name,
+        TransactionSortBy.LIABILITY_ID: Transaction.liability_id,
+        TransactionSortBy.LIABILITY_NAME: Liability.name,
         TransactionSortBy.AMOUNT: Transaction.amount,
         TransactionSortBy.AMOUNT_IN_PORTFOLIO_CURRENCY: Transaction.amount_in_portfolio_currency,
         TransactionSortBy.CURRENCY: Transaction.currency,
@@ -120,9 +143,10 @@ def list_trades(
     order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
 
     stmt: Select = (
-        select(Transaction, Portfolio.name, Asset.name, Asset.symbol)
+        select(Transaction, Portfolio.name, Asset.name, Asset.symbol, Liability.name)
         .join(Portfolio, Portfolio.id == Transaction.portfolio_id)
         .outerjoin(Asset, Asset.id == Transaction.asset_id)
+        .outerjoin(Liability, Liability.id == Transaction.liability_id)
         .where(*filters)
         .order_by(order_expr, Transaction.id.desc())
         .offset((page - 1) * page_size)
@@ -136,6 +160,7 @@ def list_trades(
             owner_user_id=txn.owner_user_id,
             portfolio_id=txn.portfolio_id,
             asset_id=txn.asset_id,
+            liability_id=txn.liability_id,
             txn_type=txn.txn_type,
             quantity=txn.quantity,
             unit_price=txn.unit_price,
@@ -156,8 +181,9 @@ def list_trades(
             portfolio_name=portfolio_name,
             asset_name=asset_name,
             asset_symbol=asset_symbol,
+            liability_name=liability_name,
         )
-        for txn, portfolio_name, asset_name, asset_symbol in rows
+        for txn, portfolio_name, asset_name, asset_symbol, liability_name in rows
     ]
     return TradePageOut(
         items=items,
@@ -180,7 +206,38 @@ def create_trade(
         normalized = normalize_trade_payload(
             db=db,
             owner_user_id=current_user.id,
-            payload=payload.model_dump(),
+            payload=payload.model_dump(mode="json"),
+            strict_fx=settings.fx_strict_mode,
+        )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    try:
+        ensure_portfolio_cashflow_baseline_transactions(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=int(normalized["portfolio_id"]),
+            executed_at=normalized["executed_at"],
+        )
+        ensure_holding_baseline_transaction(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=int(normalized["portfolio_id"]),
+            asset_id=normalized.get("asset_id"),
+            executed_at=normalized["executed_at"],
+            strict_fx=settings.fx_strict_mode,
+        )
+        ensure_liability_baseline_transaction(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=int(normalized["portfolio_id"]),
+            liability_id=normalized.get("liability_id"),
+            executed_at=normalized["executed_at"],
             strict_fx=settings.fx_strict_mode,
         )
     except MissingFxRateError as exc:
@@ -200,6 +257,7 @@ def create_trade(
             owner_user_id=current_user.id,
             portfolio_id=txn.portfolio_id,
             asset_id=txn.asset_id,
+            liability_id=txn.liability_id,
         )
         db.commit()
     except TradeSyncError as exc:
@@ -224,11 +282,12 @@ def update_trade(
     if txn.status == "VOID":
         raise HTTPException(status_code=400, detail="VOID transaction cannot be updated")
 
-    old_scope = (txn.portfolio_id, txn.asset_id)
+    old_scope = (txn.portfolio_id, txn.asset_id, txn.liability_id)
     merged = {
         "portfolio_id": txn.portfolio_id,
         "txn_type": txn.txn_type,
         "asset_id": txn.asset_id,
+        "liability_id": txn.liability_id,
         "quantity": txn.quantity,
         "unit_price": txn.unit_price,
         "amount": txn.amount,
@@ -239,7 +298,7 @@ def update_trade(
         "auto_apply_cash_holding": txn.auto_apply_cash_holding,
         "auto_apply_portfolio_cashflow": txn.auto_apply_portfolio_cashflow,
     }
-    updates = payload.model_dump(exclude_unset=True)
+    updates = payload.model_dump(exclude_unset=True, mode="json")
     merged.update(updates)
 
     try:
@@ -260,7 +319,7 @@ def update_trade(
     for key, value in normalized.items():
         setattr(txn, key, value)
 
-    new_scope = (txn.portfolio_id, txn.asset_id)
+    new_scope = (txn.portfolio_id, txn.asset_id, txn.liability_id)
 
     try:
         db.flush()
@@ -269,6 +328,7 @@ def update_trade(
             owner_user_id=current_user.id,
             portfolio_id=new_scope[0],
             asset_id=new_scope[1],
+            liability_id=new_scope[2],
         )
         if old_scope != new_scope:
             sync_single_trade_scope(
@@ -276,6 +336,7 @@ def update_trade(
                 owner_user_id=current_user.id,
                 portfolio_id=old_scope[0],
                 asset_id=old_scope[1],
+                liability_id=old_scope[2],
             )
         db.commit()
     except TradeSyncError as exc:
@@ -307,6 +368,7 @@ def void_trade(
             owner_user_id=current_user.id,
             portfolio_id=txn.portfolio_id,
             asset_id=txn.asset_id,
+            liability_id=txn.liability_id,
         )
         db.commit()
     except TradeSyncError as exc:
@@ -332,6 +394,7 @@ def rebuild_trade_totals(
             owner_user_id=current_user.id,
             portfolio_id=payload.portfolio_id,
             asset_id=payload.asset_id,
+            liability_id=payload.liability_id,
         )
         db.commit()
     except TradeSyncError as exc:
@@ -345,8 +408,10 @@ def rebuild_trade_totals(
         owner_user_id=current_user.id,
         portfolio_id=payload.portfolio_id,
         asset_id=payload.asset_id,
+        liability_id=payload.liability_id,
         affected_portfolios=result.affected_portfolios,
         affected_holdings=result.affected_holdings,
+        affected_liabilities=result.affected_liabilities,
     )
 
 

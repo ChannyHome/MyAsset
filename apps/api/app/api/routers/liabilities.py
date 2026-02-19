@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.db import get_db
+from app.models.asset import Asset
+from app.models.holding import Holding
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.schemas.asset import SortOrder
@@ -17,6 +21,11 @@ from app.schemas.liability import (
     LiabilityTableRowOut,
     LiabilityTableSortBy,
     LiabilityUpdate,
+)
+from app.services.trade_ledger import (
+    TradeSyncError,
+    ensure_liability_baseline_transaction,
+    rebuild_cash_holding_from_trades,
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
@@ -38,6 +47,39 @@ def _get_owned_liability(db: Session, liability_id: int, owner_user_id: int) -> 
     if liability is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Liability not found")
     return liability
+
+
+def _is_cash_asset(symbol: str | None, meta_json: object) -> bool:
+    if symbol and symbol.upper().startswith("CASH_"):
+        return True
+    if isinstance(meta_json, dict):
+        subtype = str(meta_json.get("asset_subtype") or "").upper()
+        if subtype == "CASH_BALANCE":
+            return True
+    return False
+
+
+def _has_cash_holding_for_currency(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+) -> bool:
+    normalized_currency = (currency or "KRW").upper().strip()
+    rows = db.execute(
+        select(Asset.symbol, Asset.meta_json)
+        .join(Holding, Holding.asset_id == Asset.id)
+        .where(
+            Holding.owner_user_id == owner_user_id,
+            Holding.portfolio_id == portfolio_id,
+            Asset.currency == normalized_currency,
+        )
+    ).all()
+    for symbol, meta_json in rows:
+        if _is_cash_asset(symbol, meta_json):
+            return True
+    return False
 
 
 @router.get("", response_model=list[LiabilityOut])
@@ -248,20 +290,56 @@ def create_liability(
     payload: LiabilityCreate,
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
-) -> Liability:
+) -> LiabilityOut:
     data = payload.model_dump()
     _validate_portfolio(db, current_user.id, data.get("portfolio_id"))
 
     liability = Liability(owner_user_id=current_user.id, **data)
     db.add(liability)
+    auto_cash_holding_created = False
     try:
+        db.flush()
+        if liability.portfolio_id is not None:
+            ensure_liability_baseline_transaction(
+                db=db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                liability_id=liability.id,
+                executed_at=datetime.now(UTC).replace(tzinfo=None),
+                strict_fx=settings.fx_strict_mode,
+            )
+        if liability.portfolio_id is not None:
+            had_cash_holding = _has_cash_holding_for_currency(
+                db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                currency=liability.currency,
+            )
+            rebuild_cash_holding_from_trades(
+                db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                currency=liability.currency,
+            )
+            auto_cash_holding_created = not had_cash_holding
         db.commit()
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid liability payload") from exc
 
     db.refresh(liability)
-    return liability
+    return LiabilityOut.model_validate(liability).model_copy(
+        update={"auto_cash_holding_created": auto_cash_holding_created}
+    )
 
 
 @router.patch("/{liability_id}", response_model=LiabilityOut)
@@ -270,7 +348,7 @@ def update_liability(
     payload: LiabilityUpdate,
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
-) -> Liability:
+) -> LiabilityOut:
     liability = _get_owned_liability(db, liability_id, current_user.id)
 
     updates = payload.model_dump(exclude_unset=True)
@@ -280,14 +358,50 @@ def update_liability(
     for key, value in updates.items():
         setattr(liability, key, value)
 
+    auto_cash_holding_created = False
     try:
+        db.flush()
+        if liability.portfolio_id is not None:
+            ensure_liability_baseline_transaction(
+                db=db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                liability_id=liability.id,
+                executed_at=datetime.now(UTC).replace(tzinfo=None),
+                strict_fx=settings.fx_strict_mode,
+            )
+        if liability.portfolio_id is not None:
+            had_cash_holding = _has_cash_holding_for_currency(
+                db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                currency=liability.currency,
+            )
+            rebuild_cash_holding_from_trades(
+                db,
+                owner_user_id=current_user.id,
+                portfolio_id=liability.portfolio_id,
+                currency=liability.currency,
+            )
+            auto_cash_holding_created = not had_cash_holding
         db.commit()
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid liability payload") from exc
 
     db.refresh(liability)
-    return liability
+    return LiabilityOut.model_validate(liability).model_copy(
+        update={"auto_cash_holding_created": auto_cash_holding_created}
+    )
 
 
 @router.patch("/{liability_id}/hidden", response_model=LiabilityOut)

@@ -507,6 +507,18 @@ function applyQuoteUpdateJobResult(result: QuoteUpdateJobStatusOut): void {
   }
 }
 
+function formatPortfolioPrincipalNet(item: PortfolioTableRowOut): string {
+  const deposit = typeof item.cumulative_deposit_amount === "number"
+    ? item.cumulative_deposit_amount
+    : Number(item.cumulative_deposit_amount);
+  const withdrawal = typeof item.cumulative_withdrawal_amount === "number"
+    ? item.cumulative_withdrawal_amount
+    : Number(item.cumulative_withdrawal_amount);
+
+  if (!Number.isFinite(deposit) || !Number.isFinite(withdrawal)) return "-";
+  return formatMoney(deposit - withdrawal, item.base_currency);
+}
+
 async function pollQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
   try {
     const result = await getQuoteUpdateJobStatus(jobId);
@@ -1277,7 +1289,7 @@ function submitLiabilityCreate(): void {
     if (currency.length !== 3) throw new Error("Currency must be 3 letters");
 
     runAction("Liability Create", "Create Liability", "새 부채를 생성할까요?", async () => {
-      await createLiability({
+      const created = await createLiability({
         portfolio_id: parseOptionalInt(liabilityForm.portfolio_id),
         name,
         liability_type: liabilityForm.liability_type.trim() || "ETC",
@@ -1288,6 +1300,13 @@ function submitLiabilityCreate(): void {
         source_type: liabilityForm.source_type.trim() || "MANUAL",
         memo: liabilityForm.memo.trim() || null,
       });
+      if (created.auto_cash_holding_created) {
+        pushLog(
+          "Auto Cash Holding",
+          "INFO",
+          `Auto cash holding created (${currency}) for portfolio #${created.portfolio_id ?? "-"}.`,
+        );
+      }
       liabilityForm.portfolio_id = "";
       liabilityForm.name = "";
       liabilityForm.liability_type = "ETC";
@@ -1341,7 +1360,7 @@ function submitLiabilityEdit(): void {
 
     closeLiabilityEditModal();
     runAction("Liability Update", "Apply Liability Update", `Liability #${liabilityId} 정보를 수정할까요?`, async () => {
-      await updateLiability(liabilityId, {
+      const updated = await updateLiability(liabilityId, {
         portfolio_id: parseOptionalInt(liabilityEditForm.portfolio_id),
         name,
         liability_type: liabilityEditForm.liability_type.trim() || "ETC",
@@ -1354,6 +1373,13 @@ function submitLiabilityEdit(): void {
         is_hidden: liabilityEditForm.is_hidden,
         memo: liabilityEditForm.memo.trim() || null,
       });
+      if (updated.auto_cash_holding_created) {
+        pushLog(
+          "Auto Cash Holding",
+          "INFO",
+          `Auto cash holding created (${currency}) for portfolio #${updated.portfolio_id ?? "-"}.`,
+        );
+      }
     });
   } catch (error) {
     pushLog("Liability Edit", "ERROR", getErrorMessage(error));
@@ -2324,6 +2350,7 @@ onBeforeUnmount(() => {
               <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_deposit_amount')">Deposit <span class="opacity-70">{{ portfolioSortIndicator("cumulative_deposit_amount") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_withdrawal_amount')">Withdrawal <span class="opacity-70">{{ portfolioSortIndicator("cumulative_withdrawal_amount") }}</span></button></th>
+              <th class="px-2 py-1.5 whitespace-nowrap">Principal(Net)</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('gross_assets_total')">Gross <span class="opacity-70">{{ portfolioSortIndicator("gross_assets_total") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('liabilities_total')">Debt <span class="opacity-70">{{ portfolioSortIndicator("liabilities_total") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('net_assets_total')">Net <span class="opacity-70">{{ portfolioSortIndicator("net_assets_total") }}</span></button></th>
@@ -2350,6 +2377,7 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_deposit_amount, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_withdrawal_amount, item.base_currency) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPortfolioPrincipalNet(item) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.gross_assets_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.liabilities_total, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.net_assets_total, item.base_currency) }}</td>
@@ -2378,7 +2406,7 @@ onBeforeUnmount(() => {
               </td>
             </tr>
             <tr v-if="portfolioRows.length === 0">
-              <td colspan="22" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No portfolios found</td>
+              <td colspan="23" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No portfolios found</td>
             </tr>
           </tbody>
         </table>

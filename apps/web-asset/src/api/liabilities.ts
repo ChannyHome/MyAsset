@@ -15,6 +15,7 @@ export type LiabilityOut = {
   is_included: boolean;
   is_hidden: boolean;
   memo: string | null;
+  auto_cash_holding_created?: boolean;
   created_at: string;
   updated_at: string;
 };

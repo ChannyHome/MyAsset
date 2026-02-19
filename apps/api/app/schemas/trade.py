@@ -15,6 +15,8 @@ class TransactionType(str, Enum):
     DIVIDEND = "DIVIDEND"
     FEE = "FEE"
     ADJUSTMENT = "ADJUSTMENT"
+    LOAN_BORROW = "LOAN_BORROW"
+    LOAN_REPAY = "LOAN_REPAY"
 
 
 class TransactionStatus(str, Enum):
@@ -30,6 +32,8 @@ class TransactionSortBy(str, Enum):
     PORTFOLIO_NAME = "portfolio_name"
     ASSET_ID = "asset_id"
     ASSET_NAME = "asset_name"
+    LIABILITY_ID = "liability_id"
+    LIABILITY_NAME = "liability_name"
     AMOUNT = "amount"
     AMOUNT_IN_PORTFOLIO_CURRENCY = "amount_in_portfolio_currency"
     CURRENCY = "currency"
@@ -41,6 +45,7 @@ class TradeCreate(BaseModel):
     portfolio_id: int
     txn_type: TransactionType
     asset_id: int | None = None
+    liability_id: int | None = None
     quantity: Decimal | None = None
     unit_price: Decimal | None = None
     amount: Decimal | None = None
@@ -56,6 +61,7 @@ class TradeUpdate(BaseModel):
     portfolio_id: int | None = None
     txn_type: TransactionType | None = None
     asset_id: int | None = None
+    liability_id: int | None = None
     quantity: Decimal | None = None
     unit_price: Decimal | None = None
     amount: Decimal | None = None
@@ -70,6 +76,7 @@ class TradeUpdate(BaseModel):
 class TradeRebuildIn(BaseModel):
     portfolio_id: int | None = None
     asset_id: int | None = None
+    liability_id: int | None = None
 
 
 class TradeOut(BaseModel):
@@ -79,6 +86,7 @@ class TradeOut(BaseModel):
     owner_user_id: int
     portfolio_id: int
     asset_id: int | None
+    liability_id: int | None
     txn_type: TransactionType
     quantity: Decimal | None
     unit_price: Decimal | None
@@ -102,6 +110,7 @@ class TradeRowOut(TradeOut):
     portfolio_name: str | None = None
     asset_name: str | None = None
     asset_symbol: str | None = None
+    liability_name: str | None = None
 
 
 class TradePageOut(BaseModel):
@@ -118,5 +127,7 @@ class TradeRebuildOut(BaseModel):
     owner_user_id: int
     portfolio_id: int | None = None
     asset_id: int | None = None
+    liability_id: int | None = None
     affected_portfolios: int
     affected_holdings: int
+    affected_liabilities: int

@@ -29,6 +29,7 @@ class PortfolioTableSortBy(str, Enum):
     IS_HIDDEN = "is_hidden"
     DEPOSIT = "cumulative_deposit_amount"
     WITHDRAWAL = "cumulative_withdrawal_amount"
+    PRINCIPAL_NET = "principal_net"
     GROSS_ASSETS_TOTAL = "gross_assets_total"
     LIABILITIES_TOTAL = "liabilities_total"
     NET_ASSETS_TOTAL = "net_assets_total"

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -24,6 +25,7 @@ from app.schemas.holding import (
 )
 from app.schemas.asset import SortOrder
 from app.schemas.performance import HoldingPerformanceOut
+from app.services.trade_ledger import TradeSyncError, ensure_holding_baseline_transaction
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
 
@@ -493,7 +495,26 @@ def create_holding(
     holding = Holding(owner_user_id=current_user.id, **data)
     db.add(holding)
     try:
+        db.flush()
+        if holding.portfolio_id is not None:
+            ensure_holding_baseline_transaction(
+                db=db,
+                owner_user_id=current_user.id,
+                portfolio_id=holding.portfolio_id,
+                asset_id=holding.asset_id,
+                executed_at=datetime.now(UTC).replace(tzinfo=None),
+                strict_fx=settings.fx_strict_mode,
+            )
         db.commit()
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid holding payload") from exc
@@ -535,7 +556,26 @@ def update_holding(
         setattr(holding, key, value)
 
     try:
+        db.flush()
+        if holding.portfolio_id is not None:
+            ensure_holding_baseline_transaction(
+                db=db,
+                owner_user_id=current_user.id,
+                portfolio_id=holding.portfolio_id,
+                asset_id=holding.asset_id,
+                executed_at=datetime.now(UTC).replace(tzinfo=None),
+                strict_fx=settings.fx_strict_mode,
+            )
         db.commit()
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid holding payload") from exc

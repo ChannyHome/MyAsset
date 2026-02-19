@@ -69,6 +69,7 @@ class LiabilityOut(BaseModel):
     is_included: bool
     is_hidden: bool
     memo: str | None
+    auto_cash_holding_created: bool = False
     created_at: datetime
     updated_at: datetime
 

@@ -1,7 +1,16 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
 
-export type TransactionType = "BUY" | "SELL" | "DEPOSIT" | "WITHDRAW" | "DIVIDEND" | "FEE" | "ADJUSTMENT";
+export type TransactionType =
+  | "BUY"
+  | "SELL"
+  | "DEPOSIT"
+  | "WITHDRAW"
+  | "DIVIDEND"
+  | "FEE"
+  | "ADJUSTMENT"
+  | "LOAN_BORROW"
+  | "LOAN_REPAY";
 export type TransactionStatus = "POSTED" | "VOID";
 
 export type TradeSortBy =
@@ -12,6 +21,8 @@ export type TradeSortBy =
   | "portfolio_name"
   | "asset_id"
   | "asset_name"
+  | "liability_id"
+  | "liability_name"
   | "amount"
   | "amount_in_portfolio_currency"
   | "currency"
@@ -23,6 +34,7 @@ export type TradeOut = {
   owner_user_id: number;
   portfolio_id: number;
   asset_id: number | null;
+  liability_id: number | null;
   txn_type: TransactionType;
   quantity: string | number | null;
   unit_price: string | number | null;
@@ -46,6 +58,7 @@ export type TradeRowOut = TradeOut & {
   portfolio_name: string | null;
   asset_name: string | null;
   asset_symbol: string | null;
+  liability_name: string | null;
 };
 
 export type TradePageOut = {
@@ -62,6 +75,7 @@ export type TradeCreateIn = {
   portfolio_id: number;
   txn_type: TransactionType;
   asset_id?: number | null;
+  liability_id?: number | null;
   quantity?: string | number | null;
   unit_price?: string | number | null;
   amount?: string | number | null;
@@ -78,14 +92,17 @@ export type TradeUpdateIn = Partial<TradeCreateIn>;
 export type TradeRebuildIn = {
   portfolio_id?: number | null;
   asset_id?: number | null;
+  liability_id?: number | null;
 };
 
 export type TradeRebuildOut = {
   owner_user_id: number;
   portfolio_id: number | null;
   asset_id: number | null;
+  liability_id: number | null;
   affected_portfolios: number;
   affected_holdings: number;
+  affected_liabilities: number;
 };
 
 export type TradesQuery = {
@@ -96,7 +113,9 @@ export type TradesQuery = {
   q?: string;
   portfolio_id?: number;
   asset_id?: number;
+  liability_id?: number;
   txn_type?: TransactionType;
+  txn_group?: "LOAN" | "CASHFLOW" | "BUYSELL";
   status?: TransactionStatus;
   from?: string;
   to?: string;

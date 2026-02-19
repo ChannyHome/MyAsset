@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -23,6 +24,7 @@ from app.schemas.portfolio import (
     PortfolioUpdate,
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
+from app.services.trade_ledger import TradeSyncError, ensure_portfolio_cashflow_baseline_transactions
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
@@ -393,7 +395,21 @@ def create_portfolio(
 
     portfolio = Portfolio(owner_user_id=current_user.id, **portfolio_data)
     db.add(portfolio)
-    db.commit()
+    try:
+        db.flush()
+        ensure_portfolio_cashflow_baseline_transactions(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+            executed_at=datetime.now(UTC).replace(tzinfo=None),
+        )
+        db.commit()
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid portfolio payload") from exc
     db.refresh(portfolio)
     return portfolio
 
@@ -419,7 +435,17 @@ def update_portfolio(
         setattr(portfolio, key, value)
 
     try:
+        db.flush()
+        ensure_portfolio_cashflow_baseline_transactions(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+            executed_at=datetime.now(UTC).replace(tzinfo=None),
+        )
         db.commit()
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid portfolio payload") from exc
