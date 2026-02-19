@@ -2,7 +2,7 @@ import { importShared } from './__federation_fn_import-B1auV5c8.js';
 
 const {defineComponent:_defineComponent$2} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString$2,createElementVNode:_createElementVNode$2,openBlock:_openBlock$2,createElementBlock:_createElementBlock$2,createCommentVNode:_createCommentVNode$2,normalizeStyle:_normalizeStyle$1,renderList:_renderList$1,Fragment:_Fragment$1,normalizeClass:_normalizeClass$1} = await importShared('vue');
+const {toDisplayString:_toDisplayString$2,createElementVNode:_createElementVNode$2,openBlock:_openBlock$2,createElementBlock:_createElementBlock$2,createCommentVNode:_createCommentVNode$2,normalizeStyle:_normalizeStyle$2,renderList:_renderList$1,Fragment:_Fragment$1,normalizeClass:_normalizeClass$1} = await importShared('vue');
 
 const _hoisted_1$2 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2$2 = { class: "flex items-start justify-between gap-2" };
@@ -45,6 +45,7 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
     total: {},
     items: {},
     startPosition: { default: "TOP" },
+    maskAmounts: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
     error: { default: "" }
   },
@@ -131,13 +132,15 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
           _createElementVNode$2("div", _hoisted_9$2, [
             _createElementVNode$2("div", {
               class: "absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(15,23,42,0.2)]",
-              style: _normalizeStyle$1(donutStyle.value),
+              style: _normalizeStyle$2(donutStyle.value),
               "data-export-donut": "1",
               "data-donut-stops": donutExportStops.value,
               "data-donut-start-angle": String(startAngle.value)
             }, null, 12, _hoisted_10$2),
             _createElementVNode$2("div", _hoisted_11$2, [
-              _createElementVNode$2("span", null, _toDisplayString$2(formatCurrency(__props.total, __props.currency)), 1)
+              _createElementVNode$2("span", {
+                style: _normalizeStyle$2(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString$2(formatCurrency(__props.total, __props.currency)), 5)
             ])
           ]),
           _createElementVNode$2("ul", {
@@ -154,7 +157,7 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
                 _createElementVNode$2("span", _hoisted_12$2, [
                   _createElementVNode$2("span", {
                     class: "h-2.5 w-2.5 rounded-full",
-                    style: _normalizeStyle$1({ backgroundColor: item.color })
+                    style: _normalizeStyle$2({ backgroundColor: item.color })
                   }, null, 4),
                   _createElementVNode$2("span", _hoisted_13$2, _toDisplayString$2(item.label), 1)
                 ]),
@@ -171,7 +174,7 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
 
 const {defineComponent:_defineComponent$1} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,renderList:_renderList,Fragment:_Fragment,createTextVNode:_createTextVNode$1,normalizeStyle:_normalizeStyle} = await importShared('vue');
+const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,renderList:_renderList,Fragment:_Fragment,createTextVNode:_createTextVNode$1,normalizeStyle:_normalizeStyle$1} = await importShared('vue');
 
 const _hoisted_1$1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2$1 = { class: "flex items-start justify-between gap-2" };
@@ -213,6 +216,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
     subtitle: { default: "" },
     currency: {},
     items: {},
+    maskAmounts: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
     error: { default: "" }
   },
@@ -308,7 +312,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
               return _openBlock$1(), _createElementBlock$1("div", {
                 key: item.key,
                 class: "flex min-h-[64px] min-w-[110px] flex-col justify-between rounded-lg p-2 text-xs text-white",
-                style: _normalizeStyle({ flexGrow: item.weight, flexBasis: `${Math.max(18, item.ratioPct)}%`, backgroundColor: item.backgroundColor })
+                style: _normalizeStyle$1({ flexGrow: item.weight, flexBasis: `${Math.max(18, item.ratioPct)}%`, backgroundColor: item.backgroundColor })
               }, [
                 _createElementVNode$1("p", _hoisted_11$1, _toDisplayString$1(item.label), 1),
                 _createElementVNode$1("div", _hoisted_12$1, [
@@ -318,7 +322,9 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                       _createTextVNode$1("| " + _toDisplayString$1(formatSignedPercent(item.returnPct)), 1)
                     ], 64)) : _createCommentVNode$1("", true)
                   ]),
-                  _createElementVNode$1("p", null, _toDisplayString$1(formatCurrency(item.value, __props.currency)), 1)
+                  _createElementVNode$1("p", {
+                    style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+                  }, _toDisplayString$1(formatCurrency(item.value, __props.currency)), 5)
                 ])
               ], 4);
             }), 128))
@@ -333,7 +339,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,normalizeClass:_normalizeClass,createTextVNode:_createTextVNode} = await importShared('vue');
+const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,normalizeStyle:_normalizeStyle,createTextVNode:_createTextVNode,normalizeClass:_normalizeClass} = await importShared('vue');
 
 const _hoisted_1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2 = { class: "flex items-start justify-between gap-2" };
@@ -371,9 +377,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     netProfitTotal: {},
     asOf: { default: "" },
     title: { default: "KPI Summary" },
-    subtitle: { default: "" }
+    subtitle: { default: "" },
+    maskAmounts: { type: Boolean, default: false }
   },
   setup(__props) {
+    const props = __props;
     function formatCurrency(value, currency) {
       return new Intl.NumberFormat("ko-KR", {
         style: "currency",
@@ -410,24 +418,57 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         _createElementVNode("div", _hoisted_6, [
           _createElementVNode("div", _hoisted_7, [
             _createElementVNode("p", _hoisted_8, [
-              _createTextVNode(" Gross: " + _toDisplayString(formatCurrency(__props.grossAssetsTotal, __props.currency)) + " ", 1),
+              _cache[1] || (_cache[1] = _createTextVNode(" Gross: ", -1)),
+              _createElementVNode("span", {
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(__props.grossAssetsTotal, __props.currency)), 5),
               _createElementVNode("span", {
                 class: _normalizeClass(toneClass(__props.grossReturnPct))
-              }, "(" + _toDisplayString(formatSignedPercent(__props.grossReturnPct)) + ", " + _toDisplayString(formatSignedCurrency(__props.grossProfitTotal, __props.currency)) + ")", 3)
+              }, [
+                _createTextVNode(" ( " + _toDisplayString(formatSignedPercent(__props.grossReturnPct)) + ", ", 1),
+                _createElementVNode("span", {
+                  style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+                }, _toDisplayString(formatSignedCurrency(__props.grossProfitTotal, __props.currency)), 5),
+                _cache[0] || (_cache[0] = _createTextVNode(" ) ", -1))
+              ], 2)
             ]),
-            _createElementVNode("p", _hoisted_9, " vs invested principal (" + _toDisplayString(formatCurrency(__props.investedPrincipalTotal, __props.currency)) + ") ", 1)
+            _createElementVNode("p", _hoisted_9, [
+              _cache[2] || (_cache[2] = _createTextVNode(" vs invested principal ", -1)),
+              _createElementVNode("span", {
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, " (" + _toDisplayString(formatCurrency(__props.investedPrincipalTotal, __props.currency)) + ") ", 5)
+            ])
           ]),
           _createElementVNode("div", _hoisted_10, [
-            _createElementVNode("p", _hoisted_11, " Liabilities: " + _toDisplayString(formatCurrency(__props.liabilitiesTotal, __props.currency)), 1)
+            _createElementVNode("p", _hoisted_11, [
+              _cache[3] || (_cache[3] = _createTextVNode(" Liabilities: ", -1)),
+              _createElementVNode("span", {
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(__props.liabilitiesTotal, __props.currency)), 5)
+            ])
           ]),
           _createElementVNode("div", _hoisted_12, [
             _createElementVNode("p", _hoisted_13, [
-              _createTextVNode(" Net: " + _toDisplayString(formatCurrency(__props.netAssetsTotal, __props.currency)) + " ", 1),
+              _cache[5] || (_cache[5] = _createTextVNode(" Net: ", -1)),
+              _createElementVNode("span", {
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(__props.netAssetsTotal, __props.currency)), 5),
               _createElementVNode("span", {
                 class: _normalizeClass(toneClass(__props.netReturnPct))
-              }, "(" + _toDisplayString(formatSignedPercent(__props.netReturnPct)) + ", " + _toDisplayString(formatSignedCurrency(__props.netProfitTotal, __props.currency)) + ")", 3)
+              }, [
+                _createTextVNode(" ( " + _toDisplayString(formatSignedPercent(__props.netReturnPct)) + ", ", 1),
+                _createElementVNode("span", {
+                  style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+                }, _toDisplayString(formatSignedCurrency(__props.netProfitTotal, __props.currency)), 5),
+                _cache[4] || (_cache[4] = _createTextVNode(" ) ", -1))
+              ], 2)
             ]),
-            _createElementVNode("p", _hoisted_14, " vs principal - debt (" + _toDisplayString(formatCurrency(__props.principalMinusDebtTotal, __props.currency)) + ") ", 1)
+            _createElementVNode("p", _hoisted_14, [
+              _cache[6] || (_cache[6] = _createTextVNode(" vs principal - debt ", -1)),
+              _createElementVNode("span", {
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, " (" + _toDisplayString(formatCurrency(__props.principalMinusDebtTotal, __props.currency)) + ") ", 5)
+            ])
           ])
         ]),
         __props.asOf ? (_openBlock(), _createElementBlock("p", _hoisted_15, "as_of: " + _toDisplayString(__props.asOf), 1)) : _createCommentVNode("", true)

@@ -15,11 +15,13 @@ const props = withDefaults(
     subtitle?: string;
     currency: string;
     items: AllocationItem[];
+    maskAmounts?: boolean;
     loading?: boolean;
     error?: string;
   }>(),
   {
     subtitle: "",
+    maskAmounts: false,
     loading: false,
     error: "",
   },
@@ -160,7 +162,9 @@ function formatSignedPercent(value: number | null | undefined): string {
               {{ formatPercent(item.ratioPct) }}
               <template v-if="item.returnPct != null">| {{ formatSignedPercent(item.returnPct) }}</template>
             </p>
-            <p>{{ formatCurrency(item.value, currency) }}</p>
+            <p :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+              {{ formatCurrency(item.value, currency) }}
+            </p>
           </div>
         </div>
       </div>

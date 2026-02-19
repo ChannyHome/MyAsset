@@ -18,12 +18,14 @@ const props = withDefaults(
     total: number;
     items: AllocationItem[];
     startPosition?: DonutStartPosition;
+    maskAmounts?: boolean;
     loading?: boolean;
     error?: string;
   }>(),
   {
     subtitle: "",
     startPosition: "TOP",
+    maskAmounts: false,
     loading: false,
     error: "",
   },
@@ -149,7 +151,9 @@ function formatPercent(value: number): string {
         <div
           class="absolute left-1/2 top-1/2 flex h-[6rem] w-[6rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white px-1 text-center text-[12px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
         >
-          <span>{{ formatCurrency(total, currency) }}</span>
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            {{ formatCurrency(total, currency) }}
+          </span>
         </div>
       </div>
 

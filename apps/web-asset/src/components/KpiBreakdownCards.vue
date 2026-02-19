@@ -17,6 +17,7 @@ const props = defineProps<{
   netAssetsProfitTotal: number;
   portfolios: PortfolioTableRowOut[];
   liabilities: LiabilityTableRowOut[];
+  maskAmounts?: boolean;
 }>();
 
 const grossCollapsed = ref(true);
@@ -73,6 +74,8 @@ const netPortfolioRows = computed(() =>
 const sortedLiabilityRows = computed(() =>
   [...props.liabilities].sort((a, b) => toNumber(b.outstanding_balance) - toNumber(a.outstanding_balance)),
 );
+
+const amountMaskStyle = computed(() => (props.maskAmounts ? { filter: "blur(6px)" } : undefined));
 </script>
 
 <template>
@@ -89,13 +92,17 @@ const sortedLiabilityRows = computed(() =>
         </button>
       </div>
       <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {{ formatCurrency(grossAssetsTotal, displayCurrency) }}
+        <span :style="amountMaskStyle">{{ formatCurrency(grossAssetsTotal, displayCurrency) }}</span>
         <span class="text-base font-semibold" :class="(principalReturnPct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          ({{ formatPercent(principalReturnPct) }}, {{ formatSignedCurrency(principalProfitTotal, displayCurrency) }})
+          (
+          {{ formatPercent(principalReturnPct) }},
+          <span :style="amountMaskStyle">{{ formatSignedCurrency(principalProfitTotal, displayCurrency) }}</span>
+          )
         </span>
       </p>
       <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-        vs invested principal ({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})
+        vs invested principal
+        <span :style="amountMaskStyle">({{ formatCurrency(investedPrincipalTotal, displayCurrency) }})</span>
       </p>
 
       <div v-if="!grossCollapsed" class="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
@@ -119,13 +126,19 @@ const sortedLiabilityRows = computed(() =>
                   <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ row.type }}</p>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">
-                  {{ formatCurrency(toNumber(row.gross_assets_total), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatCurrency(toNumber(row.gross_assets_total), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
-                  {{ formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.total_pnl_amount))">
-                  {{ formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toOptionalNumber(row.total_return_pct))">
                   {{ formatPercent(toOptionalNumber(row.total_return_pct)) }}
@@ -149,7 +162,7 @@ const sortedLiabilityRows = computed(() =>
         </button>
       </div>
       <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {{ formatCurrency(liabilitiesTotal, displayCurrency) }}
+        <span :style="amountMaskStyle">{{ formatCurrency(liabilitiesTotal, displayCurrency) }}</span>
       </p>
       <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Included liabilities only</p>
 
@@ -172,7 +185,9 @@ const sortedLiabilityRows = computed(() =>
                 <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ row.liability_type }}</td>
                 <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ row.portfolio_name || "-" }}</td>
                 <td class="px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">
-                  {{ formatCurrency(toNumber(row.outstanding_balance), row.currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatCurrency(toNumber(row.outstanding_balance), row.currency || displayCurrency) }}
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -193,13 +208,17 @@ const sortedLiabilityRows = computed(() =>
         </button>
       </div>
       <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {{ formatCurrency(netAssetsTotal, displayCurrency) }}
+        <span :style="amountMaskStyle">{{ formatCurrency(netAssetsTotal, displayCurrency) }}</span>
         <span class="text-base font-semibold" :class="(netAssetsReturnPct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-          ({{ formatPercent(netAssetsReturnPct) }}, {{ formatSignedCurrency(netAssetsProfitTotal, displayCurrency) }})
+          (
+          {{ formatPercent(netAssetsReturnPct) }},
+          <span :style="amountMaskStyle">{{ formatSignedCurrency(netAssetsProfitTotal, displayCurrency) }}</span>
+          )
         </span>
       </p>
       <p class="mt-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
-        vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})
+        vs principal - debt
+        <span :style="amountMaskStyle">({{ formatCurrency(principalMinusDebtTotal, displayCurrency) }})</span>
       </p>
 
       <div v-if="!netCollapsed" class="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
@@ -223,13 +242,19 @@ const sortedLiabilityRows = computed(() =>
                   <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ row.type }}</p>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">
-                  {{ formatCurrency(toNumber(row.net_assets_total), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatCurrency(toNumber(row.net_assets_total), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
-                  {{ formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toNumber(row.net_assets_profit_total))">
-                  {{ formatSignedCurrency(toNumber(row.net_assets_profit_total), row.base_currency || displayCurrency) }}
+                  <span :style="amountMaskStyle">
+                    {{ formatSignedCurrency(toNumber(row.net_assets_profit_total), row.base_currency || displayCurrency) }}
+                  </span>
                 </td>
                 <td class="px-3 py-2 text-right font-semibold" :class="signedValueClass(toOptionalNumber(row.net_assets_return_pct))">
                   {{ formatPercent(toOptionalNumber(row.net_assets_return_pct)) }}

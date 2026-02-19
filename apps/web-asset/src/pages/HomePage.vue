@@ -31,6 +31,8 @@ type AllocationUiItem = {
   returnPct?: number | null;
 };
 
+const LIVE_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
+
 type Html2CanvasFn = (
   element: HTMLElement,
   options?: {
@@ -116,10 +118,12 @@ const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
 const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
 const liveDashboardExpanded = ref(false);
+const reportPanelExpanded = ref(false);
 const exportingImage = ref(false);
 const liveDonutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const liveTreemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
+const liveMaskAmounts = ref(false);
 const livePortfolioKey = ref("ALL");
 const liveDashboardRef = ref<HTMLElement | null>(null);
 const allocationGross = ref<AnalyticsAllocationOut | null>(null);
@@ -394,6 +398,10 @@ function toggleLiveDashboard() {
   liveDashboardExpanded.value = !liveDashboardExpanded.value;
 }
 
+function toggleReportPanel() {
+  reportPanelExpanded.value = !reportPanelExpanded.value;
+}
+
 function printLiveDashboard() {
   window.print();
 }
@@ -562,6 +570,14 @@ async function exportLiveDashboardImage() {
 }
 
 onMounted(async () => {
+  if (typeof window !== "undefined") {
+    const saved = window.localStorage.getItem(LIVE_MASK_STORAGE_KEY);
+    if (saved === "1" || saved === "true") {
+      liveMaskAmounts.value = true;
+    } else if (saved === "0" || saved === "false") {
+      liveMaskAmounts.value = false;
+    }
+  }
   await ensureInitialized();
   await loadHomeData();
 });
@@ -584,6 +600,14 @@ watch(
     }
   },
 );
+
+watch(
+  () => liveMaskAmounts.value,
+  (next) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(LIVE_MASK_STORAGE_KEY, next ? "1" : "0");
+  },
+);
 </script>
 
 <template>
@@ -604,6 +628,18 @@ watch(
             :loading="settingsSaving"
             @update:model-value="onChangeDisplayCurrency"
           />
+          <button
+            type="button"
+            class="rounded-xl border px-3 py-2 text-sm font-semibold transition-colors"
+            :class="
+              liveMaskAmounts
+                ? 'border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+            "
+            @click="liveMaskAmounts = !liveMaskAmounts"
+          >
+            Amount Blur {{ liveMaskAmounts ? "ON" : "OFF" }}
+          </button>
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -767,6 +803,7 @@ watch(
               :gross-profit-total="kpiGrossProfitTotal"
               :net-profit-total="kpiNetProfitTotal"
               :as-of="asOf"
+              :mask-amounts="liveMaskAmounts"
             />
           </div>
 
@@ -781,6 +818,7 @@ watch(
             :total="toNumber(donutData?.total)"
             :items="donutItems"
             :start-position="liveDonutStartPosition"
+            :mask-amounts="liveMaskAmounts"
             :loading="loading"
             :error="errorMessage"
           />
@@ -794,6 +832,7 @@ watch(
             "
             :currency="summaryDisplayCurrency"
             :items="liveTreemapItems"
+            :mask-amounts="liveMaskAmounts"
             :loading="loading"
             :error="errorMessage"
           />
@@ -804,6 +843,7 @@ watch(
               subtitle="valuation_snapshots | bucket=DAY"
               :currency="summaryDisplayCurrency"
               :points="trendPoints"
+              :mask-amounts="liveMaskAmounts"
               :loading="loading"
               :error="errorMessage"
             />
@@ -816,126 +856,169 @@ watch(
       </p>
     </article>
 
-    <KpiBreakdownCards
-      :display-currency="summaryDisplayCurrency"
-      :gross-assets-total="grossAssetsTotal"
-      :liabilities-total="liabilitiesTotal"
-      :net-assets-total="netAssetsTotal"
-      :invested-principal-total="investedPrincipalTotal"
-      :principal-minus-debt-total="principalMinusDebtTotal"
-      :principal-return-pct="principalReturnPct"
-      :net-assets-return-pct="netAssetsReturnPct"
-      :principal-profit-total="principalProfitTotal"
-      :net-assets-profit-total="netAssetsProfitTotal"
-      :portfolios="portfolios"
-      :liabilities="liabilities"
-    />
-
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Portfolios</h2>
-        <span class="text-xs text-slate-500 dark:text-slate-400">By gross assets</span>
-      </div>
-      <div
-        v-if="topPortfolios.length === 0"
-        class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
-      >
-        No portfolio data.
-      </div>
-      <ul v-else class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-        <li
-          v-for="item in topPortfolios"
-          :key="item.id"
-          class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Report Panel</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Gross/Liabilities/Net plus Top cards grouped together.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="toggleReportPanel"
         >
-          <div class="flex items-center justify-between gap-2">
-            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {{ item.name }}
-              <span class="text-xs font-normal text-slate-500">{{ item.type }}</span>
-            </p>
-            <p
-              class="text-xs font-semibold"
-              :class="item.total_return_pct == null ? 'text-slate-500' : toNumber(item.total_return_pct) >= 0 ? 'text-emerald-600' : 'text-rose-500'"
+          {{ reportPanelExpanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
+
+      <div v-if="reportPanelExpanded" class="mt-4 space-y-4">
+        <KpiBreakdownCards
+          :display-currency="summaryDisplayCurrency"
+          :gross-assets-total="grossAssetsTotal"
+          :liabilities-total="liabilitiesTotal"
+          :net-assets-total="netAssetsTotal"
+          :invested-principal-total="investedPrincipalTotal"
+          :principal-minus-debt-total="principalMinusDebtTotal"
+          :principal-return-pct="principalReturnPct"
+          :net-assets-return-pct="netAssetsReturnPct"
+          :principal-profit-total="principalProfitTotal"
+          :net-assets-profit-total="netAssetsProfitTotal"
+          :portfolios="portfolios"
+          :liabilities="liabilities"
+          :mask-amounts="liveMaskAmounts"
+        />
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Portfolios</h2>
+            <span class="text-xs text-slate-500 dark:text-slate-400">By gross assets</span>
+          </div>
+          <div
+            v-if="topPortfolios.length === 0"
+            class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+          >
+            No portfolio data.
+          </div>
+          <ul v-else class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <li
+              v-for="item in topPortfolios"
+              :key="item.id"
+              class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
             >
-              {{ formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct)) }}
-            </p>
-          </div>
-          <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency) }}
-            /
-            {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || summaryDisplayCurrency) }}
-          </div>
-          <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Net {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency) }}
-            ·
-            PnL {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || summaryDisplayCurrency) }}
-          </div>
-        </li>
-      </ul>
+              <div class="flex items-center justify-between gap-2">
+                <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {{ item.name }}
+                  <span class="text-xs font-normal text-slate-500">{{ item.type }}</span>
+                </p>
+                <p
+                  class="text-xs font-semibold"
+                  :class="item.total_return_pct == null ? 'text-slate-500' : toNumber(item.total_return_pct) >= 0 ? 'text-emerald-600' : 'text-rose-500'"
+                >
+                  {{ formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct)) }}
+                </p>
+              </div>
+              <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                  {{ formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency) }}
+                </span>
+                /
+                <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                  {{ formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || summaryDisplayCurrency) }}
+                </span>
+              </div>
+              <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                Net
+                <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                  {{ formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency) }}
+                </span>
+                ·
+                PnL
+                <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                  {{ formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || summaryDisplayCurrency) }}
+                </span>
+              </div>
+            </li>
+          </ul>
+        </article>
+
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Holdings</h2>
+              <span class="text-xs text-slate-500 dark:text-slate-400">By evaluated amount</span>
+            </div>
+            <div
+              v-if="topHoldings.length === 0"
+              class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+            >
+              No holdings data.
+            </div>
+            <ul v-else class="space-y-2">
+              <li
+                v-for="item in topHoldings"
+                :key="item.holding_id"
+                class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {{ item.asset_name }}
+                    <span class="text-xs font-normal text-slate-500">{{ item.asset_symbol || "-" }}</span>
+                  </p>
+                  <p class="text-xs font-semibold" :class="toNumber(item.pnl_pct) >= 0 ? 'text-emerald-600' : 'text-rose-500'">
+                    {{ formatPercent(toNumber(item.pnl_pct)) }}
+                  </p>
+                </div>
+                <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                    {{ formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency) }}
+                  </span>
+                  /
+                  <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                    {{ formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency) }}
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </article>
+
+          <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Liabilities</h2>
+              <span class="text-xs text-slate-500 dark:text-slate-400">By outstanding balance</span>
+            </div>
+            <div
+              v-if="topLiabilities.length === 0"
+              class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+            >
+              No liabilities data.
+            </div>
+            <ul v-else class="space-y-2">
+              <li
+                v-for="item in topLiabilities"
+                :key="item.id"
+                class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.name }}</p>
+                  <p class="text-xs text-slate-500">{{ item.liability_type }}</p>
+                </div>
+                <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                  <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
+                    {{ formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency) }}
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        Collapsed. Click <span class="font-semibold">Expand</span> to preview report cards.
+      </p>
     </article>
-
-    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Holdings</h2>
-          <span class="text-xs text-slate-500 dark:text-slate-400">By evaluated amount</span>
-        </div>
-        <div v-if="topHoldings.length === 0" class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-          No holdings data.
-        </div>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="item in topHoldings"
-            :key="item.holding_id"
-            class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {{ item.asset_name }}
-                <span class="text-xs font-normal text-slate-500">{{ item.asset_symbol || "-" }}</span>
-              </p>
-              <p class="text-xs font-semibold" :class="toNumber(item.pnl_pct) >= 0 ? 'text-emerald-600' : 'text-rose-500'">
-                {{ formatPercent(toNumber(item.pnl_pct)) }}
-              </p>
-            </div>
-            <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              {{ formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency) }}
-              /
-              {{ formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency) }}
-              
-            </div>
-          </li>
-        </ul>
-      </article>
-
-      <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Top Liabilities</h2>
-          <span class="text-xs text-slate-500 dark:text-slate-400">By outstanding balance</span>
-        </div>
-        <div
-          v-if="topLiabilities.length === 0"
-          class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
-        >
-          No liabilities data.
-        </div>
-        <ul v-else class="space-y-2">
-          <li
-            v-for="item in topLiabilities"
-            :key="item.id"
-            class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.name }}</p>
-              <p class="text-xs text-slate-500">{{ item.liability_type }}</p>
-            </div>
-            <div class="mt-1 text-xs text-slate-600 dark:text-slate-300">
-              {{ formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency) }}
-            </div>
-          </li>
-        </ul>
-      </article>
-    </div>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Quick Insight</h2>

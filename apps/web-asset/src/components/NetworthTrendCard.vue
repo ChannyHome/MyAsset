@@ -14,12 +14,14 @@ const props = withDefaults(
     subtitle?: string;
     currency: string;
     points: NetworthPoint[];
+    maskAmounts?: boolean;
     loading?: boolean;
     error?: string;
   }>(),
   {
     title: "Networth Trend",
     subtitle: "valuation_snapshots",
+    maskAmounts: false,
     loading: false,
     error: "",
   },
@@ -136,7 +138,7 @@ function formatCurrency(value: number, currency: string): string {
             <span class="h-2.5 w-2.5 rounded-full bg-sky-500" />
             Gross
           </p>
-          <p class="mt-1 text-slate-600 dark:text-slate-300">
+          <p class="mt-1 text-slate-600 dark:text-slate-300" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             {{ formatCurrency(lastPoint?.gross ?? 0, currency) }}
           </p>
         </div>
@@ -145,7 +147,7 @@ function formatCurrency(value: number, currency: string): string {
             <span class="h-2.5 w-2.5 rounded-full bg-amber-500" />
             Liabilities
           </p>
-          <p class="mt-1 text-slate-600 dark:text-slate-300">
+          <p class="mt-1 text-slate-600 dark:text-slate-300" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             {{ formatCurrency(lastPoint?.liabilities ?? 0, currency) }}
           </p>
         </div>
@@ -154,7 +156,7 @@ function formatCurrency(value: number, currency: string): string {
             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500" />
             Net
           </p>
-          <p class="mt-1 text-slate-600 dark:text-slate-300">
+          <p class="mt-1 text-slate-600 dark:text-slate-300" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             {{ formatCurrency(lastPoint?.net ?? 0, currency) }}
           </p>
         </div>

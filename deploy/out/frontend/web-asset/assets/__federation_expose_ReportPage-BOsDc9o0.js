@@ -1,7 +1,7 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CfKM0Xv_.js';
+import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-BgFJ5pUC.js';
 import { u as useDisplayCurrency, _ as _sfc_main$1, a as getPortfoliosTable, g as getLiabilitiesTable } from './useDisplayCurrency-BOX_gs28.js';
-import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dopz1oEc.js';
+import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CDhJ1sK1.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

@@ -1,8 +1,8 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CfKM0Xv_.js';
+import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-BgFJ5pUC.js';
 import { g as getHoldingsPerformance } from './holdings-PVaHh3Rj.js';
 import { u as useDisplayCurrency, _ as _sfc_main$1, b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './useDisplayCurrency-BOX_gs28.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-Dy_apiiv.js';
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-BEy7luee.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

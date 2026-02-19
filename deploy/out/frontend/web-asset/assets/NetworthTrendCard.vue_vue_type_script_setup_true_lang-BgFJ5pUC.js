@@ -20,7 +20,7 @@ async function collectSnapshots(params = {}) {
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,renderList:_renderList,Fragment:_Fragment,createTextVNode:_createTextVNode} = await importShared('vue');
+const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,renderList:_renderList,Fragment:_Fragment,createTextVNode:_createTextVNode,normalizeStyle:_normalizeStyle} = await importShared('vue');
 
 const _hoisted_1 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2 = { class: "flex items-start justify-between gap-2" };
@@ -51,12 +51,9 @@ const _hoisted_14 = ["d"];
 const _hoisted_15 = ["d"];
 const _hoisted_16 = { class: "grid grid-cols-1 gap-2 text-xs md:grid-cols-3" };
 const _hoisted_17 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_18 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_18 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_19 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_20 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_21 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_22 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_23 = { class: "text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_20 = { class: "text-[11px] text-slate-500 dark:text-slate-400" };
 const {computed} = await importShared('vue');
 
 const chartWidth = 640;
@@ -69,6 +66,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     subtitle: { default: "valuation_snapshots" },
     currency: {},
     points: {},
+    maskAmounts: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
     error: { default: "" }
   },
@@ -176,24 +174,33 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-sky-500" }),
                 _createTextVNode(" Gross ")
               ], -1)),
-              _createElementVNode("p", _hoisted_18, _toDisplayString(formatCurrency(lastPoint.value?.gross ?? 0, __props.currency)), 1)
+              _createElementVNode("p", {
+                class: "mt-1 text-slate-600 dark:text-slate-300",
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(lastPoint.value?.gross ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_19, [
+            _createElementVNode("div", _hoisted_18, [
               _cache[1] || (_cache[1] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-amber-500" }),
                 _createTextVNode(" Liabilities ")
               ], -1)),
-              _createElementVNode("p", _hoisted_20, _toDisplayString(formatCurrency(lastPoint.value?.liabilities ?? 0, __props.currency)), 1)
+              _createElementVNode("p", {
+                class: "mt-1 text-slate-600 dark:text-slate-300",
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(lastPoint.value?.liabilities ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_21, [
+            _createElementVNode("div", _hoisted_19, [
               _cache[2] || (_cache[2] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-emerald-500" }),
                 _createTextVNode(" Net ")
               ], -1)),
-              _createElementVNode("p", _hoisted_22, _toDisplayString(formatCurrency(lastPoint.value?.net ?? 0, __props.currency)), 1)
+              _createElementVNode("p", {
+                class: "mt-1 text-slate-600 dark:text-slate-300",
+                style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
+              }, _toDisplayString(formatCurrency(lastPoint.value?.net ?? 0, __props.currency)), 5)
             ])
           ]),
-          _createElementVNode("p", _hoisted_23, " Range: " + _toDisplayString(firstPoint.value?.label ?? "-") + " -> " + _toDisplayString(lastPoint.value?.label ?? "-"), 1)
+          _createElementVNode("p", _hoisted_20, " Range: " + _toDisplayString(firstPoint.value?.label ?? "-") + " -> " + _toDisplayString(lastPoint.value?.label ?? "-"), 1)
         ]))
       ]);
     };

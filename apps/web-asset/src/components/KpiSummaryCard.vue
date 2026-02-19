@@ -16,6 +16,7 @@ const props = withDefaults(
     asOf?: string;
     title?: string;
     subtitle?: string;
+    maskAmounts?: boolean;
   }>(),
   {
     grossReturnPct: null,
@@ -23,6 +24,7 @@ const props = withDefaults(
     asOf: "",
     title: "KPI Summary",
     subtitle: "",
+    maskAmounts: false,
   },
 );
 
@@ -71,29 +73,55 @@ function toneClass(value: NullableNumber): string {
       <div class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
         <p class="font-semibold text-slate-800 dark:text-slate-100">
           Gross:
-          {{ formatCurrency(grossAssetsTotal, currency) }}
-          <span :class="toneClass(grossReturnPct)">({{ formatSignedPercent(grossReturnPct) }}, {{ formatSignedCurrency(grossProfitTotal, currency) }})</span>
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            {{ formatCurrency(grossAssetsTotal, currency) }}
+          </span>
+          <span :class="toneClass(grossReturnPct)">
+            (
+            {{ formatSignedPercent(grossReturnPct) }},
+            <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+              {{ formatSignedCurrency(grossProfitTotal, currency) }}
+            </span>
+            )
+          </span>
         </p>
         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          vs invested principal ({{ formatCurrency(investedPrincipalTotal, currency) }})
+          vs invested principal
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            ({{ formatCurrency(investedPrincipalTotal, currency) }})
+          </span>
         </p>
       </div>
 
       <div class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
         <p class="font-semibold text-slate-800 dark:text-slate-100">
           Liabilities:
-          {{ formatCurrency(liabilitiesTotal, currency) }}
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            {{ formatCurrency(liabilitiesTotal, currency) }}
+          </span>
         </p>
       </div>
 
       <div class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
         <p class="font-semibold text-slate-800 dark:text-slate-100">
           Net:
-          {{ formatCurrency(netAssetsTotal, currency) }}
-          <span :class="toneClass(netReturnPct)">({{ formatSignedPercent(netReturnPct) }}, {{ formatSignedCurrency(netProfitTotal, currency) }})</span>
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            {{ formatCurrency(netAssetsTotal, currency) }}
+          </span>
+          <span :class="toneClass(netReturnPct)">
+            (
+            {{ formatSignedPercent(netReturnPct) }},
+            <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+              {{ formatSignedCurrency(netProfitTotal, currency) }}
+            </span>
+            )
+          </span>
         </p>
         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          vs principal - debt ({{ formatCurrency(principalMinusDebtTotal, currency) }})
+          vs principal - debt
+          <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+            ({{ formatCurrency(principalMinusDebtTotal, currency) }})
+          </span>
         </p>
       </div>
     </div>
@@ -101,4 +129,3 @@ function toneClass(value: NullableNumber): string {
     <p v-if="asOf" class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">as_of: {{ asOf }}</p>
   </article>
 </template>
-
