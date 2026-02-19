@@ -16,6 +16,7 @@ function createRemotePage(loader: () => Promise<{ default: Component }>): Compon
 export const RemoteHomePage = createRemotePage(() => import("web_asset/HomePage"));
 export const RemoteDashboardPage = createRemotePage(() => import("web_asset/DashboardPage"));
 export const RemoteAgentPage = createRemotePage(() => import("web_asset/AgentPage"));
+export const RemoteTradePage = createRemotePage(() => import("web_asset/TradePage"));
 export const RemoteReportPage = createRemotePage(() => import("web_asset/ReportPage"));
 export const RemoteLabPage = createRemotePage(() => import("web_asset/LabPage"));
 export const RemoteHistoryPage = createRemotePage(() => import("web_asset/HistoryPage"));

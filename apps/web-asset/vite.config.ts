@@ -15,6 +15,7 @@ export default defineConfig({
         "./DashboardPage": "./src/pages/DashboardPage.vue",
         "./ReportPage": "./src/pages/ReportPage.vue",
         "./AgentPage": "./src/pages/AgentPage.vue",
+        "./TradePage": "./src/pages/TradePage.vue",
         "./LabPage": "./src/pages/LabPage.vue",
         "./HistoryPage": "./src/pages/HistoryPage.vue",
       },

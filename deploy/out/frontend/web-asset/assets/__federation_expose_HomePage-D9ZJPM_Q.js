@@ -107,17 +107,26 @@ const _hoisted_55 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-sl
 const _hoisted_56 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_57 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_58 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_59 = {
+const _hoisted_59 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_60 = {
+  key: 0,
+  class: "mt-4"
+};
+const _hoisted_61 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_60 = {
+const _hoisted_62 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_61 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_62 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_63 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_63 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_64 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_65 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_66 = {
+  key: 1,
+  class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
+};
 const {computed,nextTick,onMounted,ref,watch} = await importShared('vue');
 const LIVE_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
 const _sfc_main = /* @__PURE__ */ _defineComponent({
@@ -178,6 +187,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const releaseNoteItems = ref([]);
     const liveDashboardExpanded = ref(false);
     const reportPanelExpanded = ref(false);
+    const releaseNotesExpanded = ref(false);
     const exportingImage = ref(false);
     const liveDonutTarget = ref("GROSS");
     const liveDonutStartPosition = ref("TOP");
@@ -426,6 +436,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function toggleReportPanel() {
       reportPanelExpanded.value = !reportPanelExpanded.value;
     }
+    function toggleReleaseNotesPanel() {
+      releaseNotesExpanded.value = !releaseNotesExpanded.value;
+    }
     function printLiveDashboard() {
       window.print();
     }
@@ -507,6 +520,31 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         node.replaceChildren(canvas);
       });
     }
+    function applyAmountMaskForExport(documentRef) {
+      const maskedNodes = documentRef.querySelectorAll("[style*='blur(6px)']");
+      const calcMaskWidthCh = (text) => {
+        const compactLength = text.replace(/\s+/g, "").length;
+        if (compactLength <= 0) return 6;
+        return Math.max(6, Math.min(24, Math.round(compactLength * 0.65)));
+      };
+      maskedNodes.forEach((node) => {
+        const original = node.textContent ?? "";
+        const maskWidth = calcMaskWidthCh(original);
+        const maskBlock = documentRef.createElement("span");
+        maskBlock.style.display = "inline-block";
+        maskBlock.style.width = `${maskWidth}ch`;
+        maskBlock.style.height = "1em";
+        maskBlock.style.verticalAlign = "middle";
+        maskBlock.style.borderRadius = "0.35em";
+        maskBlock.style.background = "linear-gradient(180deg, rgba(148,163,184,0.62), rgba(100,116,139,0.58))";
+        maskBlock.style.boxShadow = "inset 0 0 0 1px rgba(15,23,42,0.22), 0 1px 6px rgba(15,23,42,0.22)";
+        maskBlock.style.filter = "blur(0.35px)";
+        maskBlock.setAttribute("aria-hidden", "true");
+        node.replaceChildren(maskBlock);
+        node.style.filter = "none";
+        node.style.webkitFilter = "none";
+      });
+    }
     async function ensureHtml2Canvas() {
       if (window.html2canvas) {
         return window.html2canvas;
@@ -549,18 +587,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           windowWidth: Math.max(document.documentElement.clientWidth, Math.ceil(rect.width)),
           windowHeight: Math.max(document.documentElement.clientHeight, Math.ceil(rect.height))
         };
+        const onClone = (clonedDocument) => {
+          drawDonutForExport(clonedDocument);
+          if (liveMaskAmounts.value) {
+            applyAmountMaskForExport(clonedDocument);
+          }
+        };
         let canvas;
         try {
           canvas = await html2canvas(target, {
             ...baseOptions,
             foreignObjectRendering: false,
-            onclone: drawDonutForExport
+            onclone: onClone
           });
         } catch {
           canvas = await html2canvas(target, {
             ...baseOptions,
             foreignObjectRendering: true,
-            onclone: drawDonutForExport
+            onclone: onClone
           });
         }
         if (isCanvasBlank(canvas)) {
@@ -966,22 +1010,35 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           ])
         ]),
         _createElementVNode("article", _hoisted_58, [
-          _cache[25] || (_cache[25] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
-            _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
-            _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
-          ], -1)),
-          releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_59, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_60, [
-            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
-              return _openBlock(), _createElementBlock("li", {
-                key: note.id,
-                class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-              }, [
-                _createElementVNode("p", _hoisted_61, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                _createElementVNode("p", _hoisted_62, _toDisplayString(note.title), 1),
-                _createElementVNode("p", _hoisted_63, _toDisplayString(note.summary), 1)
-              ]);
-            }), 128))
-          ]))
+          _createElementVNode("div", _hoisted_59, [
+            _cache[25] || (_cache[25] = _createElementVNode("div", null, [
+              _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
+              _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
+            ], -1)),
+            _createElementVNode("button", {
+              type: "button",
+              class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+              onClick: toggleReleaseNotesPanel
+            }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
+          ]),
+          releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
+            releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_61, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_62, [
+              (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
+                return _openBlock(), _createElementBlock("li", {
+                  key: note.id,
+                  class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                }, [
+                  _createElementVNode("p", _hoisted_63, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                  _createElementVNode("p", _hoisted_64, _toDisplayString(note.title), 1),
+                  _createElementVNode("p", _hoisted_65, _toDisplayString(note.summary), 1)
+                ]);
+              }), 128))
+            ]))
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_66, [..._cache[26] || (_cache[26] = [
+            _createTextVNode(" Collapsed. Click ", -1),
+            _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
+            _createTextVNode(" to view release notes. ", -1)
+          ])]))
         ])
       ]);
     };

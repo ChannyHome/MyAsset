@@ -119,6 +119,7 @@ const portfolios = ref<PortfolioTableRowOut[]>([]);
 const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
 const liveDashboardExpanded = ref(false);
 const reportPanelExpanded = ref(false);
+const releaseNotesExpanded = ref(false);
 const exportingImage = ref(false);
 const liveDonutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
@@ -402,6 +403,10 @@ function toggleReportPanel() {
   reportPanelExpanded.value = !reportPanelExpanded.value;
 }
 
+function toggleReleaseNotesPanel() {
+  releaseNotesExpanded.value = !releaseNotesExpanded.value;
+}
+
 function printLiveDashboard() {
   window.print();
 }
@@ -493,6 +498,35 @@ function drawDonutForExport(documentRef: Document): void {
   });
 }
 
+function applyAmountMaskForExport(documentRef: Document): void {
+  const maskedNodes = documentRef.querySelectorAll<HTMLElement>("[style*='blur(6px)']");
+
+  const calcMaskWidthCh = (text: string): number => {
+    const compactLength = text.replace(/\s+/g, "").length;
+    if (compactLength <= 0) return 6;
+    return Math.max(6, Math.min(24, Math.round(compactLength * 0.65)));
+  };
+
+  maskedNodes.forEach((node) => {
+    const original = node.textContent ?? "";
+    const maskWidth = calcMaskWidthCh(original);
+    const maskBlock = documentRef.createElement("span");
+    maskBlock.style.display = "inline-block";
+    maskBlock.style.width = `${maskWidth}ch`;
+    maskBlock.style.height = "1em";
+    maskBlock.style.verticalAlign = "middle";
+    maskBlock.style.borderRadius = "0.35em";
+    maskBlock.style.background = "linear-gradient(180deg, rgba(148,163,184,0.62), rgba(100,116,139,0.58))";
+    maskBlock.style.boxShadow = "inset 0 0 0 1px rgba(15,23,42,0.22), 0 1px 6px rgba(15,23,42,0.22)";
+    maskBlock.style.filter = "blur(0.35px)";
+    maskBlock.setAttribute("aria-hidden", "true");
+
+    node.replaceChildren(maskBlock);
+    node.style.filter = "none";
+    node.style.webkitFilter = "none";
+  });
+}
+
 async function ensureHtml2Canvas(): Promise<Html2CanvasFn> {
   if (window.html2canvas) {
     return window.html2canvas;
@@ -538,18 +572,25 @@ async function exportLiveDashboardImage() {
       windowHeight: Math.max(document.documentElement.clientHeight, Math.ceil(rect.height)),
     };
 
+    const onClone = (clonedDocument: Document) => {
+      drawDonutForExport(clonedDocument);
+      if (liveMaskAmounts.value) {
+        applyAmountMaskForExport(clonedDocument);
+      }
+    };
+
     let canvas: HTMLCanvasElement;
     try {
       canvas = await html2canvas(target, {
         ...baseOptions,
         foreignObjectRendering: false,
-        onclone: drawDonutForExport,
+        onclone: onClone,
       });
     } catch {
       canvas = await html2canvas(target, {
         ...baseOptions,
         foreignObjectRendering: true,
-        onclone: drawDonutForExport,
+        onclone: onClone,
       });
     }
 
@@ -1033,27 +1074,43 @@ watch(
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes</h2>
-        <span class="text-xs text-slate-500 dark:text-slate-400">Latest first</span>
-      </div>
-      <div
-        v-if="releaseNoteItems.length === 0"
-        class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
-      >
-        No release notes yet.
-      </div>
-      <ul v-else class="space-y-2">
-        <li
-          v-for="note in releaseNoteItems"
-          :key="note.id"
-          class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Latest first</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="toggleReleaseNotesPanel"
         >
-          <p class="text-xs text-slate-500 dark:text-slate-400">{{ formatDateTime(note.releasedAt) }}</p>
-          <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ note.title }}</p>
-          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ note.summary }}</p>
-        </li>
-      </ul>
+          {{ releaseNotesExpanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
+
+      <div v-if="releaseNotesExpanded" class="mt-4">
+        <div
+          v-if="releaseNoteItems.length === 0"
+          class="rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+        >
+          No release notes yet.
+        </div>
+        <ul v-else class="space-y-2">
+          <li
+            v-for="note in releaseNoteItems"
+            :key="note.id"
+            class="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+          >
+            <p class="text-xs text-slate-500 dark:text-slate-400">{{ formatDateTime(note.releasedAt) }}</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{{ note.title }}</p>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">{{ note.summary }}</p>
+          </li>
+        </ul>
+      </div>
+
+      <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+        Collapsed. Click <span class="font-semibold">Expand</span> to view release notes.
+      </p>
     </article>
   </section>
 </template>

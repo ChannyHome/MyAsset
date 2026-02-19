@@ -8,6 +8,7 @@ import {
   Home,
   History as HistoryIcon,
   LayoutDashboard,
+  ArrowLeftRight,
   LogOut,
   Menu,
   MessageCircle,
@@ -33,12 +34,13 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/trade", label: "Trade", icon: ArrowLeftRight },
   { to: "/agent", label: "Agent", icon: Bot },
   { to: "/report", label: "Report", icon: ChartColumn },
   { to: "/history", label: "History", icon: HistoryIcon, minRole: "MAINTAINER" },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/budget", label: "Budget", icon: Wallet },
-  { to: "/lab", label: "Lab", icon: FlaskConical },
+  { to: "/lab", label: "Lab", icon: FlaskConical, minRole: "MAINTAINER" },
 ];
 
 const route = useRoute();

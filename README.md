@@ -143,6 +143,33 @@
   - `-KillPortOwner` option: if target port is occupied, kill existing process then start
   - `RunAsset` now uses watch mode (`vite build --watch + vite preview`) for faster remote refresh
 
+### Step 17 (done): Trade menu + manual ledger sync
+- Added DB table:
+  - `transactions` (trade/cashflow ledger)
+  - migration: `029_trade_ledger`
+- Added trade auto-apply flags:
+  - `auto_apply_cash_holding` (default ON)
+  - `auto_apply_portfolio_cashflow` (default ON for DEPOSIT/WITHDRAW)
+  - migration: `030_trade_auto_apply_flags`
+- Added APIs:
+  - `GET /api/v1/trades`
+  - `POST /api/v1/trades`
+  - `PATCH /api/v1/trades/{id}`
+  - `POST /api/v1/trades/{id}/void`
+  - `POST /api/v1/trades/rebuild`
+- Sync behavior:
+  - BUY/SELL sync holding qty/avg/invested (moving average)
+  - DEPOSIT/WITHDRAW sync portfolio principal (cumulative deposit/withdraw)
+  - Optional auto cash-holding sync by portfolio+currency for BUY/SELL/DEPOSIT/WITHDRAW/DIVIDEND/FEE/ADJUSTMENT
+- Frontend:
+  - New LNB menu + page: `/trade`
+  - Manual create/edit/void/rebuild trade journal UI
+  - Filtered journal table with server-side pagination
+- Role policy:
+  - `Trade`: USER/SUPERUSER/MAINTAINER/ADMIN
+  - `Lab`: MAINTAINER/ADMIN only
+  - `Guest`: blocked from real-data trade endpoints (403)
+
 ## MySQL first decision
 - DB name: `myasset`
 - Use Alembic as source of truth.
@@ -224,6 +251,23 @@ Each wrapper calls `run.ps1` with `-KillPortOwner` enabled.
 5. 데스크탑에서 LNB 접기/펼치기 확인
 6. Light/Dark 전환 후 새로고침해도 유지되는지 확인
 7. `apps/web-asset`를 끄면 Host에서 remote fallback 메시지 노출되는지 확인
+
+## Trade stage test checklist
+1. `apps/api`에서 마이그레이션 적용:
+```powershell
+cd apps/api
+.\.venv\Scripts\alembic.exe upgrade head
+```
+2. `/trade` 진입 후 `DEPOSIT` 거래 생성
+  - `auto_apply_cash_holding=ON`, `auto_apply_portfolio_cashflow=ON`
+3. 같은 포트폴리오에서 `BUY` 거래 생성
+  - `auto_apply_cash_holding=ON`, `auto_apply_portfolio_cashflow=OFF`
+4. 기대결과
+  - `portfolios.cumulative_deposit_amount` 증가
+  - 대상 통화 CASH holding 자동 증감
+  - 매수한 자산 holding 수량/평단/투입원금 자동 반영
+5. `VOID` 동작 확인
+  - 거래 취소 후 holdings/portfolio 수치가 역반영되는지 확인
 
 ## Frontend troubleshooting
 - `Remote 모듈 연결에 실패했습니다`가 보이면:
