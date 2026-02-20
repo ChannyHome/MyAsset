@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AxiosError } from "axios";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
 import { getAssets, type AssetOut } from "../api/assets";
 import { getLiabilities, type LiabilityOut } from "../api/liabilities";
@@ -17,6 +17,7 @@ import {
   type TransactionStatus,
   type TransactionType,
 } from "../api/trades";
+import { formatDateTimeSeoul, seoulDateToUtcNaiveIso } from "../utils/datetime";
 
 const loading = ref(false);
 const saving = ref(false);
@@ -36,6 +37,10 @@ const transferCollapsed = ref(false);
 const entryCollapsed = ref(false);
 const journalCollapsed = ref(false);
 const TRADE_COLLAPSE_STORAGE_KEY = "myasset:trade:collapse-state";
+const AUTO_SEARCH_DEBOUNCE_MS = 450;
+let journalSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const journalAutoSearchPending = ref(false);
+const suspendJournalAutoSearch = ref(false);
 
 const portfolios = ref<PortfolioOut[]>([]);
 const assets = ref<AssetOut[]>([]);
@@ -50,6 +55,7 @@ const tradeTypes: TransactionType[] = [
   "ADJUSTMENT",
   "LOAN_BORROW",
   "LOAN_REPAY",
+  "LOAN_INTEREST",
 ];
 const statusOptions: TransactionStatus[] = ["POSTED", "VOID"];
 const rebuildHintLines = [
@@ -98,7 +104,9 @@ const filters = reactive({
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 const isBuySell = computed(() => form.txn_type === "BUY" || form.txn_type === "SELL");
-const isLoanTxn = computed(() => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY");
+const isLoanTxn = computed(
+  () => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY" || form.txn_type === "LOAN_INTEREST",
+);
 const canSelectAsset = computed(() => isBuySell.value || form.txn_type === "DIVIDEND");
 const selectableLoanLiabilities = computed(() => {
   const selectedPortfolioId = toOptionalNumber(form.portfolio_id);
@@ -124,10 +132,7 @@ function toOptionalNumber(value: string): number | undefined {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 function formatNumber(value: string | number | null | undefined, digits = 2): string {
@@ -378,8 +383,8 @@ async function loadTrades() {
       txn_type: filters.txn_type || undefined,
       txn_group: quickGroup.value === "ALL" ? undefined : quickGroup.value,
       status: filters.status || undefined,
-      from: filters.from || undefined,
-      to: filters.to || undefined,
+      from: seoulDateToUtcNaiveIso(filters.from, false),
+      to: seoulDateToUtcNaiveIso(filters.to, true),
       sort_by: sortBy.value,
       sort_order: sortOrder.value,
     });
@@ -402,7 +407,7 @@ async function submit() {
     return;
   }
   if (isLoanTxn.value && !form.liability_id) {
-    errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY.";
+    errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST.";
     return;
   }
   if (!window.confirm(editingId.value ? "Update this trade?" : "Create this trade?")) return;
@@ -460,28 +465,74 @@ async function onRebuild() {
 }
 
 async function applyFilters() {
-  page.value = 1;
-  await loadTrades();
+  suspendJournalAutoSearch.value = true;
+  try {
+    clearJournalSearchDebounce();
+    page.value = 1;
+    await loadTrades();
+  } finally {
+    suspendJournalAutoSearch.value = false;
+  }
 }
 
 async function resetFilters() {
-  filters.q = "";
-  filters.portfolio_id = "";
-  filters.asset_id = "";
-  filters.liability_id = "";
-  filters.txn_type = "";
-  filters.status = "";
-  filters.from = "";
-  filters.to = "";
-  quickGroup.value = "ALL";
-  page.value = 1;
-  await loadTrades();
+  suspendJournalAutoSearch.value = true;
+  try {
+    clearJournalSearchDebounce();
+    filters.q = "";
+    filters.portfolio_id = "";
+    filters.asset_id = "";
+    filters.liability_id = "";
+    filters.txn_type = "";
+    filters.status = "";
+    filters.from = "";
+    filters.to = "";
+    quickGroup.value = "ALL";
+    page.value = 1;
+    await loadTrades();
+  } finally {
+    suspendJournalAutoSearch.value = false;
+  }
 }
 
 async function setQuickGroup(next: "ALL" | "LOAN" | "CASHFLOW" | "BUYSELL") {
-  quickGroup.value = next;
-  page.value = 1;
-  await loadTrades();
+  suspendJournalAutoSearch.value = true;
+  try {
+    clearJournalSearchDebounce();
+    quickGroup.value = next;
+    page.value = 1;
+    await loadTrades();
+  } finally {
+    suspendJournalAutoSearch.value = false;
+  }
+}
+
+function clearJournalSearchDebounce(): void {
+  if (!journalSearchDebounceTimer) return;
+  clearTimeout(journalSearchDebounceTimer);
+  journalSearchDebounceTimer = null;
+  journalAutoSearchPending.value = false;
+}
+
+async function applyJournalFiltersDebounced(): Promise<void> {
+  try {
+    if (page.value !== 1) {
+      page.value = 1;
+      return;
+    }
+    await loadTrades();
+  } finally {
+    journalAutoSearchPending.value = false;
+  }
+}
+
+function queueJournalSearch(): void {
+  clearJournalSearchDebounce();
+  journalAutoSearchPending.value = true;
+  journalSearchDebounceTimer = setTimeout(() => {
+    journalSearchDebounceTimer = null;
+    void applyJournalFiltersDebounced();
+  }, AUTO_SEARCH_DEBOUNCE_MS);
 }
 
 watch(
@@ -491,7 +542,7 @@ watch(
       form.asset_id = "";
       form.liability_id = "";
       form.auto_apply_portfolio_cashflow = true;
-    } else if (next === "LOAN_BORROW" || next === "LOAN_REPAY") {
+    } else if (next === "LOAN_BORROW" || next === "LOAN_REPAY" || next === "LOAN_INTEREST") {
       form.asset_id = "";
       form.auto_apply_portfolio_cashflow = false;
     } else {
@@ -502,6 +553,22 @@ watch(
 );
 
 watch([page, pageSize], () => void loadTrades());
+watch(
+  [
+    () => filters.q,
+    () => filters.portfolio_id,
+    () => filters.asset_id,
+    () => filters.liability_id,
+    () => filters.txn_type,
+    () => filters.status,
+    () => filters.from,
+    () => filters.to,
+  ],
+  () => {
+    if (suspendJournalAutoSearch.value) return;
+    queueJournalSearch();
+  },
+);
 watch(
   [() => form.portfolio_id, selectableLoanLiabilities],
   () => {
@@ -528,6 +595,11 @@ onMounted(async () => {
   resetForm();
   resetTransferForm();
   await loadTrades();
+  journalAutoSearchPending.value = false;
+});
+
+onBeforeUnmount(() => {
+  clearJournalSearchDebounce();
 });
 </script>
 
@@ -844,8 +916,8 @@ onMounted(async () => {
             <option value="">ALL STATUS</option>
             <option v-for="status in statusOptions" :key="status" :value="status">{{ status }}</option>
           </select>
-          <input v-model="filters.from" type="datetime-local" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-          <input v-model="filters.to" type="datetime-local" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="filters.from" type="date" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          <input v-model="filters.to" type="date" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
         </div>
         <div class="flex items-center gap-2">
           <button type="button" class="rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500" @click="applyFilters">
@@ -858,6 +930,13 @@ onMounted(async () => {
           >
             Reset
           </button>
+          <span
+            v-if="journalAutoSearchPending"
+            class="inline-flex items-center gap-1 rounded-md border border-cyan-400/60 bg-cyan-50 px-2 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-700 dark:bg-cyan-900/25 dark:text-cyan-300"
+          >
+            <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-500 dark:bg-cyan-400"></span>
+            Searching while typing...
+          </span>
         </div>
 
         <div class="overflow-x-auto">

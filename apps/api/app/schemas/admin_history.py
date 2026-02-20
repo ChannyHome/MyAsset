@@ -1,6 +1,18 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
+
+from app.schemas.asset import SortOrder
+
+
+class AdminHistorySortBy(str, Enum):
+    TIMESTAMP = "timestamp"
+    USER_ID = "user_id"
+    METHOD = "method"
+    PATH = "path"
+    STATUS_CODE = "status_code"
+    DURATION_MS = "duration_ms"
 
 
 class AdminHistoryItemOut(BaseModel):
@@ -31,3 +43,5 @@ class AdminHistoryPageOut(BaseModel):
     total: int
     page: int
     page_size: int
+    sort_by: AdminHistorySortBy
+    sort_order: SortOrder

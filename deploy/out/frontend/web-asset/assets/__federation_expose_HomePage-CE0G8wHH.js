@@ -1,10 +1,12 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-BgFJ5pUC.js';
-import { _ as _sfc_main$6 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CDhJ1sK1.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1, g as getLiabilitiesTable, a as getPortfoliosTable } from './useDisplayCurrency-BOX_gs28.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-BEy7luee.js';
-import { g as getHoldingsPerformance } from './holdings-PVaHh3Rj.js';
-import { g as getReleaseNotes } from './releaseNotes-g83SEybF.js';
+import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
+import { _ as _sfc_main$6 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-ieuH0L9s.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-CQ1BICp7.js';
+import { g as getHoldingsPerformance } from './holdings-BJ36ZSvf.js';
+import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-Dk-CPOVT.js';
+import { g as getReleaseNotes } from './releaseNotes-d3Ur1oXa.js';
+import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -169,14 +171,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
     }
     function formatDateTime(value) {
-      if (!value) {
-        return "-";
-      }
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) {
-        return value;
-      }
-      return dt.toLocaleString("ko-KR");
+      return formatDateTimeSeoul(value);
     }
     const loading = ref(false);
     const errorMessage = ref("");
@@ -206,7 +201,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
     const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
     const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
-    const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+    const principalMinusDebtTotal = computed(
+      () => toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total)
+    );
     const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
     const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
     const principalProfitTotal = computed(() => toNumber(summary.value?.principal_profit_total ?? grossAssetsTotal.value - investedPrincipalTotal.value));
@@ -308,7 +305,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       () => toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total))
     );
     const kpiNetProfitTotal = computed(
-      () => toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total))
+      () => toNumber(
+        summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total)
+      )
     );
     const topHoldings = computed(
       () => [...holdings.value].sort((a, b) => toNumber(b.evaluated_amount) - toNumber(a.evaluated_amount)).slice(0, 6)
@@ -895,7 +894,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               "mask-amounts": liveMaskAmounts.value
             }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
             _createElementVNode("article", _hoisted_30, [
-              _cache[19] || (_cache[19] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+              _cache[20] || (_cache[20] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                 _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
               ], -1)),
@@ -915,23 +914,30 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                     ]),
                     _createElementVNode("div", _hoisted_36, [
+                      _cache[16] || (_cache[16] = _createTextVNode(" Gross ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[16] || (_cache[16] = _createTextVNode(" / ", -1)),
+                      _cache[17] || (_cache[17] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatCurrency(toNumber(item.cumulative_deposit_amount), item.base_currency || summaryDisplayCurrency.value)), 5)
+                      }, _toDisplayString(formatCurrency(
+                        toNumber(item.debt_adjusted_principal_total ?? item.principal_minus_debt_total),
+                        item.base_currency || summaryDisplayCurrency.value
+                      )), 5)
                     ]),
                     _createElementVNode("div", _hoisted_37, [
-                      _cache[17] || (_cache[17] = _createTextVNode(" Net ", -1)),
+                      _cache[18] || (_cache[18] = _createTextVNode(" Net ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[18] || (_cache[18] = _createTextVNode(" · PnL ", -1)),
+                      _cache[19] || (_cache[19] = _createTextVNode(" · Portfolio Profit ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatSignedCurrency(toNumber(item.total_pnl_amount), item.base_currency || summaryDisplayCurrency.value)), 5)
+                      }, _toDisplayString(formatSignedCurrency(
+                        toNumber(item.portfolio_profit_total ?? item.total_pnl_amount),
+                        item.base_currency || summaryDisplayCurrency.value
+                      )), 5)
                     ])
                   ]);
                 }), 128))
@@ -939,7 +945,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             ]),
             _createElementVNode("div", _hoisted_38, [
               _createElementVNode("article", _hoisted_39, [
-                _cache[21] || (_cache[21] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                _cache[22] || (_cache[22] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                   _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                 ], -1)),
@@ -962,7 +968,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         _createElementVNode("span", {
                           style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                         }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
-                        _cache[20] || (_cache[20] = _createTextVNode(" / ", -1)),
+                        _cache[21] || (_cache[21] = _createTextVNode(" / ", -1)),
                         _createElementVNode("span", {
                           style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                         }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
@@ -972,7 +978,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]))
               ]),
               _createElementVNode("article", _hoisted_46, [
-                _cache[22] || (_cache[22] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                _cache[23] || (_cache[23] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                   _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                 ], -1)),
@@ -996,22 +1002,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]))
               ])
             ])
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_53, [..._cache[23] || (_cache[23] = [
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_53, [..._cache[24] || (_cache[24] = [
             _createTextVNode(" Collapsed. Click ", -1),
             _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
             _createTextVNode(" to preview report cards. ", -1)
           ])]))
         ]),
         _createElementVNode("article", _hoisted_54, [
-          _cache[24] || (_cache[24] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
+          _cache[25] || (_cache[25] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
           _createElementVNode("ul", _hoisted_55, [
             _createElementVNode("li", _hoisted_56, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
-            _createElementVNode("li", _hoisted_57, " Best PnL assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
+            _createElementVNode("li", _hoisted_57, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
           ])
         ]),
         _createElementVNode("article", _hoisted_58, [
           _createElementVNode("div", _hoisted_59, [
-            _cache[25] || (_cache[25] = _createElementVNode("div", null, [
+            _cache[26] || (_cache[26] = _createElementVNode("div", null, [
               _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
             ], -1)),
@@ -1034,7 +1040,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]);
               }), 128))
             ]))
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_66, [..._cache[26] || (_cache[26] = [
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_66, [..._cache[27] || (_cache[27] = [
             _createTextVNode(" Collapsed. Click ", -1),
             _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
             _createTextVNode(" to view release notes. ", -1)

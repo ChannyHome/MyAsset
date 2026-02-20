@@ -464,7 +464,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ], 2)
             ]),
             _createElementVNode("p", _hoisted_14, [
-              _cache[6] || (_cache[6] = _createTextVNode(" vs principal - debt ", -1)),
+              _cache[6] || (_cache[6] = _createTextVNode(" vs debt-adjusted principal ", -1)),
               _createElementVNode("span", {
                 style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, " (" + _toDisplayString(formatCurrency(__props.principalMinusDebtTotal, __props.currency)) + ") ", 5)

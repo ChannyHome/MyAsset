@@ -26,6 +26,7 @@ class Transaction(Base):
             "ADJUSTMENT",
             "LOAN_BORROW",
             "LOAN_REPAY",
+            "LOAN_INTEREST",
             name="transaction_type",
         ),
         nullable=False,

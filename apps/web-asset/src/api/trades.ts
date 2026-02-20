@@ -10,7 +10,8 @@ export type TransactionType =
   | "FEE"
   | "ADJUSTMENT"
   | "LOAN_BORROW"
-  | "LOAN_REPAY";
+  | "LOAN_REPAY"
+  | "LOAN_INTEREST";
 export type TransactionStatus = "POSTED" | "VOID";
 
 export type TradeSortBy =

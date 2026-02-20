@@ -1,7 +1,9 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-BgFJ5pUC.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1, a as getPortfoliosTable, g as getLiabilitiesTable } from './useDisplayCurrency-BOX_gs28.js';
-import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CDhJ1sK1.js';
+import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
+import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-Dk-CPOVT.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
+import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-ieuH0L9s.js';
+import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -27,10 +29,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return Number.isFinite(num) ? num : 0;
     }
     function formatDateTime(value) {
-      if (!value) return "-";
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) return value;
-      return dt.toLocaleString("ko-KR");
+      return formatDateTimeSeoul(value);
     }
     const loading = ref(false);
     const errorMessage = ref("");
@@ -44,7 +43,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
     const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
     const investedPrincipalTotal = computed(() => toNumber(summary.value?.invested_principal_total));
-    const principalMinusDebtTotal = computed(() => toNumber(summary.value?.principal_minus_debt_total));
+    const principalMinusDebtTotal = computed(
+      () => toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total)
+    );
     const principalReturnPct = computed(() => toNumber(summary.value?.principal_return_pct ?? null));
     const netAssetsReturnPct = computed(() => toNumber(summary.value?.net_assets_return_pct ?? null));
     const principalProfitTotal = computed(

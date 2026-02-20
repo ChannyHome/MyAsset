@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from "vue";
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import {
   Bot,
   ChartColumn,
@@ -69,6 +69,21 @@ const isMaintainerOrAdmin = computed(
 const visibleMenuItems = computed(() =>
   menuItems.filter((item) => (item.minRole === "MAINTAINER" ? isMaintainerOrAdmin.value : true)),
 );
+const seoulNowText = ref("");
+let seoulClockTimer: ReturnType<typeof setInterval> | null = null;
+
+function updateSeoulNow(): void {
+  seoulNowText.value = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date());
+}
 
 function isDesktopViewport() {
   return window.matchMedia("(min-width: 768px)").matches;
@@ -109,6 +124,18 @@ function goSettings() {
   }
   router.push("/settings");
 }
+
+onMounted(() => {
+  updateSeoulNow();
+  seoulClockTimer = setInterval(updateSeoulNow, 1000);
+});
+
+onBeforeUnmount(() => {
+  if (seoulClockTimer) {
+    clearInterval(seoulClockTimer);
+    seoulClockTimer = null;
+  }
+});
 </script>
 
 <template>
@@ -125,17 +152,22 @@ function goSettings() {
         <Menu class="h-5 w-5" />
       </button>
       <p class="text-base font-semibold">{{ pageTitle }}</p>
-      <button
-        type="button"
-        class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-        @click="uiStore.toggleTheme()"
-      >
-        <span class="inline-flex items-center gap-1">
-          <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
-          <SunMedium v-else class="h-3.5 w-3.5" />
-          {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+      <div class="inline-flex items-center gap-2">
+        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+          Seoul {{ seoulNowText }}
         </span>
-      </button>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
+          @click="uiStore.toggleTheme()"
+        >
+          <span class="inline-flex items-center gap-1">
+            <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
+            <SunMedium v-else class="h-3.5 w-3.5" />
+            {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+          </span>
+        </button>
+      </div>
     </header>
 
     <button

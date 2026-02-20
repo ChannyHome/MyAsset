@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http, A as AxiosError } from './http-nYGPWehe.js';
+import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-BdCiN_Bj.js';
 
 async function getAdminHistory(params) {
   const { data } = await http.get("/admin/history", { params });
@@ -36,46 +36,61 @@ const _hoisted_20 = {
 const _hoisted_21 = { class: "rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_22 = { class: "overflow-x-auto" };
 const _hoisted_23 = { class: "min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" };
-const _hoisted_24 = { class: "divide-y divide-slate-100 dark:divide-slate-800" };
-const _hoisted_25 = { key: 0 };
-const _hoisted_26 = { class: "px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" };
-const _hoisted_27 = { class: "px-3 py-2 text-slate-700 dark:text-slate-200" };
-const _hoisted_28 = { class: "whitespace-nowrap" };
-const _hoisted_29 = { class: "mt-0.5 max-w-[16rem] truncate text-[11px] text-slate-500 dark:text-slate-400" };
-const _hoisted_30 = { class: "px-3 py-2 text-slate-700 dark:text-slate-200" };
-const _hoisted_31 = ["title"];
-const _hoisted_32 = { class: "px-3 py-2 whitespace-nowrap" };
-const _hoisted_33 = { class: "px-3 py-2 text-right whitespace-nowrap text-slate-700 dark:text-slate-200" };
-const _hoisted_34 = { class: "px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" };
-const _hoisted_35 = { class: "px-3 py-2 text-center" };
-const _hoisted_36 = ["onClick"];
-const _hoisted_37 = { class: "flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 text-xs dark:border-slate-800" };
-const _hoisted_38 = { class: "text-slate-500 dark:text-slate-400" };
-const _hoisted_39 = { class: "font-semibold text-slate-700 dark:text-slate-200" };
-const _hoisted_40 = { class: "inline-flex items-center gap-2" };
-const _hoisted_41 = ["disabled"];
-const _hoisted_42 = { class: "text-slate-600 dark:text-slate-300" };
-const _hoisted_43 = ["disabled"];
-const _hoisted_44 = { class: "w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_45 = { class: "flex items-start justify-between gap-3" };
-const _hoisted_46 = { class: "mt-2 text-lg font-bold text-slate-900 dark:text-slate-100" };
-const _hoisted_47 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_48 = { class: "mt-4 grid grid-cols-1 gap-3 text-xs md:grid-cols-2" };
-const _hoisted_49 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_50 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_51 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_52 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_53 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_54 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_55 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_56 = { class: "mt-1 break-all text-slate-600 dark:text-slate-300" };
-const _hoisted_57 = { class: "mt-1 break-all text-slate-500 dark:text-slate-400" };
-const _hoisted_58 = { class: "mt-3 grid grid-cols-1 gap-3 md:grid-cols-2" };
-const _hoisted_59 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_60 = { class: "mt-2 max-h-60 overflow-auto rounded bg-slate-900 p-3 text-[11px] text-slate-100" };
-const _hoisted_61 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
-const _hoisted_62 = { class: "mt-2 max-h-60 overflow-auto rounded bg-slate-900 p-3 text-[11px] text-slate-100" };
-const {computed,onMounted,reactive,ref,watch} = await importShared('vue');
+const _hoisted_24 = { class: "bg-slate-50 dark:bg-slate-800/80" };
+const _hoisted_25 = { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_26 = { class: "opacity-70" };
+const _hoisted_27 = { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_28 = { class: "opacity-70" };
+const _hoisted_29 = { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_30 = { class: "opacity-70" };
+const _hoisted_31 = { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_32 = { class: "opacity-70" };
+const _hoisted_33 = { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_34 = { class: "opacity-70" };
+const _hoisted_35 = { class: "px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300" };
+const _hoisted_36 = { class: "opacity-70" };
+const _hoisted_37 = { class: "divide-y divide-slate-100 dark:divide-slate-800" };
+const _hoisted_38 = { key: 0 };
+const _hoisted_39 = { class: "px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" };
+const _hoisted_40 = { class: "px-3 py-2 text-slate-700 dark:text-slate-200" };
+const _hoisted_41 = { class: "whitespace-nowrap" };
+const _hoisted_42 = { class: "mt-0.5 max-w-[16rem] truncate text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_43 = { class: "px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" };
+const _hoisted_44 = { class: "px-3 py-2 text-slate-700 dark:text-slate-200" };
+const _hoisted_45 = ["title"];
+const _hoisted_46 = { class: "px-3 py-2 whitespace-nowrap" };
+const _hoisted_47 = { class: "px-3 py-2 text-right whitespace-nowrap text-slate-700 dark:text-slate-200" };
+const _hoisted_48 = { class: "px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200" };
+const _hoisted_49 = { class: "px-3 py-2 text-center" };
+const _hoisted_50 = ["onClick"];
+const _hoisted_51 = { class: "flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 text-xs dark:border-slate-800" };
+const _hoisted_52 = { class: "text-slate-500 dark:text-slate-400" };
+const _hoisted_53 = { class: "font-semibold text-slate-700 dark:text-slate-200" };
+const _hoisted_54 = { class: "inline-flex items-center gap-2" };
+const _hoisted_55 = ["disabled"];
+const _hoisted_56 = { class: "text-slate-600 dark:text-slate-300" };
+const _hoisted_57 = ["disabled"];
+const _hoisted_58 = { class: "w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_59 = { class: "flex items-start justify-between gap-3" };
+const _hoisted_60 = { class: "mt-2 text-lg font-bold text-slate-900 dark:text-slate-100" };
+const _hoisted_61 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_62 = { class: "mt-4 grid grid-cols-1 gap-3 text-xs md:grid-cols-2" };
+const _hoisted_63 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_64 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_65 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_66 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_67 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_68 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_69 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_70 = { class: "mt-1 break-all text-slate-600 dark:text-slate-300" };
+const _hoisted_71 = { class: "mt-1 break-all text-slate-500 dark:text-slate-400" };
+const _hoisted_72 = { class: "mt-3 grid grid-cols-1 gap-3 md:grid-cols-2" };
+const _hoisted_73 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_74 = { class: "mt-2 max-h-60 overflow-auto rounded bg-slate-900 p-3 text-[11px] text-slate-100" };
+const _hoisted_75 = { class: "rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950" };
+const _hoisted_76 = { class: "mt-2 max-h-60 overflow-auto rounded bg-slate-900 p-3 text-[11px] text-slate-100" };
+const {computed,onBeforeUnmount,onMounted,reactive,ref,watch} = await importShared('vue');
+const AUTO_SEARCH_DEBOUNCE_MS = 450;
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "HistoryPage",
   setup(__props) {
@@ -98,12 +113,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     });
     const methodOptions = ["GET", "POST", "PUT", "PATCH", "DELETE"];
     const pageSizeOptions = [20, 50, 100];
+    const sortBy = ref("timestamp");
+    const sortOrder = ref("desc");
+    let filterDebounceTimer = null;
     const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pagination.pageSize)));
     const hasRows = computed(() => items.value.length > 0);
     function formatDateTime(value) {
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) return value;
-      return dt.toLocaleString("ko-KR");
+      return formatDateTimeSeoul(value);
     }
     function actorText(item) {
       if (!item.user_id) return "anonymous";
@@ -126,10 +142,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function buildQuery() {
       const params = {
         page: pagination.page,
-        page_size: pagination.pageSize
+        page_size: pagination.pageSize,
+        sort_by: sortBy.value,
+        sort_order: sortOrder.value
       };
-      if (filters.from.trim()) params.from = filters.from.trim();
-      if (filters.to.trim()) params.to = filters.to.trim();
+      const fromIso = seoulDateToUtcNaiveIso(filters.from, false);
+      const toIso = seoulDateToUtcNaiveIso(filters.to, true);
+      if (fromIso) params.from = fromIso;
+      if (toIso) params.to = toIso;
       if (filters.pathContains.trim()) params.path_contains = filters.pathContains.trim();
       if (filters.method) params.method = filters.method;
       if (filters.userId.trim()) {
@@ -145,6 +165,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         }
       }
       return params;
+    }
+    function toggleSort(next) {
+      if (sortBy.value === next) {
+        sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+      } else {
+        sortBy.value = next;
+        sortOrder.value = "desc";
+      }
+      pagination.page = 1;
+      void loadHistory();
+    }
+    function sortIndicator(next) {
+      if (sortBy.value !== next) return "";
+      return sortOrder.value === "asc" ? "▲" : "▼";
     }
     function parseApiError(error) {
       if (error instanceof AxiosError) {
@@ -171,10 +205,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
     }
     async function applyFilters() {
+      clearFilterDebounce();
       pagination.page = 1;
       await loadHistory();
     }
     async function resetFilters() {
+      clearFilterDebounce();
       filters.from = "";
       filters.to = "";
       filters.userId = "";
@@ -183,6 +219,18 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       filters.statusCode = "";
       pagination.page = 1;
       await loadHistory();
+    }
+    function clearFilterDebounce() {
+      if (!filterDebounceTimer) return;
+      clearTimeout(filterDebounceTimer);
+      filterDebounceTimer = null;
+    }
+    function queueFilterSearch() {
+      clearFilterDebounce();
+      filterDebounceTimer = setTimeout(async () => {
+        pagination.page = 1;
+        await loadHistory();
+      }, AUTO_SEARCH_DEBOUNCE_MS);
     }
     async function movePage(nextPage) {
       const clamped = Math.min(Math.max(1, nextPage), totalPages.value);
@@ -193,10 +241,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     watch(
       () => pagination.pageSize,
       async () => {
+        clearFilterDebounce();
         pagination.page = 1;
         await loadHistory();
       }
     );
+    watch(
+      () => filters.pathContains,
+      () => {
+        queueFilterSearch();
+      }
+    );
+    onBeforeUnmount(() => {
+      clearFilterDebounce();
+    });
     onMounted(async () => {
       await loadHistory();
     });
@@ -204,7 +262,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[11] || (_cache[11] = _createElementVNode("div", null, [
+            _cache[17] || (_cache[17] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300" }, "History"),
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "API Audit History"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " 사용자 액션, 엔드포인트 호출 결과, 마스킹된 요청/응답을 조회합니다. ")
@@ -220,27 +278,27 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         _createElementVNode("article", _hoisted_5, [
           _createElementVNode("div", _hoisted_6, [
             _createElementVNode("label", _hoisted_7, [
-              _cache[12] || (_cache[12] = _createTextVNode(" From ", -1)),
+              _cache[18] || (_cache[18] = _createTextVNode(" From ", -1)),
               _withDirectives(_createElementVNode("input", {
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => filters.from = $event),
-                type: "datetime-local",
+                type: "date",
                 class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, filters.from]
               ])
             ]),
             _createElementVNode("label", _hoisted_8, [
-              _cache[13] || (_cache[13] = _createTextVNode(" To ", -1)),
+              _cache[19] || (_cache[19] = _createTextVNode(" To ", -1)),
               _withDirectives(_createElementVNode("input", {
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => filters.to = $event),
-                type: "datetime-local",
+                type: "date",
                 class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, filters.to]
               ])
             ]),
             _createElementVNode("label", _hoisted_9, [
-              _cache[14] || (_cache[14] = _createTextVNode(" User ID ", -1)),
+              _cache[20] || (_cache[20] = _createTextVNode(" User ID ", -1)),
               _withDirectives(_createElementVNode("input", {
                 "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => filters.userId = $event),
                 type: "number",
@@ -252,12 +310,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ])
             ]),
             _createElementVNode("label", _hoisted_10, [
-              _cache[16] || (_cache[16] = _createTextVNode(" Method ", -1)),
+              _cache[22] || (_cache[22] = _createTextVNode(" Method ", -1)),
               _withDirectives(_createElementVNode("select", {
                 "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => filters.method = $event),
                 class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-950"
               }, [
-                _cache[15] || (_cache[15] = _createElementVNode("option", { value: "" }, "ALL", -1)),
+                _cache[21] || (_cache[21] = _createElementVNode("option", { value: "" }, "ALL", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(methodOptions, (method) => {
                   return _createElementVNode("option", {
                     key: method,
@@ -269,7 +327,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ])
             ]),
             _createElementVNode("label", _hoisted_12, [
-              _cache[17] || (_cache[17] = _createTextVNode(" Path Contains ", -1)),
+              _cache[23] || (_cache[23] = _createTextVNode(" Path Contains ", -1)),
               _withDirectives(_createElementVNode("input", {
                 "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => filters.pathContains = $event),
                 type: "text",
@@ -280,7 +338,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ])
             ]),
             _createElementVNode("label", _hoisted_13, [
-              _cache[18] || (_cache[18] = _createTextVNode(" Status Code ", -1)),
+              _cache[24] || (_cache[24] = _createTextVNode(" Status Code ", -1)),
               _withDirectives(_createElementVNode("input", {
                 "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => filters.statusCode = $event),
                 type: "number",
@@ -309,7 +367,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               }, " Reset ", 8, _hoisted_17)
             ]),
             _createElementVNode("label", _hoisted_18, [
-              _cache[19] || (_cache[19] = _createElementVNode("span", null, "Page Size", -1)),
+              _cache[25] || (_cache[25] = _createElementVNode("span", null, "Page Size", -1)),
               _withDirectives(_createElementVNode("select", {
                 "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => pagination.pageSize = $event),
                 class: "rounded-lg border border-slate-300 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -335,22 +393,77 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         _createElementVNode("article", _hoisted_21, [
           _createElementVNode("div", _hoisted_22, [
             _createElementVNode("table", _hoisted_23, [
-              _cache[21] || (_cache[21] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800/80" }, [
+              _createElementVNode("thead", _hoisted_24, [
                 _createElementVNode("tr", null, [
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Time"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Actor"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Action"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Endpoint"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Status"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300" }, "Latency"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "IP"),
-                  _createElementVNode("th", { class: "px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300" }, "Detail")
+                  _createElementVNode("th", _hoisted_25, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[7] || (_cache[7] = ($event) => toggleSort("timestamp"))
+                    }, [
+                      _cache[26] || (_cache[26] = _createTextVNode(" Time ", -1)),
+                      _createElementVNode("span", _hoisted_26, _toDisplayString(sortIndicator("timestamp")), 1)
+                    ])
+                  ]),
+                  _createElementVNode("th", _hoisted_27, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[8] || (_cache[8] = ($event) => toggleSort("user_id"))
+                    }, [
+                      _cache[27] || (_cache[27] = _createTextVNode(" Actor ", -1)),
+                      _createElementVNode("span", _hoisted_28, _toDisplayString(sortIndicator("user_id")), 1)
+                    ])
+                  ]),
+                  _createElementVNode("th", _hoisted_29, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[9] || (_cache[9] = ($event) => toggleSort("method"))
+                    }, [
+                      _cache[28] || (_cache[28] = _createTextVNode(" Method ", -1)),
+                      _createElementVNode("span", _hoisted_30, _toDisplayString(sortIndicator("method")), 1)
+                    ])
+                  ]),
+                  _cache[32] || (_cache[32] = _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "Action", -1)),
+                  _createElementVNode("th", _hoisted_31, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[10] || (_cache[10] = ($event) => toggleSort("path"))
+                    }, [
+                      _cache[29] || (_cache[29] = _createTextVNode(" Endpoint ", -1)),
+                      _createElementVNode("span", _hoisted_32, _toDisplayString(sortIndicator("path")), 1)
+                    ])
+                  ]),
+                  _createElementVNode("th", _hoisted_33, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[11] || (_cache[11] = ($event) => toggleSort("status_code"))
+                    }, [
+                      _cache[30] || (_cache[30] = _createTextVNode(" Status ", -1)),
+                      _createElementVNode("span", _hoisted_34, _toDisplayString(sortIndicator("status_code")), 1)
+                    ])
+                  ]),
+                  _createElementVNode("th", _hoisted_35, [
+                    _createElementVNode("button", {
+                      type: "button",
+                      class: "inline-flex items-center gap-1 hover:underline",
+                      onClick: _cache[12] || (_cache[12] = ($event) => toggleSort("duration_ms"))
+                    }, [
+                      _cache[31] || (_cache[31] = _createTextVNode(" Latency ", -1)),
+                      _createElementVNode("span", _hoisted_36, _toDisplayString(sortIndicator("duration_ms")), 1)
+                    ])
+                  ]),
+                  _cache[33] || (_cache[33] = _createElementVNode("th", { class: "px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300" }, "IP", -1)),
+                  _cache[34] || (_cache[34] = _createElementVNode("th", { class: "px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300" }, "Detail", -1))
                 ])
-              ], -1)),
-              _createElementVNode("tbody", _hoisted_24, [
-                !loading.value && !hasRows.value ? (_openBlock(), _createElementBlock("tr", _hoisted_25, [..._cache[20] || (_cache[20] = [
+              ]),
+              _createElementVNode("tbody", _hoisted_37, [
+                !loading.value && !hasRows.value ? (_openBlock(), _createElementBlock("tr", _hoisted_38, [..._cache[35] || (_cache[35] = [
                   _createElementVNode("td", {
-                    colspan: "8",
+                    colspan: "9",
                     class: "px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400"
                   }, " 조회 결과가 없습니다. ", -1)
                 ])])) : _createCommentVNode("", true),
@@ -359,102 +472,103 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     key: item.id,
                     class: "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                   }, [
-                    _createElementVNode("td", _hoisted_26, _toDisplayString(formatDateTime(item.timestamp)), 1),
-                    _createElementVNode("td", _hoisted_27, [
-                      _createElementVNode("p", _hoisted_28, _toDisplayString(actorText(item)), 1),
-                      _createElementVNode("p", _hoisted_29, _toDisplayString(item.actor_email || "-"), 1)
+                    _createElementVNode("td", _hoisted_39, _toDisplayString(formatDateTime(item.timestamp)), 1),
+                    _createElementVNode("td", _hoisted_40, [
+                      _createElementVNode("p", _hoisted_41, _toDisplayString(actorText(item)), 1),
+                      _createElementVNode("p", _hoisted_42, _toDisplayString(item.actor_email || "-"), 1)
                     ]),
-                    _createElementVNode("td", _hoisted_30, _toDisplayString(item.action_name || "-"), 1),
+                    _createElementVNode("td", _hoisted_43, _toDisplayString(item.method), 1),
+                    _createElementVNode("td", _hoisted_44, _toDisplayString(item.action_name || "-"), 1),
                     _createElementVNode("td", {
                       class: "px-3 py-2 max-w-[30rem] truncate text-slate-700 dark:text-slate-200",
                       title: endpointText(item)
-                    }, _toDisplayString(endpointText(item)), 9, _hoisted_31),
-                    _createElementVNode("td", _hoisted_32, [
+                    }, _toDisplayString(endpointText(item)), 9, _hoisted_45),
+                    _createElementVNode("td", _hoisted_46, [
                       _createElementVNode("span", {
                         class: _normalizeClass(["inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold", statusClass(item.status_code)])
                       }, _toDisplayString(item.status_code), 3)
                     ]),
-                    _createElementVNode("td", _hoisted_33, _toDisplayString(item.duration_ms) + " ms", 1),
-                    _createElementVNode("td", _hoisted_34, _toDisplayString(item.client_ip || "-"), 1),
-                    _createElementVNode("td", _hoisted_35, [
+                    _createElementVNode("td", _hoisted_47, _toDisplayString(item.duration_ms) + " ms", 1),
+                    _createElementVNode("td", _hoisted_48, _toDisplayString(item.client_ip || "-"), 1),
+                    _createElementVNode("td", _hoisted_49, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                         onClick: ($event) => selectedItem.value = item
-                      }, " View ", 8, _hoisted_36)
+                      }, " View ", 8, _hoisted_50)
                     ])
                   ]);
                 }), 128))
               ])
             ])
           ]),
-          _createElementVNode("div", _hoisted_37, [
-            _createElementVNode("p", _hoisted_38, [
-              _cache[22] || (_cache[22] = _createTextVNode(" total: ", -1)),
-              _createElementVNode("span", _hoisted_39, _toDisplayString(total.value), 1)
+          _createElementVNode("div", _hoisted_51, [
+            _createElementVNode("p", _hoisted_52, [
+              _cache[36] || (_cache[36] = _createTextVNode(" total: ", -1)),
+              _createElementVNode("span", _hoisted_53, _toDisplayString(total.value), 1)
             ]),
-            _createElementVNode("div", _hoisted_40, [
+            _createElementVNode("div", _hoisted_54, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-md border border-slate-300 px-2 py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 disabled: loading.value || pagination.page <= 1,
-                onClick: _cache[7] || (_cache[7] = ($event) => movePage(pagination.page - 1))
-              }, " Prev ", 8, _hoisted_41),
-              _createElementVNode("span", _hoisted_42, "page " + _toDisplayString(pagination.page) + " / " + _toDisplayString(totalPages.value), 1),
+                onClick: _cache[13] || (_cache[13] = ($event) => movePage(pagination.page - 1))
+              }, " Prev ", 8, _hoisted_55),
+              _createElementVNode("span", _hoisted_56, "page " + _toDisplayString(pagination.page) + " / " + _toDisplayString(totalPages.value), 1),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-md border border-slate-300 px-2 py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 disabled: loading.value || pagination.page >= totalPages.value,
-                onClick: _cache[8] || (_cache[8] = ($event) => movePage(pagination.page + 1))
-              }, " Next ", 8, _hoisted_43)
+                onClick: _cache[14] || (_cache[14] = ($event) => movePage(pagination.page + 1))
+              }, " Next ", 8, _hoisted_57)
             ])
           ])
         ]),
         selectedItem.value ? (_openBlock(), _createElementBlock("div", {
           key: 1,
           class: "fixed inset-0 z-50 flex items-end justify-center bg-slate-900/55 p-3 md:items-center",
-          onClick: _cache[10] || (_cache[10] = _withModifiers(($event) => selectedItem.value = null, ["self"]))
+          onClick: _cache[16] || (_cache[16] = _withModifiers(($event) => selectedItem.value = null, ["self"]))
         }, [
-          _createElementVNode("section", _hoisted_44, [
-            _createElementVNode("div", _hoisted_45, [
+          _createElementVNode("section", _hoisted_58, [
+            _createElementVNode("div", _hoisted_59, [
               _createElementVNode("div", null, [
-                _cache[23] || (_cache[23] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300" }, "History Detail", -1)),
-                _createElementVNode("h2", _hoisted_46, " #" + _toDisplayString(selectedItem.value.id) + " " + _toDisplayString(selectedItem.value.method) + " " + _toDisplayString(selectedItem.value.path), 1),
-                _createElementVNode("p", _hoisted_47, _toDisplayString(formatDateTime(selectedItem.value.timestamp)), 1)
+                _cache[37] || (_cache[37] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300" }, "History Detail", -1)),
+                _createElementVNode("h2", _hoisted_60, " #" + _toDisplayString(selectedItem.value.id) + " " + _toDisplayString(selectedItem.value.method) + " " + _toDisplayString(selectedItem.value.path), 1),
+                _createElementVNode("p", _hoisted_61, _toDisplayString(formatDateTime(selectedItem.value.timestamp)), 1)
               ]),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-                onClick: _cache[9] || (_cache[9] = ($event) => selectedItem.value = null)
+                onClick: _cache[15] || (_cache[15] = ($event) => selectedItem.value = null)
               }, " Close ")
             ]),
-            _createElementVNode("div", _hoisted_48, [
-              _createElementVNode("div", _hoisted_49, [
-                _cache[24] || (_cache[24] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Actor", -1)),
-                _createElementVNode("p", _hoisted_50, _toDisplayString(actorText(selectedItem.value)), 1)
+            _createElementVNode("div", _hoisted_62, [
+              _createElementVNode("div", _hoisted_63, [
+                _cache[38] || (_cache[38] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Actor", -1)),
+                _createElementVNode("p", _hoisted_64, _toDisplayString(actorText(selectedItem.value)), 1)
               ]),
-              _createElementVNode("div", _hoisted_51, [
-                _cache[25] || (_cache[25] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Result", -1)),
-                _createElementVNode("p", _hoisted_52, _toDisplayString(selectedItem.value.result || "-"), 1)
+              _createElementVNode("div", _hoisted_65, [
+                _cache[39] || (_cache[39] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Result", -1)),
+                _createElementVNode("p", _hoisted_66, _toDisplayString(selectedItem.value.result || "-"), 1)
               ]),
-              _createElementVNode("div", _hoisted_53, [
-                _cache[26] || (_cache[26] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Status / Latency", -1)),
-                _createElementVNode("p", _hoisted_54, _toDisplayString(selectedItem.value.status_code) + " / " + _toDisplayString(selectedItem.value.duration_ms) + " ms", 1)
+              _createElementVNode("div", _hoisted_67, [
+                _cache[40] || (_cache[40] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Status / Latency", -1)),
+                _createElementVNode("p", _hoisted_68, _toDisplayString(selectedItem.value.status_code) + " / " + _toDisplayString(selectedItem.value.duration_ms) + " ms", 1)
               ]),
-              _createElementVNode("div", _hoisted_55, [
-                _cache[27] || (_cache[27] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "IP / Agent", -1)),
-                _createElementVNode("p", _hoisted_56, _toDisplayString(selectedItem.value.client_ip || "-"), 1),
-                _createElementVNode("p", _hoisted_57, _toDisplayString(selectedItem.value.user_agent || "-"), 1)
+              _createElementVNode("div", _hoisted_69, [
+                _cache[41] || (_cache[41] = _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "IP / Agent", -1)),
+                _createElementVNode("p", _hoisted_70, _toDisplayString(selectedItem.value.client_ip || "-"), 1),
+                _createElementVNode("p", _hoisted_71, _toDisplayString(selectedItem.value.user_agent || "-"), 1)
               ])
             ]),
-            _createElementVNode("div", _hoisted_58, [
-              _createElementVNode("article", _hoisted_59, [
-                _cache[28] || (_cache[28] = _createElementVNode("h3", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300" }, "Request (masked)", -1)),
-                _createElementVNode("pre", _hoisted_60, _toDisplayString(selectedItem.value.request_body_masked || "-"), 1)
+            _createElementVNode("div", _hoisted_72, [
+              _createElementVNode("article", _hoisted_73, [
+                _cache[42] || (_cache[42] = _createElementVNode("h3", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300" }, "Request (masked)", -1)),
+                _createElementVNode("pre", _hoisted_74, _toDisplayString(selectedItem.value.request_body_masked || "-"), 1)
               ]),
-              _createElementVNode("article", _hoisted_61, [
-                _cache[29] || (_cache[29] = _createElementVNode("h3", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300" }, "Response (masked)", -1)),
-                _createElementVNode("pre", _hoisted_62, _toDisplayString(selectedItem.value.response_body_masked || "-"), 1)
+              _createElementVNode("article", _hoisted_75, [
+                _cache[43] || (_cache[43] = _createElementVNode("h3", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300" }, "Response (masked)", -1)),
+                _createElementVNode("pre", _hoisted_76, _toDisplayString(selectedItem.value.response_body_masked || "-"), 1)
               ])
             ])
           ])

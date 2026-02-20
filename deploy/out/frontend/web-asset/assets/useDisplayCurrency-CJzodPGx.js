@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http } from './http-nYGPWehe.js';
+import { h as http, p as parseApiUtcDate, f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
 
 async function updateQuotesNow() {
   const { data } = await http.post("/quotes/update-now");
@@ -76,10 +76,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const staleThresholdMs = computed$1(() => staleMinutes.value * 60 * 1e3);
     let staleTimer = null;
     function formatAsOf(value) {
-      if (!value) return "-";
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) return value;
-      return dt.toLocaleString("ko-KR");
+      return formatDateTimeSeoul(value);
     }
     function formatRate(value) {
       if (value == null) return "-";
@@ -110,7 +107,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     }
     const fxIsStale = computed$1(() => {
       if (!fxRate.value?.as_of) return false;
-      const asOfTs = new Date(fxRate.value.as_of).getTime();
+      const parsed = parseApiUtcDate(fxRate.value.as_of);
+      const asOfTs = parsed ? parsed.getTime() : Number.NaN;
       if (!Number.isFinite(asOfTs)) return false;
       return nowTs.value - asOfTs > staleThresholdMs.value;
     });
@@ -164,46 +162,6 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     };
   }
 });
-
-async function getLiabilities(params = {}) {
-  const { data } = await http.get("/liabilities", { params });
-  return data;
-}
-async function getLiabilitiesTable(params = {}) {
-  const { data } = await http.get("/liabilities/table", { params });
-  return data;
-}
-async function createLiability(payload) {
-  const { data } = await http.post("/liabilities", payload);
-  return data;
-}
-async function updateLiability(liabilityId, payload) {
-  const { data } = await http.patch(`/liabilities/${liabilityId}`, payload);
-  return data;
-}
-async function deleteLiability(liabilityId) {
-  await http.delete(`/liabilities/${liabilityId}`);
-}
-
-async function getPortfolios() {
-  const { data } = await http.get("/portfolios");
-  return data;
-}
-async function getPortfoliosTable(params = {}) {
-  const { data } = await http.get("/portfolios/table", { params });
-  return data;
-}
-async function createPortfolio(payload) {
-  const { data } = await http.post("/portfolios", payload);
-  return data;
-}
-async function updatePortfolio(portfolioId, payload) {
-  const { data } = await http.patch(`/portfolios/${portfolioId}`, payload);
-  return data;
-}
-async function deletePortfolio(portfolioId) {
-  await http.delete(`/portfolios/${portfolioId}`);
-}
 
 const {computed,ref} = await importShared('vue');
 const STORAGE_KEY = "myasset.display_currency.v1";
@@ -290,4 +248,4 @@ function useDisplayCurrency() {
   };
 }
 
-export { _sfc_main as _, getPortfoliosTable as a, getLiabilities as b, getPortfolios as c, createPortfolio as d, updatePortfolio as e, createLiability as f, getLiabilitiesTable as g, updateLiability as h, getLatestUsdKrwFxRate as i, getFxStaleMinutes as j, updateQuotesNow as k, upsertManualQuote as l, deletePortfolio as m, deleteLiability as n, getQuoteUpdateJobStatus as o, testQuoteForAsset as t, useDisplayCurrency as u };
+export { _sfc_main as _, getFxStaleMinutes as a, updateQuotesNow as b, upsertManualQuote as c, getQuoteUpdateJobStatus as d, getLatestUsdKrwFxRate as g, testQuoteForAsset as t, useDisplayCurrency as u };

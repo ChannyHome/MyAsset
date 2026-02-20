@@ -70,6 +70,7 @@ import {
   updateReleaseNote,
   type ReleaseNoteOut,
 } from "../api/releaseNotes";
+import { formatDateTimeSeoul, toDateTimeLocalSeoul } from "../utils/datetime";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
 type AssetModalMode = "CREATE" | "EDIT";
@@ -377,22 +378,11 @@ const assetMetaJsonPlaceholder = `예시 (부동산) :
 ${realEstateMetaJsonExample}`;
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 function formatDateTimeLocalInput(value: string | null | undefined): string {
-  if (!value) return "";
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return "";
-  const year = dt.getFullYear();
-  const month = String(dt.getMonth() + 1).padStart(2, "0");
-  const day = String(dt.getDate()).padStart(2, "0");
-  const hour = String(dt.getHours()).padStart(2, "0");
-  const minute = String(dt.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hour}:${minute}`;
+  return toDateTimeLocalSeoul(value);
 }
 
 function normalizeUpper(value: string): string {

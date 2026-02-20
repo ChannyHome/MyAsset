@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { getLatestUsdKrwFxRate, type FxRateLatestOut } from "../api/quotes";
 import { getFxStaleMinutes } from "../api/settings";
 import { type DisplayCurrency } from "../api/userSettings";
+import { formatDateTimeSeoul, parseApiUtcDate } from "../utils/datetime";
 
 const props = withDefaults(
   defineProps<{
@@ -34,10 +35,7 @@ const staleThresholdMs = computed(() => staleMinutes.value * 60 * 1000);
 let staleTimer: ReturnType<typeof setInterval> | null = null;
 
 function formatAsOf(value: string | null | undefined): string {
-  if (!value) return "-";
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 function formatRate(value: string | number | null | undefined): string {
@@ -73,7 +71,8 @@ async function loadStaleMinutes(): Promise<void> {
 
 const fxIsStale = computed(() => {
   if (!fxRate.value?.as_of) return false;
-  const asOfTs = new Date(fxRate.value.as_of).getTime();
+  const parsed = parseApiUtcDate(fxRate.value.as_of);
+  const asOfTs = parsed ? parsed.getTime() : Number.NaN;
   if (!Number.isFinite(asOfTs)) return false;
   return nowTs.value - asOfTs > staleThresholdMs.value;
 });

@@ -9,6 +9,7 @@ import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
+import { formatDateTimeSeoul } from "../utils/datetime";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -17,10 +18,7 @@ function toNumber(value: string | number | null | undefined): number {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 const loading = ref(false);

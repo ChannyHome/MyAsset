@@ -22,6 +22,7 @@ import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import type { DisplayCurrency } from "../api/userSettings";
 import type { ReleaseNoteItem } from "../data/releaseNotes";
+import { formatDateTimeSeoul } from "../utils/datetime";
 
 type AllocationUiItem = {
   key: string;
@@ -100,14 +101,7 @@ function formatPercent(value: number | null | undefined): string {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) {
-    return "-";
-  }
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) {
-    return value;
-  }
-  return dt.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 const loading = ref(false);

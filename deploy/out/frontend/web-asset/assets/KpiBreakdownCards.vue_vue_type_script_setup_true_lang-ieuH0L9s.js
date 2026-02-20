@@ -175,8 +175,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   _createElementVNode("tr", null, [
                     _createElementVNode("th", { class: "px-3 py-2" }, "Portfolio"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Current"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Principal"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Profit"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Invested Principal"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Portfolio Profit"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Return")
                   ])
                 ], -1)),
@@ -201,11 +201,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, _toDisplayString(formatCurrency(toNumber(row.cumulative_deposit_amount), row.base_currency || __props.displayCurrency)), 5)
                       ]),
                       _createElementVNode("td", {
-                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toNumber(row.total_pnl_amount))])
+                        class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount))])
                       }, [
                         _createElementVNode("span", {
                           style: _normalizeStyle(amountMaskStyle.value)
-                        }, _toDisplayString(formatSignedCurrency(toNumber(row.total_pnl_amount), row.base_currency || __props.displayCurrency)), 5)
+                        }, _toDisplayString(formatSignedCurrency(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount), row.base_currency || __props.displayCurrency)), 5)
                       ], 2),
                       _createElementVNode("td", {
                         class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toOptionalNumber(row.total_return_pct))])
@@ -289,7 +289,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             ], 2)
           ]),
           _createElementVNode("p", _hoisted_29, [
-            _cache[14] || (_cache[14] = _createTextVNode(" vs principal - debt ", -1)),
+            _cache[14] || (_cache[14] = _createTextVNode(" vs debt-adjusted principal ", -1)),
             _createElementVNode("span", {
               style: _normalizeStyle(amountMaskStyle.value)
             }, "(" + _toDisplayString(formatCurrency(__props.principalMinusDebtTotal, __props.displayCurrency)) + ")", 5)
@@ -302,8 +302,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   _createElementVNode("tr", null, [
                     _createElementVNode("th", { class: "px-3 py-2" }, "Portfolio"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Current"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Principal"),
-                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Profit"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Debt-Adjusted Principal"),
+                    _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Net Profit"),
                     _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Return")
                   ])
                 ], -1)),
@@ -325,7 +325,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       _createElementVNode("td", _hoisted_38, [
                         _createElementVNode("span", {
                           style: _normalizeStyle(amountMaskStyle.value)
-                        }, _toDisplayString(formatCurrency(toNumber(row.principal_minus_debt_total), row.base_currency || __props.displayCurrency)), 5)
+                        }, _toDisplayString(formatCurrency(toNumber(row.debt_adjusted_principal_total ?? row.principal_minus_debt_total), row.base_currency || __props.displayCurrency)), 5)
                       ]),
                       _createElementVNode("td", {
                         class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedValueClass(toNumber(row.net_assets_profit_total))])

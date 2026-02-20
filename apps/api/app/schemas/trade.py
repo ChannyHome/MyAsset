@@ -17,6 +17,7 @@ class TransactionType(str, Enum):
     ADJUSTMENT = "ADJUSTMENT"
     LOAN_BORROW = "LOAN_BORROW"
     LOAN_REPAY = "LOAN_REPAY"
+    LOAN_INTEREST = "LOAN_INTEREST"
 
 
 class TransactionStatus(str, Enum):

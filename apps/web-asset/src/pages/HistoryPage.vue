@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { AxiosError } from "axios";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
 import {
   getAdminHistory,
   type AdminHistoryItemOut,
   type AdminHistoryMethod,
   type AdminHistoryQuery,
+  type AdminHistorySortBy,
+  type SortOrder,
 } from "../api/adminHistory";
+import { formatDateTimeSeoul, seoulDateToUtcNaiveIso } from "../utils/datetime";
 
 const loading = ref(false);
 const errorMessage = ref("");
@@ -31,14 +34,16 @@ const pagination = reactive({
 
 const methodOptions: AdminHistoryMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 const pageSizeOptions = [20, 50, 100];
+const sortBy = ref<AdminHistorySortBy>("timestamp");
+const sortOrder = ref<SortOrder>("desc");
+const AUTO_SEARCH_DEBOUNCE_MS = 450;
+let filterDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pagination.pageSize)));
 const hasRows = computed(() => items.value.length > 0);
 
 function formatDateTime(value: string): string {
-  const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("ko-KR");
+  return formatDateTimeSeoul(value);
 }
 
 function actorText(item: AdminHistoryItemOut): string {
@@ -66,9 +71,13 @@ function buildQuery(): AdminHistoryQuery {
   const params: AdminHistoryQuery = {
     page: pagination.page,
     page_size: pagination.pageSize,
+    sort_by: sortBy.value,
+    sort_order: sortOrder.value,
   };
-  if (filters.from.trim()) params.from = filters.from.trim();
-  if (filters.to.trim()) params.to = filters.to.trim();
+  const fromIso = seoulDateToUtcNaiveIso(filters.from, false);
+  const toIso = seoulDateToUtcNaiveIso(filters.to, true);
+  if (fromIso) params.from = fromIso;
+  if (toIso) params.to = toIso;
   if (filters.pathContains.trim()) params.path_contains = filters.pathContains.trim();
   if (filters.method) params.method = filters.method;
 
@@ -85,6 +94,22 @@ function buildQuery(): AdminHistoryQuery {
     }
   }
   return params;
+}
+
+function toggleSort(next: AdminHistorySortBy): void {
+  if (sortBy.value === next) {
+    sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+  } else {
+    sortBy.value = next;
+    sortOrder.value = "desc";
+  }
+  pagination.page = 1;
+  void loadHistory();
+}
+
+function sortIndicator(next: AdminHistorySortBy): string {
+  if (sortBy.value !== next) return "";
+  return sortOrder.value === "asc" ? "▲" : "▼";
 }
 
 function parseApiError(error: unknown): string {
@@ -114,11 +139,13 @@ async function loadHistory(): Promise<void> {
 }
 
 async function applyFilters(): Promise<void> {
+  clearFilterDebounce();
   pagination.page = 1;
   await loadHistory();
 }
 
 async function resetFilters(): Promise<void> {
+  clearFilterDebounce();
   filters.from = "";
   filters.to = "";
   filters.userId = "";
@@ -127,6 +154,20 @@ async function resetFilters(): Promise<void> {
   filters.statusCode = "";
   pagination.page = 1;
   await loadHistory();
+}
+
+function clearFilterDebounce(): void {
+  if (!filterDebounceTimer) return;
+  clearTimeout(filterDebounceTimer);
+  filterDebounceTimer = null;
+}
+
+function queueFilterSearch(): void {
+  clearFilterDebounce();
+  filterDebounceTimer = setTimeout(async () => {
+    pagination.page = 1;
+    await loadHistory();
+  }, AUTO_SEARCH_DEBOUNCE_MS);
 }
 
 async function movePage(nextPage: number): Promise<void> {
@@ -139,10 +180,22 @@ async function movePage(nextPage: number): Promise<void> {
 watch(
   () => pagination.pageSize,
   async () => {
+    clearFilterDebounce();
     pagination.page = 1;
     await loadHistory();
   },
 );
+
+watch(
+  () => filters.pathContains,
+  () => {
+    queueFilterSearch();
+  },
+);
+
+onBeforeUnmount(() => {
+  clearFilterDebounce();
+});
 
 onMounted(async () => {
   await loadHistory();
@@ -177,7 +230,7 @@ onMounted(async () => {
           From
           <input
             v-model="filters.from"
-            type="datetime-local"
+            type="date"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-950"
           />
         </label>
@@ -186,7 +239,7 @@ onMounted(async () => {
           To
           <input
             v-model="filters.to"
-            type="datetime-local"
+            type="date"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm font-normal dark:border-slate-700 dark:bg-slate-950"
           />
         </label>
@@ -280,19 +333,44 @@ onMounted(async () => {
         <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
           <thead class="bg-slate-50 dark:bg-slate-800/80">
             <tr>
-              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Time</th>
-              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Actor</th>
+              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('timestamp')">
+                  Time <span class="opacity-70">{{ sortIndicator("timestamp") }}</span>
+                </button>
+              </th>
+              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('user_id')">
+                  Actor <span class="opacity-70">{{ sortIndicator("user_id") }}</span>
+                </button>
+              </th>
+              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('method')">
+                  Method <span class="opacity-70">{{ sortIndicator("method") }}</span>
+                </button>
+              </th>
               <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Action</th>
-              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Endpoint</th>
-              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Status</th>
-              <th class="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Latency</th>
+              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('path')">
+                  Endpoint <span class="opacity-70">{{ sortIndicator("path") }}</span>
+                </button>
+              </th>
+              <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('status_code')">
+                  Status <span class="opacity-70">{{ sortIndicator("status_code") }}</span>
+                </button>
+              </th>
+              <th class="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
+                <button type="button" class="inline-flex items-center gap-1 hover:underline" @click="toggleSort('duration_ms')">
+                  Latency <span class="opacity-70">{{ sortIndicator("duration_ms") }}</span>
+                </button>
+              </th>
               <th class="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">IP</th>
               <th class="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Detail</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr v-if="!loading && !hasRows">
-              <td colspan="8" class="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+              <td colspan="9" class="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
                 조회 결과가 없습니다.
               </td>
             </tr>
@@ -307,6 +385,7 @@ onMounted(async () => {
                   {{ item.actor_email || "-" }}
                 </p>
               </td>
+              <td class="px-3 py-2 whitespace-nowrap text-slate-700 dark:text-slate-200">{{ item.method }}</td>
               <td class="px-3 py-2 text-slate-700 dark:text-slate-200">{{ item.action_name || "-" }}</td>
               <td class="px-3 py-2 max-w-[30rem] truncate text-slate-700 dark:text-slate-200" :title="endpointText(item)">
                 {{ endpointText(item) }}

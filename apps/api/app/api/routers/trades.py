@@ -36,7 +36,7 @@ from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/trades", tags=["trades"])
 _TXN_GROUP_MAP: dict[str, tuple[str, ...]] = {
-    "LOAN": ("LOAN_BORROW", "LOAN_REPAY"),
+    "LOAN": ("LOAN_BORROW", "LOAN_REPAY", "LOAN_INTEREST"),
     "CASHFLOW": ("DEPOSIT", "WITHDRAW"),
     "BUYSELL": ("BUY", "SELL"),
 }

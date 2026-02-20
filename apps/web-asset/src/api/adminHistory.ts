@@ -1,6 +1,8 @@
 import { http } from "./http";
 
 export type AdminHistoryMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type SortOrder = "asc" | "desc";
+export type AdminHistorySortBy = "timestamp" | "user_id" | "method" | "path" | "status_code" | "duration_ms";
 
 export type AdminHistoryItemOut = {
   id: number;
@@ -28,6 +30,8 @@ export type AdminHistoryPageOut = {
   total: number;
   page: number;
   page_size: number;
+  sort_by: AdminHistorySortBy;
+  sort_order: SortOrder;
 };
 
 export type AdminHistoryQuery = {
@@ -37,6 +41,8 @@ export type AdminHistoryQuery = {
   method?: AdminHistoryMethod;
   path_contains?: string;
   status_code?: number;
+  sort_by?: AdminHistorySortBy;
+  sort_order?: SortOrder;
   page?: number;
   page_size?: number;
 };

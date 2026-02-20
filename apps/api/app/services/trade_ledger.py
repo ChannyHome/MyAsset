@@ -21,7 +21,9 @@ _PRICE_Q = Decimal("0.00000001")
 _QTY_Q = Decimal("0.00000001")
 _BUY_SELL_TYPES = {"BUY", "SELL"}
 _PORTFOLIO_CASHFLOW_TYPES = {"DEPOSIT", "WITHDRAW"}
-_LOAN_TYPES = {"LOAN_BORROW", "LOAN_REPAY"}
+_LOAN_PRINCIPAL_TYPES = {"LOAN_BORROW", "LOAN_REPAY"}
+_LOAN_INTEREST_TYPES = {"LOAN_INTEREST"}
+_LOAN_EVENT_TYPES = _LOAN_PRINCIPAL_TYPES | _LOAN_INTEREST_TYPES
 _CASH_APPLY_TYPES = {
     "BUY",
     "SELL",
@@ -32,6 +34,7 @@ _CASH_APPLY_TYPES = {
     "ADJUSTMENT",
     "LOAN_BORROW",
     "LOAN_REPAY",
+    "LOAN_INTEREST",
 }
 
 
@@ -225,6 +228,8 @@ def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
     if txn.txn_type == "LOAN_BORROW":
         return amount
     if txn.txn_type == "LOAN_REPAY":
+        return -amount
+    if txn.txn_type == "LOAN_INTEREST":
         return -amount
     return None
 
@@ -434,7 +439,7 @@ def normalize_trade_payload(
     if hasattr(raw_txn_type, "value"):
         raw_txn_type = raw_txn_type.value
     txn_type = str(raw_txn_type).upper().strip()
-    allowed_types = _BUY_SELL_TYPES | _PORTFOLIO_CASHFLOW_TYPES | _LOAN_TYPES | {"DIVIDEND", "FEE", "ADJUSTMENT"}
+    allowed_types = _BUY_SELL_TYPES | _PORTFOLIO_CASHFLOW_TYPES | _LOAN_EVENT_TYPES | {"DIVIDEND", "FEE", "ADJUSTMENT"}
     if txn_type not in allowed_types:
         raise TradeSyncError("txn_type is invalid")
 
@@ -511,11 +516,11 @@ def normalize_trade_payload(
         amount = _validate_positive(amount, "amount")
         quantity = None
         unit_price = None
-    elif txn_type in _LOAN_TYPES:
+    elif txn_type in _LOAN_EVENT_TYPES:
         if asset_id is not None:
-            raise TradeSyncError("asset_id must be null for LOAN_BORROW/LOAN_REPAY")
+            raise TradeSyncError("asset_id must be null for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST")
         if liability is None:
-            raise TradeSyncError("liability_id is required for LOAN_BORROW/LOAN_REPAY")
+            raise TradeSyncError("liability_id is required for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST")
         if liability.portfolio_id != portfolio_id:
             raise TradeSyncError("Liability must be linked to the same portfolio")
         if currency != _normalize_currency(liability.currency):
@@ -598,7 +603,7 @@ def ensure_liability_baseline_transaction(
         Transaction.owner_user_id == owner_user_id,
         Transaction.liability_id == liability_id,
         Transaction.status == "POSTED",
-        Transaction.txn_type.in_(list(_LOAN_TYPES)),
+        Transaction.txn_type.in_(list(_LOAN_PRINCIPAL_TYPES)),
     )
     if exclude_transaction_id is not None:
         existing_stmt = existing_stmt.where(Transaction.id != exclude_transaction_id)
@@ -879,7 +884,7 @@ def rebuild_liability_from_trades(
                 Transaction.owner_user_id == owner_user_id,
                 Transaction.liability_id == liability_id,
                 Transaction.status == "POSTED",
-                Transaction.txn_type.in_(list(_LOAN_TYPES)),
+                Transaction.txn_type.in_(list(_LOAN_PRINCIPAL_TYPES)),
             )
             .order_by(Transaction.executed_at.asc(), Transaction.id.asc())
         ).all()
@@ -1093,7 +1098,7 @@ def rebuild_trade_scope(
             .where(
                 Transaction.owner_user_id == owner_user_id,
                 Transaction.status == "POSTED",
-                Transaction.txn_type.in_(list(_LOAN_TYPES)),
+                Transaction.txn_type.in_(list(_LOAN_EVENT_TYPES)),
                 Transaction.liability_id.is_not(None),
             )
             .where(Transaction.portfolio_id == portfolio_id if portfolio_id is not None else True)

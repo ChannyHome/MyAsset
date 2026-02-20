@@ -9,7 +9,8 @@ from app.api.deps import require_min_role
 from app.core.db import get_db
 from app.models.api_audit_log import ApiAuditLog
 from app.models.user import User
-from app.schemas.admin_history import AdminHistoryItemOut, AdminHistoryPageOut
+from app.schemas.admin_history import AdminHistoryItemOut, AdminHistoryPageOut, AdminHistorySortBy
+from app.schemas.asset import SortOrder
 
 router = APIRouter(prefix="/admin/history", tags=["admin-history"])
 
@@ -22,6 +23,8 @@ def list_admin_history(
     method: str | None = Query(default=None, min_length=1, max_length=10),
     path_contains: str | None = Query(default=None, min_length=1, max_length=255),
     status_code: int | None = Query(default=None, ge=100, le=599),
+    sort_by: AdminHistorySortBy = Query(default=AdminHistorySortBy.TIMESTAMP),
+    sort_order: SortOrder = Query(default=SortOrder.DESC),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -46,10 +49,22 @@ def list_admin_history(
         count_stmt = count_stmt.where(*filters)
     total = int(db.scalar(count_stmt) or 0)
 
+    sort_column_map = {
+        AdminHistorySortBy.TIMESTAMP: ApiAuditLog.timestamp,
+        AdminHistorySortBy.USER_ID: ApiAuditLog.user_id,
+        AdminHistorySortBy.METHOD: ApiAuditLog.method,
+        AdminHistorySortBy.PATH: ApiAuditLog.path,
+        AdminHistorySortBy.STATUS_CODE: ApiAuditLog.status_code,
+        AdminHistorySortBy.DURATION_MS: ApiAuditLog.duration_ms,
+    }
+    sort_column = sort_column_map[sort_by]
+    order_expr = sort_column.asc() if sort_order == SortOrder.ASC else sort_column.desc()
+    tie_breaker = ApiAuditLog.id.asc() if sort_order == SortOrder.ASC else ApiAuditLog.id.desc()
+
     stmt = select(ApiAuditLog)
     if filters:
         stmt = stmt.where(*filters)
-    stmt = stmt.order_by(ApiAuditLog.timestamp.desc(), ApiAuditLog.id.desc())
+    stmt = stmt.order_by(order_expr, tie_breaker)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
 
     rows = list(db.scalars(stmt).all())
@@ -73,4 +88,11 @@ def list_admin_history(
                 pass
         items.append(item)
 
-    return AdminHistoryPageOut(items=items, total=total, page=page, page_size=page_size)
+    return AdminHistoryPageOut(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )

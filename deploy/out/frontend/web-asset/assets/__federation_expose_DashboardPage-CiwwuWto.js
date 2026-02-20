@@ -1,8 +1,10 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-BgFJ5pUC.js';
-import { g as getHoldingsPerformance } from './holdings-PVaHh3Rj.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1, b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './useDisplayCurrency-BOX_gs28.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-BEy7luee.js';
+import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
+import { g as getHoldingsPerformance } from './holdings-BJ36ZSvf.js';
+import { b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './portfolios-Dk-CPOVT.js';
+import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-CQ1BICp7.js';
+import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -94,10 +96,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return Number.isFinite(num) ? num : 0;
     }
     function formatDateTime(value) {
-      if (!value) return "-";
-      const dt = new Date(value);
-      if (Number.isNaN(dt.getTime())) return value;
-      return dt.toLocaleString("ko-KR");
+      return formatDateTimeSeoul(value);
     }
     const toolboxSections = [
       {
@@ -296,7 +295,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       () => toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total))
     );
     const kpiNetProfitTotal = computed(
-      () => toNumber(summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.principal_minus_debt_total))
+      () => toNumber(
+        summary.value?.net_assets_profit_total ?? toNumber(summary.value?.net_assets_total) - toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total)
+      )
     );
     function buildWidgetsFromPreset(presetId) {
       const preset = dashboardPresets.find((item) => item.id === presetId);
@@ -578,7 +579,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "liabilities-total": toNumber(summary.value?.liabilities_total),
                       "net-assets-total": toNumber(summary.value?.net_assets_total),
                       "invested-principal-total": toNumber(summary.value?.invested_principal_total),
-                      "principal-minus-debt-total": toNumber(summary.value?.principal_minus_debt_total),
+                      "principal-minus-debt-total": toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
                       "gross-return-pct": kpiGrossReturnPct.value,
                       "net-return-pct": kpiNetReturnPct.value,
                       "gross-profit-total": kpiGrossProfitTotal.value,
