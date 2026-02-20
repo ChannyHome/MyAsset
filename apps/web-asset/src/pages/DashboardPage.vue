@@ -18,13 +18,12 @@ import {
   type PortfolioOut,
   type PortfolioTableRowOut,
 } from "../api/portfolios";
-import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import AllocationDonutCard from "../components/AllocationDonutCard.vue";
 import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
 import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import KpiSummaryCard from "../components/KpiSummaryCard.vue";
+import KpiPortfolioSummaryCard from "../components/KpiPortfolioSummaryCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
-import type { DisplayCurrency } from "../api/userSettings";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 type WidgetType =
@@ -135,6 +134,8 @@ const compare = reactive({
 const donutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
 const donutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const treemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
+const kpiTarget = ref<"SUMMARY" | "PORTFOLIOS">("SUMMARY");
+const kpiPortfolioKey = ref("ALL");
 const collectingSnapshot = ref(false);
 
 const dataLoading = ref(false);
@@ -150,7 +151,7 @@ const allocationNet = ref<AnalyticsAllocationOut | null>(null);
 const allocationHoldings = ref<AnalyticsAllocationOut | null>(null);
 const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
 const treemapPortfolioKey = ref("ALL");
-const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 
@@ -280,6 +281,13 @@ const treemapPortfolioLabel = computed(() => {
   if (treemapPortfolioId.value == null) return "All portfolios";
   const target = portfolios.value.find((item) => item.id === treemapPortfolioId.value);
   return target ? target.name : `Portfolio #${treemapPortfolioId.value}`;
+});
+
+const kpiPortfolioRows = computed(() => {
+  if (kpiPortfolioKey.value === "ALL") return portfolioStats.value;
+  const parsed = Number(kpiPortfolioKey.value);
+  if (!Number.isFinite(parsed)) return portfolioStats.value;
+  return portfolioStats.value.filter((item) => Number(item.id) === parsed);
 });
 
 const trendPoints = computed(() =>
@@ -418,6 +426,12 @@ async function loadDashboardData() {
     if (treemapPortfolioKey.value !== "ALL" && !portfoliosOut.some((item) => String(item.id) === treemapPortfolioKey.value)) {
       treemapPortfolioKey.value = "ALL";
     }
+    if (
+      kpiPortfolioKey.value !== "ALL" &&
+      !portfoliosOut.some((item) => String(Number(item.id)) === kpiPortfolioKey.value)
+    ) {
+      kpiPortfolioKey.value = "ALL";
+    }
   } catch (error) {
     dataError.value = error instanceof Error ? error.message : "Failed to load dashboard data";
   } finally {
@@ -434,15 +448,6 @@ async function collectSnapshotNow() {
     dataError.value = error instanceof Error ? error.message : "Failed to collect valuation snapshot";
   } finally {
     collectingSnapshot.value = false;
-  }
-}
-
-async function onChangeDisplayCurrency(value: DisplayCurrency) {
-  try {
-    await setDisplayCurrency(value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to update display currency";
-    dataError.value = message;
   }
 }
 
@@ -483,12 +488,6 @@ watch(
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <DisplayCurrencyToggle
-            :model-value="displayCurrency"
-            :disabled="dataLoading || settingsSaving"
-            :loading="settingsSaving"
-            @update:model-value="onChangeDisplayCurrency"
-          />
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -613,24 +612,65 @@ watch(
                 </button>
               </div>
 
-              <KpiSummaryCard
-                v-if="widget.type === 'kpi_summary'"
-                title="KPI Summary"
-                subtitle="Gross / Liabilities / Net"
-                :currency="summaryDisplayCurrency"
-                :gross-assets-total="toNumber(summary?.gross_assets_total)"
-                :liabilities-total="toNumber(summary?.liabilities_total)"
-                :net-assets-total="toNumber(summary?.net_assets_total)"
-                :invested-principal-total="toNumber(summary?.invested_principal_total)"
-                :principal-minus-debt-total="
-                  toNumber(summary?.debt_adjusted_principal_total ?? summary?.principal_minus_debt_total)
-                "
-                :gross-return-pct="kpiGrossReturnPct"
-                :net-return-pct="kpiNetReturnPct"
-                :gross-profit-total="kpiGrossProfitTotal"
-                :net-profit-total="kpiNetProfitTotal"
-                :as-of="formatDateTime(summary?.as_of || null)"
-              />
+              <div v-if="widget.type === 'kpi_summary'" class="space-y-2">
+                <div class="flex flex-wrap items-center gap-1">
+                  <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">KPI</span>
+                  <button
+                    v-for="mode in ['SUMMARY', 'PORTFOLIOS']"
+                    :key="`dashboard-kpi-${mode}`"
+                    type="button"
+                    class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+                    :class="
+                      kpiTarget === mode
+                        ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                        : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+                    "
+                    @click="kpiTarget = mode as 'SUMMARY' | 'PORTFOLIOS'"
+                  >
+                    {{ mode }}
+                  </button>
+                </div>
+
+                <div v-if="kpiTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
+                  <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+                  <select
+                    v-model="kpiPortfolioKey"
+                    class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                  >
+                    <option value="ALL">All</option>
+                    <option v-for="item in portfolios" :key="`dashboard-kpi-portfolio-${item.id}`" :value="String(item.id)">
+                      {{ item.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <KpiSummaryCard
+                  v-if="kpiTarget === 'SUMMARY'"
+                  title="KPI Summary"
+                  subtitle="Gross / Liabilities / Net"
+                  :currency="summaryDisplayCurrency"
+                  :gross-assets-total="toNumber(summary?.gross_assets_total)"
+                  :liabilities-total="toNumber(summary?.liabilities_total)"
+                  :net-assets-total="toNumber(summary?.net_assets_total)"
+                  :invested-principal-total="toNumber(summary?.invested_principal_total)"
+                  :principal-minus-debt-total="
+                    toNumber(summary?.debt_adjusted_principal_total ?? summary?.principal_minus_debt_total)
+                  "
+                  :gross-return-pct="kpiGrossReturnPct"
+                  :net-return-pct="kpiNetReturnPct"
+                  :gross-profit-total="kpiGrossProfitTotal"
+                  :net-profit-total="kpiNetProfitTotal"
+                  :as-of="formatDateTime(summary?.as_of || null)"
+                />
+
+                <KpiPortfolioSummaryCard
+                  v-else
+                  title="KPI Portfolios"
+                  subtitle="Per portfolio snapshot"
+                  :currency="summaryDisplayCurrency"
+                  :portfolios="kpiPortfolioRows"
+                />
+              </div>
 
               <div v-else-if="widget.type === 'donut_allocation'" class="space-y-2">
                 <div class="flex flex-wrap items-center gap-2">

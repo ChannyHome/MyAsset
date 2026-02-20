@@ -1,13 +1,39 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http, f as formatDateTimeSeoul, A as AxiosError, t as toDateTimeLocalSeoul } from './datetime-BdCiN_Bj.js';
-import { c as createAsset, u as updateAsset, g as getAssetsTable, a as getAssets, d as deleteAsset } from './assets-CxsdxuYl.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1, g as getLatestUsdKrwFxRate, a as getFxStaleMinutes, b as updateQuotesNow, t as testQuoteForAsset, c as upsertManualQuote, d as getQuoteUpdateJobStatus } from './useDisplayCurrency-CJzodPGx.js';
-import { c as createHolding, u as updateHolding, a as getHoldingsTable, d as deleteHolding } from './holdings-BJ36ZSvf.js';
-import { d as createPortfolio, u as updatePortfolio, e as createLiability, f as updateLiability, a as getPortfoliosTable, g as getLiabilitiesTable, c as getPortfolios, h as deletePortfolio, i as deleteLiability } from './portfolios-Dk-CPOVT.js';
-import { c as createReleaseNote, u as updateReleaseNote, g as getReleaseNotes, a as unpublishReleaseNote } from './releaseNotes-d3Ur1oXa.js';
+import { h as http, f as formatDateTimeSeoul, A as AxiosError, t as toDateTimeLocalSeoul } from './datetime-BbzyLRcb.js';
+import { c as createAsset, u as updateAsset, g as getAssetsTable, a as getAssets, d as deleteAsset } from './assets-BUn4YPW0.js';
+import { u as useDisplayCurrency } from './useDisplayCurrency-ArDju8z7.js';
+import { c as createHolding, u as updateHolding, a as getHoldingsTable, d as deleteHolding } from './holdings-8qgM-Yg8.js';
+import { d as createPortfolio, u as updatePortfolio, e as createLiability, f as updateLiability, a as getPortfoliosTable, g as getLiabilitiesTable, c as getPortfolios, h as deletePortfolio, i as deleteLiability } from './portfolios-De0w93tc.js';
+import { c as createReleaseNote, u as updateReleaseNote, g as getReleaseNotes, a as unpublishReleaseNote } from './releaseNotes-BEya420W.js';
 
 async function getMe() {
   const { data } = await http.get("/auth/me");
+  return data;
+}
+
+async function updateQuotesNow() {
+  const { data } = await http.post("/quotes/update-now");
+  return data;
+}
+async function getQuoteUpdateJobStatus(jobId) {
+  const { data } = await http.get(`/quotes/update-jobs/${jobId}`);
+  return data;
+}
+async function testQuoteForAsset(assetId) {
+  const { data } = await http.post(`/quotes/test/${assetId}`);
+  return data;
+}
+async function upsertManualQuote(payload) {
+  const { data } = await http.post("/quotes/manual", payload);
+  return data;
+}
+async function getLatestUsdKrwFxRate() {
+  const { data } = await http.get("/quotes/fx/usd-krw/latest");
+  return data;
+}
+
+async function getFxStaleMinutes() {
+  const { data } = await http.get("/settings/fx-stale-minutes");
   return data;
 }
 
@@ -30,7 +56,7 @@ async function deactivateAppSecret(secretId) {
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,unref:_unref,createVNode:_createVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,createTextVNode:_createTextVNode,vModelCheckbox:_vModelCheckbox,renderList:_renderList,Fragment:_Fragment,normalizeClass:_normalizeClass,withKeys:_withKeys,withModifiers:_withModifiers,vModelSelect:_vModelSelect} = await importShared('vue');
+const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,createTextVNode:_createTextVNode,vModelCheckbox:_vModelCheckbox,renderList:_renderList,Fragment:_Fragment,normalizeClass:_normalizeClass,withKeys:_withKeys,withModifiers:_withModifiers,vModelSelect:_vModelSelect} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -597,7 +623,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const releaseNotes = ref([]);
     const usdKrwFx = ref(null);
     const logs = ref([]);
-    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     let nextLogId = 1;
     const assetsQuery = reactive({
       page: 1,
@@ -1720,13 +1746,6 @@ ${realEstateMetaJsonExample}`;
         }
       );
     }
-    async function onChangeDisplayCurrency(value) {
-      try {
-        await setDisplayCurrency(value);
-      } catch (error) {
-        pushLog("Display Currency", "ERROR", getErrorMessage(error));
-      }
-    }
     async function refreshData(options) {
       const refreshId = ++refreshSequence;
       const shouldLogRefresh = options?.logRefresh ?? true;
@@ -2010,12 +2029,6 @@ ${realEstateMetaJsonExample}`;
                 _createElementVNode("p", _hoisted_4, "Role: " + _toDisplayString(me.value?.role || "-") + " / " + _toDisplayString(me.value?.email || "-"), 1)
               ]),
               _createElementVNode("div", _hoisted_5, [
-                _createVNode(_sfc_main$1, {
-                  "model-value": _unref(displayCurrency),
-                  disabled: isBusy.value || _unref(settingsSaving),
-                  loading: _unref(settingsSaving),
-                  "onUpdate:modelValue": onChangeDisplayCurrency
-                }, null, 8, ["model-value", "disabled", "loading"]),
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",

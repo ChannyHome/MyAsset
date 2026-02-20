@@ -20,8 +20,12 @@ import {
 } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 
+import GlobalDisplayCurrencyToggle from "../components/GlobalDisplayCurrencyToggle.vue";
+import GlobalNameClampToggle from "../components/GlobalNameClampToggle.vue";
 import GuestDemoPage from "../pages/GuestDemoPage.vue";
 import { useAuthStore } from "../stores/auth";
+import { useDisplayCurrencyStore } from "../stores/displayCurrency";
+import { useNameClampStore } from "../stores/nameClamp";
 import { useUiStore } from "../stores/ui";
 
 type MenuItem = {
@@ -47,6 +51,8 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
+const displayCurrencyStore = useDisplayCurrencyStore();
+const nameClampStore = useNameClampStore();
 
 const pageTitle = computed(() => {
   if (route.path.startsWith("/forbidden")) {
@@ -128,6 +134,8 @@ function goSettings() {
 onMounted(() => {
   updateSeoulNow();
   seoulClockTimer = setInterval(updateSeoulNow, 1000);
+  void displayCurrencyStore.initialize();
+  nameClampStore.initialize();
 });
 
 onBeforeUnmount(() => {
@@ -156,6 +164,32 @@ onBeforeUnmount(() => {
         <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
           Seoul {{ seoulNowText }}
         </span>
+        <GlobalDisplayCurrencyToggle />
+        <GlobalNameClampToggle />
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
+          @click="uiStore.toggleTheme()"
+        >
+          <span class="inline-flex items-center gap-1">
+            <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
+            <SunMedium v-else class="h-3.5 w-3.5" />
+            {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+          </span>
+        </button>
+      </div>
+    </header>
+
+    <header
+      class="sticky top-0 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-6 py-3 backdrop-blur md:flex dark:border-slate-800 dark:bg-slate-900/95"
+    >
+      <p class="text-base font-semibold">{{ pageTitle }}</p>
+      <div class="inline-flex items-center gap-2">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Seoul {{ seoulNowText }}
+        </span>
+        <GlobalDisplayCurrencyToggle />
+        <GlobalNameClampToggle />
         <button
           type="button"
           class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"

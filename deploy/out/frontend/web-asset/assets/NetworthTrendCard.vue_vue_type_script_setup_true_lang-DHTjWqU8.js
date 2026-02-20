@@ -1,4 +1,4 @@
-import { h as http } from './datetime-BdCiN_Bj.js';
+import { h as http } from './datetime-BbzyLRcb.js';
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 
 async function getSummary(params = {}) {
@@ -17,6 +17,80 @@ async function collectSnapshots(params = {}) {
   const { data } = await http.post("/analytics/snapshots/collect", null, { params });
   return data;
 }
+
+const {defineStore} = await importShared('pinia');
+
+const {ref,watch} = await importShared('vue');
+
+const NAME_CLAMP_STORAGE_KEY = "myasset:ui:name-clamp";
+const NAME_CLAMP_EVENT = "myasset:ui:name-clamp-changed";
+const useUiStore = defineStore("asset-ui", () => {
+  const nameClampEnabled = ref(true);
+  const initialized = ref(false);
+  let listenersAttached = false;
+  function readStoredClamp() {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem(NAME_CLAMP_STORAGE_KEY) !== "0";
+  }
+  function writeStoredClamp(value) {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(NAME_CLAMP_STORAGE_KEY, value ? "1" : "0");
+  }
+  function broadcastClamp(value) {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent(NAME_CLAMP_EVENT, {
+        detail: { enabled: value }
+      })
+    );
+  }
+  function onStorage(event) {
+    if (event.key !== NAME_CLAMP_STORAGE_KEY) return;
+    const next = event.newValue !== "0";
+    if (nameClampEnabled.value !== next) {
+      nameClampEnabled.value = next;
+    }
+  }
+  function onBroadcast(event) {
+    const custom = event;
+    const next = custom.detail?.enabled ?? readStoredClamp();
+    if (nameClampEnabled.value !== next) {
+      nameClampEnabled.value = next;
+      writeStoredClamp(next);
+    }
+  }
+  function attachListeners() {
+    if (typeof window === "undefined" || listenersAttached) return;
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(NAME_CLAMP_EVENT, onBroadcast);
+    listenersAttached = true;
+  }
+  function init() {
+    if (initialized.value) return;
+    attachListeners();
+    nameClampEnabled.value = readStoredClamp();
+    initialized.value = true;
+  }
+  function setNameClampEnabled(value) {
+    nameClampEnabled.value = value;
+    if (!initialized.value) return;
+    writeStoredClamp(value);
+    broadcastClamp(value);
+  }
+  function toggleNameClamp() {
+    setNameClampEnabled(!nameClampEnabled.value);
+  }
+  watch(nameClampEnabled, (next) => {
+    if (!initialized.value) return;
+    writeStoredClamp(next);
+  });
+  return {
+    nameClampEnabled,
+    init,
+    setNameClampEnabled,
+    toggleNameClamp
+  };
+});
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -207,4 +281,4 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
   }
 });
 
-export { _sfc_main as _, getAllocation as a, getNetworthSeries as b, collectSnapshots as c, getSummary as g };
+export { _sfc_main as _, getAllocation as a, getNetworthSeries as b, collectSnapshots as c, getSummary as g, useUiStore as u };

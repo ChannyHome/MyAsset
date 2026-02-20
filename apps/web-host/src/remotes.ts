@@ -1,22 +1,23 @@
-import { defineAsyncComponent, type Component } from "vue";
+import type { Component } from "vue";
 
-import RemoteFallback from "./components/RemoteFallback.vue";
-import RemoteLoading from "./components/RemoteLoading.vue";
+type RemoteModule = { default: Component };
+type RemoteLoader = () => Promise<RemoteModule>;
 
-function createRemotePage(loader: () => Promise<{ default: Component }>): Component {
-  return defineAsyncComponent({
-    loader,
-    loadingComponent: RemoteLoading,
-    errorComponent: RemoteFallback,
-    delay: 150,
-    timeout: 7000,
-  });
+function createRemotePage(loader: () => Promise<RemoteModule>): RemoteLoader {
+  return async () => {
+    try {
+      return await loader();
+    } catch (error) {
+      console.error("[remote] failed to load remote page:", error);
+      return import("./components/RemoteFallback.vue");
+    }
+  };
 }
 
-export const RemoteHomePage = createRemotePage(() => import("web_asset/HomePage"));
-export const RemoteDashboardPage = createRemotePage(() => import("web_asset/DashboardPage"));
-export const RemoteAgentPage = createRemotePage(() => import("web_asset/AgentPage"));
-export const RemoteTradePage = createRemotePage(() => import("web_asset/TradePage"));
-export const RemoteReportPage = createRemotePage(() => import("web_asset/ReportPage"));
-export const RemoteLabPage = createRemotePage(() => import("web_asset/LabPage"));
-export const RemoteHistoryPage = createRemotePage(() => import("web_asset/HistoryPage"));
+export const RemoteHomePage: RemoteLoader = createRemotePage(() => import("web_asset/HomePage"));
+export const RemoteDashboardPage: RemoteLoader = createRemotePage(() => import("web_asset/DashboardPage"));
+export const RemoteAgentPage: RemoteLoader = createRemotePage(() => import("web_asset/AgentPage"));
+export const RemoteTradePage: RemoteLoader = createRemotePage(() => import("web_asset/TradePage"));
+export const RemoteReportPage: RemoteLoader = createRemotePage(() => import("web_asset/ReportPage"));
+export const RemoteLabPage: RemoteLoader = createRemotePage(() => import("web_asset/LabPage"));
+export const RemoteHistoryPage: RemoteLoader = createRemotePage(() => import("web_asset/HistoryPage"));

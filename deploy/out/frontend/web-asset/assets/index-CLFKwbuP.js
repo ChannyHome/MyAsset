@@ -41,4 +41,8 @@ function _sfc_render(_ctx, _cache) {
 const App = /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render]]);
 
 const {createApp} = await importShared('vue');
-createApp(App).mount("#app");
+
+const {createPinia} = await importShared('pinia');
+const app = createApp(App);
+app.use(createPinia());
+app.mount("#app");

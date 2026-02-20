@@ -1,13 +1,13 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$3, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
-import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-Dk-CPOVT.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
-import { _ as _sfc_main$2 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-ieuH0L9s.js';
-import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
+import { _ as _sfc_main$2, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DHTjWqU8.js';
+import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-De0w93tc.js';
+import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-rw7ZDYxD.js';
+import { u as useDisplayCurrency } from './useDisplayCurrency-ArDju8z7.js';
+import { f as formatDateTimeSeoul } from './datetime-BbzyLRcb.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,unref:_unref,createVNode:_createVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createStaticVNode:_createStaticVNode} = await importShared('vue');
+const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createVNode:_createVNode,createStaticVNode:_createStaticVNode} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -37,7 +37,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const networthSeries = ref(null);
     const portfolioRows = ref([]);
     const liabilityRows = ref([]);
-    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
     const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
@@ -104,14 +104,6 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         loading.value = false;
       }
     }
-    async function onChangeDisplayCurrency(value) {
-      try {
-        await setDisplayCurrency(value);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        errorMessage.value = `Failed to update display currency: ${message}`;
-      }
-    }
     onMounted(async () => {
       await ensureInitialized();
       await loadReportData();
@@ -134,12 +126,6 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " KPI breakdown + valuation snapshot trend connected to analytics APIs. ")
             ], -1)),
             _createElementVNode("div", _hoisted_4, [
-              _createVNode(_sfc_main$1, {
-                "model-value": _unref(displayCurrency),
-                disabled: loading.value || _unref(settingsSaving),
-                loading: _unref(settingsSaving),
-                "onUpdate:modelValue": onChangeDisplayCurrency
-              }, null, 8, ["model-value", "disabled", "loading"]),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
@@ -151,7 +137,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           _createElementVNode("p", _hoisted_6, "as_of: " + _toDisplayString(asOf.value), 1)
         ]),
         errorMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_7, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true),
-        _createVNode(_sfc_main$2, {
+        _createVNode(_sfc_main$1, {
           "display-currency": summaryDisplayCurrency.value,
           "gross-assets-total": grossAssetsTotal.value,
           "liabilities-total": liabilitiesTotal.value,
@@ -165,7 +151,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           portfolios: portfolioRows.value,
           liabilities: liabilityRows.value
         }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities"]),
-        _createVNode(_sfc_main$3, {
+        _createVNode(_sfc_main$2, {
           title: "Networth Trend",
           subtitle: "Connected to valuation_snapshots (bucket=DAY)",
           currency: summaryDisplayCurrency.value,

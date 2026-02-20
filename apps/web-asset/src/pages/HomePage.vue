@@ -10,17 +10,16 @@ import {
   type AnalyticsSummaryV2Out,
 } from "../api/analytics";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
-import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import AllocationDonutCard from "../components/AllocationDonutCard.vue";
 import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
 import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import KpiSummaryCard from "../components/KpiSummaryCard.vue";
+import KpiPortfolioSummaryCard from "../components/KpiPortfolioSummaryCard.vue";
 import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
-import type { DisplayCurrency } from "../api/userSettings";
 import type { ReleaseNoteItem } from "../data/releaseNotes";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
@@ -118,15 +117,22 @@ const exportingImage = ref(false);
 const liveDonutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const liveTreemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
+const liveKpiTarget = ref<"SUMMARY" | "PORTFOLIOS">("SUMMARY");
 const liveMaskAmounts = ref(false);
 const livePortfolioKey = ref("ALL");
+const liveKpiPortfolioKey = computed({
+  get: () => livePortfolioKey.value,
+  set: (value: string) => {
+    livePortfolioKey.value = value;
+  },
+});
 const liveDashboardRef = ref<HTMLElement | null>(null);
 const allocationGross = ref<AnalyticsAllocationOut | null>(null);
 const allocationLiabilities = ref<AnalyticsAllocationOut | null>(null);
 const allocationNet = ref<AnalyticsAllocationOut | null>(null);
 const allocationHoldings = ref<AnalyticsAllocationOut | null>(null);
 const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
-const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
@@ -152,6 +158,13 @@ const livePortfolioLabel = computed(() => {
   if (livePortfolioId.value == null) return "All portfolios";
   const target = portfolios.value.find((item) => item.id === livePortfolioId.value);
   return target ? target.name : `Portfolio #${livePortfolioId.value}`;
+});
+
+const liveKpiPortfolioRows = computed(() => {
+  if (livePortfolioKey.value === "ALL") return portfolios.value;
+  const parsed = Number(livePortfolioKey.value);
+  if (!Number.isFinite(parsed)) return portfolios.value;
+  return portfolios.value.filter((item) => Number(item.id) === parsed);
 });
 
 const donutData = computed(() => {
@@ -383,15 +396,6 @@ async function loadHomeData() {
     errorMessage.value = `Failed to load dashboard data: ${message}`;
   } finally {
     loading.value = false;
-  }
-}
-
-async function onChangeDisplayCurrency(value: DisplayCurrency) {
-  try {
-    await setDisplayCurrency(value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    errorMessage.value = `Failed to update display currency: ${message}`;
   }
 }
 
@@ -663,12 +667,6 @@ watch(
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <DisplayCurrencyToggle
-            :model-value="displayCurrency"
-            :disabled="loading || settingsSaving"
-            :loading="settingsSaving"
-            @update:model-value="onChangeDisplayCurrency"
-          />
           <button
             type="button"
             class="rounded-xl border px-3 py-2 text-sm font-semibold transition-colors"
@@ -727,6 +725,39 @@ watch(
 
       <div v-if="liveDashboardExpanded" class="mt-4 space-y-3">
         <div class="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
+          <div class="flex items-center gap-1">
+            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">KPI</span>
+            <button
+              v-for="mode in ['SUMMARY', 'PORTFOLIOS']"
+              :key="`home-kpi-${mode}`"
+              type="button"
+              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
+              :class="
+                liveKpiTarget === mode
+                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
+                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
+              "
+              @click="liveKpiTarget = mode as 'SUMMARY' | 'PORTFOLIOS'"
+            >
+              {{ mode }}
+            </button>
+          </div>
+
+          <div v-if="liveKpiTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
+            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
+            <select
+              v-model="liveKpiPortfolioKey"
+              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+            >
+              <option value="ALL">All</option>
+              <option v-for="item in portfolios" :key="`home-kpi-portfolio-${item.id}`" :value="String(item.id)">
+                {{ item.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" />
+
           <div class="flex items-center gap-1">
             <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Donut</span>
             <button
@@ -831,6 +862,7 @@ watch(
         <div ref="liveDashboardRef" class="grid grid-cols-1 gap-3 xl:grid-cols-2">
           <div class="xl:col-span-2">
             <KpiSummaryCard
+              v-if="liveKpiTarget === 'SUMMARY'"
               title="KPI Summary"
               subtitle="Included in print/snapshot"
               :currency="summaryDisplayCurrency"
@@ -844,6 +876,14 @@ watch(
               :gross-profit-total="kpiGrossProfitTotal"
               :net-profit-total="kpiNetProfitTotal"
               :as-of="asOf"
+              :mask-amounts="liveMaskAmounts"
+            />
+            <KpiPortfolioSummaryCard
+              v-else
+              title="KPI Portfolios"
+              subtitle="Per portfolio | Included in print/snapshot"
+              :currency="summaryDisplayCurrency"
+              :portfolios="liveKpiPortfolioRows"
               :mask-amounts="liveMaskAmounts"
             />
           </div>

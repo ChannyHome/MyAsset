@@ -1,7 +1,7 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-BdCiN_Bj.js';
-import { a as getAssets } from './assets-CxsdxuYl.js';
-import { c as getPortfolios, b as getLiabilities } from './portfolios-Dk-CPOVT.js';
+import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-BbzyLRcb.js';
+import { a as getAssets } from './assets-BUn4YPW0.js';
+import { c as getPortfolios, b as getLiabilities } from './portfolios-De0w93tc.js';
 
 async function getTrades(params = {}) {
   const { data } = await http.get("/trades", { params });
@@ -195,7 +195,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       "FEE",
       "ADJUSTMENT",
       "LOAN_BORROW",
-      "LOAN_REPAY"
+      "LOAN_REPAY",
+      "LOAN_INTEREST"
     ];
     const statusOptions = ["POSTED", "VOID"];
     const rebuildHintLines = [
@@ -240,7 +241,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     });
     const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
     const isBuySell = computed(() => form.txn_type === "BUY" || form.txn_type === "SELL");
-    const isLoanTxn = computed(() => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY");
+    const isLoanTxn = computed(
+      () => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY" || form.txn_type === "LOAN_INTEREST"
+    );
     const canSelectAsset = computed(() => isBuySell.value || form.txn_type === "DIVIDEND");
     const selectableLoanLiabilities = computed(() => {
       const selectedPortfolioId = toOptionalNumber(form.portfolio_id);
@@ -512,7 +515,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         return;
       }
       if (isLoanTxn.value && !form.liability_id) {
-        errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY.";
+        errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST.";
         return;
       }
       if (!window.confirm(editingId.value ? "Update this trade?" : "Create this trade?")) return;
@@ -636,7 +639,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           form.asset_id = "";
           form.liability_id = "";
           form.auto_apply_portfolio_cashflow = true;
-        } else if (next === "LOAN_BORROW" || next === "LOAN_REPAY") {
+        } else if (next === "LOAN_BORROW" || next === "LOAN_REPAY" || next === "LOAN_INTEREST") {
           form.asset_id = "";
           form.auto_apply_portfolio_cashflow = false;
         } else {

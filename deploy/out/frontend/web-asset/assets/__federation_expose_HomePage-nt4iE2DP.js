@@ -1,16 +1,16 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
-import { _ as _sfc_main$6 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-ieuH0L9s.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-CQ1BICp7.js';
-import { g as getHoldingsPerformance } from './holdings-BJ36ZSvf.js';
-import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-Dk-CPOVT.js';
-import { g as getReleaseNotes } from './releaseNotes-d3Ur1oXa.js';
-import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
+import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DHTjWqU8.js';
+import { _ as _sfc_main$6 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-rw7ZDYxD.js';
+import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3, c as _sfc_main$4 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-BjkCKIwg.js';
+import { g as getHoldingsPerformance } from './holdings-8qgM-Yg8.js';
+import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-De0w93tc.js';
+import { g as getReleaseNotes } from './releaseNotes-BEya420W.js';
+import { u as useDisplayCurrency } from './useDisplayCurrency-ArDju8z7.js';
+import { f as formatDateTimeSeoul } from './datetime-BbzyLRcb.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,unref:_unref,createVNode:_createVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,renderList:_renderList,Fragment:_Fragment,vModelSelect:_vModelSelect,withDirectives:_withDirectives,createTextVNode:_createTextVNode,normalizeStyle:_normalizeStyle} = await importShared('vue');
+const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,renderList:_renderList,Fragment:_Fragment,vModelSelect:_vModelSelect,withDirectives:_withDirectives,createBlock:_createBlock,createVNode:_createVNode,createTextVNode:_createTextVNode,normalizeStyle:_normalizeStyle} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -31,13 +31,13 @@ const _hoisted_10 = {
 const _hoisted_11 = { class: "flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50" };
 const _hoisted_12 = { class: "flex items-center gap-1" };
 const _hoisted_13 = ["onClick"];
-const _hoisted_14 = { class: "flex items-center gap-1" };
-const _hoisted_15 = ["onClick"];
-const _hoisted_16 = {
+const _hoisted_14 = {
   key: 0,
   class: "flex items-center gap-2"
 };
-const _hoisted_17 = ["value"];
+const _hoisted_15 = ["value"];
+const _hoisted_16 = { class: "flex items-center gap-1" };
+const _hoisted_17 = ["onClick"];
 const _hoisted_18 = { class: "flex items-center gap-1" };
 const _hoisted_19 = ["onClick"];
 const _hoisted_20 = {
@@ -45,87 +45,94 @@ const _hoisted_20 = {
   class: "flex items-center gap-2"
 };
 const _hoisted_21 = ["value"];
-const _hoisted_22 = { class: "ml-auto flex items-center gap-2" };
-const _hoisted_23 = ["disabled"];
-const _hoisted_24 = { class: "xl:col-span-2" };
-const _hoisted_25 = { class: "xl:col-span-2" };
-const _hoisted_26 = {
+const _hoisted_22 = { class: "flex items-center gap-1" };
+const _hoisted_23 = ["onClick"];
+const _hoisted_24 = {
+  key: 2,
+  class: "flex items-center gap-2"
+};
+const _hoisted_25 = ["value"];
+const _hoisted_26 = { class: "ml-auto flex items-center gap-2" };
+const _hoisted_27 = ["disabled"];
+const _hoisted_28 = { class: "xl:col-span-2" };
+const _hoisted_29 = { class: "xl:col-span-2" };
+const _hoisted_30 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_27 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_28 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_29 = {
+const _hoisted_31 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_32 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_33 = {
   key: 0,
   class: "mt-4 space-y-4"
 };
-const _hoisted_30 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_31 = {
+const _hoisted_34 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_35 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_32 = {
+const _hoisted_36 = {
   key: 1,
   class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
 };
-const _hoisted_33 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_34 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_35 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_36 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_37 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
-const _hoisted_38 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
-const _hoisted_39 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_40 = {
+const _hoisted_37 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_38 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_39 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_40 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_41 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_42 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
+const _hoisted_43 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_44 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_41 = {
+const _hoisted_45 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_42 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_43 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_44 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_45 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_46 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_47 = {
+const _hoisted_46 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_47 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_48 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_49 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_50 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_51 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_48 = {
+const _hoisted_52 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_49 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_50 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_51 = { class: "text-xs text-slate-500" };
-const _hoisted_52 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_53 = {
+const _hoisted_53 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_54 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_55 = { class: "text-xs text-slate-500" };
+const _hoisted_56 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_57 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_54 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_55 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
-const _hoisted_56 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_57 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_58 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_59 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_60 = {
+const _hoisted_59 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
+const _hoisted_60 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_61 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_62 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_63 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_64 = {
   key: 0,
   class: "mt-4"
 };
-const _hoisted_61 = {
+const _hoisted_65 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_62 = {
+const _hoisted_66 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_63 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_64 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_65 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_66 = {
+const _hoisted_67 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_68 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_69 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_70 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
@@ -187,15 +194,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const liveDonutTarget = ref("GROSS");
     const liveDonutStartPosition = ref("TOP");
     const liveTreemapTarget = ref("GROSS");
+    const liveKpiTarget = ref("SUMMARY");
     const liveMaskAmounts = ref(false);
     const livePortfolioKey = ref("ALL");
+    const liveKpiPortfolioKey = computed({
+      get: () => livePortfolioKey.value,
+      set: (value) => {
+        livePortfolioKey.value = value;
+      }
+    });
     const liveDashboardRef = ref(null);
     const allocationGross = ref(null);
     const allocationLiabilities = ref(null);
     const allocationNet = ref(null);
     const allocationHoldings = ref(null);
     const networthSeries = ref(null);
-    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
     const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
     const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
@@ -218,6 +232,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (livePortfolioId.value == null) return "All portfolios";
       const target = portfolios.value.find((item) => item.id === livePortfolioId.value);
       return target ? target.name : `Portfolio #${livePortfolioId.value}`;
+    });
+    const liveKpiPortfolioRows = computed(() => {
+      if (livePortfolioKey.value === "ALL") return portfolios.value;
+      const parsed = Number(livePortfolioKey.value);
+      if (!Number.isFinite(parsed)) return portfolios.value;
+      return portfolios.value.filter((item) => Number(item.id) === parsed);
     });
     const donutData = computed(() => {
       if (liveDonutTarget.value === "GROSS") return allocationGross.value;
@@ -419,14 +439,6 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         errorMessage.value = `Failed to load dashboard data: ${message}`;
       } finally {
         loading.value = false;
-      }
-    }
-    async function onChangeDisplayCurrency(value) {
-      try {
-        await setDisplayCurrency(value);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        errorMessage.value = `Failed to update display currency: ${message}`;
       }
     }
     function toggleLiveDashboard() {
@@ -660,18 +672,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[3] || (_cache[3] = _createElementVNode("div", null, [
+            _cache[4] || (_cache[4] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300" }, "Home"),
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Live Dashboard"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " This page now uses real API data from summary, holdings performance, and liabilities. ")
             ], -1)),
             _createElementVNode("div", _hoisted_4, [
-              _createVNode(_sfc_main$1, {
-                "model-value": _unref(displayCurrency),
-                disabled: loading.value || _unref(settingsSaving),
-                loading: _unref(settingsSaving),
-                "onUpdate:modelValue": onChangeDisplayCurrency
-              }, null, 8, ["model-value", "disabled", "loading"]),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass([
@@ -700,7 +706,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ])) : _createCommentVNode("", true),
         _createElementVNode("article", _hoisted_8, [
           _createElementVNode("div", _hoisted_9, [
-            _cache[4] || (_cache[4] = _createElementVNode("div", null, [
+            _cache[5] || (_cache[5] = _createElementVNode("div", null, [
               _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Live Dashboard Panel"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Default is collapsed. Expand to preview dashboard widgets and export image. ")
             ], -1)),
@@ -713,7 +719,39 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           liveDashboardExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_10, [
             _createElementVNode("div", _hoisted_11, [
               _createElementVNode("div", _hoisted_12, [
-                _cache[5] || (_cache[5] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Donut", -1)),
+                _cache[6] || (_cache[6] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "KPI", -1)),
+                (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["SUMMARY", "PORTFOLIOS"], (mode) => {
+                  return _createElementVNode("button", {
+                    key: `home-kpi-${mode}`,
+                    type: "button",
+                    class: _normalizeClass([
+                      "rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors",
+                      liveKpiTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    ]),
+                    onClick: ($event) => liveKpiTarget.value = mode
+                  }, _toDisplayString(mode), 11, _hoisted_13);
+                }), 64))
+              ]),
+              liveKpiTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_14, [
+                _cache[8] || (_cache[8] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+                _withDirectives(_createElementVNode("select", {
+                  "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => liveKpiPortfolioKey.value = $event),
+                  class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                }, [
+                  _cache[7] || (_cache[7] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
+                    return _openBlock(), _createElementBlock("option", {
+                      key: `home-kpi-portfolio-${item.id}`,
+                      value: String(item.id)
+                    }, _toDisplayString(item.name), 9, _hoisted_15);
+                  }), 128))
+                ], 512), [
+                  [_vModelSelect, liveKpiPortfolioKey.value]
+                ])
+              ])) : _createCommentVNode("", true),
+              _cache[16] || (_cache[16] = _createElementVNode("div", { class: "mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" }, null, -1)),
+              _createElementVNode("div", _hoisted_16, [
+                _cache[9] || (_cache[9] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Donut", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "PORTFOLIOS"], (mode) => {
                   return _createElementVNode("button", {
                     key: `home-donut-${mode}`,
@@ -723,12 +761,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       liveDonutTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                     ]),
                     onClick: ($event) => liveDonutTarget.value = mode
-                  }, _toDisplayString(mode), 11, _hoisted_13);
+                  }, _toDisplayString(mode), 11, _hoisted_17);
                 }), 64))
               ]),
-              _cache[12] || (_cache[12] = _createElementVNode("div", { class: "mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" }, null, -1)),
-              _createElementVNode("div", _hoisted_14, [
-                _cache[6] || (_cache[6] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Start", -1)),
+              _cache[17] || (_cache[17] = _createElementVNode("div", { class: "mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" }, null, -1)),
+              _createElementVNode("div", _hoisted_18, [
+                _cache[10] || (_cache[10] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Start", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
                   return _createElementVNode("button", {
                     key: `home-donut-start-${pos}`,
@@ -738,29 +776,29 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       liveDonutStartPosition.value === pos ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                     ]),
                     onClick: ($event) => liveDonutStartPosition.value = pos
-                  }, _toDisplayString(pos), 11, _hoisted_15);
+                  }, _toDisplayString(pos), 11, _hoisted_19);
                 }), 64))
               ]),
-              liveDonutTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_16, [
-                _cache[8] || (_cache[8] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+              liveDonutTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_20, [
+                _cache[12] || (_cache[12] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => livePortfolioKey.value = $event),
+                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => livePortfolioKey.value = $event),
                   class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
                 }, [
-                  _cache[7] || (_cache[7] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                  _cache[11] || (_cache[11] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: `home-donut-portfolio-${item.id}`,
                       value: String(item.id)
-                    }, _toDisplayString(item.name), 9, _hoisted_17);
+                    }, _toDisplayString(item.name), 9, _hoisted_21);
                   }), 128))
                 ], 512), [
                   [_vModelSelect, livePortfolioKey.value]
                 ])
               ])) : _createCommentVNode("", true),
-              _cache[13] || (_cache[13] = _createElementVNode("div", { class: "mx-2 h-5 w-px bg-slate-300 dark:bg-slate-700" }, null, -1)),
-              _createElementVNode("div", _hoisted_18, [
-                _cache[9] || (_cache[9] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Treemap", -1)),
+              _cache[18] || (_cache[18] = _createElementVNode("div", { class: "mx-2 h-5 w-px bg-slate-300 dark:bg-slate-700" }, null, -1)),
+              _createElementVNode("div", _hoisted_22, [
+                _cache[13] || (_cache[13] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Treemap", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "PORTFOLIOS"], (mode) => {
                   return _createElementVNode("button", {
                     key: `home-treemap-${mode}`,
@@ -770,27 +808,27 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       liveTreemapTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                     ]),
                     onClick: ($event) => liveTreemapTarget.value = mode
-                  }, _toDisplayString(mode), 11, _hoisted_19);
+                  }, _toDisplayString(mode), 11, _hoisted_23);
                 }), 64))
               ]),
-              liveTreemapTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_20, [
-                _cache[11] || (_cache[11] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+              liveTreemapTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_24, [
+                _cache[15] || (_cache[15] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => livePortfolioKey.value = $event),
+                  "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => livePortfolioKey.value = $event),
                   class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
                 }, [
-                  _cache[10] || (_cache[10] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                  _cache[14] || (_cache[14] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: `home-treemap-portfolio-${item.id}`,
                       value: String(item.id)
-                    }, _toDisplayString(item.name), 9, _hoisted_21);
+                    }, _toDisplayString(item.name), 9, _hoisted_25);
                   }), 128))
                 ], 512), [
                   [_vModelSelect, livePortfolioKey.value]
                 ])
               ])) : _createCommentVNode("", true),
-              _createElementVNode("div", _hoisted_22, [
+              _createElementVNode("div", _hoisted_26, [
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
@@ -801,7 +839,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   class: "rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
                   disabled: exportingImage.value || loading.value,
                   onClick: exportLiveDashboardImage
-                }, _toDisplayString(exportingImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_23)
+                }, _toDisplayString(exportingImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_27)
               ])
             ]),
             _createElementVNode("div", {
@@ -809,8 +847,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ref: liveDashboardRef,
               class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
             }, [
-              _createElementVNode("div", _hoisted_24, [
-                _createVNode(_sfc_main$2, {
+              _createElementVNode("div", _hoisted_28, [
+                liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$1, {
+                  key: 0,
                   title: "KPI Summary",
                   subtitle: "Included in print/snapshot",
                   currency: summaryDisplayCurrency.value,
@@ -825,7 +864,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   "net-profit-total": kpiNetProfitTotal.value,
                   "as-of": asOf.value,
                   "mask-amounts": liveMaskAmounts.value
-                }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])
+                }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$2, {
+                  key: 1,
+                  title: "KPI Portfolios",
+                  subtitle: "Per portfolio | Included in print/snapshot",
+                  currency: summaryDisplayCurrency.value,
+                  portfolios: liveKpiPortfolioRows.value,
+                  "mask-amounts": liveMaskAmounts.value
+                }, null, 8, ["currency", "portfolios", "mask-amounts"]))
               ]),
               _createVNode(_sfc_main$3, {
                 title: `Allocation | ${liveDonutTarget.value}`,
@@ -847,7 +893,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 loading: loading.value,
                 error: errorMessage.value
               }, null, 8, ["subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
-              _createElementVNode("div", _hoisted_25, [
+              _createElementVNode("div", _hoisted_29, [
                 _createVNode(_sfc_main$5, {
                   title: "Networth Trend",
                   subtitle: "valuation_snapshots | bucket=DAY",
@@ -859,15 +905,15 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 }, null, 8, ["currency", "points", "mask-amounts", "loading", "error"])
               ])
             ], 512)
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_26, [..._cache[14] || (_cache[14] = [
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_30, [..._cache[19] || (_cache[19] = [
             _createTextVNode(" Collapsed. Click ", -1),
             _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
             _createTextVNode(" to preview and export. ", -1)
           ])]))
         ]),
-        _createElementVNode("article", _hoisted_27, [
-          _createElementVNode("div", _hoisted_28, [
-            _cache[15] || (_cache[15] = _createElementVNode("div", null, [
+        _createElementVNode("article", _hoisted_31, [
+          _createElementVNode("div", _hoisted_32, [
+            _cache[20] || (_cache[20] = _createElementVNode("div", null, [
               _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
             ], -1)),
@@ -877,7 +923,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               onClick: toggleReportPanel
             }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
           ]),
-          reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_29, [
+          reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_33, [
             _createVNode(_sfc_main$6, {
               "display-currency": summaryDisplayCurrency.value,
               "gross-assets-total": grossAssetsTotal.value,
@@ -893,32 +939,32 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               liabilities: liabilities.value,
               "mask-amounts": liveMaskAmounts.value
             }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
-            _createElementVNode("article", _hoisted_30, [
-              _cache[20] || (_cache[20] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+            _createElementVNode("article", _hoisted_34, [
+              _cache[25] || (_cache[25] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                 _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
               ], -1)),
-              topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_31, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_32, [
+              topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_35, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_36, [
                 (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topPortfolios.value, (item) => {
                   return _openBlock(), _createElementBlock("li", {
                     key: item.id,
                     class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                   }, [
-                    _createElementVNode("div", _hoisted_33, [
-                      _createElementVNode("p", _hoisted_34, [
+                    _createElementVNode("div", _hoisted_37, [
+                      _createElementVNode("p", _hoisted_38, [
                         _createTextVNode(_toDisplayString(item.name) + " ", 1),
-                        _createElementVNode("span", _hoisted_35, _toDisplayString(item.type), 1)
+                        _createElementVNode("span", _hoisted_39, _toDisplayString(item.type), 1)
                       ]),
                       _createElementVNode("p", {
                         class: _normalizeClass(["text-xs font-semibold", item.total_return_pct == null ? "text-slate-500" : toNumber(item.total_return_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                       }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                     ]),
-                    _createElementVNode("div", _hoisted_36, [
-                      _cache[16] || (_cache[16] = _createTextVNode(" Gross ", -1)),
+                    _createElementVNode("div", _hoisted_40, [
+                      _cache[21] || (_cache[21] = _createTextVNode(" Gross ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[17] || (_cache[17] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
+                      _cache[22] || (_cache[22] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatCurrency(
@@ -926,12 +972,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         item.base_currency || summaryDisplayCurrency.value
                       )), 5)
                     ]),
-                    _createElementVNode("div", _hoisted_37, [
-                      _cache[18] || (_cache[18] = _createTextVNode(" Net ", -1)),
+                    _createElementVNode("div", _hoisted_41, [
+                      _cache[23] || (_cache[23] = _createTextVNode(" Net ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[19] || (_cache[19] = _createTextVNode(" · Portfolio Profit ", -1)),
+                      _cache[24] || (_cache[24] = _createTextVNode(" · Portfolio Profit ", -1)),
                       _createElementVNode("span", {
                         style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                       }, _toDisplayString(formatSignedCurrency(
@@ -943,32 +989,32 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 }), 128))
               ]))
             ]),
-            _createElementVNode("div", _hoisted_38, [
-              _createElementVNode("article", _hoisted_39, [
-                _cache[22] || (_cache[22] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+            _createElementVNode("div", _hoisted_42, [
+              _createElementVNode("article", _hoisted_43, [
+                _cache[27] || (_cache[27] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                   _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                 ], -1)),
-                topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_40, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_41, [
+                topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_44, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_45, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topHoldings.value, (item) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: item.holding_id,
                       class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                     }, [
-                      _createElementVNode("div", _hoisted_42, [
-                        _createElementVNode("p", _hoisted_43, [
+                      _createElementVNode("div", _hoisted_46, [
+                        _createElementVNode("p", _hoisted_47, [
                           _createTextVNode(_toDisplayString(item.asset_name) + " ", 1),
-                          _createElementVNode("span", _hoisted_44, _toDisplayString(item.asset_symbol || "-"), 1)
+                          _createElementVNode("span", _hoisted_48, _toDisplayString(item.asset_symbol || "-"), 1)
                         ]),
                         _createElementVNode("p", {
                           class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                         }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
                       ]),
-                      _createElementVNode("div", _hoisted_45, [
+                      _createElementVNode("div", _hoisted_49, [
                         _createElementVNode("span", {
                           style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                         }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
-                        _cache[21] || (_cache[21] = _createTextVNode(" / ", -1)),
+                        _cache[26] || (_cache[26] = _createTextVNode(" / ", -1)),
                         _createElementVNode("span", {
                           style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                         }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
@@ -977,22 +1023,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   }), 128))
                 ]))
               ]),
-              _createElementVNode("article", _hoisted_46, [
-                _cache[23] || (_cache[23] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+              _createElementVNode("article", _hoisted_50, [
+                _cache[28] || (_cache[28] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                   _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                 ], -1)),
-                topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_47, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_48, [
+                topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_51, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_52, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topLiabilities.value, (item) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: item.id,
                       class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                     }, [
-                      _createElementVNode("div", _hoisted_49, [
-                        _createElementVNode("p", _hoisted_50, _toDisplayString(item.name), 1),
-                        _createElementVNode("p", _hoisted_51, _toDisplayString(item.liability_type), 1)
+                      _createElementVNode("div", _hoisted_53, [
+                        _createElementVNode("p", _hoisted_54, _toDisplayString(item.name), 1),
+                        _createElementVNode("p", _hoisted_55, _toDisplayString(item.liability_type), 1)
                       ]),
-                      _createElementVNode("div", _hoisted_52, [
+                      _createElementVNode("div", _hoisted_56, [
                         _createElementVNode("span", {
                           style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                         }, _toDisplayString(formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency.value)), 5)
@@ -1002,22 +1048,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]))
               ])
             ])
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_53, [..._cache[24] || (_cache[24] = [
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_57, [..._cache[29] || (_cache[29] = [
             _createTextVNode(" Collapsed. Click ", -1),
             _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
             _createTextVNode(" to preview report cards. ", -1)
           ])]))
         ]),
-        _createElementVNode("article", _hoisted_54, [
-          _cache[25] || (_cache[25] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
-          _createElementVNode("ul", _hoisted_55, [
-            _createElementVNode("li", _hoisted_56, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
-            _createElementVNode("li", _hoisted_57, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
+        _createElementVNode("article", _hoisted_58, [
+          _cache[30] || (_cache[30] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
+          _createElementVNode("ul", _hoisted_59, [
+            _createElementVNode("li", _hoisted_60, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
+            _createElementVNode("li", _hoisted_61, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
           ])
         ]),
-        _createElementVNode("article", _hoisted_58, [
-          _createElementVNode("div", _hoisted_59, [
-            _cache[26] || (_cache[26] = _createElementVNode("div", null, [
+        _createElementVNode("article", _hoisted_62, [
+          _createElementVNode("div", _hoisted_63, [
+            _cache[31] || (_cache[31] = _createElementVNode("div", null, [
               _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
             ], -1)),
@@ -1027,20 +1073,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               onClick: toggleReleaseNotesPanel
             }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
           ]),
-          releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
-            releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_61, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_62, [
+          releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_64, [
+            releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_65, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_66, [
               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
                 return _openBlock(), _createElementBlock("li", {
                   key: note.id,
                   class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                 }, [
-                  _createElementVNode("p", _hoisted_63, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                  _createElementVNode("p", _hoisted_64, _toDisplayString(note.title), 1),
-                  _createElementVNode("p", _hoisted_65, _toDisplayString(note.summary), 1)
+                  _createElementVNode("p", _hoisted_67, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                  _createElementVNode("p", _hoisted_68, _toDisplayString(note.title), 1),
+                  _createElementVNode("p", _hoisted_69, _toDisplayString(note.summary), 1)
                 ]);
               }), 128))
             ]))
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_66, [..._cache[27] || (_cache[27] = [
+          ])) : (_openBlock(), _createElementBlock("p", _hoisted_70, [..._cache[32] || (_cache[32] = [
             _createTextVNode(" Collapsed. Click ", -1),
             _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
             _createTextVNode(" to view release notes. ", -1)

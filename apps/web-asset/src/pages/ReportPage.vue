@@ -4,11 +4,9 @@ import { computed, onMounted, ref, watch } from "vue";
 import { getNetworthSeries, getSummary, type AnalyticsNetworthSeriesOut, type AnalyticsSummaryV2Out } from "../api/analytics";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
-import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
 import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
-import type { DisplayCurrency } from "../api/userSettings";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 function toNumber(value: string | number | null | undefined): number {
@@ -27,7 +25,7 @@ const summary = ref<AnalyticsSummaryV2Out | null>(null);
 const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
-const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
@@ -99,15 +97,6 @@ async function loadReportData(): Promise<void> {
   }
 }
 
-async function onChangeDisplayCurrency(value: DisplayCurrency) {
-  try {
-    await setDisplayCurrency(value);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    errorMessage.value = `Failed to update display currency: ${message}`;
-  }
-}
-
 onMounted(async () => {
   await ensureInitialized();
   await loadReportData();
@@ -135,12 +124,6 @@ watch(
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <DisplayCurrencyToggle
-            :model-value="displayCurrency"
-            :disabled="loading || settingsSaving"
-            :loading="settingsSaving"
-            @update:model-value="onChangeDisplayCurrency"
-          />
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"

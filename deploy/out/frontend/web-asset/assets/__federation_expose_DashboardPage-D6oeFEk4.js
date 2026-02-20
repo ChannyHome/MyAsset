@@ -1,14 +1,14 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-kOAy-Gve.js';
-import { g as getHoldingsPerformance } from './holdings-BJ36ZSvf.js';
-import { b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './portfolios-Dk-CPOVT.js';
-import { u as useDisplayCurrency, _ as _sfc_main$1 } from './useDisplayCurrency-CJzodPGx.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4 } from './KpiSummaryCard.vue_vue_type_script_setup_true_lang-CQ1BICp7.js';
-import { f as formatDateTimeSeoul } from './datetime-BdCiN_Bj.js';
+import { _ as _sfc_main$5, g as getSummary, a as getAllocation, b as getNetworthSeries, c as collectSnapshots } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DHTjWqU8.js';
+import { g as getHoldingsPerformance } from './holdings-8qgM-Yg8.js';
+import { b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './portfolios-De0w93tc.js';
+import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3, c as _sfc_main$4 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-BjkCKIwg.js';
+import { u as useDisplayCurrency } from './useDisplayCurrency-ArDju8z7.js';
+import { f as formatDateTimeSeoul } from './datetime-BbzyLRcb.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,unref:_unref,createVNode:_createVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,renderList:_renderList,Fragment:_Fragment,createBlock:_createBlock,vModelSelect:_vModelSelect,withModifiers:_withModifiers} = await importShared('vue');
+const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelText:_vModelText,withDirectives:_withDirectives,renderList:_renderList,Fragment:_Fragment,vModelSelect:_vModelSelect,createBlock:_createBlock,createVNode:_createVNode,withModifiers:_withModifiers} = await importShared('vue');
 
 const _hoisted_1 = { class: "space-y-4" };
 const _hoisted_2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -46,46 +46,57 @@ const _hoisted_24 = { class: "mb-3 flex items-center justify-between" };
 const _hoisted_25 = { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" };
 const _hoisted_26 = ["onClick"];
 const _hoisted_27 = {
+  key: 0,
+  class: "space-y-2"
+};
+const _hoisted_28 = { class: "flex flex-wrap items-center gap-1" };
+const _hoisted_29 = ["onClick"];
+const _hoisted_30 = {
+  key: 0,
+  class: "flex items-center gap-2"
+};
+const _hoisted_31 = ["value"];
+const _hoisted_32 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_28 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_29 = { class: "flex flex-wrap items-center gap-1" };
-const _hoisted_30 = ["onClick"];
-const _hoisted_31 = { class: "flex flex-wrap items-center gap-1" };
-const _hoisted_32 = ["onClick"];
-const _hoisted_33 = {
+const _hoisted_33 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_34 = { class: "flex flex-wrap items-center gap-1" };
+const _hoisted_35 = ["onClick"];
+const _hoisted_36 = { class: "flex flex-wrap items-center gap-1" };
+const _hoisted_37 = ["onClick"];
+const _hoisted_38 = {
   key: 0,
   class: "mb-1 flex items-center gap-2"
 };
-const _hoisted_34 = ["value"];
-const _hoisted_35 = { key: 2 };
-const _hoisted_36 = { class: "mb-2 flex flex-wrap items-center gap-2" };
-const _hoisted_37 = { class: "flex items-center gap-1" };
-const _hoisted_38 = ["onClick"];
 const _hoisted_39 = ["value"];
-const _hoisted_40 = { key: 3 };
-const _hoisted_41 = {
+const _hoisted_40 = { key: 2 };
+const _hoisted_41 = { class: "mb-2 flex flex-wrap items-center gap-2" };
+const _hoisted_42 = { class: "flex items-center gap-1" };
+const _hoisted_43 = ["onClick"];
+const _hoisted_44 = ["value"];
+const _hoisted_45 = { key: 3 };
+const _hoisted_46 = {
   key: 4,
   class: "rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800"
 };
-const _hoisted_42 = {
+const _hoisted_47 = {
   key: 5,
   class: "rounded-lg bg-slate-100 p-3 text-xs dark:bg-slate-800"
 };
-const _hoisted_43 = { class: "w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_44 = { class: "mb-3 flex items-center justify-between" };
-const _hoisted_45 = { class: "grid grid-cols-1 gap-3 md:grid-cols-2" };
-const _hoisted_46 = { class: "block text-sm" };
-const _hoisted_47 = ["value"];
-const _hoisted_48 = { class: "block text-sm" };
-const _hoisted_49 = ["value"];
-const _hoisted_50 = { class: "mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700" };
-const _hoisted_51 = { class: "w-full min-w-[420px] text-left text-sm" };
-const _hoisted_52 = { class: "px-3 py-2" };
-const _hoisted_53 = { class: "px-3 py-2" };
-const _hoisted_54 = { class: "px-3 py-2" };
-const _hoisted_55 = { class: "mt-4 flex flex-wrap justify-end gap-2" };
+const _hoisted_48 = { class: "w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_49 = { class: "mb-3 flex items-center justify-between" };
+const _hoisted_50 = { class: "grid grid-cols-1 gap-3 md:grid-cols-2" };
+const _hoisted_51 = { class: "block text-sm" };
+const _hoisted_52 = ["value"];
+const _hoisted_53 = { class: "block text-sm" };
+const _hoisted_54 = ["value"];
+const _hoisted_55 = { class: "mt-4 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700" };
+const _hoisted_56 = { class: "w-full min-w-[420px] text-left text-sm" };
+const _hoisted_57 = { class: "px-3 py-2" };
+const _hoisted_58 = { class: "px-3 py-2" };
+const _hoisted_59 = { class: "px-3 py-2" };
+const _hoisted_60 = { class: "mt-4 flex flex-wrap justify-end gap-2" };
 const {computed,onMounted,reactive,ref,watch} = await importShared('vue');
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "DashboardPage",
@@ -156,6 +167,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const donutTarget = ref("GROSS");
     const donutStartPosition = ref("TOP");
     const treemapTarget = ref("GROSS");
+    const kpiTarget = ref("SUMMARY");
+    const kpiPortfolioKey = ref("ALL");
     const collectingSnapshot = ref(false);
     const dataLoading = ref(false);
     const dataError = ref("");
@@ -170,7 +183,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const allocationHoldings = ref(null);
     const networthSeries = ref(null);
     const treemapPortfolioKey = ref("ALL");
-    const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+    const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
     const filteredSections = computed(() => {
       const keyword = search.value.trim().toLowerCase();
@@ -280,6 +293,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (treemapPortfolioId.value == null) return "All portfolios";
       const target = portfolios.value.find((item) => item.id === treemapPortfolioId.value);
       return target ? target.name : `Portfolio #${treemapPortfolioId.value}`;
+    });
+    const kpiPortfolioRows = computed(() => {
+      if (kpiPortfolioKey.value === "ALL") return portfolioStats.value;
+      const parsed = Number(kpiPortfolioKey.value);
+      if (!Number.isFinite(parsed)) return portfolioStats.value;
+      return portfolioStats.value.filter((item) => Number(item.id) === parsed);
     });
     const trendPoints = computed(
       () => (networthSeries.value?.points ?? []).map((point) => ({
@@ -406,6 +425,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         if (treemapPortfolioKey.value !== "ALL" && !portfoliosOut.some((item) => String(item.id) === treemapPortfolioKey.value)) {
           treemapPortfolioKey.value = "ALL";
         }
+        if (kpiPortfolioKey.value !== "ALL" && !portfoliosOut.some((item) => String(Number(item.id)) === kpiPortfolioKey.value)) {
+          kpiPortfolioKey.value = "ALL";
+        }
       } catch (error) {
         dataError.value = error instanceof Error ? error.message : "Failed to load dashboard data";
       } finally {
@@ -421,14 +443,6 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         dataError.value = error instanceof Error ? error.message : "Failed to collect valuation snapshot";
       } finally {
         collectingSnapshot.value = false;
-      }
-    }
-    async function onChangeDisplayCurrency(value) {
-      try {
-        await setDisplayCurrency(value);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to update display currency";
-        dataError.value = message;
       }
     }
     onMounted(async () => {
@@ -456,18 +470,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[12] || (_cache[12] = _createElementVNode("div", null, [
+            _cache[13] || (_cache[13] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300" }, "Dashboard"),
               _createElementVNode("h1", { class: "mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Dashboard Builder"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " Allocation widgets + valuation snapshot trend are now connected to live analytics APIs. ")
             ], -1)),
             _createElementVNode("div", _hoisted_4, [
-              _createVNode(_sfc_main$1, {
-                "model-value": _unref(displayCurrency),
-                disabled: dataLoading.value || _unref(settingsSaving),
-                loading: _unref(settingsSaving),
-                "onUpdate:modelValue": onChangeDisplayCurrency
-              }, null, 8, ["model-value", "disabled", "loading"]),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
@@ -484,7 +492,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 onClick: _cache[0] || (_cache[0] = ($event) => compareModalOpen.value = true)
               }, " Compare "),
-              _cache[11] || (_cache[11] = _createElementVNode("button", {
+              _cache[12] || (_cache[12] = _createElementVNode("button", {
                 type: "button",
                 class: "rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
               }, " Save ", -1))
@@ -506,7 +514,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ]),
         _createElementVNode("div", _hoisted_12, [
           _createElementVNode("aside", _hoisted_13, [
-            _cache[14] || (_cache[14] = _createElementVNode("div", { class: "border-b border-slate-700 px-4 py-3" }, [
+            _cache[15] || (_cache[15] = _createElementVNode("div", { class: "border-b border-slate-700 px-4 py-3" }, [
               _createElementVNode("p", { class: "text-sm font-semibold" }, "Toolbox"),
               _createElementVNode("p", { class: "mt-0.5 text-xs text-slate-400" }, "Double-click or drag widgets to canvas")
             ], -1)),
@@ -537,7 +545,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onDragstart: ($event) => onDragStart($event, item),
                         onDblclick: ($event) => addWidget(item)
                       }, [
-                        _cache[13] || (_cache[13] = _createElementVNode("span", { class: "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded border border-slate-600 text-[10px] text-slate-300" }, " + ", -1)),
+                        _cache[14] || (_cache[14] = _createElementVNode("span", { class: "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded border border-slate-600 text-[10px] text-slate-300" }, " + ", -1)),
                         _createElementVNode("span", null, [
                           _createElementVNode("span", _hoisted_19, _toDisplayString(item.label), 1),
                           _createElementVNode("span", _hoisted_20, _toDisplayString(item.description), 1)
@@ -552,7 +560,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           _createElementVNode("article", _hoisted_21, [
             _createElementVNode("div", {
               class: "min-h-[420px] rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/40",
-              onDragover: _cache[4] || (_cache[4] = _withModifiers(() => {
+              onDragover: _cache[5] || (_cache[5] = _withModifiers(() => {
               }, ["prevent"])),
               onDrop: _withModifiers(onDropCanvas, ["prevent"])
             }, [
@@ -570,24 +578,63 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onClick: ($event) => removeWidget(widget.id)
                       }, " Remove ", 8, _hoisted_26)
                     ]),
-                    widget.type === "kpi_summary" ? (_openBlock(), _createBlock(_sfc_main$2, {
-                      key: 0,
-                      title: "KPI Summary",
-                      subtitle: "Gross / Liabilities / Net",
-                      currency: summaryDisplayCurrency.value,
-                      "gross-assets-total": toNumber(summary.value?.gross_assets_total),
-                      "liabilities-total": toNumber(summary.value?.liabilities_total),
-                      "net-assets-total": toNumber(summary.value?.net_assets_total),
-                      "invested-principal-total": toNumber(summary.value?.invested_principal_total),
-                      "principal-minus-debt-total": toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
-                      "gross-return-pct": kpiGrossReturnPct.value,
-                      "net-return-pct": kpiNetReturnPct.value,
-                      "gross-profit-total": kpiGrossProfitTotal.value,
-                      "net-profit-total": kpiNetProfitTotal.value,
-                      "as-of": formatDateTime(summary.value?.as_of || null)
-                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of"])) : widget.type === "donut_allocation" ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
+                    widget.type === "kpi_summary" ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
                       _createElementVNode("div", _hoisted_28, [
-                        _createElementVNode("div", _hoisted_29, [
+                        _cache[16] || (_cache[16] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "KPI", -1)),
+                        (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["SUMMARY", "PORTFOLIOS"], (mode) => {
+                          return _createElementVNode("button", {
+                            key: `dashboard-kpi-${mode}`,
+                            type: "button",
+                            class: _normalizeClass([
+                              "rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors",
+                              kpiTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                            ]),
+                            onClick: ($event) => kpiTarget.value = mode
+                          }, _toDisplayString(mode), 11, _hoisted_29);
+                        }), 64))
+                      ]),
+                      kpiTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_30, [
+                        _cache[18] || (_cache[18] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+                        _withDirectives(_createElementVNode("select", {
+                          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => kpiPortfolioKey.value = $event),
+                          class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                        }, [
+                          _cache[17] || (_cache[17] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                          (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
+                            return _openBlock(), _createElementBlock("option", {
+                              key: `dashboard-kpi-portfolio-${item.id}`,
+                              value: String(item.id)
+                            }, _toDisplayString(item.name), 9, _hoisted_31);
+                          }), 128))
+                        ], 512), [
+                          [_vModelSelect, kpiPortfolioKey.value]
+                        ])
+                      ])) : _createCommentVNode("", true),
+                      kpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$1, {
+                        key: 1,
+                        title: "KPI Summary",
+                        subtitle: "Gross / Liabilities / Net",
+                        currency: summaryDisplayCurrency.value,
+                        "gross-assets-total": toNumber(summary.value?.gross_assets_total),
+                        "liabilities-total": toNumber(summary.value?.liabilities_total),
+                        "net-assets-total": toNumber(summary.value?.net_assets_total),
+                        "invested-principal-total": toNumber(summary.value?.invested_principal_total),
+                        "principal-minus-debt-total": toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
+                        "gross-return-pct": kpiGrossReturnPct.value,
+                        "net-return-pct": kpiNetReturnPct.value,
+                        "gross-profit-total": kpiGrossProfitTotal.value,
+                        "net-profit-total": kpiNetProfitTotal.value,
+                        "as-of": formatDateTime(summary.value?.as_of || null)
+                      }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of"])) : (_openBlock(), _createBlock(_sfc_main$2, {
+                        key: 2,
+                        title: "KPI Portfolios",
+                        subtitle: "Per portfolio snapshot",
+                        currency: summaryDisplayCurrency.value,
+                        portfolios: kpiPortfolioRows.value
+                      }, null, 8, ["currency", "portfolios"]))
+                    ])) : widget.type === "donut_allocation" ? (_openBlock(), _createElementBlock("div", _hoisted_32, [
+                      _createElementVNode("div", _hoisted_33, [
+                        _createElementVNode("div", _hoisted_34, [
                           (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "PORTFOLIOS"], (mode) => {
                             return _createElementVNode("button", {
                               key: mode,
@@ -597,12 +644,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 donutTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               ]),
                               onClick: ($event) => donutTarget.value = mode
-                            }, _toDisplayString(mode), 11, _hoisted_30);
+                            }, _toDisplayString(mode), 11, _hoisted_35);
                           }), 64))
                         ]),
-                        _cache[16] || (_cache[16] = _createElementVNode("div", { class: "mx-1 hidden h-4 w-px bg-slate-300 dark:bg-slate-700 sm:block" }, null, -1)),
-                        _createElementVNode("div", _hoisted_31, [
-                          _cache[15] || (_cache[15] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Start", -1)),
+                        _cache[20] || (_cache[20] = _createElementVNode("div", { class: "mx-1 hidden h-4 w-px bg-slate-300 dark:bg-slate-700 sm:block" }, null, -1)),
+                        _createElementVNode("div", _hoisted_36, [
+                          _cache[19] || (_cache[19] = _createElementVNode("span", { class: "mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400" }, "Start", -1)),
                           (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
                             return _createElementVNode("button", {
                               key: `donut-start-${pos}`,
@@ -612,22 +659,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 donutStartPosition.value === pos ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               ]),
                               onClick: ($event) => donutStartPosition.value = pos
-                            }, _toDisplayString(pos), 11, _hoisted_32);
+                            }, _toDisplayString(pos), 11, _hoisted_37);
                           }), 64))
                         ])
                       ]),
-                      donutTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_33, [
-                        _cache[18] || (_cache[18] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+                      donutTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock("div", _hoisted_38, [
+                        _cache[22] || (_cache[22] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
                         _withDirectives(_createElementVNode("select", {
-                          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => treemapPortfolioKey.value = $event),
+                          "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => treemapPortfolioKey.value = $event),
                           class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
                         }, [
-                          _cache[17] || (_cache[17] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                          _cache[21] || (_cache[21] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                           (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                             return _openBlock(), _createElementBlock("option", {
                               key: `donut-${item.id}`,
                               value: String(item.id)
-                            }, _toDisplayString(item.name), 9, _hoisted_34);
+                            }, _toDisplayString(item.name), 9, _hoisted_39);
                           }), 128))
                         ], 512), [
                           [_vModelSelect, treemapPortfolioKey.value]
@@ -641,9 +688,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         items: donutItems.value,
                         "start-position": donutStartPosition.value
                       }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position"])
-                    ])) : widget.type === "treemap_holdings" ? (_openBlock(), _createElementBlock("div", _hoisted_35, [
-                      _createElementVNode("div", _hoisted_36, [
-                        _createElementVNode("div", _hoisted_37, [
+                    ])) : widget.type === "treemap_holdings" ? (_openBlock(), _createElementBlock("div", _hoisted_40, [
+                      _createElementVNode("div", _hoisted_41, [
+                        _createElementVNode("div", _hoisted_42, [
                           (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "PORTFOLIOS"], (mode) => {
                             return _createElementVNode("button", {
                               key: `treemap-${mode}`,
@@ -653,21 +700,21 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 treemapTarget.value === mode ? "border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300" : "border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               ]),
                               onClick: ($event) => treemapTarget.value = mode
-                            }, _toDisplayString(mode), 11, _hoisted_38);
+                            }, _toDisplayString(mode), 11, _hoisted_43);
                           }), 64))
                         ]),
                         treemapTarget.value === "PORTFOLIOS" ? (_openBlock(), _createElementBlock(_Fragment, { key: 0 }, [
-                          _cache[20] || (_cache[20] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
+                          _cache[24] || (_cache[24] = _createElementVNode("label", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "Portfolio", -1)),
                           _withDirectives(_createElementVNode("select", {
-                            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => treemapPortfolioKey.value = $event),
+                            "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => treemapPortfolioKey.value = $event),
                             class: "rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
                           }, [
-                            _cache[19] || (_cache[19] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                            _cache[23] || (_cache[23] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                             (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                               return _openBlock(), _createElementBlock("option", {
                                 key: item.id,
                                 value: String(item.id)
-                              }, _toDisplayString(item.name), 9, _hoisted_39);
+                              }, _toDisplayString(item.name), 9, _hoisted_44);
                             }), 128))
                           ], 512), [
                             [_vModelSelect, treemapPortfolioKey.value]
@@ -680,14 +727,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         currency: summaryDisplayCurrency.value,
                         items: holdingsTreemapItems.value
                       }, null, 8, ["subtitle", "currency", "items"])
-                    ])) : widget.type === "networth_line" ? (_openBlock(), _createElementBlock("div", _hoisted_40, [
+                    ])) : widget.type === "networth_line" ? (_openBlock(), _createElementBlock("div", _hoisted_45, [
                       _createVNode(_sfc_main$5, {
                         title: "Networth Line",
                         subtitle: "valuation_snapshots | bucket=DAY",
                         currency: summaryDisplayCurrency.value,
                         points: trendPoints.value
                       }, null, 8, ["currency", "points"])
-                    ])) : widget.type === "dividend_bar_monthly" ? (_openBlock(), _createElementBlock("div", _hoisted_41, " Dividend monthly widget is a planned MVP+ item. ")) : (_openBlock(), _createElementBlock("div", _hoisted_42, " Market board widget is ready for market API binding. "))
+                    ])) : widget.type === "dividend_bar_monthly" ? (_openBlock(), _createElementBlock("div", _hoisted_46, " Dividend monthly widget is a planned MVP+ item. ")) : (_openBlock(), _createElementBlock("div", _hoisted_47, " Market board widget is ready for market API binding. "))
                   ]);
                 }), 128))
               ]))
@@ -697,54 +744,54 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         compareModalOpen.value ? (_openBlock(), _createElementBlock("div", {
           key: 0,
           class: "fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 px-4",
-          onClick: _cache[10] || (_cache[10] = _withModifiers(($event) => compareModalOpen.value = false, ["self"]))
+          onClick: _cache[11] || (_cache[11] = _withModifiers(($event) => compareModalOpen.value = false, ["self"]))
         }, [
-          _createElementVNode("section", _hoisted_43, [
-            _createElementVNode("div", _hoisted_44, [
-              _cache[21] || (_cache[21] = _createElementVNode("h2", { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Dashboard Compare", -1)),
+          _createElementVNode("section", _hoisted_48, [
+            _createElementVNode("div", _hoisted_49, [
+              _cache[25] || (_cache[25] = _createElementVNode("h2", { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Dashboard Compare", -1)),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-2 py-1 text-xs dark:border-slate-700",
-                onClick: _cache[5] || (_cache[5] = ($event) => compareModalOpen.value = false)
+                onClick: _cache[6] || (_cache[6] = ($event) => compareModalOpen.value = false)
               }, " Close ")
             ]),
-            _createElementVNode("div", _hoisted_45, [
-              _createElementVNode("label", _hoisted_46, [
-                _cache[22] || (_cache[22] = _createElementVNode("span", { class: "mb-1 block font-medium text-slate-700 dark:text-slate-200" }, "Left", -1)),
+            _createElementVNode("div", _hoisted_50, [
+              _createElementVNode("label", _hoisted_51, [
+                _cache[26] || (_cache[26] = _createElementVNode("span", { class: "mb-1 block font-medium text-slate-700 dark:text-slate-200" }, "Left", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => compare.left = $event),
+                  "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => compare.left = $event),
                   class: "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(dashboardPresets, (preset) => {
                     return _createElementVNode("option", {
                       key: preset.id,
                       value: preset.id
-                    }, _toDisplayString(preset.name), 9, _hoisted_47);
+                    }, _toDisplayString(preset.name), 9, _hoisted_52);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, compare.left]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_48, [
-                _cache[23] || (_cache[23] = _createElementVNode("span", { class: "mb-1 block font-medium text-slate-700 dark:text-slate-200" }, "Right", -1)),
+              _createElementVNode("label", _hoisted_53, [
+                _cache[27] || (_cache[27] = _createElementVNode("span", { class: "mb-1 block font-medium text-slate-700 dark:text-slate-200" }, "Right", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => compare.right = $event),
+                  "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => compare.right = $event),
                   class: "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(dashboardPresets, (preset) => {
                     return _createElementVNode("option", {
                       key: preset.id,
                       value: preset.id
-                    }, _toDisplayString(preset.name), 9, _hoisted_49);
+                    }, _toDisplayString(preset.name), 9, _hoisted_54);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, compare.right]
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_50, [
-              _createElementVNode("table", _hoisted_51, [
-                _cache[24] || (_cache[24] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
+            _createElementVNode("div", _hoisted_55, [
+              _createElementVNode("table", _hoisted_56, [
+                _cache[28] || (_cache[28] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
                   _createElementVNode("tr", null, [
                     _createElementVNode("th", { class: "px-3 py-2" }, "Widget"),
                     _createElementVNode("th", { class: "px-3 py-2" }, "Left"),
@@ -757,19 +804,19 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       key: row.type,
                       class: "border-t border-slate-200 dark:border-slate-700"
                     }, [
-                      _createElementVNode("td", _hoisted_52, _toDisplayString(row.type), 1),
-                      _createElementVNode("td", _hoisted_53, _toDisplayString(row.left ? "O" : "-"), 1),
-                      _createElementVNode("td", _hoisted_54, _toDisplayString(row.right ? "O" : "-"), 1)
+                      _createElementVNode("td", _hoisted_57, _toDisplayString(row.type), 1),
+                      _createElementVNode("td", _hoisted_58, _toDisplayString(row.left ? "O" : "-"), 1),
+                      _createElementVNode("td", _hoisted_59, _toDisplayString(row.right ? "O" : "-"), 1)
                     ]);
                   }), 128))
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_55, [
+            _createElementVNode("div", _hoisted_60, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700",
-                onClick: _cache[8] || (_cache[8] = ($event) => {
+                onClick: _cache[9] || (_cache[9] = ($event) => {
                   buildWidgetsFromPreset(compare.left);
                   compareModalOpen.value = false;
                 })
@@ -777,7 +824,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500",
-                onClick: _cache[9] || (_cache[9] = ($event) => {
+                onClick: _cache[10] || (_cache[10] = ($event) => {
                   buildWidgetsFromPreset(compare.right);
                   compareModalOpen.value = false;
                 })

@@ -15,8 +15,6 @@ import {
   type SortOrder,
 } from "../api/assets";
 import { getMe, type AuthMeOut } from "../api/auth";
-import type { DisplayCurrency } from "../api/userSettings";
-import DisplayCurrencyToggle from "../components/DisplayCurrencyToggle.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import {
   createHolding,
@@ -132,7 +130,7 @@ const appSecrets = ref<AppSecretOut[]>([]);
 const releaseNotes = ref<ReleaseNoteOut[]>([]);
 const usdKrwFx = ref<FxRateLatestOut | null>(null);
 const logs = ref<ActionLog[]>([]);
-const { displayCurrency, settingsSaving, ensureInitialized, setDisplayCurrency } = useDisplayCurrency();
+const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 let nextLogId = 1;
 const assetsQuery = reactive<TableQueryState<AssetTableSortBy>>({
   page: 1,
@@ -1409,14 +1407,6 @@ function toggleLiabilityHidden(item: LiabilityTableRowOut): void {
   );
 }
 
-async function onChangeDisplayCurrency(value: DisplayCurrency): Promise<void> {
-  try {
-    await setDisplayCurrency(value);
-  } catch (error) {
-    pushLog("Display Currency", "ERROR", getErrorMessage(error));
-  }
-}
-
 async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   const refreshId = ++refreshSequence;
   const shouldLogRefresh = options?.logRefresh ?? true;
@@ -1731,12 +1721,6 @@ onBeforeUnmount(() => {
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Role: {{ me?.role || "-" }} / {{ me?.email || "-" }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <DisplayCurrencyToggle
-            :model-value="displayCurrency"
-            :disabled="isBusy || settingsSaving"
-            :loading="settingsSaving"
-            @update:model-value="onChangeDisplayCurrency"
-          />
           <button
             type="button"
             class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"

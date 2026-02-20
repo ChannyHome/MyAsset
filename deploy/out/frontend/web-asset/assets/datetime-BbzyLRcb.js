@@ -4056,4 +4056,4 @@ function toDateTimeLocalSeoul(value) {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
-export { AxiosError as A, formatDateTimeSeoul as f, http as h, parseApiUtcDate as p, seoulDateToUtcNaiveIso as s, toDateTimeLocalSeoul as t };
+export { AxiosError as A, formatDateTimeSeoul as f, http as h, seoulDateToUtcNaiveIso as s, toDateTimeLocalSeoul as t };
