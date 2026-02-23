@@ -1,4 +1,4 @@
-import { h as http } from './datetime-BbzyLRcb.js';
+import { h as http } from './datetime-D3NoeBy6.js';
 
 async function getReleaseNotes(params = {}) {
   const { data } = await http.get("/release-notes", { params });

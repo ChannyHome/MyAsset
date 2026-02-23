@@ -119,3 +119,19 @@ class PortfolioTablePageOut(BaseModel):
     sort_by: PortfolioTableSortBy
     sort_order: SortOrder
     q: str | None = None
+
+
+class PortfolioCashAccountSetIn(BaseModel):
+    asset_id: int = Field(ge=1)
+
+
+class PortfolioCashAccountOut(BaseModel):
+    id: int
+    owner_user_id: int
+    portfolio_id: int
+    currency: str
+    asset_id: int
+    asset_name: str | None = None
+    asset_symbol: str | None = None
+    created_at: datetime
+    updated_at: datetime

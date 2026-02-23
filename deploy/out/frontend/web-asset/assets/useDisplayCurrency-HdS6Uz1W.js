@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http } from './datetime-BbzyLRcb.js';
+import { h as http } from './datetime-D3NoeBy6.js';
 
 async function getMySettings() {
   const { data } = await http.get("/users/me/settings");

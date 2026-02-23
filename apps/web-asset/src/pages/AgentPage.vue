@@ -35,9 +35,12 @@ import {
 import {
   createPortfolio,
   deletePortfolio,
+  getPortfolioCashAccounts,
   getPortfolios,
   getPortfoliosTable,
+  setPortfolioCashAccount,
   updatePortfolio,
+  type PortfolioCashAccountOut,
   type PortfolioOut,
   type PortfolioTableRowOut,
   type PortfolioTableSortBy,
@@ -126,6 +129,7 @@ const holdingPortfolioOptions = ref<PortfolioOut[]>([]);
 const portfolioRows = ref<PortfolioTableRowOut[]>([]);
 const holdingRows = ref<HoldingTableRowOut[]>([]);
 const liabilityRows = ref<LiabilityTableRowOut[]>([]);
+const portfolioCashAccounts = ref<PortfolioCashAccountOut[]>([]);
 const appSecrets = ref<AppSecretOut[]>([]);
 const releaseNotes = ref<ReleaseNoteOut[]>([]);
 const usdKrwFx = ref<FxRateLatestOut | null>(null);
@@ -183,6 +187,7 @@ const liabilitiesSectionCollapsed = ref(initialCollapseState.liabilitiesSectionC
 const quickCreatePortfolioOpen = ref(false);
 const quickCreateHoldingOpen = ref(false);
 const quickCreateLiabilityOpen = ref(false);
+const cashAccountLookupLoading = ref(false);
 const lookupLoading = ref(false);
 
 const assetForm = reactive({
@@ -225,6 +230,11 @@ const holdingForm = reactive({
   invested_amount_currency: "KRW",
   source_type: "MANUAL",
   memo: "",
+});
+const portfolioCashMapForm = reactive({
+  portfolio_id: "",
+  currency: "KRW",
+  asset_id: "",
 });
 const liabilityForm = reactive({
   portfolio_id: "",
@@ -329,6 +339,13 @@ const sortedHoldingPortfolioOptions = computed(() =>
     return a.id - b.id;
   }),
 );
+const cashBalanceAssetOptions = computed(() =>
+  sortedHoldingAssetOptions.value.filter((asset) => isCashBalanceAssetOption(asset)),
+);
+const cashMapAssetOptions = computed(() => {
+  const currency = normalizeUpper(portfolioCashMapForm.currency || "KRW");
+  return cashBalanceAssetOptions.value.filter((asset) => normalizeUpper(asset.currency) === currency);
+});
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
 const QUOTE_UPDATE_POLL_MS = 1500;
 const QUOTE_UPDATE_POLL_TIMEOUT_MS = 5 * 60 * 1000;
@@ -459,6 +476,14 @@ function quoteAsOfText(item: AssetTableRowOut): string {
 
 function quoteSourceText(item: AssetTableRowOut): string {
   return item.quote_source || "-";
+}
+
+function isCashBalanceAssetOption(asset: AssetOut): boolean {
+  const symbol = normalizeUpper(asset.symbol || "");
+  if (symbol.startsWith("CASH_")) return true;
+  const meta = asset.meta_json;
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return false;
+  return normalizeUpper(String((meta as Record<string, unknown>).asset_subtype || "")) === "CASH_BALANCE";
 }
 
 function normalizeQuoteJobStatus(value: string | null | undefined): QuoteJobStatus {
@@ -1172,6 +1197,52 @@ function togglePortfolioHidden(item: PortfolioTableRowOut): void {
   );
 }
 
+async function loadPortfolioCashAccounts(): Promise<void> {
+  const portfolioId = parseOptionalInt(portfolioCashMapForm.portfolio_id);
+  if (!portfolioId) {
+    portfolioCashAccounts.value = [];
+    portfolioCashMapForm.asset_id = "";
+    return;
+  }
+  cashAccountLookupLoading.value = true;
+  try {
+    await loadHoldingLookupOptions();
+    const rows = await getPortfolioCashAccounts(portfolioId);
+    portfolioCashAccounts.value = rows;
+    const byCurrency = rows.find((row) => normalizeUpper(row.currency) === normalizeUpper(portfolioCashMapForm.currency));
+    portfolioCashMapForm.asset_id = byCurrency ? String(byCurrency.asset_id) : "";
+  } catch (error) {
+    pushLog("Cash Mapping", "ERROR", getErrorMessage(error));
+  } finally {
+    cashAccountLookupLoading.value = false;
+  }
+}
+
+function submitPortfolioCashMapping(): void {
+  if (!canManageAssets.value) {
+    pushLog("Cash Mapping", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  try {
+    const portfolioId = toPositiveInt(portfolioCashMapForm.portfolio_id);
+    const currency = normalizeUpper(portfolioCashMapForm.currency);
+    if (!currency) throw new Error("Currency is required");
+    if (currency.length !== 3) throw new Error("Currency must be 3 letters");
+    const assetId = toPositiveInt(portfolioCashMapForm.asset_id);
+    runAction(
+      "Cash Mapping",
+      "Apply Cash Mapping",
+      `Portfolio #${portfolioId} ${currency} 대표 cash asset을 #${assetId}로 변경할까요?`,
+      async () => {
+        await setPortfolioCashAccount(portfolioId, currency, { asset_id: assetId });
+        await loadPortfolioCashAccounts();
+      },
+    );
+  } catch (error) {
+    pushLog("Cash Mapping", "ERROR", getErrorMessage(error));
+  }
+}
+
 function submitHoldingCreate(): void {
   try {
     const assetId = toPositiveInt(holdingForm.asset_id.trim());
@@ -1474,6 +1545,22 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
     holdingQuery.total = holdingsOut.total;
     liabilityQuery.total = liabilitiesOut.total;
 
+    if (
+      portfolioCashMapForm.portfolio_id &&
+      !portfoliosOut.items.some((item) => String(item.id) === portfolioCashMapForm.portfolio_id)
+    ) {
+      portfolioCashMapForm.portfolio_id = "";
+      portfolioCashAccounts.value = [];
+      portfolioCashMapForm.asset_id = "";
+    }
+    const firstPortfolio = portfoliosOut.items[0];
+    if (!portfolioCashMapForm.portfolio_id && firstPortfolio) {
+      portfolioCashMapForm.portfolio_id = String(firstPortfolio.id);
+    }
+    if (!portfolioCashMapForm.currency) {
+      portfolioCashMapForm.currency = "KRW";
+    }
+
     const selectedStillExists = assetsOut.items.some((item) => String(item.id) === manualQuoteForm.asset_id);
     if (!selectedStillExists) {
       manualQuoteForm.asset_id = assetsOut.items[0] ? String(assetsOut.items[0].id) : "";
@@ -1655,6 +1742,21 @@ watch(
       liabilityQuery.page = 1;
       await refreshData({ logRefresh: false });
     }, AUTO_SEARCH_DEBOUNCE_MS);
+  },
+);
+watch(
+  () => portfolioCashMapForm.portfolio_id,
+  () => {
+    void loadPortfolioCashAccounts();
+  },
+);
+watch(
+  () => portfolioCashMapForm.currency,
+  () => {
+    const byCurrency = portfolioCashAccounts.value.find(
+      (row) => normalizeUpper(row.currency) === normalizeUpper(portfolioCashMapForm.currency),
+    );
+    portfolioCashMapForm.asset_id = byCurrency ? String(byCurrency.asset_id) : "";
   },
 );
 watch(
@@ -2399,6 +2501,87 @@ onBeforeUnmount(() => {
           <label>Size <select v-model.number="portfolioQuery.pageSize" class="ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950" @change="portfolioQuery.page = 1; refreshData()"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
           <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || portfolioQuery.page <= 1" @click="movePortfolioPage(-1)">Prev</button>
           <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || portfolioQuery.page >= portfolioTotalPages" @click="movePortfolioPage(1)">Next</button>
+        </div>
+      </div>
+      <div class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Representative Cash Mapping</h3>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Portfolio + Currency 별 대표 cash asset을 고정합니다. (입출금/Auto Cash Flow 시 이 매핑 우선)
+            </p>
+          </div>
+        </div>
+        <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Portfolio
+            <select
+              v-model="portfolioCashMapForm.portfolio_id"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="lookupLoading || isBusy || cashAccountLookupLoading"
+            >
+              <option value="">Select</option>
+              <option v-for="item in sortedHoldingPortfolioOptions" :key="`cash-map-${item.id}`" :value="String(item.id)">
+                {{ item.id }} - {{ item.name }}
+              </option>
+            </select>
+          </label>
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Currency
+            <input
+              v-model="portfolioCashMapForm.currency"
+              maxlength="3"
+              placeholder="KRW"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950"
+              :disabled="isBusy || cashAccountLookupLoading"
+            />
+          </label>
+          <label class="text-xs text-slate-600 dark:text-slate-300 md:col-span-2">
+            Cash Asset
+            <select
+              v-model="portfolioCashMapForm.asset_id"
+              class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
+              :disabled="isBusy || cashAccountLookupLoading"
+            >
+              <option value="">Select</option>
+              <option v-for="item in cashMapAssetOptions" :key="`cash-asset-${item.id}`" :value="String(item.id)">
+                {{ item.id }} - {{ item.name }} ({{ item.currency }})
+              </option>
+            </select>
+          </label>
+        </div>
+        <div class="mt-2">
+          <button
+            type="button"
+            class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="!canManageAssets || isBusy || cashAccountLookupLoading"
+            @click="submitPortfolioCashMapping"
+          >
+            Set Representative Cash
+          </button>
+        </div>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full min-w-[560px] text-left text-xs leading-tight">
+            <thead class="bg-slate-50 dark:bg-slate-800">
+              <tr>
+                <th class="px-2 py-1.5 whitespace-nowrap">Currency</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Asset ID</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Asset</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in portfolioCashAccounts" :key="item.id" class="border-t border-slate-200 dark:border-slate-700">
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.currency }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_id }}</td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_name || "-" }} <span class="opacity-70">{{ item.asset_symbol || "" }}</span></td>
+                <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
+              </tr>
+              <tr v-if="portfolioCashAccounts.length === 0">
+                <td colspan="4" class="px-3 py-3 text-center text-xs text-slate-500 dark:text-slate-400">No cash mapping</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div v-if="quickCreatePortfolioOpen" class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">

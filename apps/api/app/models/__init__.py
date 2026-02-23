@@ -9,6 +9,7 @@ from app.models.app_setting import AppSetting
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
+from app.models.portfolio_cash_account import PortfolioCashAccount
 from app.models.release_note import ReleaseNote
 from app.models.user import User
 from app.models.fx_rate import FxRate
@@ -23,6 +24,7 @@ __all__ = [
     "Household",
     "HouseholdMember",
     "Portfolio",
+    "PortfolioCashAccount",
     "ReleaseNote",
     "Asset",
     "AssetQuote",

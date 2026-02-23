@@ -17,6 +17,8 @@ from app.schemas.performance import PortfolioPerformanceOut
 from app.schemas.asset import SortOrder
 from app.schemas.portfolio import (
     PortfolioCreate,
+    PortfolioCashAccountOut,
+    PortfolioCashAccountSetIn,
     PortfolioOut,
     PortfolioTablePageOut,
     PortfolioTableRowOut,
@@ -24,7 +26,13 @@ from app.schemas.portfolio import (
     PortfolioUpdate,
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
-from app.services.trade_ledger import TradeSyncError, ensure_portfolio_cashflow_baseline_transactions
+from app.services.trade_ledger import (
+    TradeSyncError,
+    ensure_portfolio_cash_account_for_currency,
+    ensure_portfolio_cashflow_baseline_transactions,
+    list_portfolio_cash_account_mappings,
+    set_portfolio_cash_account_mapping,
+)
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/portfolios", tags=["portfolios"])
@@ -48,6 +56,13 @@ def _normalize_sort_value(value: object) -> tuple[int, object]:
     return (0, value)
 
 
+def _get_owned_portfolio(db: Session, owner_user_id: int, portfolio_id: int) -> Portfolio:
+    portfolio = db.scalar(select(Portfolio).where(Portfolio.id == portfolio_id, Portfolio.owner_user_id == owner_user_id))
+    if portfolio is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
+    return portfolio
+
+
 @router.get("", response_model=list[PortfolioOut])
 def list_portfolios(
     db: Session = Depends(get_db),
@@ -55,6 +70,92 @@ def list_portfolios(
 ) -> list[Portfolio]:
     stmt = select(Portfolio).where(Portfolio.owner_user_id == current_user.id).order_by(Portfolio.id.desc())
     return list(db.scalars(stmt).all())
+
+
+@router.get("/{portfolio_id}/cash-accounts", response_model=list[PortfolioCashAccountOut])
+def list_portfolio_cash_accounts(
+    portfolio_id: int,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> list[PortfolioCashAccountOut]:
+    portfolio = _get_owned_portfolio(db, current_user.id, portfolio_id)
+
+    rows = list_portfolio_cash_account_mappings(
+        db,
+        owner_user_id=current_user.id,
+        portfolio_id=portfolio.id,
+    )
+    if not rows:
+        try:
+            ensure_portfolio_cash_account_for_currency(
+                db,
+                owner_user_id=current_user.id,
+                portfolio_id=portfolio.id,
+                currency=portfolio.base_currency,
+            )
+            db.commit()
+        except TradeSyncError as exc:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        rows = list_portfolio_cash_account_mappings(
+            db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+        )
+
+    return [
+        PortfolioCashAccountOut(
+            id=mapping.id,
+            owner_user_id=mapping.owner_user_id,
+            portfolio_id=mapping.portfolio_id,
+            currency=mapping.currency,
+            asset_id=mapping.asset_id,
+            asset_name=asset.name if asset is not None else None,
+            asset_symbol=asset.symbol if asset is not None else None,
+            created_at=mapping.created_at,
+            updated_at=mapping.updated_at,
+        )
+        for mapping, asset in rows
+    ]
+
+
+@router.put("/{portfolio_id}/cash-accounts/{currency}", response_model=PortfolioCashAccountOut)
+def upsert_portfolio_cash_account(
+    portfolio_id: int,
+    currency: str,
+    payload: PortfolioCashAccountSetIn,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> PortfolioCashAccountOut:
+    portfolio = _get_owned_portfolio(db, current_user.id, portfolio_id)
+    try:
+        mapping, _holding, asset = set_portfolio_cash_account_mapping(
+            db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+            currency=currency,
+            asset_id=payload.asset_id,
+        )
+        db.commit()
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid cash account mapping payload") from exc
+
+    db.refresh(mapping)
+    return PortfolioCashAccountOut(
+        id=mapping.id,
+        owner_user_id=mapping.owner_user_id,
+        portfolio_id=mapping.portfolio_id,
+        currency=mapping.currency,
+        asset_id=mapping.asset_id,
+        asset_name=asset.name,
+        asset_symbol=asset.symbol,
+        created_at=mapping.created_at,
+        updated_at=mapping.updated_at,
+    )
 
 
 @router.get("/table", response_model=PortfolioTablePageOut)
@@ -416,6 +517,12 @@ def create_portfolio(
             portfolio_id=portfolio.id,
             executed_at=datetime.now(UTC).replace(tzinfo=None),
         )
+        ensure_portfolio_cash_account_for_currency(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+            currency=portfolio.base_currency,
+        )
         db.commit()
     except TradeSyncError as exc:
         db.rollback()
@@ -454,6 +561,12 @@ def update_portfolio(
             owner_user_id=current_user.id,
             portfolio_id=portfolio.id,
             executed_at=datetime.now(UTC).replace(tzinfo=None),
+        )
+        ensure_portfolio_cash_account_for_currency(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+            currency=portfolio.base_currency,
         )
         db.commit()
     except TradeSyncError as exc:

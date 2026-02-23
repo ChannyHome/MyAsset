@@ -21,11 +21,9 @@ import {
 import { useRoute, useRouter } from "vue-router";
 
 import GlobalDisplayCurrencyToggle from "../components/GlobalDisplayCurrencyToggle.vue";
-import GlobalNameClampToggle from "../components/GlobalNameClampToggle.vue";
 import GuestDemoPage from "../pages/GuestDemoPage.vue";
 import { useAuthStore } from "../stores/auth";
 import { useDisplayCurrencyStore } from "../stores/displayCurrency";
-import { useNameClampStore } from "../stores/nameClamp";
 import { useUiStore } from "../stores/ui";
 
 type MenuItem = {
@@ -44,19 +42,30 @@ const menuItems: MenuItem[] = [
   { to: "/history", label: "History", icon: HistoryIcon, minRole: "MAINTAINER" },
   { to: "/chat", label: "Chat", icon: MessageCircle },
   { to: "/budget", label: "Budget", icon: Wallet },
+  { to: "/app-settings", label: "App Settings", icon: Settings, minRole: "ADMIN" },
   { to: "/lab", label: "Lab", icon: FlaskConical, minRole: "MAINTAINER" },
 ];
+
+const ROLE_LEVEL: Record<string, number> = {
+  GUEST: 0,
+  USER: 1,
+  SUPERUSER: 1,
+  MAINTAINER: 2,
+  ADMIN: 3,
+};
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUiStore();
 const displayCurrencyStore = useDisplayCurrencyStore();
-const nameClampStore = useNameClampStore();
 
 const pageTitle = computed(() => {
   if (route.path.startsWith("/forbidden")) {
     return "Forbidden";
+  }
+  if (route.path.startsWith("/app-settings")) {
+    return "App Settings";
   }
   if (route.path.startsWith("/settings")) {
     return "Settings";
@@ -69,11 +78,12 @@ const userEmail = computed(() => authStore.user?.email ?? "-");
 const householdName = computed(() => authStore.primaryHousehold?.name ?? "No household");
 const isGuestMode = computed(() => authStore.user?.role === "GUEST");
 const showGuestDemo = computed(() => isGuestMode.value && !route.path.startsWith("/forbidden"));
-const isMaintainerOrAdmin = computed(
-  () => authStore.user?.role === "MAINTAINER" || authStore.user?.role === "ADMIN",
-);
+const currentRoleLevel = computed(() => ROLE_LEVEL[authStore.user?.role || "GUEST"] ?? 0);
 const visibleMenuItems = computed(() =>
-  menuItems.filter((item) => (item.minRole === "MAINTAINER" ? isMaintainerOrAdmin.value : true)),
+  menuItems.filter((item) => {
+    if (!item.minRole) return true;
+    return currentRoleLevel.value >= (ROLE_LEVEL[item.minRole] ?? 99);
+  }),
 );
 const seoulNowText = ref("");
 let seoulClockTimer: ReturnType<typeof setInterval> | null = null;
@@ -135,7 +145,6 @@ onMounted(() => {
   updateSeoulNow();
   seoulClockTimer = setInterval(updateSeoulNow, 1000);
   void displayCurrencyStore.initialize();
-  nameClampStore.initialize();
 });
 
 onBeforeUnmount(() => {
@@ -165,7 +174,6 @@ onBeforeUnmount(() => {
           Seoul {{ seoulNowText }}
         </span>
         <GlobalDisplayCurrencyToggle />
-        <GlobalNameClampToggle />
         <button
           type="button"
           class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
@@ -189,7 +197,6 @@ onBeforeUnmount(() => {
           Seoul {{ seoulNowText }}
         </span>
         <GlobalDisplayCurrencyToggle />
-        <GlobalNameClampToggle />
         <button
           type="button"
           class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"

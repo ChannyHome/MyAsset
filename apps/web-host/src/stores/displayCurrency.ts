@@ -108,7 +108,7 @@ export const useDisplayCurrencyStore = defineStore("display-currency", () => {
     saving.value = true;
     error.value = "";
     try {
-      await updateMySettings(next);
+      await updateMySettings({ display_currency: next });
     } catch (err) {
       setLocal(prev);
       broadcast(prev);

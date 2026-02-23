@@ -13,6 +13,7 @@ export interface SignupIn {
 
 export interface LoginOut {
   access_token: string;
+  refresh_token?: string | null;
   token_type: string;
 }
 
@@ -42,4 +43,11 @@ export async function getMe(): Promise<MeOut> {
 
 export async function logout(): Promise<void> {
   await http.post("/auth/logout");
+}
+
+export async function refresh(refreshToken: string): Promise<LoginOut> {
+  const { data } = await http.post<LoginOut>("/auth/refresh", {
+    refresh_token: refreshToken,
+  });
+  return data;
 }

@@ -1,4 +1,4 @@
-import { h as http } from './datetime-BbzyLRcb.js';
+import { h as http } from './datetime-D3NoeBy6.js';
 
 async function getLiabilities(params = {}) {
   const { data } = await http.get("/liabilities", { params });
@@ -39,5 +39,17 @@ async function updatePortfolio(portfolioId, payload) {
 async function deletePortfolio(portfolioId) {
   await http.delete(`/portfolios/${portfolioId}`);
 }
+async function getPortfolioCashAccounts(portfolioId) {
+  const { data } = await http.get(`/portfolios/${portfolioId}/cash-accounts`);
+  return data;
+}
+async function setPortfolioCashAccount(portfolioId, currency, payload) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const { data } = await http.put(
+    `/portfolios/${portfolioId}/cash-accounts/${normalizedCurrency}`,
+    payload
+  );
+  return data;
+}
 
-export { getPortfoliosTable as a, getLiabilities as b, getPortfolios as c, createPortfolio as d, createLiability as e, updateLiability as f, getLiabilitiesTable as g, deletePortfolio as h, deleteLiability as i, updatePortfolio as u };
+export { getPortfoliosTable as a, getLiabilities as b, getPortfolios as c, createPortfolio as d, getPortfolioCashAccounts as e, createLiability as f, getLiabilitiesTable as g, updateLiability as h, deletePortfolio as i, deleteLiability as j, setPortfolioCashAccount as s, updatePortfolio as u };

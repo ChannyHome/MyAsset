@@ -17,3 +17,12 @@ class FxStaleMinutesOut(BaseModel):
 
 class FxStaleMinutesUpdate(BaseModel):
     minutes: int = Field(ge=1, le=1440)
+
+
+class TokenRefreshEnabledOut(BaseModel):
+    enabled: bool
+    source: str
+
+
+class TokenRefreshEnabledUpdate(BaseModel):
+    enabled: bool

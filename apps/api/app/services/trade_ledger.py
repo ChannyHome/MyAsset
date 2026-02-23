@@ -13,6 +13,7 @@ from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
+from app.models.portfolio_cash_account import PortfolioCashAccount
 from app.models.transaction import Transaction
 from app.services.currency import MissingFxRateError
 
@@ -115,6 +116,98 @@ def _is_cash_balance_asset(asset: Asset) -> bool:
     return False
 
 
+def _is_auto_generated_cash_asset(asset: Asset) -> bool:
+    meta = asset.meta_json if isinstance(asset.meta_json, dict) else {}
+    auto_generated = bool(meta.get("auto_generated"))
+    symbol = (asset.symbol or "").upper()
+    return auto_generated or symbol.startswith("CASH_AUTO_")
+
+
+def _get_cash_account_mapping(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+) -> PortfolioCashAccount | None:
+    normalized_currency = _normalize_currency(currency)
+    return db.scalar(
+        select(PortfolioCashAccount).where(
+            PortfolioCashAccount.owner_user_id == owner_user_id,
+            PortfolioCashAccount.portfolio_id == portfolio_id,
+            PortfolioCashAccount.currency == normalized_currency,
+        )
+    )
+
+
+def _bind_cash_account_mapping(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+    asset_id: int,
+) -> PortfolioCashAccount:
+    normalized_currency = _normalize_currency(currency)
+    mapping = _get_cash_account_mapping(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+    )
+    if mapping is None:
+        mapping = PortfolioCashAccount(
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio_id,
+            currency=normalized_currency,
+            asset_id=asset_id,
+        )
+        db.add(mapping)
+        db.flush()
+        return mapping
+
+    if mapping.asset_id != asset_id:
+        mapping.asset_id = asset_id
+        db.flush()
+    return mapping
+
+
+def _get_or_create_cash_holding_for_asset(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+    asset: Asset,
+) -> Holding:
+    holding = db.scalar(
+        select(Holding).where(
+            Holding.owner_user_id == owner_user_id,
+            Holding.portfolio_id == portfolio_id,
+            Holding.asset_id == asset.id,
+        )
+    )
+    if holding is not None:
+        return holding
+
+    holding = Holding(
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        asset_id=asset.id,
+        quantity=_quantize_qty(Decimal("0")),
+        avg_price=Decimal("1"),
+        avg_price_currency=_normalize_currency(currency),
+        invested_amount=Decimal("0"),
+        invested_amount_currency=_normalize_currency(currency),
+        source_type="AUTO",
+        is_hidden=False,
+        memo="Auto-created cash balance holding",
+    )
+    db.add(holding)
+    db.flush()
+    return holding
+
+
 def _find_cash_holding_for_currency(
     db: Session,
     *,
@@ -122,19 +215,60 @@ def _find_cash_holding_for_currency(
     portfolio_id: int,
     currency: str,
 ) -> tuple[Holding, Asset] | None:
+    normalized_currency = _normalize_currency(currency)
+
+    mapped = _get_cash_account_mapping(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+    )
+    if mapped is not None:
+        mapped_asset = db.scalar(select(Asset).where(Asset.id == mapped.asset_id))
+        if (
+            mapped_asset is not None
+            and _is_cash_balance_asset(mapped_asset)
+            and _normalize_currency(mapped_asset.currency) == normalized_currency
+        ):
+            mapped_holding = _get_or_create_cash_holding_for_asset(
+                db,
+                owner_user_id=owner_user_id,
+                portfolio_id=portfolio_id,
+                currency=normalized_currency,
+                asset=mapped_asset,
+            )
+            return mapped_holding, mapped_asset
+
     rows = db.execute(
         select(Holding, Asset)
         .join(Asset, Asset.id == Holding.asset_id)
         .where(
             Holding.owner_user_id == owner_user_id,
             Holding.portfolio_id == portfolio_id,
-            Asset.currency == currency,
+            Asset.currency == normalized_currency,
         )
         .order_by(Holding.id.asc())
     ).all()
-    for holding, asset in rows:
-        if _is_cash_balance_asset(asset):
-            return holding, asset
+    candidates: list[tuple[Holding, Asset]] = [
+        (holding, asset) for holding, asset in rows if _is_cash_balance_asset(asset)
+    ]
+    if candidates:
+        # Prefer Auto Cash Balance asset if multiple cash-like assets exist.
+        candidates.sort(
+            key=lambda pair: (
+                0 if _is_auto_generated_cash_asset(pair[1]) else 1,
+                pair[0].id,
+            )
+        )
+        selected_holding, selected_asset = candidates[0]
+        _bind_cash_account_mapping(
+            db,
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio_id,
+            currency=normalized_currency,
+            asset_id=selected_asset.id,
+        )
+        return selected_holding, selected_asset
     return None
 
 
@@ -185,25 +319,102 @@ def _ensure_cash_holding_for_currency(
         currency=normalized_currency,
     )
     if existing is not None:
+        _existing_holding, existing_asset = existing
+        _bind_cash_account_mapping(
+            db,
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio_id,
+            currency=normalized_currency,
+            asset_id=existing_asset.id,
+        )
         return existing
 
     asset = _get_or_create_cash_asset(db, currency=normalized_currency)
-    holding = Holding(
+    holding = _get_or_create_cash_holding_for_asset(
+        db,
         owner_user_id=owner_user_id,
         portfolio_id=portfolio_id,
-        asset_id=asset.id,
-        quantity=_quantize_qty(Decimal("1")),
-        avg_price=Decimal("0"),
-        avg_price_currency=normalized_currency,
-        invested_amount=Decimal("0"),
-        invested_amount_currency=normalized_currency,
-        source_type="AUTO",
-        is_hidden=False,
-        memo="Auto-created cash balance holding",
+        currency=normalized_currency,
+        asset=asset,
     )
-    db.add(holding)
-    db.flush()
+    _bind_cash_account_mapping(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+        asset_id=asset.id,
+    )
     return holding, asset
+
+
+def ensure_portfolio_cash_account_for_currency(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+) -> tuple[Holding, Asset]:
+    _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    return _ensure_cash_holding_for_currency(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=currency,
+    )
+
+
+def list_portfolio_cash_account_mappings(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+) -> list[tuple[PortfolioCashAccount, Asset | None]]:
+    _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    rows = db.execute(
+        select(PortfolioCashAccount, Asset)
+        .outerjoin(Asset, Asset.id == PortfolioCashAccount.asset_id)
+        .where(
+            PortfolioCashAccount.owner_user_id == owner_user_id,
+            PortfolioCashAccount.portfolio_id == portfolio_id,
+        )
+        .order_by(PortfolioCashAccount.currency.asc())
+    ).all()
+    return rows
+
+
+def set_portfolio_cash_account_mapping(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int,
+    currency: str,
+    asset_id: int,
+) -> tuple[PortfolioCashAccount, Holding, Asset]:
+    _get_owned_portfolio(db, owner_user_id, portfolio_id)
+    normalized_currency = _normalize_currency(currency)
+    asset = _get_asset(db, asset_id)
+    if asset is None:
+        raise TradeSyncError("Asset does not exist")
+    if not _is_cash_balance_asset(asset):
+        raise TradeSyncError("Selected asset is not a cash balance asset")
+    if _normalize_currency(asset.currency) != normalized_currency:
+        raise TradeSyncError("Asset currency must match mapping currency")
+
+    holding = _get_or_create_cash_holding_for_asset(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+        asset=asset,
+    )
+    mapping = _bind_cash_account_mapping(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+        asset_id=asset.id,
+    )
+    return mapping, holding, asset
 
 
 def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
@@ -234,35 +445,14 @@ def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
     return None
 
 
-def _upsert_cash_latest_quote(
+def _clear_cash_latest_quote(
     db: Session,
     *,
     asset_id: int,
-    currency: str,
-    balance: Decimal,
 ) -> None:
-    now = datetime.now(UTC).replace(tzinfo=None)
     row = db.scalar(select(LatestQuote).where(LatestQuote.asset_id == asset_id))
-    if row is None:
-        db.add(
-            LatestQuote(
-                asset_id=asset_id,
-                price=_quantize_price(balance),
-                currency=currency,
-                change_value=None,
-                change_pct=None,
-                as_of=now,
-                source="TRADE_LEDGER",
-            )
-        )
-        return
-
-    row.price = _quantize_price(balance)
-    row.currency = currency
-    row.change_value = None
-    row.change_pct = None
-    row.as_of = now
-    row.source = "TRADE_LEDGER"
+    if row is not None:
+        db.delete(row)
 
 
 def rebuild_cash_holding_from_trades(
@@ -310,18 +500,18 @@ def rebuild_cash_holding_from_trades(
         )
     else:
         cash_holding, cash_asset = cash_ref
-    cash_holding.quantity = _quantize_qty(Decimal("1"))
-    cash_holding.avg_price = _quantize_price(balance)
+    # Cash balance is represented as quantity=balance and fixed unit price=1.
+    # This avoids writing a misleading latest quote price equal to total balance.
+    cash_holding.quantity = _quantize_qty(balance)
+    cash_holding.avg_price = Decimal("1")
     cash_holding.avg_price_currency = normalized_currency
     cash_holding.invested_amount = balance
     cash_holding.invested_amount_currency = normalized_currency
     cash_holding.source_type = "AUTO"
 
-    _upsert_cash_latest_quote(
+    _clear_cash_latest_quote(
         db,
         asset_id=cash_asset.id,
-        currency=normalized_currency,
-        balance=balance,
     )
     return True
 

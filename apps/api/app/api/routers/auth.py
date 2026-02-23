@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user_any
 from app.core.db import get_db
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
 from app.models.user import User
-from app.schemas.auth import LoginRequest, MeResponse, SignupRequest, TokenResponse
+from app.schemas.auth import LoginRequest, MeResponse, RefreshRequest, SignupRequest, TokenResponse
+from app.services.app_settings import get_token_refresh_enabled
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,8 +32,10 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)) -> TokenRespon
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists") from exc
 
     db.refresh(user)
+    refresh_enabled, _ = get_token_refresh_enabled(db)
     token = create_access_token(subject=str(user.id))
-    return TokenResponse(access_token=token)
+    refresh_token = create_refresh_token(subject=str(user.id)) if refresh_enabled else None
+    return TokenResponse(access_token=token, refresh_token=refresh_token)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -47,8 +50,31 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
     if not user.is_active or user.status != "ACTIVE":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
 
+    refresh_enabled, _ = get_token_refresh_enabled(db)
     token = create_access_token(subject=str(user.id))
-    return TokenResponse(access_token=token)
+    refresh_token = create_refresh_token(subject=str(user.id)) if refresh_enabled else None
+    return TokenResponse(access_token=token, refresh_token=refresh_token)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh_token(payload: RefreshRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    refresh_enabled, _ = get_token_refresh_enabled(db)
+    if not refresh_enabled:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token refresh is disabled")
+
+    try:
+        claims = decode_token(payload.refresh_token, expected_token_type="refresh")
+        user_id = int(claims.get("sub", ""))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token") from exc
+
+    user = db.scalar(select(User).where(User.id == user_id))
+    if user is None or not user.is_active or user.status != "ACTIVE":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is inactive")
+
+    access_token = create_access_token(subject=str(user.id))
+    next_refresh_token = create_refresh_token(subject=str(user.id))
+    return TokenResponse(access_token=access_token, refresh_token=next_refresh_token)
 
 
 @router.get("/me", response_model=MeResponse)

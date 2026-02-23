@@ -110,6 +110,22 @@ export type PortfolioCreateIn = {
 
 export type PortfolioUpdateIn = Partial<PortfolioCreateIn>;
 
+export type PortfolioCashAccountOut = {
+  id: number;
+  owner_user_id: number;
+  portfolio_id: number;
+  currency: string;
+  asset_id: number;
+  asset_name: string | null;
+  asset_symbol: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PortfolioCashAccountSetIn = {
+  asset_id: number;
+};
+
 export async function getPortfolios(): Promise<PortfolioOut[]> {
   const { data } = await http.get<PortfolioOut[]>("/portfolios");
   return data;
@@ -132,4 +148,22 @@ export async function updatePortfolio(portfolioId: number, payload: PortfolioUpd
 
 export async function deletePortfolio(portfolioId: number): Promise<void> {
   await http.delete(`/portfolios/${portfolioId}`);
+}
+
+export async function getPortfolioCashAccounts(portfolioId: number): Promise<PortfolioCashAccountOut[]> {
+  const { data } = await http.get<PortfolioCashAccountOut[]>(`/portfolios/${portfolioId}/cash-accounts`);
+  return data;
+}
+
+export async function setPortfolioCashAccount(
+  portfolioId: number,
+  currency: string,
+  payload: PortfolioCashAccountSetIn,
+): Promise<PortfolioCashAccountOut> {
+  const normalizedCurrency = currency.trim().toUpperCase();
+  const { data } = await http.put<PortfolioCashAccountOut>(
+    `/portfolios/${portfolioId}/cash-accounts/${normalizedCurrency}`,
+    payload,
+  );
+  return data;
 }

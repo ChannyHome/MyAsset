@@ -8,6 +8,8 @@ export type UserSettingsOut = {
   default_scope_type: "USER" | "HOUSEHOLD";
   default_scope_id: number | null;
   hide_values: boolean;
+  name_clamp_enabled: boolean;
+  mobile_allocation_top_n: number;
   hide_small_assets: boolean;
   small_asset_threshold: string | number;
   display_currency: DisplayCurrency;
@@ -16,7 +18,9 @@ export type UserSettingsOut = {
 };
 
 export type UserSettingsUpdateIn = {
-  display_currency: DisplayCurrency;
+  display_currency?: DisplayCurrency;
+  name_clamp_enabled?: boolean;
+  mobile_allocation_top_n?: number;
 };
 
 export async function getMySettings(): Promise<UserSettingsOut> {

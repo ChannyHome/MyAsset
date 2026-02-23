@@ -4,6 +4,8 @@ export type DisplayCurrency = "KRW" | "USD";
 
 type UserSettingsOut = {
   display_currency: DisplayCurrency;
+  name_clamp_enabled: boolean;
+  mobile_allocation_top_n: number;
 };
 
 export async function getMySettings(): Promise<UserSettingsOut> {
@@ -11,9 +13,13 @@ export async function getMySettings(): Promise<UserSettingsOut> {
   return data;
 }
 
-export async function updateMySettings(displayCurrency: DisplayCurrency): Promise<UserSettingsOut> {
-  const { data } = await http.patch<UserSettingsOut>("/users/me/settings", {
-    display_currency: displayCurrency,
-  });
+export type UserSettingsUpdateIn = {
+  display_currency?: DisplayCurrency;
+  name_clamp_enabled?: boolean;
+  mobile_allocation_top_n?: number;
+};
+
+export async function updateMySettings(payload: UserSettingsUpdateIn): Promise<UserSettingsOut> {
+  const { data } = await http.patch<UserSettingsOut>("/users/me/settings", payload);
   return data;
 }

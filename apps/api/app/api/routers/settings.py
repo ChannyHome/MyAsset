@@ -9,12 +9,16 @@ from app.schemas.app_settings import (
     FxStaleMinutesUpdate,
     QuoteIntervalOut,
     QuoteIntervalUpdate,
+    TokenRefreshEnabledOut,
+    TokenRefreshEnabledUpdate,
 )
 from app.services.app_settings import (
     get_fx_stale_minutes,
     get_quote_interval_minutes,
+    get_token_refresh_enabled,
     set_fx_stale_minutes,
     set_quote_interval_minutes,
+    set_token_refresh_enabled,
 )
 from app.tasks.quotes_scheduler import reschedule_quote_scheduler
 
@@ -58,3 +62,22 @@ def update_fx_stale_minutes_setting(
 ) -> FxStaleMinutesOut:
     minutes = set_fx_stale_minutes(db, payload.minutes)
     return FxStaleMinutesOut(minutes=minutes, source="db")
+
+
+@router.get("/token-refresh", response_model=TokenRefreshEnabledOut)
+def get_token_refresh_setting(
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_min_role("ADMIN")),
+) -> TokenRefreshEnabledOut:
+    enabled, source = get_token_refresh_enabled(db)
+    return TokenRefreshEnabledOut(enabled=enabled, source=source)
+
+
+@router.put("/token-refresh", response_model=TokenRefreshEnabledOut)
+def update_token_refresh_setting(
+    payload: TokenRefreshEnabledUpdate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_min_role("ADMIN")),
+) -> TokenRefreshEnabledOut:
+    enabled = set_token_refresh_enabled(db, payload.enabled)
+    return TokenRefreshEnabledOut(enabled=enabled, source="db")

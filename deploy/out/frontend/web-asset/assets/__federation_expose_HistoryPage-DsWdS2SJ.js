@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-BbzyLRcb.js';
+import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-D3NoeBy6.js';
 
 async function getAdminHistory(params) {
   const { data } = await http.get("/admin/history", { params });

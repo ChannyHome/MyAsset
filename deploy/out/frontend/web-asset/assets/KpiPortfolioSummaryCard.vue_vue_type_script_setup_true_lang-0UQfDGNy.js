@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { u as useUiStore } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DHTjWqU8.js';
+import { u as useUiStore } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Bn1Zxn3x.js';
 
 const {defineComponent:_defineComponent$3} = await importShared('vue');
 
@@ -23,20 +23,25 @@ const _hoisted_7$3 = {
 };
 const _hoisted_8$3 = {
   key: 2,
-  class: "mt-4 grid min-h-[180px] grid-cols-[192px_minmax(0,1fr)] items-start gap-3"
+  class: "mt-4 grid min-h-[180px] grid-cols-1 items-start gap-3 md:grid-cols-[192px_minmax(0,1fr)]"
 };
-const _hoisted_9$3 = { class: "relative mx-auto h-[12rem] w-[12rem]" };
+const _hoisted_9$3 = { class: "relative mx-auto h-[11.5rem] w-[11.5rem] md:h-[12rem] md:w-[12rem]" };
 const _hoisted_10$3 = ["data-donut-stops", "data-donut-start-angle"];
 const _hoisted_11$3 = { class: "absolute left-1/2 top-1/2 flex h-[6rem] w-[6rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white px-1 text-center text-[12px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" };
-const _hoisted_12$3 = { class: "flex min-w-0 items-center gap-2" };
-const _hoisted_13$3 = { class: "truncate text-slate-700 dark:text-slate-200" };
+const _hoisted_12$3 = ["onClick"];
+const _hoisted_13$3 = { class: "block max-w-[8.6rem] truncate leading-tight text-slate-700 md:max-w-none md:break-words dark:text-slate-200" };
 const _hoisted_14$1 = { class: "shrink-0 font-semibold text-slate-700 dark:text-slate-200" };
 const _hoisted_15$1 = {
+  key: 0,
+  class: "absolute left-2 right-2 top-full z-20 mt-1 rounded-md border border-slate-300 bg-slate-950/95 px-2 py-1 text-[11px] text-slate-100 shadow-lg"
+};
+const _hoisted_16 = {
   key: 0,
   class: "rounded-lg bg-slate-50 px-2 py-2 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400"
 };
 const {computed: computed$2,onBeforeUnmount,onMounted: onMounted$1,ref} = await importShared('vue');
 
+const {storeToRefs: storeToRefs$1} = await importShared('pinia');
 const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
   __name: "AllocationDonutCard",
   props: {
@@ -48,10 +53,14 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
     startPosition: { default: "TOP" },
     maskAmounts: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
-    error: { default: "" }
+    error: { default: "" },
+    mobileTopN: {},
+    enableMobileTopN: { type: Boolean, default: true }
   },
   setup(__props) {
     const props = __props;
+    const uiStore = useUiStore();
+    const { mobileAllocationTopN } = storeToRefs$1(uiStore);
     const palette = [
       "#0ea5e9",
       "#10b981",
@@ -71,10 +80,17 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
       }))
     );
     const viewportWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1280);
+    const activeLegendTooltipKey = ref(null);
     function updateViewportWidth() {
       viewportWidth.value = window.innerWidth;
+      if (viewportWidth.value >= 768) {
+        activeLegendTooltipKey.value = null;
+      }
     }
     onMounted$1(() => {
+      if (typeof uiStore.init === "function") {
+        uiStore.init();
+      }
       window.addEventListener("resize", updateViewportWidth, { passive: true });
     });
     onBeforeUnmount(() => {
@@ -87,21 +103,53 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
       if (viewportWidth.value >= 768) return 10;
       return 8;
     });
-    const shouldEnableListScroll = computed$2(() => normalizedItems.value.length > listScrollThreshold.value);
+    const isMobileViewport = computed$2(() => viewportWidth.value < 768);
+    const effectiveMobileTopN = computed$2(() => {
+      const fromProp = Number(props.mobileTopN);
+      if (Number.isFinite(fromProp) && fromProp > 0) {
+        return Math.min(12, Math.max(1, Math.trunc(fromProp)));
+      }
+      return Math.min(12, Math.max(1, Math.trunc(Number(mobileAllocationTopN.value || 6))));
+    });
+    const displayItems = computed$2(() => {
+      const rows = normalizedItems.value;
+      const topN = effectiveMobileTopN.value;
+      if (!props.enableMobileTopN || !isMobileViewport.value || rows.length <= topN) {
+        return rows;
+      }
+      const head = rows.slice(0, topN);
+      const tail = rows.slice(topN);
+      const othersValue = tail.reduce((sum, item) => sum + item.value, 0);
+      const othersRatio = tail.reduce((sum, item) => sum + item.ratioPct, 0);
+      if (othersRatio <= 0) {
+        return head;
+      }
+      return [
+        ...head,
+        {
+          key: "__mobile_others__",
+          label: "Others",
+          value: othersValue,
+          ratioPct: othersRatio,
+          color: "#64748b"
+        }
+      ];
+    });
+    const shouldEnableListScroll = computed$2(() => displayItems.value.length > listScrollThreshold.value);
     const startAngle = computed$2(() => {
       if (props.startPosition === "RIGHT") return 90;
       if (props.startPosition === "LEFT") return 270;
       return 0;
     });
     const donutExportStops = computed$2(
-      () => normalizedItems.value.map((item) => `${Math.max(0, Math.min(100, item.ratioPct)).toFixed(6)}:${item.color}`).join("|")
+      () => displayItems.value.map((item) => `${Math.max(0, Math.min(100, item.ratioPct)).toFixed(6)}:${item.color}`).join("|")
     );
     const donutStyle = computed$2(() => {
-      if (normalizedItems.value.length === 0) {
+      if (displayItems.value.length === 0) {
         return { background: "conic-gradient(#334155 0% 100%)" };
       }
       let cursor = 0;
-      const stops = normalizedItems.value.map((item) => {
+      const stops = displayItems.value.map((item) => {
         const ratio = Math.max(0, Math.min(100, item.ratioPct));
         const start = cursor;
         const end = Math.min(100, cursor + ratio);
@@ -110,6 +158,10 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
       }).join(", ");
       return { background: `conic-gradient(from ${startAngle.value}deg, ${stops})` };
     });
+    function toggleLegendTooltip(key) {
+      if (!isMobileViewport.value) return;
+      activeLegendTooltipKey.value = activeLegendTooltipKey.value === key ? null : key;
+    }
     function formatCurrency(value, currency) {
       return new Intl.NumberFormat("ko-KR", {
         style: "currency",
@@ -147,25 +199,30 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
           _createElementVNode$3("ul", {
             class: _normalizeClass$2([
               "space-y-1 pr-1",
-              shouldEnableListScroll.value ? "max-h-[10rem] overflow-y-auto md:max-h-[11rem] lg:max-h-[12rem] xl:max-h-[13rem]" : ""
+              shouldEnableListScroll.value ? "max-h-[11rem] overflow-y-auto md:max-h-[11rem] lg:max-h-[12rem] xl:max-h-[13rem]" : ""
             ])
           }, [
-            (_openBlock$3(true), _createElementBlock$3(_Fragment$2, null, _renderList$2(normalizedItems.value, (item) => {
+            (_openBlock$3(true), _createElementBlock$3(_Fragment$2, null, _renderList$2(displayItems.value, (item) => {
               return _openBlock$3(), _createElementBlock$3("li", {
                 key: item.key,
-                class: "flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1 text-xs dark:bg-slate-800"
+                class: "relative flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1 text-xs dark:bg-slate-800"
               }, [
-                _createElementVNode$3("span", _hoisted_12$3, [
+                _createElementVNode$3("button", {
+                  type: "button",
+                  class: "flex min-w-0 items-center gap-2 text-left",
+                  onClick: ($event) => toggleLegendTooltip(item.key)
+                }, [
                   _createElementVNode$3("span", {
                     class: "h-2.5 w-2.5 rounded-full",
                     style: _normalizeStyle$3({ backgroundColor: item.color })
                   }, null, 4),
                   _createElementVNode$3("span", _hoisted_13$3, _toDisplayString$3(item.label), 1)
-                ]),
-                _createElementVNode$3("span", _hoisted_14$1, _toDisplayString$3(formatPercent(item.ratioPct)), 1)
+                ], 8, _hoisted_12$3),
+                _createElementVNode$3("span", _hoisted_14$1, _toDisplayString$3(formatPercent(item.ratioPct)), 1),
+                isMobileViewport.value && activeLegendTooltipKey.value === item.key ? (_openBlock$3(), _createElementBlock$3("div", _hoisted_15$1, _toDisplayString$3(item.label), 1)) : _createCommentVNode$3("", true)
               ]);
             }), 128)),
-            normalizedItems.value.length === 0 ? (_openBlock$3(), _createElementBlock$3("li", _hoisted_15$1, " No allocation data. ")) : _createCommentVNode$3("", true)
+            displayItems.value.length === 0 ? (_openBlock$3(), _createElementBlock$3("li", _hoisted_16, " No allocation data. ")) : _createCommentVNode$3("", true)
           ], 2)
         ]))
       ]);

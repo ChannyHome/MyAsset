@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
+
+import { useUiStore } from "../stores/ui";
 
 type AllocationItem = {
   key: string;
@@ -21,6 +24,8 @@ const props = withDefaults(
     maskAmounts?: boolean;
     loading?: boolean;
     error?: string;
+    mobileTopN?: number;
+    enableMobileTopN?: boolean;
   }>(),
   {
     subtitle: "",
@@ -28,8 +33,12 @@ const props = withDefaults(
     maskAmounts: false,
     loading: false,
     error: "",
+    enableMobileTopN: true,
   },
 );
+
+const uiStore = useUiStore();
+const { mobileAllocationTopN } = storeToRefs(uiStore);
 
 const palette = [
   "#0ea5e9",
@@ -54,12 +63,19 @@ const normalizedItems = computed(() =>
 );
 
 const viewportWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1280);
+const activeLegendTooltipKey = ref<string | null>(null);
 
 function updateViewportWidth() {
   viewportWidth.value = window.innerWidth;
+  if (viewportWidth.value >= 768) {
+    activeLegendTooltipKey.value = null;
+  }
 }
 
 onMounted(() => {
+  if (typeof uiStore.init === "function") {
+    uiStore.init();
+  }
   window.addEventListener("resize", updateViewportWidth, { passive: true });
 });
 
@@ -75,7 +91,42 @@ const listScrollThreshold = computed(() => {
   return 8;
 });
 
-const shouldEnableListScroll = computed(() => normalizedItems.value.length > listScrollThreshold.value);
+const isMobileViewport = computed(() => viewportWidth.value < 768);
+
+const effectiveMobileTopN = computed(() => {
+  const fromProp = Number(props.mobileTopN);
+  if (Number.isFinite(fromProp) && fromProp > 0) {
+    return Math.min(12, Math.max(1, Math.trunc(fromProp)));
+  }
+  return Math.min(12, Math.max(1, Math.trunc(Number(mobileAllocationTopN.value || 6))));
+});
+
+const displayItems = computed(() => {
+  const rows = normalizedItems.value;
+  const topN = effectiveMobileTopN.value;
+  if (!props.enableMobileTopN || !isMobileViewport.value || rows.length <= topN) {
+    return rows;
+  }
+  const head = rows.slice(0, topN);
+  const tail = rows.slice(topN);
+  const othersValue = tail.reduce((sum, item) => sum + item.value, 0);
+  const othersRatio = tail.reduce((sum, item) => sum + item.ratioPct, 0);
+  if (othersRatio <= 0) {
+    return head;
+  }
+  return [
+    ...head,
+    {
+      key: "__mobile_others__",
+      label: "Others",
+      value: othersValue,
+      ratioPct: othersRatio,
+      color: "#64748b",
+    },
+  ];
+});
+
+const shouldEnableListScroll = computed(() => displayItems.value.length > listScrollThreshold.value);
 
 const startAngle = computed(() => {
   if (props.startPosition === "RIGHT") return 90;
@@ -84,18 +135,18 @@ const startAngle = computed(() => {
 });
 
 const donutExportStops = computed(() =>
-  normalizedItems.value
+  displayItems.value
     .map((item) => `${Math.max(0, Math.min(100, item.ratioPct)).toFixed(6)}:${item.color}`)
     .join("|"),
 );
 
 const donutStyle = computed(() => {
-  if (normalizedItems.value.length === 0) {
+  if (displayItems.value.length === 0) {
     return { background: "conic-gradient(#334155 0% 100%)" };
   }
 
   let cursor = 0;
-  const stops = normalizedItems.value
+  const stops = displayItems.value
     .map((item) => {
       const ratio = Math.max(0, Math.min(100, item.ratioPct));
       const start = cursor;
@@ -107,6 +158,11 @@ const donutStyle = computed(() => {
 
   return { background: `conic-gradient(from ${startAngle.value}deg, ${stops})` };
 });
+
+function toggleLegendTooltip(key: string): void {
+  if (!isMobileViewport.value) return;
+  activeLegendTooltipKey.value = activeLegendTooltipKey.value === key ? null : key;
+}
 
 function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat("ko-KR", {
@@ -139,8 +195,8 @@ function formatPercent(value: number): string {
     <div v-else-if="error" class="mt-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
       {{ error }}
     </div>
-    <div v-else class="mt-4 grid min-h-[180px] grid-cols-[192px_minmax(0,1fr)] items-start gap-3">
-      <div class="relative mx-auto h-[12rem] w-[12rem]">
+    <div v-else class="mt-4 grid min-h-[180px] grid-cols-1 items-start gap-3 md:grid-cols-[192px_minmax(0,1fr)]">
+      <div class="relative mx-auto h-[11.5rem] w-[11.5rem] md:h-[12rem] md:w-[12rem]">
         <div
           class="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(15,23,42,0.2)]"
           :style="donutStyle"
@@ -161,25 +217,37 @@ function formatPercent(value: number): string {
         class="space-y-1 pr-1"
         :class="
           shouldEnableListScroll
-            ? 'max-h-[10rem] overflow-y-auto md:max-h-[11rem] lg:max-h-[12rem] xl:max-h-[13rem]'
+            ? 'max-h-[11rem] overflow-y-auto md:max-h-[11rem] lg:max-h-[12rem] xl:max-h-[13rem]'
             : ''
         "
       >
         <li
-          v-for="item in normalizedItems"
+          v-for="item in displayItems"
           :key="item.key"
-          class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1 text-xs dark:bg-slate-800"
+          class="relative flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1 text-xs dark:bg-slate-800"
         >
-          <span class="flex min-w-0 items-center gap-2">
-            <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: item.color }" />
-            <span class="truncate text-slate-700 dark:text-slate-200">{{ item.label }}</span>
-          </span>
+            <button
+              type="button"
+              class="flex min-w-0 items-center gap-2 text-left"
+              @click="toggleLegendTooltip(item.key)"
+            >
+              <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: item.color }" />
+              <span class="block max-w-[8.6rem] truncate leading-tight text-slate-700 md:max-w-none md:break-words dark:text-slate-200">
+                {{ item.label }}
+              </span>
+            </button>
           <span class="shrink-0 font-semibold text-slate-700 dark:text-slate-200">
             {{ formatPercent(item.ratioPct) }}
           </span>
+          <div
+            v-if="isMobileViewport && activeLegendTooltipKey === item.key"
+            class="absolute left-2 right-2 top-full z-20 mt-1 rounded-md border border-slate-300 bg-slate-950/95 px-2 py-1 text-[11px] text-slate-100 shadow-lg"
+          >
+            {{ item.label }}
+          </div>
         </li>
         <li
-          v-if="normalizedItems.length === 0"
+          v-if="displayItems.length === 0"
           class="rounded-lg bg-slate-50 px-2 py-2 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400"
         >
           No allocation data.

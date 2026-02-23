@@ -7,7 +7,7 @@ type DemoSection = {
   subtitle: string;
   highlights: string[];
 };
-type SectionKey = "home" | "dashboard" | "agent" | "report" | "chat" | "budget" | "lab" | "settings";
+type SectionKey = "home" | "dashboard" | "agent" | "report" | "chat" | "budget" | "lab" | "settings" | "app-settings";
 
 const route = useRoute();
 
@@ -84,6 +84,15 @@ const sections: Record<SectionKey, DemoSection> = {
       "개인 표시/숨김 옵션",
     ],
   },
+  "app-settings": {
+    title: "App Settings Demo",
+    subtitle: "관리자 전용 시스템 설정 화면 구성을 보여줍니다.",
+    highlights: [
+      "Token Refresh ON/OFF",
+      "시스템 레벨 설정 source 표기(env/db)",
+      "운영 정책 적용 시나리오",
+    ],
+  },
 };
 
 const sectionKey = computed<SectionKey>(() => {
@@ -94,6 +103,7 @@ const sectionKey = computed<SectionKey>(() => {
   if (path.startsWith("/chat")) return "chat";
   if (path.startsWith("/budget")) return "budget";
   if (path.startsWith("/lab")) return "lab";
+  if (path.startsWith("/app-settings")) return "app-settings";
   if (path.startsWith("/settings")) return "settings";
   return "home";
 });

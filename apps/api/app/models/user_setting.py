@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Numeric, String, text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, Numeric, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -21,6 +21,8 @@ class UserSetting(Base):
     )
     default_scope_id: Mapped[int | None] = mapped_column(nullable=True)
     hide_values: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("0"))
+    name_clamp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("1"))
+    mobile_allocation_top_n: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("6"))
     hide_small_assets: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("0"))
     small_asset_threshold: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, server_default=text("100000"))
     display_currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="KRW")

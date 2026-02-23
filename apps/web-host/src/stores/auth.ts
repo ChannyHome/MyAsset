@@ -18,6 +18,7 @@ function readJson<T>(raw: string | null): T | null {
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: null as string | null,
+    refreshToken: null as string | null,
     user: null as MeOut | null,
     households: [] as HouseholdOut[],
     initialized: false,
@@ -33,6 +34,7 @@ export const useAuthStore = defineStore("auth", {
         return;
       }
       this.token = localStorage.getItem(STORAGE_KEYS.token);
+      this.refreshToken = localStorage.getItem(STORAGE_KEYS.refreshToken);
       this.user = readJson<MeOut>(localStorage.getItem(STORAGE_KEYS.user));
       this.initialized = true;
     },
@@ -40,6 +42,13 @@ export const useAuthStore = defineStore("auth", {
       const result = await login({ email, password });
       this.token = result.access_token;
       localStorage.setItem(STORAGE_KEYS.token, result.access_token);
+      if (result.refresh_token) {
+        this.refreshToken = result.refresh_token;
+        localStorage.setItem(STORAGE_KEYS.refreshToken, result.refresh_token);
+      } else {
+        this.refreshToken = null;
+        localStorage.removeItem(STORAGE_KEYS.refreshToken);
+      }
       const me = await this.fetchMe();
       if (me.role !== "GUEST") {
         await this.fetchHouseholds();
@@ -51,6 +60,13 @@ export const useAuthStore = defineStore("auth", {
       const result = await signup({ email, display_name: displayName, password });
       this.token = result.access_token;
       localStorage.setItem(STORAGE_KEYS.token, result.access_token);
+      if (result.refresh_token) {
+        this.refreshToken = result.refresh_token;
+        localStorage.setItem(STORAGE_KEYS.refreshToken, result.refresh_token);
+      } else {
+        this.refreshToken = null;
+        localStorage.removeItem(STORAGE_KEYS.refreshToken);
+      }
       const me = await this.fetchMe();
       if (me.role !== "GUEST") {
         await this.fetchHouseholds();
@@ -84,9 +100,11 @@ export const useAuthStore = defineStore("auth", {
     },
     logout() {
       this.token = null;
+      this.refreshToken = null;
       this.user = null;
       this.households = [];
       localStorage.removeItem(STORAGE_KEYS.token);
+      localStorage.removeItem(STORAGE_KEYS.refreshToken);
       localStorage.removeItem(STORAGE_KEYS.user);
     },
     async logoutWithAudit() {

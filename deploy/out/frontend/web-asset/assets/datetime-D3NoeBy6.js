@@ -3977,7 +3977,10 @@ const {
 } = axios;
 
 const STORAGE_TOKEN_KEY = "myasset.auth.token";
+const STORAGE_REFRESH_TOKEN_KEY = "myasset.auth.refresh-token";
+const STORAGE_USER_KEY = "myasset.auth.user";
 const apiBaseUrl = "/api/v1";
+let refreshingPromise = null;
 const http = axios.create({
   baseURL: apiBaseUrl,
   timeout: 3e4
@@ -3990,6 +3993,59 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN_KEY);
+  if (!refreshToken) {
+    return null;
+  }
+  try {
+    const { data } = await axios.post(
+      `${apiBaseUrl}/auth/refresh`,
+      { refresh_token: refreshToken },
+      { timeout: 15e3 }
+    );
+    if (!data?.access_token) {
+      return null;
+    }
+    localStorage.setItem(STORAGE_TOKEN_KEY, data.access_token);
+    if (data.refresh_token) {
+      localStorage.setItem(STORAGE_REFRESH_TOKEN_KEY, data.refresh_token);
+    }
+    return data.access_token;
+  } catch {
+    localStorage.removeItem(STORAGE_TOKEN_KEY);
+    localStorage.removeItem(STORAGE_REFRESH_TOKEN_KEY);
+    localStorage.removeItem(STORAGE_USER_KEY);
+    return null;
+  }
+}
+http.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const responseStatus = error?.response?.status;
+    const originalRequest = error?.config;
+    if (!originalRequest || responseStatus !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+    const requestUrl = String(originalRequest.url || "");
+    if (requestUrl.includes("/auth/login") || requestUrl.includes("/auth/signup") || requestUrl.includes("/auth/refresh")) {
+      return Promise.reject(error);
+    }
+    originalRequest._retry = true;
+    if (!refreshingPromise) {
+      refreshingPromise = refreshAccessToken().finally(() => {
+        refreshingPromise = null;
+      });
+    }
+    const nextAccessToken = await refreshingPromise;
+    if (!nextAccessToken) {
+      return Promise.reject(error);
+    }
+    originalRequest.headers = originalRequest.headers ?? {};
+    originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
+    return http.request(originalRequest);
+  }
+);
 
 const SEOUL_TIME_ZONE = "Asia/Seoul";
 function normalizeIsoInput(value) {
