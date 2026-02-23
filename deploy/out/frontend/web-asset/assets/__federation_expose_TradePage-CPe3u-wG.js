@@ -76,45 +76,45 @@ const _hoisted_39 = { class: "text-xs font-semibold uppercase tracking-[0.08em] 
 const _hoisted_40 = ["disabled"];
 const _hoisted_41 = { class: "text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300" };
 const _hoisted_42 = { class: "text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300" };
-const _hoisted_43 = { class: "block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300" };
-const _hoisted_44 = { class: "grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_45 = { class: "inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700" };
-const _hoisted_46 = { class: "inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700" };
-const _hoisted_47 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_48 = ["disabled"];
-const _hoisted_49 = { class: "group relative inline-flex items-center gap-1" };
+const _hoisted_43 = ["disabled"];
+const _hoisted_44 = { class: "text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300" };
+const _hoisted_45 = { class: "block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300" };
+const _hoisted_46 = { class: "grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_47 = { class: "inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700" };
+const _hoisted_48 = { class: "inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700" };
+const _hoisted_49 = { class: "flex flex-wrap items-center gap-2" };
 const _hoisted_50 = ["disabled"];
-const _hoisted_51 = { class: "pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-[24rem] rounded-xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 shadow-xl backdrop-blur-sm group-hover:block group-focus-within:block dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200" };
-const _hoisted_52 = { class: "mt-2 list-disc space-y-1 pl-4" };
-const _hoisted_53 = {
+const _hoisted_51 = { class: "group relative inline-flex items-center gap-1" };
+const _hoisted_52 = ["disabled"];
+const _hoisted_53 = { class: "pointer-events-none absolute left-0 top-full z-20 mt-2 hidden w-[24rem] rounded-xl border border-slate-200 bg-white/95 p-3 text-xs text-slate-700 shadow-xl backdrop-blur-sm group-hover:block group-focus-within:block dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200" };
+const _hoisted_54 = { class: "mt-2 list-disc space-y-1 pl-4" };
+const _hoisted_55 = {
   key: 0,
   class: "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
 };
-const _hoisted_54 = {
+const _hoisted_56 = {
   key: 1,
   class: "rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
 };
-const _hoisted_55 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_56 = { class: "flex items-start justify-between gap-3" };
-const _hoisted_57 = ["aria-expanded"];
-const _hoisted_58 = {
+const _hoisted_57 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_58 = { class: "flex items-start justify-between gap-3" };
+const _hoisted_59 = ["aria-expanded"];
+const _hoisted_60 = {
   key: 0,
   class: "mt-3 space-y-3"
 };
-const _hoisted_59 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_60 = { class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-8" };
-const _hoisted_61 = ["value"];
-const _hoisted_62 = ["value"];
-const _hoisted_63 = { class: "flex items-center gap-2" };
-const _hoisted_64 = {
+const _hoisted_61 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_62 = { class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-8" };
+const _hoisted_63 = ["value"];
+const _hoisted_64 = ["value"];
+const _hoisted_65 = { class: "flex items-center gap-2" };
+const _hoisted_66 = {
   key: 0,
   class: "inline-flex items-center gap-1 rounded-md border border-cyan-400/60 bg-cyan-50 px-2 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-700 dark:bg-cyan-900/25 dark:text-cyan-300"
 };
-const _hoisted_65 = { class: "overflow-x-auto" };
-const _hoisted_66 = { class: "min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" };
-const _hoisted_67 = { class: "bg-slate-50 dark:bg-slate-800/80" };
-const _hoisted_68 = { class: "px-2 py-2 text-left" };
-const _hoisted_69 = { class: "opacity-70" };
+const _hoisted_67 = { class: "overflow-x-auto" };
+const _hoisted_68 = { class: "min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800" };
+const _hoisted_69 = { class: "bg-slate-50 dark:bg-slate-800/80" };
 const _hoisted_70 = { class: "px-2 py-2 text-left" };
 const _hoisted_71 = { class: "opacity-70" };
 const _hoisted_72 = { class: "px-2 py-2 text-left" };
@@ -125,38 +125,40 @@ const _hoisted_76 = { class: "px-2 py-2 text-left" };
 const _hoisted_77 = { class: "opacity-70" };
 const _hoisted_78 = { class: "px-2 py-2 text-left" };
 const _hoisted_79 = { class: "opacity-70" };
-const _hoisted_80 = { class: "px-2 py-2 text-right" };
+const _hoisted_80 = { class: "px-2 py-2 text-left" };
 const _hoisted_81 = { class: "opacity-70" };
 const _hoisted_82 = { class: "px-2 py-2 text-right" };
 const _hoisted_83 = { class: "opacity-70" };
-const _hoisted_84 = { class: "px-2 py-2 text-center" };
+const _hoisted_84 = { class: "px-2 py-2 text-right" };
 const _hoisted_85 = { class: "opacity-70" };
-const _hoisted_86 = { class: "divide-y divide-slate-100 dark:divide-slate-800" };
-const _hoisted_87 = { key: 0 };
-const _hoisted_88 = { class: "px-2 py-2" };
-const _hoisted_89 = { class: "px-2 py-2 whitespace-nowrap" };
+const _hoisted_86 = { class: "px-2 py-2 text-center" };
+const _hoisted_87 = { class: "opacity-70" };
+const _hoisted_88 = { class: "divide-y divide-slate-100 dark:divide-slate-800" };
+const _hoisted_89 = { key: 0 };
 const _hoisted_90 = { class: "px-2 py-2" };
-const _hoisted_91 = { class: "px-2 py-2" };
+const _hoisted_91 = { class: "px-2 py-2 whitespace-nowrap" };
 const _hoisted_92 = { class: "px-2 py-2" };
-const _hoisted_93 = { key: 0 };
-const _hoisted_94 = { key: 1 };
-const _hoisted_95 = { class: "px-2 py-2" };
-const _hoisted_96 = { key: 0 };
-const _hoisted_97 = { key: 1 };
-const _hoisted_98 = { class: "px-2 py-2 text-right" };
-const _hoisted_99 = { class: "px-2 py-2 text-right" };
-const _hoisted_100 = { class: "px-2 py-2 text-center" };
-const _hoisted_101 = { class: "px-2 py-2 text-center" };
+const _hoisted_93 = { class: "px-2 py-2" };
+const _hoisted_94 = { class: "px-2 py-2" };
+const _hoisted_95 = { key: 0 };
+const _hoisted_96 = { key: 1 };
+const _hoisted_97 = { class: "px-2 py-2" };
+const _hoisted_98 = { key: 0 };
+const _hoisted_99 = { key: 1 };
+const _hoisted_100 = { class: "px-2 py-2 text-right" };
+const _hoisted_101 = { class: "px-2 py-2 text-right" };
 const _hoisted_102 = { class: "px-2 py-2 text-center" };
 const _hoisted_103 = { class: "px-2 py-2 text-center" };
-const _hoisted_104 = { class: "inline-flex gap-1" };
-const _hoisted_105 = ["onClick"];
-const _hoisted_106 = ["disabled", "onClick"];
-const _hoisted_107 = { class: "flex items-center justify-between text-xs" };
-const _hoisted_108 = { class: "text-slate-500 dark:text-slate-400" };
-const _hoisted_109 = { class: "inline-flex items-center gap-2" };
-const _hoisted_110 = ["disabled"];
-const _hoisted_111 = ["disabled"];
+const _hoisted_104 = { class: "px-2 py-2 text-center" };
+const _hoisted_105 = { class: "px-2 py-2 text-center" };
+const _hoisted_106 = { class: "inline-flex gap-1" };
+const _hoisted_107 = ["onClick"];
+const _hoisted_108 = ["disabled", "onClick"];
+const _hoisted_109 = { class: "flex items-center justify-between text-xs" };
+const _hoisted_110 = { class: "text-slate-500 dark:text-slate-400" };
+const _hoisted_111 = { class: "inline-flex items-center gap-2" };
+const _hoisted_112 = ["disabled"];
+const _hoisted_113 = ["disabled"];
 const {computed,onBeforeUnmount,onMounted,reactive,ref,watch} = await importShared('vue');
 const TRADE_COLLAPSE_STORAGE_KEY = "myasset:trade:collapse-state";
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
@@ -213,6 +215,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       quantity: "",
       unit_price: "",
       amount: "",
+      fee_amount: "",
       currency: "KRW",
       memo: "",
       source_type: "MANUAL",
@@ -329,6 +332,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       form.quantity = "";
       form.unit_price = "";
       form.amount = "";
+      form.fee_amount = "";
       form.currency = "KRW";
       form.memo = "";
       form.source_type = "MANUAL";
@@ -361,6 +365,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       form.quantity = row.quantity == null ? "" : String(row.quantity);
       form.unit_price = row.unit_price == null ? "" : String(row.unit_price);
       form.amount = String(row.amount);
+      form.fee_amount = "";
       form.currency = row.currency;
       form.memo = row.memo ?? "";
       form.source_type = row.source_type;
@@ -518,7 +523,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST.";
         return;
       }
-      if (!window.confirm(editingId.value ? "Update this trade?" : "Create this trade?")) return;
+      const feeAmount = isBuySell.value && !editingId.value ? toOptionalNumber(form.fee_amount) ?? 0 : 0;
+      if (feeAmount < 0) {
+        errorMessage.value = "Fee must be >= 0.";
+        return;
+      }
+      const confirmMessage = editingId.value ? "Update this trade?" : feeAmount > 0 ? "Create BUY/SELL trade + FEE trade?" : "Create this trade?";
+      if (!window.confirm(confirmMessage)) return;
       saving.value = true;
       errorMessage.value = "";
       successMessage.value = "";
@@ -528,8 +539,45 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           await updateTrade(editingId.value, payload);
           successMessage.value = `Trade #${editingId.value} updated.`;
         } else {
-          const created = await createTrade(payload);
-          successMessage.value = `Trade #${created.id} created.`;
+          let createdMain = null;
+          let createdFee = null;
+          try {
+            createdMain = await createTrade(payload);
+            if (isBuySell.value && feeAmount > 0) {
+              const feePayload = {
+                portfolio_id: Number(form.portfolio_id),
+                txn_type: "FEE",
+                asset_id: null,
+                liability_id: null,
+                amount: feeAmount,
+                currency: form.currency.trim().toUpperCase(),
+                memo: form.memo.trim() ? `[AUTO_FEE for #${createdMain.id}] ${form.memo.trim()}` : `[AUTO_FEE for #${createdMain.id}]`,
+                source_type: form.source_type,
+                auto_apply_cash_holding: form.auto_apply_cash_holding,
+                auto_apply_portfolio_cashflow: false
+              };
+              createdFee = await createTrade(feePayload);
+            }
+          } catch (error) {
+            if (createdFee) {
+              try {
+                await voidTrade(createdFee.id);
+              } catch {
+              }
+            }
+            if (createdMain) {
+              try {
+                await voidTrade(createdMain.id);
+              } catch {
+              }
+            }
+            throw error;
+          }
+          if (createdMain && createdFee) {
+            successMessage.value = `Trades created. main=#${createdMain.id}, fee=#${createdFee.id}`;
+          } else if (createdMain) {
+            successMessage.value = `Trade #${createdMain.id} created.`;
+          }
         }
         await loadTrades();
         resetForm();
@@ -646,6 +694,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           form.liability_id = "";
           form.auto_apply_portfolio_cashflow = false;
         }
+        if (next !== "BUY" && next !== "SELL") {
+          form.fee_amount = "";
+        }
       }
     );
     watch([page, pageSize], () => void loadTrades());
@@ -697,13 +748,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     });
     return (_ctx, _cache) => {
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
-        _cache[96] || (_cache[96] = _createElementVNode("header", { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" }, [
+        _cache[99] || (_cache[99] = _createElementVNode("header", { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" }, [
           _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300" }, "Trade"),
           _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Manual Trade Ledger")
         ], -1)),
         _createElementVNode("article", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[47] || (_cache[47] = _createElementVNode("div", null, [
+            _cache[48] || (_cache[48] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.08em] text-cyan-700 dark:text-cyan-300" }, "Transfer"),
               _createElementVNode("h2", { class: "mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Portfolio To Portfolio Transfer"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "한 번 입력하면 WITHDRAW + DEPOSIT 두 거래를 자동 생성합니다.")
@@ -718,12 +769,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           !transferCollapsed.value ? (_openBlock(), _createElementBlock("div", _hoisted_5, [
             _createElementVNode("div", _hoisted_6, [
               _createElementVNode("label", _hoisted_7, [
-                _cache[49] || (_cache[49] = _createTextVNode("From Portfolio ", -1)),
+                _cache[50] || (_cache[50] = _createTextVNode("From Portfolio ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => transferForm.from_portfolio_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[48] || (_cache[48] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                  _cache[49] || (_cache[49] = _createElementVNode("option", { value: "" }, "Select", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (p) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: `from-${p.id}`,
@@ -735,12 +786,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_9, [
-                _cache[51] || (_cache[51] = _createTextVNode("To Portfolio ", -1)),
+                _cache[52] || (_cache[52] = _createTextVNode("To Portfolio ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => transferForm.to_portfolio_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[50] || (_cache[50] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                  _cache[51] || (_cache[51] = _createElementVNode("option", { value: "" }, "Select", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (p) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: `to-${p.id}`,
@@ -752,7 +803,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_11, [
-                _cache[52] || (_cache[52] = _createTextVNode("Amount ", -1)),
+                _cache[53] || (_cache[53] = _createTextVNode("Amount ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => transferForm.amount = $event),
                   placeholder: "1000000",
@@ -762,7 +813,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_12, [
-                _cache[53] || (_cache[53] = _createTextVNode("Currency ", -1)),
+                _cache[54] || (_cache[54] = _createTextVNode("Currency ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => transferForm.currency = $event),
                   maxlength: "3",
@@ -773,7 +824,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_13, [
-                _cache[54] || (_cache[54] = _createTextVNode("Executed At (optional) ", -1)),
+                _cache[55] || (_cache[55] = _createTextVNode("Executed At (optional) ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => transferForm.executed_at = $event),
                   type: "datetime-local",
@@ -783,7 +834,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_14, [
-                _cache[55] || (_cache[55] = _createTextVNode("Memo (optional) ", -1)),
+                _cache[56] || (_cache[56] = _createTextVNode("Memo (optional) ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => transferForm.memo = $event),
                   placeholder: "예: Toss -> Upbit transfer",
@@ -802,7 +853,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 }, null, 512), [
                   [_vModelCheckbox, transferForm.auto_apply_cash_holding]
                 ]),
-                _cache[56] || (_cache[56] = _createElementVNode("span", null, "Auto apply to cash holding", -1))
+                _cache[57] || (_cache[57] = _createElementVNode("span", null, "Auto apply to cash holding", -1))
               ]),
               _createElementVNode("label", _hoisted_17, [
                 _withDirectives(_createElementVNode("input", {
@@ -812,7 +863,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 }, null, 512), [
                   [_vModelCheckbox, transferForm.auto_apply_portfolio_cashflow]
                 ]),
-                _cache[57] || (_cache[57] = _createElementVNode("span", null, "Auto apply to net contribution", -1))
+                _cache[58] || (_cache[58] = _createElementVNode("span", null, "Auto apply to net contribution", -1))
               ])
             ]),
             _createElementVNode("div", _hoisted_18, [
@@ -833,7 +884,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ]),
         _createElementVNode("article", _hoisted_21, [
           _createElementVNode("div", _hoisted_22, [
-            _cache[58] || (_cache[58] = _createElementVNode("div", null, [
+            _cache[59] || (_cache[59] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700 dark:text-emerald-300" }, "Entry"),
               _createElementVNode("h2", { class: "mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Manual Trade Entry"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "수동 거래를 입력하고 holdings, portfolio, liability 집계에 반영합니다.")
@@ -848,12 +899,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           !entryCollapsed.value ? (_openBlock(), _createElementBlock("div", _hoisted_24, [
             _createElementVNode("div", _hoisted_25, [
               _createElementVNode("label", _hoisted_26, [
-                _cache[60] || (_cache[60] = _createTextVNode("Portfolio ", -1)),
+                _cache[61] || (_cache[61] = _createTextVNode("Portfolio ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => form.portfolio_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[59] || (_cache[59] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                  _cache[60] || (_cache[60] = _createElementVNode("option", { value: "" }, "Select", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (p) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: p.id,
@@ -865,7 +916,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_28, [
-                _cache[61] || (_cache[61] = _createTextVNode("Type ", -1)),
+                _cache[62] || (_cache[62] = _createTextVNode("Type ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => form.txn_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
@@ -881,13 +932,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_30, [
-                _cache[63] || (_cache[63] = _createTextVNode("Asset ", -1)),
+                _cache[64] || (_cache[64] = _createTextVNode("Asset ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[12] || (_cache[12] = ($event) => form.asset_id = $event),
                   disabled: !canSelectAsset.value,
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[62] || (_cache[62] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                  _cache[63] || (_cache[63] = _createElementVNode("option", { value: "" }, "Select", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(assets.value, (a) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: a.id,
@@ -899,13 +950,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_33, [
-                _cache[65] || (_cache[65] = _createTextVNode("Liability ", -1)),
+                _cache[66] || (_cache[66] = _createTextVNode("Liability ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => form.liability_id = $event),
                   disabled: !isLoanTxn.value,
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[64] || (_cache[64] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                  _cache[65] || (_cache[65] = _createElementVNode("option", { value: "" }, "Select", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(selectableLoanLiabilities.value, (l) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: l.id,
@@ -915,10 +966,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ], 8, _hoisted_34), [
                   [_vModelSelect, form.liability_id]
                 ]),
-                _cache[66] || (_cache[66] = _createElementVNode("p", { class: "mt-1 text-[11px] normal-case text-slate-500 dark:text-slate-400" }, "Shows liabilities linked to selected portfolio.", -1))
+                _cache[67] || (_cache[67] = _createElementVNode("p", { class: "mt-1 text-[11px] normal-case text-slate-500 dark:text-slate-400" }, "Shows liabilities linked to selected portfolio.", -1))
               ]),
               _createElementVNode("label", _hoisted_36, [
-                _cache[67] || (_cache[67] = _createTextVNode("Currency ", -1)),
+                _cache[68] || (_cache[68] = _createTextVNode("Currency ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => form.currency = $event),
                   maxlength: "3",
@@ -928,7 +979,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_37, [
-                _cache[68] || (_cache[68] = _createTextVNode("Quantity ", -1)),
+                _cache[69] || (_cache[69] = _createTextVNode("Quantity ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => form.quantity = $event),
                   disabled: !isBuySell.value,
@@ -938,7 +989,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_39, [
-                _cache[69] || (_cache[69] = _createTextVNode("Unit Price ", -1)),
+                _cache[70] || (_cache[70] = _createTextVNode("Unit Price ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => form.unit_price = $event),
                   disabled: !isBuySell.value,
@@ -948,7 +999,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_41, [
-                _cache[70] || (_cache[70] = _createTextVNode("Amount ", -1)),
+                _cache[71] || (_cache[71] = _createTextVNode("Amount ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => form.amount = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
@@ -957,11 +1008,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ]),
               _createElementVNode("label", _hoisted_42, [
-                _cache[72] || (_cache[72] = _createTextVNode("Source ", -1)),
+                _cache[72] || (_cache[72] = _createTextVNode("Fee (optional) ", -1)),
+                _withDirectives(_createElementVNode("input", {
+                  "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => form.fee_amount = $event),
+                  disabled: !isBuySell.value || !!editingId.value,
+                  placeholder: "0",
+                  class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950"
+                }, null, 8, _hoisted_43), [
+                  [_vModelText, form.fee_amount]
+                ]),
+                _cache[73] || (_cache[73] = _createElementVNode("p", { class: "mt-1 text-[11px] normal-case text-slate-500 dark:text-slate-400" }, " BUY/SELL create 시 fee > 0 이면 FEE 거래가 추가로 생성됩니다. ", -1))
+              ]),
+              _createElementVNode("label", _hoisted_44, [
+                _cache[75] || (_cache[75] = _createTextVNode("Source ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => form.source_type = $event),
+                  "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => form.source_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-                }, [..._cache[71] || (_cache[71] = [
+                }, [..._cache[74] || (_cache[74] = [
                   _createElementVNode("option", { value: "MANUAL" }, "MANUAL", -1),
                   _createElementVNode("option", { value: "AUTO" }, "AUTO", -1)
                 ])], 512), [
@@ -969,64 +1032,64 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ])
             ]),
-            _createElementVNode("label", _hoisted_43, [
-              _cache[73] || (_cache[73] = _createTextVNode("Memo ", -1)),
+            _createElementVNode("label", _hoisted_45, [
+              _cache[76] || (_cache[76] = _createTextVNode("Memo ", -1)),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => form.memo = $event),
+                "onUpdate:modelValue": _cache[20] || (_cache[20] = ($event) => form.memo = $event),
                 class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, form.memo]
               ])
             ]),
-            _createElementVNode("div", _hoisted_44, [
-              _createElementVNode("label", _hoisted_45, [
+            _createElementVNode("div", _hoisted_46, [
+              _createElementVNode("label", _hoisted_47, [
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[20] || (_cache[20] = ($event) => form.auto_apply_cash_holding = $event),
+                  "onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => form.auto_apply_cash_holding = $event),
                   type: "checkbox",
                   class: "h-4 w-4"
                 }, null, 512), [
                   [_vModelCheckbox, form.auto_apply_cash_holding]
                 ]),
-                _cache[74] || (_cache[74] = _createElementVNode("span", null, "Auto apply to cash holding", -1))
+                _cache[77] || (_cache[77] = _createElementVNode("span", null, "Auto apply to cash holding", -1))
               ]),
-              _createElementVNode("label", _hoisted_46, [
+              _createElementVNode("label", _hoisted_48, [
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => form.auto_apply_portfolio_cashflow = $event),
+                  "onUpdate:modelValue": _cache[22] || (_cache[22] = ($event) => form.auto_apply_portfolio_cashflow = $event),
                   type: "checkbox",
                   class: "h-4 w-4"
                 }, null, 512), [
                   [_vModelCheckbox, form.auto_apply_portfolio_cashflow]
                 ]),
-                _cache[75] || (_cache[75] = _createElementVNode("span", null, "Auto apply to net contribution", -1))
+                _cache[78] || (_cache[78] = _createElementVNode("span", null, "Auto apply to net contribution", -1))
               ])
             ]),
-            _createElementVNode("div", _hoisted_47, [
+            _createElementVNode("div", _hoisted_49, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60",
                 disabled: saving.value,
                 onClick: submit
-              }, _toDisplayString(saving.value ? "Saving..." : editingId.value ? "Update Trade" : "Create Trade"), 9, _hoisted_48),
+              }, _toDisplayString(saving.value ? "Saving..." : editingId.value ? "Update Trade" : "Create Trade"), 9, _hoisted_50),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 onClick: resetForm
               }, "Reset"),
-              _createElementVNode("div", _hoisted_49, [
+              _createElementVNode("div", _hoisted_51, [
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded-lg border border-cyan-300 px-4 py-2 text-sm font-semibold text-cyan-700 hover:bg-cyan-50 disabled:opacity-60 dark:border-cyan-800 dark:text-cyan-300 dark:hover:bg-cyan-900/30",
                   disabled: rebuilding.value,
                   onClick: onRebuild
-                }, _toDisplayString(rebuilding.value ? "Rebuilding..." : "Rebuild Ledger Sync"), 9, _hoisted_50),
-                _cache[77] || (_cache[77] = _createElementVNode("button", {
+                }, _toDisplayString(rebuilding.value ? "Rebuilding..." : "Rebuild Ledger Sync"), 9, _hoisted_52),
+                _cache[80] || (_cache[80] = _createElementVNode("button", {
                   type: "button",
                   "aria-label": "Rebuild usage guide",
                   class: "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-xs font-bold text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 }, " i ", -1)),
-                _createElementVNode("div", _hoisted_51, [
-                  _cache[76] || (_cache[76] = _createElementVNode("p", { class: "font-semibold text-slate-900 dark:text-slate-100" }, "Rebuild Ledger Sync 사용 가이드", -1)),
-                  _createElementVNode("ul", _hoisted_52, [
+                _createElementVNode("div", _hoisted_53, [
+                  _cache[79] || (_cache[79] = _createElementVNode("p", { class: "font-semibold text-slate-900 dark:text-slate-100" }, "Rebuild Ledger Sync 사용 가이드", -1)),
+                  _createElementVNode("ul", _hoisted_54, [
                     (_openBlock(), _createElementBlock(_Fragment, null, _renderList(rebuildHintLines, (line) => {
                       return _createElementVNode("li", { key: line }, _toDisplayString(line), 1);
                     }), 64))
@@ -1036,11 +1099,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             ])
           ])) : _createCommentVNode("", true)
         ]),
-        errorMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_53, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true),
-        successMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_54, _toDisplayString(successMessage.value), 1)) : _createCommentVNode("", true),
-        _createElementVNode("article", _hoisted_55, [
-          _createElementVNode("div", _hoisted_56, [
-            _cache[78] || (_cache[78] = _createElementVNode("div", null, [
+        errorMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_55, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true),
+        successMessage.value ? (_openBlock(), _createElementBlock("article", _hoisted_56, _toDisplayString(successMessage.value), 1)) : _createCommentVNode("", true),
+        _createElementVNode("article", _hoisted_57, [
+          _createElementVNode("div", _hoisted_58, [
+            _cache[81] || (_cache[81] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.08em] text-indigo-700 dark:text-indigo-300" }, "Journal"),
               _createElementVNode("h2", { class: "mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Trade Journal"),
               _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "필터/정렬/페이지네이션으로 거래 이력을 조회하고 편집/무효화합니다.")
@@ -1049,42 +1112,42 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               type: "button",
               class: "rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
               "aria-expanded": !journalCollapsed.value,
-              onClick: _cache[22] || (_cache[22] = ($event) => journalCollapsed.value = !journalCollapsed.value)
-            }, _toDisplayString(journalCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_57)
+              onClick: _cache[23] || (_cache[23] = ($event) => journalCollapsed.value = !journalCollapsed.value)
+            }, _toDisplayString(journalCollapsed.value ? "Expand" : "Collapse"), 9, _hoisted_59)
           ]),
-          !journalCollapsed.value ? (_openBlock(), _createElementBlock("div", _hoisted_58, [
-            _createElementVNode("div", _hoisted_59, [
+          !journalCollapsed.value ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
+            _createElementVNode("div", _hoisted_61, [
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold transition", quickGroup.value === "ALL" ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                onClick: _cache[23] || (_cache[23] = ($event) => setQuickGroup("ALL"))
+                onClick: _cache[24] || (_cache[24] = ($event) => setQuickGroup("ALL"))
               }, " ALL ", 2),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold transition", quickGroup.value === "LOAN" ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                onClick: _cache[24] || (_cache[24] = ($event) => setQuickGroup("LOAN"))
+                onClick: _cache[25] || (_cache[25] = ($event) => setQuickGroup("LOAN"))
               }, " LOAN ", 2),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold transition", quickGroup.value === "CASHFLOW" ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                onClick: _cache[25] || (_cache[25] = ($event) => setQuickGroup("CASHFLOW"))
+                onClick: _cache[26] || (_cache[26] = ($event) => setQuickGroup("CASHFLOW"))
               }, " CASHFLOW ", 2),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold transition", quickGroup.value === "BUYSELL" ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:border-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-300" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                onClick: _cache[26] || (_cache[26] = ($event) => setQuickGroup("BUYSELL"))
+                onClick: _cache[27] || (_cache[27] = ($event) => setQuickGroup("BUYSELL"))
               }, " BUYSELL ", 2)
             ]),
-            _createElementVNode("div", _hoisted_60, [
+            _createElementVNode("div", _hoisted_62, [
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => filters.q = $event),
+                "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => filters.q = $event),
                 placeholder: "Search...",
                 class: "rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, filters.q]
               ]),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => filters.portfolio_id = $event),
+                "onUpdate:modelValue": _cache[29] || (_cache[29] = ($event) => filters.portfolio_id = $event),
                 type: "number",
                 min: "1",
                 placeholder: "Portfolio ID",
@@ -1093,7 +1156,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 [_vModelText, filters.portfolio_id]
               ]),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[29] || (_cache[29] = ($event) => filters.asset_id = $event),
+                "onUpdate:modelValue": _cache[30] || (_cache[30] = ($event) => filters.asset_id = $event),
                 type: "number",
                 min: "1",
                 placeholder: "Asset ID",
@@ -1102,7 +1165,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 [_vModelText, filters.asset_id]
               ]),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[30] || (_cache[30] = ($event) => filters.liability_id = $event),
+                "onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => filters.liability_id = $event),
                 type: "number",
                 min: "1",
                 placeholder: "Liability ID",
@@ -1111,49 +1174,49 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 [_vModelText, filters.liability_id]
               ]),
               _withDirectives(_createElementVNode("select", {
-                "onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => filters.txn_type = $event),
+                "onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => filters.txn_type = $event),
                 class: "rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, [
-                _cache[79] || (_cache[79] = _createElementVNode("option", { value: "" }, "ALL TYPES", -1)),
+                _cache[82] || (_cache[82] = _createElementVNode("option", { value: "" }, "ALL TYPES", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(tradeTypes, (type) => {
                   return _createElementVNode("option", {
                     key: type,
                     value: type
-                  }, _toDisplayString(type), 9, _hoisted_61);
+                  }, _toDisplayString(type), 9, _hoisted_63);
                 }), 64))
               ], 512), [
                 [_vModelSelect, filters.txn_type]
               ]),
               _withDirectives(_createElementVNode("select", {
-                "onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => filters.status = $event),
+                "onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => filters.status = $event),
                 class: "rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, [
-                _cache[80] || (_cache[80] = _createElementVNode("option", { value: "" }, "ALL STATUS", -1)),
+                _cache[83] || (_cache[83] = _createElementVNode("option", { value: "" }, "ALL STATUS", -1)),
                 (_openBlock(), _createElementBlock(_Fragment, null, _renderList(statusOptions, (status) => {
                   return _createElementVNode("option", {
                     key: status,
                     value: status
-                  }, _toDisplayString(status), 9, _hoisted_62);
+                  }, _toDisplayString(status), 9, _hoisted_64);
                 }), 64))
               ], 512), [
                 [_vModelSelect, filters.status]
               ]),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => filters.from = $event),
+                "onUpdate:modelValue": _cache[34] || (_cache[34] = ($event) => filters.from = $event),
                 type: "date",
                 class: "rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, filters.from]
               ]),
               _withDirectives(_createElementVNode("input", {
-                "onUpdate:modelValue": _cache[34] || (_cache[34] = ($event) => filters.to = $event),
+                "onUpdate:modelValue": _cache[35] || (_cache[35] = ($event) => filters.to = $event),
                 type: "date",
                 class: "rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
               }, null, 512), [
                 [_vModelText, filters.to]
               ])
             ]),
-            _createElementVNode("div", _hoisted_63, [
+            _createElementVNode("div", _hoisted_65, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500",
@@ -1164,112 +1227,112 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 onClick: resetFilters
               }, " Reset "),
-              journalAutoSearchPending.value ? (_openBlock(), _createElementBlock("span", _hoisted_64, [..._cache[81] || (_cache[81] = [
+              journalAutoSearchPending.value ? (_openBlock(), _createElementBlock("span", _hoisted_66, [..._cache[84] || (_cache[84] = [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-500 dark:bg-cyan-400" }, null, -1),
                 _createTextVNode(" Searching while typing... ", -1)
               ])])) : _createCommentVNode("", true)
             ]),
-            _createElementVNode("div", _hoisted_65, [
-              _createElementVNode("table", _hoisted_66, [
-                _createElementVNode("thead", _hoisted_67, [
+            _createElementVNode("div", _hoisted_67, [
+              _createElementVNode("table", _hoisted_68, [
+                _createElementVNode("thead", _hoisted_69, [
                   _createElementVNode("tr", null, [
-                    _createElementVNode("th", _hoisted_68, [
-                      _createElementVNode("button", {
-                        type: "button",
-                        class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[35] || (_cache[35] = ($event) => toggleSort("id"))
-                      }, [
-                        _cache[82] || (_cache[82] = _createTextVNode(" # ", -1)),
-                        _createElementVNode("span", _hoisted_69, _toDisplayString(sortIndicator("id")), 1)
-                      ])
-                    ]),
                     _createElementVNode("th", _hoisted_70, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[36] || (_cache[36] = ($event) => toggleSort("executed_at"))
+                        onClick: _cache[36] || (_cache[36] = ($event) => toggleSort("id"))
                       }, [
-                        _cache[83] || (_cache[83] = _createTextVNode(" Time ", -1)),
-                        _createElementVNode("span", _hoisted_71, _toDisplayString(sortIndicator("executed_at")), 1)
+                        _cache[85] || (_cache[85] = _createTextVNode(" # ", -1)),
+                        _createElementVNode("span", _hoisted_71, _toDisplayString(sortIndicator("id")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_72, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[37] || (_cache[37] = ($event) => toggleSort("txn_type"))
+                        onClick: _cache[37] || (_cache[37] = ($event) => toggleSort("executed_at"))
                       }, [
-                        _cache[84] || (_cache[84] = _createTextVNode(" Type ", -1)),
-                        _createElementVNode("span", _hoisted_73, _toDisplayString(sortIndicator("txn_type")), 1)
+                        _cache[86] || (_cache[86] = _createTextVNode(" Time ", -1)),
+                        _createElementVNode("span", _hoisted_73, _toDisplayString(sortIndicator("executed_at")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_74, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[38] || (_cache[38] = ($event) => toggleSort("portfolio_name"))
+                        onClick: _cache[38] || (_cache[38] = ($event) => toggleSort("txn_type"))
                       }, [
-                        _cache[85] || (_cache[85] = _createTextVNode(" Portfolio ", -1)),
-                        _createElementVNode("span", _hoisted_75, _toDisplayString(sortIndicator("portfolio_name")), 1)
+                        _cache[87] || (_cache[87] = _createTextVNode(" Type ", -1)),
+                        _createElementVNode("span", _hoisted_75, _toDisplayString(sortIndicator("txn_type")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_76, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[39] || (_cache[39] = ($event) => toggleSort("asset_name"))
+                        onClick: _cache[39] || (_cache[39] = ($event) => toggleSort("portfolio_name"))
                       }, [
-                        _cache[86] || (_cache[86] = _createTextVNode(" Asset ", -1)),
-                        _createElementVNode("span", _hoisted_77, _toDisplayString(sortIndicator("asset_name")), 1)
+                        _cache[88] || (_cache[88] = _createTextVNode(" Portfolio ", -1)),
+                        _createElementVNode("span", _hoisted_77, _toDisplayString(sortIndicator("portfolio_name")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_78, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[40] || (_cache[40] = ($event) => toggleSort("liability_name"))
+                        onClick: _cache[40] || (_cache[40] = ($event) => toggleSort("asset_name"))
                       }, [
-                        _cache[87] || (_cache[87] = _createTextVNode(" Liability ", -1)),
-                        _createElementVNode("span", _hoisted_79, _toDisplayString(sortIndicator("liability_name")), 1)
+                        _cache[89] || (_cache[89] = _createTextVNode(" Asset ", -1)),
+                        _createElementVNode("span", _hoisted_79, _toDisplayString(sortIndicator("asset_name")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_80, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[41] || (_cache[41] = ($event) => toggleSort("amount"))
+                        onClick: _cache[41] || (_cache[41] = ($event) => toggleSort("liability_name"))
                       }, [
-                        _cache[88] || (_cache[88] = _createTextVNode(" Amount ", -1)),
-                        _createElementVNode("span", _hoisted_81, _toDisplayString(sortIndicator("amount")), 1)
+                        _cache[90] || (_cache[90] = _createTextVNode(" Liability ", -1)),
+                        _createElementVNode("span", _hoisted_81, _toDisplayString(sortIndicator("liability_name")), 1)
                       ])
                     ]),
                     _createElementVNode("th", _hoisted_82, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[42] || (_cache[42] = ($event) => toggleSort("amount_in_portfolio_currency"))
+                        onClick: _cache[42] || (_cache[42] = ($event) => toggleSort("amount"))
                       }, [
-                        _cache[89] || (_cache[89] = _createTextVNode(" Amount(Base) ", -1)),
-                        _createElementVNode("span", _hoisted_83, _toDisplayString(sortIndicator("amount_in_portfolio_currency")), 1)
+                        _cache[91] || (_cache[91] = _createTextVNode(" Amount ", -1)),
+                        _createElementVNode("span", _hoisted_83, _toDisplayString(sortIndicator("amount")), 1)
                       ])
                     ]),
-                    _cache[91] || (_cache[91] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Auto Cash", -1)),
-                    _cache[92] || (_cache[92] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Auto Net Contribution", -1)),
                     _createElementVNode("th", _hoisted_84, [
                       _createElementVNode("button", {
                         type: "button",
                         class: "inline-flex items-center gap-1 hover:underline",
-                        onClick: _cache[43] || (_cache[43] = ($event) => toggleSort("status"))
+                        onClick: _cache[43] || (_cache[43] = ($event) => toggleSort("amount_in_portfolio_currency"))
                       }, [
-                        _cache[90] || (_cache[90] = _createTextVNode(" Status ", -1)),
-                        _createElementVNode("span", _hoisted_85, _toDisplayString(sortIndicator("status")), 1)
+                        _cache[92] || (_cache[92] = _createTextVNode(" Amount(Base) ", -1)),
+                        _createElementVNode("span", _hoisted_85, _toDisplayString(sortIndicator("amount_in_portfolio_currency")), 1)
                       ])
                     ]),
-                    _cache[93] || (_cache[93] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Action", -1))
+                    _cache[94] || (_cache[94] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Auto Cash", -1)),
+                    _cache[95] || (_cache[95] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Auto Net Contribution", -1)),
+                    _createElementVNode("th", _hoisted_86, [
+                      _createElementVNode("button", {
+                        type: "button",
+                        class: "inline-flex items-center gap-1 hover:underline",
+                        onClick: _cache[44] || (_cache[44] = ($event) => toggleSort("status"))
+                      }, [
+                        _cache[93] || (_cache[93] = _createTextVNode(" Status ", -1)),
+                        _createElementVNode("span", _hoisted_87, _toDisplayString(sortIndicator("status")), 1)
+                      ])
+                    ]),
+                    _cache[96] || (_cache[96] = _createElementVNode("th", { class: "px-2 py-2 text-center" }, "Action", -1))
                   ])
                 ]),
-                _createElementVNode("tbody", _hoisted_86, [
-                  !loading.value && trades.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_87, [..._cache[94] || (_cache[94] = [
+                _createElementVNode("tbody", _hoisted_88, [
+                  !loading.value && trades.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_89, [..._cache[97] || (_cache[97] = [
                     _createElementVNode("td", {
                       colspan: "12",
                       class: "px-2 py-6 text-center text-slate-500 dark:text-slate-400"
@@ -1280,21 +1343,21 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       key: row.id,
                       class: "hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
                     }, [
-                      _createElementVNode("td", _hoisted_88, "#" + _toDisplayString(row.id), 1),
-                      _createElementVNode("td", _hoisted_89, _toDisplayString(formatDateTime(row.executed_at)), 1),
-                      _createElementVNode("td", _hoisted_90, _toDisplayString(row.txn_type), 1),
-                      _createElementVNode("td", _hoisted_91, "#" + _toDisplayString(row.portfolio_id) + " " + _toDisplayString(row.portfolio_name ?? "-"), 1),
-                      _createElementVNode("td", _hoisted_92, [
-                        row.asset_id ? (_openBlock(), _createElementBlock("span", _hoisted_93, "#" + _toDisplayString(row.asset_id) + " " + _toDisplayString(row.asset_name ?? "-"), 1)) : (_openBlock(), _createElementBlock("span", _hoisted_94, "-"))
+                      _createElementVNode("td", _hoisted_90, "#" + _toDisplayString(row.id), 1),
+                      _createElementVNode("td", _hoisted_91, _toDisplayString(formatDateTime(row.executed_at)), 1),
+                      _createElementVNode("td", _hoisted_92, _toDisplayString(row.txn_type), 1),
+                      _createElementVNode("td", _hoisted_93, "#" + _toDisplayString(row.portfolio_id) + " " + _toDisplayString(row.portfolio_name ?? "-"), 1),
+                      _createElementVNode("td", _hoisted_94, [
+                        row.asset_id ? (_openBlock(), _createElementBlock("span", _hoisted_95, "#" + _toDisplayString(row.asset_id) + " " + _toDisplayString(row.asset_name ?? "-"), 1)) : (_openBlock(), _createElementBlock("span", _hoisted_96, "-"))
                       ]),
-                      _createElementVNode("td", _hoisted_95, [
-                        row.liability_id ? (_openBlock(), _createElementBlock("span", _hoisted_96, "#" + _toDisplayString(row.liability_id) + " " + _toDisplayString(row.liability_name ?? "-"), 1)) : (_openBlock(), _createElementBlock("span", _hoisted_97, "-"))
+                      _createElementVNode("td", _hoisted_97, [
+                        row.liability_id ? (_openBlock(), _createElementBlock("span", _hoisted_98, "#" + _toDisplayString(row.liability_id) + " " + _toDisplayString(row.liability_name ?? "-"), 1)) : (_openBlock(), _createElementBlock("span", _hoisted_99, "-"))
                       ]),
-                      _createElementVNode("td", _hoisted_98, _toDisplayString(formatNumber(row.amount)) + " " + _toDisplayString(row.currency), 1),
-                      _createElementVNode("td", _hoisted_99, _toDisplayString(formatNumber(row.amount_in_portfolio_currency)), 1),
-                      _createElementVNode("td", _hoisted_100, _toDisplayString(row.auto_apply_cash_holding ? "ON" : "OFF"), 1),
-                      _createElementVNode("td", _hoisted_101, _toDisplayString(row.auto_apply_portfolio_cashflow ? "ON" : "OFF"), 1),
-                      _createElementVNode("td", _hoisted_102, [
+                      _createElementVNode("td", _hoisted_100, _toDisplayString(formatNumber(row.amount)) + " " + _toDisplayString(row.currency), 1),
+                      _createElementVNode("td", _hoisted_101, _toDisplayString(formatNumber(row.amount_in_portfolio_currency)), 1),
+                      _createElementVNode("td", _hoisted_102, _toDisplayString(row.auto_apply_cash_holding ? "ON" : "OFF"), 1),
+                      _createElementVNode("td", _hoisted_103, _toDisplayString(row.auto_apply_portfolio_cashflow ? "ON" : "OFF"), 1),
+                      _createElementVNode("td", _hoisted_104, [
                         _createElementVNode("span", {
                           class: _normalizeClass([
                             "rounded-full px-2 py-0.5 text-xs font-semibold",
@@ -1302,19 +1365,19 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           ])
                         }, _toDisplayString(row.status), 3)
                       ]),
-                      _createElementVNode("td", _hoisted_103, [
-                        _createElementVNode("div", _hoisted_104, [
+                      _createElementVNode("td", _hoisted_105, [
+                        _createElementVNode("div", _hoisted_106, [
                           _createElementVNode("button", {
                             type: "button",
                             class: "rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800",
                             onClick: ($event) => applyEdit(row)
-                          }, " Edit ", 8, _hoisted_105),
+                          }, " Edit ", 8, _hoisted_107),
                           _createElementVNode("button", {
                             type: "button",
                             class: "rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 hover:bg-rose-50 disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/30",
                             disabled: row.status === "VOID",
                             onClick: ($event) => onVoid(row)
-                          }, " Void ", 8, _hoisted_106)
+                          }, " Void ", 8, _hoisted_108)
                         ])
                       ])
                     ]);
@@ -1322,26 +1385,26 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_107, [
-              _createElementVNode("p", _hoisted_108, "total: " + _toDisplayString(total.value), 1),
-              _createElementVNode("div", _hoisted_109, [
+            _createElementVNode("div", _hoisted_109, [
+              _createElementVNode("p", _hoisted_110, "total: " + _toDisplayString(total.value), 1),
+              _createElementVNode("div", _hoisted_111, [
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded border border-slate-300 px-2 py-1 disabled:opacity-50 dark:border-slate-700",
                   disabled: page.value <= 1,
-                  onClick: _cache[44] || (_cache[44] = ($event) => page.value -= 1)
-                }, "Prev", 8, _hoisted_110),
+                  onClick: _cache[45] || (_cache[45] = ($event) => page.value -= 1)
+                }, "Prev", 8, _hoisted_112),
                 _createElementVNode("span", null, "page " + _toDisplayString(page.value) + " / " + _toDisplayString(totalPages.value), 1),
                 _createElementVNode("button", {
                   type: "button",
                   class: "rounded border border-slate-300 px-2 py-1 disabled:opacity-50 dark:border-slate-700",
                   disabled: page.value >= totalPages.value,
-                  onClick: _cache[45] || (_cache[45] = ($event) => page.value += 1)
-                }, "Next", 8, _hoisted_111),
+                  onClick: _cache[46] || (_cache[46] = ($event) => page.value += 1)
+                }, "Next", 8, _hoisted_113),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[46] || (_cache[46] = ($event) => pageSize.value = $event),
+                  "onUpdate:modelValue": _cache[47] || (_cache[47] = ($event) => pageSize.value = $event),
                   class: "rounded border border-slate-300 px-1 py-1 dark:border-slate-700 dark:bg-slate-950"
-                }, [..._cache[95] || (_cache[95] = [
+                }, [..._cache[98] || (_cache[98] = [
                   _createElementVNode("option", { value: 20 }, "20", -1),
                   _createElementVNode("option", { value: 50 }, "50", -1),
                   _createElementVNode("option", { value: 100 }, "100", -1)

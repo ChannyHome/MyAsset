@@ -660,6 +660,7 @@ function openEditAssetModal(item: AssetTableRowOut): void {
 
 function selectAssetForQuote(item: AssetTableRowOut): void {
   manualQuoteForm.asset_id = String(item.id);
+  manualQuoteForm.currency = normalizeUpper(item.currency || "KRW");
 }
 
 function closeAssetModal(): void {
@@ -839,11 +840,33 @@ function askApplyManualQuote(): void {
     return;
   }
 
+  if (!manualQuoteForm.asset_id.trim()) {
+    pushLog("Manual Quote", "ERROR", "Asset is required");
+    return;
+  }
+
+  const normalizedPrice = manualQuoteForm.price.trim().replace(/,/g, "");
+  const parsedPrice = Number(normalizedPrice);
+  if (!normalizedPrice || !Number.isFinite(parsedPrice)) {
+    pushLog("Manual Quote", "ERROR", "Price must be a valid number");
+    return;
+  }
+  if (parsedPrice < 0) {
+    pushLog("Manual Quote", "ERROR", "Price must be 0 or greater");
+    return;
+  }
+
+  const normalizedCurrency = normalizeUpper(manualQuoteForm.currency);
+  if (!normalizedCurrency || normalizedCurrency.length !== 3) {
+    pushLog("Manual Quote", "ERROR", "Currency must be 3 letters");
+    return;
+  }
+
   runAction("Manual Quote", "Manual Quote", "수동 시세를 반영할까요?", async () => {
     const payload: ManualQuoteUpsertIn = {
       asset_id: toPositiveInt(manualQuoteForm.asset_id),
-      price: manualQuoteForm.price.trim(),
-      currency: normalizeUpper(manualQuoteForm.currency),
+      price: normalizedPrice,
+      currency: normalizedCurrency,
       as_of: manualQuoteForm.as_of.trim() || null,
       source: manualQuoteForm.source.trim() || null,
     };
@@ -1757,6 +1780,15 @@ watch(
       (row) => normalizeUpper(row.currency) === normalizeUpper(portfolioCashMapForm.currency),
     );
     portfolioCashMapForm.asset_id = byCurrency ? String(byCurrency.asset_id) : "";
+  },
+);
+watch(
+  () => manualQuoteForm.asset_id,
+  (next) => {
+    if (!next) return;
+    const selected = assets.value.find((item) => String(item.id) === next);
+    if (!selected) return;
+    manualQuoteForm.currency = normalizeUpper(selected.currency || "KRW");
   },
 );
 watch(

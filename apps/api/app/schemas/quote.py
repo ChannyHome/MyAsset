@@ -60,7 +60,7 @@ class QuoteUpdateJobStatusOut(BaseModel):
 
 class ManualQuoteUpsertIn(BaseModel):
     asset_id: int
-    price: Decimal = Field(gt=0)
+    price: Decimal = Field(ge=0)
     currency: str = Field(default="KRW", min_length=3, max_length=3)
     as_of: datetime | None = None
     source: str | None = Field(default=None, min_length=2, max_length=50)

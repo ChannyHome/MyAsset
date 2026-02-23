@@ -86,6 +86,7 @@ const visibleMenuItems = computed(() =>
   }),
 );
 const seoulNowText = ref("");
+const seoulNowClockText = ref("");
 let seoulClockTimer: ReturnType<typeof setInterval> | null = null;
 
 function updateSeoulNow(): void {
@@ -94,6 +95,13 @@ function updateSeoulNow(): void {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(new Date());
+  seoulNowClockText.value = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -158,56 +166,26 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <header
-      class="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur md:hidden dark:border-slate-800 dark:bg-slate-900/95"
+      class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95"
     >
-      <button
-        type="button"
-        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-        aria-label="Open sidebar"
-        @click="openSidebar()"
-      >
-        <Menu class="h-5 w-5" />
-      </button>
-      <p class="text-base font-semibold">{{ pageTitle }}</p>
-      <div class="inline-flex items-center gap-2">
-        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-          Seoul {{ seoulNowText }}
-        </span>
-        <GlobalDisplayCurrencyToggle />
+      <div class="relative flex items-center">
         <button
           type="button"
-          class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-          @click="uiStore.toggleTheme()"
+          class="relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
+          aria-label="Open sidebar"
+          @click="openSidebar()"
         >
-          <span class="inline-flex items-center gap-1">
-            <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
-            <SunMedium v-else class="h-3.5 w-3.5" />
-            {{ uiStore.theme === "light" ? "Dark" : "Light" }}
-          </span>
+          <Menu class="h-5 w-5" />
         </button>
-      </div>
-    </header>
-
-    <header
-      class="sticky top-0 z-20 hidden items-center justify-between border-b border-slate-200 bg-white/95 px-6 py-3 backdrop-blur md:flex dark:border-slate-800 dark:bg-slate-900/95"
-    >
-      <p class="text-base font-semibold">{{ pageTitle }}</p>
-      <div class="inline-flex items-center gap-2">
-        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
-          Seoul {{ seoulNowText }}
-        </span>
-        <GlobalDisplayCurrencyToggle />
-        <button
-          type="button"
-          class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-          @click="uiStore.toggleTheme()"
-        >
-          <span class="inline-flex items-center gap-1">
-            <MoonStar v-if="uiStore.theme === 'light'" class="h-3.5 w-3.5" />
-            <SunMedium v-else class="h-3.5 w-3.5" />
-            {{ uiStore.theme === "light" ? "Dark" : "Light" }}
+        <div class="pointer-events-none absolute inset-x-12 text-center">
+          <p class="truncate text-lg font-bold leading-tight">{{ pageTitle }}</p>
+        </div>
+        <div class="relative z-10 ml-auto inline-flex shrink-0 items-center gap-2">
+          <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            Seoul {{ seoulNowClockText }}
           </span>
-        </button>
+          <GlobalDisplayCurrencyToggle />
+        </div>
       </div>
     </header>
 

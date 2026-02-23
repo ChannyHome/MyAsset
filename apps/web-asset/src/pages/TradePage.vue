@@ -9,6 +9,7 @@ import {
   createTrade,
   getTrades,
   rebuildTrades,
+  type TradeOut,
   updateTrade,
   voidTrade,
   type TradeCreateIn,
@@ -73,6 +74,7 @@ const form = reactive({
   quantity: "",
   unit_price: "",
   amount: "",
+  fee_amount: "",
   currency: "KRW",
   memo: "",
   source_type: "MANUAL" as "MANUAL" | "AUTO",
@@ -207,6 +209,7 @@ function resetForm() {
   form.quantity = "";
   form.unit_price = "";
   form.amount = "";
+  form.fee_amount = "";
   form.currency = "KRW";
   form.memo = "";
   form.source_type = "MANUAL";
@@ -242,6 +245,7 @@ function applyEdit(row: TradeRowOut) {
   form.quantity = row.quantity == null ? "" : String(row.quantity);
   form.unit_price = row.unit_price == null ? "" : String(row.unit_price);
   form.amount = String(row.amount);
+  form.fee_amount = "";
   form.currency = row.currency;
   form.memo = row.memo ?? "";
   form.source_type = row.source_type;
@@ -410,7 +414,17 @@ async function submit() {
     errorMessage.value = "Liability is required for LOAN_BORROW/LOAN_REPAY/LOAN_INTEREST.";
     return;
   }
-  if (!window.confirm(editingId.value ? "Update this trade?" : "Create this trade?")) return;
+  const feeAmount = isBuySell.value && !editingId.value ? toOptionalNumber(form.fee_amount) ?? 0 : 0;
+  if (feeAmount < 0) {
+    errorMessage.value = "Fee must be >= 0.";
+    return;
+  }
+  const confirmMessage = editingId.value
+    ? "Update this trade?"
+    : feeAmount > 0
+      ? "Create BUY/SELL trade + FEE trade?"
+      : "Create this trade?";
+  if (!window.confirm(confirmMessage)) return;
 
   saving.value = true;
   errorMessage.value = "";
@@ -421,8 +435,49 @@ async function submit() {
       await updateTrade(editingId.value, payload);
       successMessage.value = `Trade #${editingId.value} updated.`;
     } else {
-      const created = await createTrade(payload);
-      successMessage.value = `Trade #${created.id} created.`;
+      let createdMain: TradeOut | null = null;
+      let createdFee: TradeOut | null = null;
+      try {
+        createdMain = await createTrade(payload);
+        if (isBuySell.value && feeAmount > 0) {
+          const feePayload: TradeCreateIn = {
+            portfolio_id: Number(form.portfolio_id),
+            txn_type: "FEE",
+            asset_id: null,
+            liability_id: null,
+            amount: feeAmount,
+            currency: form.currency.trim().toUpperCase(),
+            memo: form.memo.trim()
+              ? `[AUTO_FEE for #${createdMain.id}] ${form.memo.trim()}`
+              : `[AUTO_FEE for #${createdMain.id}]`,
+            source_type: form.source_type,
+            auto_apply_cash_holding: form.auto_apply_cash_holding,
+            auto_apply_portfolio_cashflow: false,
+          };
+          createdFee = await createTrade(feePayload);
+        }
+      } catch (error) {
+        if (createdFee) {
+          try {
+            await voidTrade(createdFee.id);
+          } catch {
+            // keep original error handling below
+          }
+        }
+        if (createdMain) {
+          try {
+            await voidTrade(createdMain.id);
+          } catch {
+            // keep original error handling below
+          }
+        }
+        throw error;
+      }
+      if (createdMain && createdFee) {
+        successMessage.value = `Trades created. main=#${createdMain.id}, fee=#${createdFee.id}`;
+      } else if (createdMain) {
+        successMessage.value = `Trade #${createdMain.id} created.`;
+      }
     }
     await loadTrades();
     resetForm();
@@ -548,6 +603,9 @@ watch(
     } else {
       form.liability_id = "";
       form.auto_apply_portfolio_cashflow = false;
+    }
+    if (next !== "BUY" && next !== "SELL") {
+      form.fee_amount = "";
     }
   },
 );
@@ -770,6 +828,17 @@ onBeforeUnmount(() => {
           </label>
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Amount
             <input v-model="form.amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Fee (optional)
+            <input
+              v-model="form.fee_amount"
+              :disabled="!isBuySell || !!editingId"
+              placeholder="0"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950"
+            />
+            <p class="mt-1 text-[11px] normal-case text-slate-500 dark:text-slate-400">
+              BUY/SELL create 시 fee > 0 이면 FEE 거래가 추가로 생성됩니다.
+            </p>
           </label>
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Source
             <select v-model="form.source_type" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
