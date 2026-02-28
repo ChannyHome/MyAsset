@@ -20,7 +20,9 @@ import {
   createHolding,
   deleteHolding,
   getHoldingsTable,
+  rebaselineHolding,
   updateHolding,
+  type HoldingRebaselineIn,
   type HoldingTableRowOut,
   type HoldingTableSortBy,
 } from "../api/holdings";
@@ -28,7 +30,9 @@ import {
   createLiability,
   deleteLiability,
   getLiabilitiesTable,
+  rebaselineLiability,
   updateLiability,
+  type LiabilityRebaselineIn,
   type LiabilityTableRowOut,
   type LiabilityTableSortBy,
 } from "../api/liabilities";
@@ -38,8 +42,11 @@ import {
   getPortfolioCashAccounts,
   getPortfolios,
   getPortfoliosTable,
+  rebaselinePortfolio,
   setPortfolioCashAccount,
   updatePortfolio,
+  type EditMode,
+  type PortfolioRebaselineIn,
   type PortfolioCashAccountOut,
   type PortfolioOut,
   type PortfolioTableRowOut,
@@ -71,6 +78,12 @@ import {
   updateReleaseNote,
   type ReleaseNoteOut,
 } from "../api/releaseNotes";
+import {
+  getEntityHistory,
+  revertEntityHistory,
+  type EntityHistoryItemOut,
+  type EntityType,
+} from "../api/entityHistory";
 import { formatDateTimeSeoul, toDateTimeLocalSeoul } from "../utils/datetime";
 
 type LogStatus = "SUCCESS" | "ERROR" | "INFO";
@@ -176,6 +189,7 @@ const assetModal = reactive({ open: false, mode: "CREATE" as AssetModalMode });
 const portfolioEditModal = reactive({ open: false });
 const holdingEditModal = reactive({ open: false });
 const liabilityEditModal = reactive({ open: false });
+const entityHistoryModal = reactive({ open: false });
 const quoteActionsCollapsed = ref(initialCollapseState.quoteActionsCollapsed ?? true);
 const secretsVaultCollapsed = ref(initialCollapseState.secretsVaultCollapsed ?? true);
 const releaseNotesSectionCollapsed = ref(initialCollapseState.releaseNotesSectionCollapsed ?? true);
@@ -260,6 +274,9 @@ const portfolioEditForm = reactive({
   is_included: true,
   is_hidden: false,
   memo: "",
+  edit_mode: "SAFE" as EditMode,
+  effective_at: "",
+  reason: "",
 });
 const holdingEditForm = reactive({
   id: "",
@@ -273,6 +290,11 @@ const holdingEditForm = reactive({
   source_type: "MANUAL",
   is_hidden: false,
   memo: "",
+  edit_mode: "SAFE" as EditMode,
+  effective_at: "",
+  reason: "",
+  original_portfolio_id: "",
+  original_asset_id: "",
 });
 const liabilityEditForm = reactive({
   id: "",
@@ -287,6 +309,19 @@ const liabilityEditForm = reactive({
   is_included: true,
   is_hidden: false,
   memo: "",
+  edit_mode: "SAFE" as EditMode,
+  effective_at: "",
+  reason: "",
+  original_portfolio_id: "",
+  original_currency: "KRW",
+});
+const entityHistoryState = reactive({
+  entity_type: "HOLDING" as EntityType,
+  entity_id: 0,
+  title: "",
+  loading: false,
+  reverting_id: 0,
+  items: [] as EntityHistoryItemOut[],
 });
 const secretForm = reactive({
   id: "",
@@ -308,6 +343,8 @@ const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.r
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageAppSecrets = computed(() => me.value?.role === "ADMIN");
 const canManageReleaseNotes = computed(() => me.value?.role === "ADMIN");
+const canHardEdit = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
+const canManageEntityHistory = computed(() => canHardEdit.value);
 const isBusy = computed(() => loading.data || loading.action || loading.confirm);
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
@@ -398,6 +435,10 @@ function formatDateTime(value: string | null | undefined): string {
 
 function formatDateTimeLocalInput(value: string | null | undefined): string {
   return toDateTimeLocalSeoul(value);
+}
+
+function nowDateTimeLocalInput(): string {
+  return toDateTimeLocalSeoul(new Date().toISOString());
 }
 
 function normalizeUpper(value: string): string {
@@ -1040,6 +1081,14 @@ function parseOptionalInt(value: string): number | null {
   return toPositiveInt(trimmed);
 }
 
+function parseEffectiveAt(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error("effective_at is required");
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) throw new Error("effective_at is invalid");
+  return parsed.toISOString();
+}
+
 async function loadHoldingLookupOptions(force = false): Promise<void> {
   if (lookupLoading.value) return;
   if (!force && holdingAssetOptions.value.length > 0 && holdingPortfolioOptions.value.length > 0) return;
@@ -1132,6 +1181,9 @@ function fillPortfolioEditForm(item: PortfolioTableRowOut): void {
   portfolioEditForm.is_included = item.is_included;
   portfolioEditForm.is_hidden = item.is_hidden;
   portfolioEditForm.memo = item.memo || "";
+  portfolioEditForm.edit_mode = "SAFE";
+  portfolioEditForm.effective_at = nowDateTimeLocalInput();
+  portfolioEditForm.reason = "";
 }
 
 function openEditPortfolioModal(item: PortfolioTableRowOut): void {
@@ -1161,32 +1213,86 @@ function submitPortfolioEdit(): void {
     if (baseCurrency.length !== 3) throw new Error("Base currency must be 3 letters");
     const deposit = parseRequiredDecimal(portfolioEditForm.cumulative_deposit_amount, "Cumulative deposit");
     const withdrawal = parseRequiredDecimal(portfolioEditForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
+    const editMode = portfolioEditForm.edit_mode;
+    if (editMode === "HARD" && !canHardEdit.value) {
+      throw new Error("HARD edit requires MAINTAINER+");
+    }
 
     closePortfolioEditModal();
-    runAction("Portfolio Update", "Apply Portfolio Update", `Portfolio #${portfolioId} 정보를 수정할까요?`, async () => {
-      await updatePortfolio(portfolioId, {
-        name,
-        type: portfolioEditForm.type.trim() || "ETC",
-        base_currency: baseCurrency,
-        exchange_code: normalizeUpper(portfolioEditForm.exchange_code) || null,
-        category: (portfolioEditForm.category.trim() || null) as
-          | "KR_STOCK"
-          | "US_STOCK"
-          | "CRYPTO"
-          | "REAL_ESTATE"
-          | "BOND"
-          | "CASH"
-          | "DEPOSIT_SAVING"
-          | "ETC"
-          | null,
-        cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
-        cumulative_deposit_amount: deposit,
-        cumulative_withdrawal_amount: withdrawal,
-        is_included: portfolioEditForm.is_included,
-        is_hidden: portfolioEditForm.is_hidden,
-        memo: portfolioEditForm.memo.trim() || null,
-      });
-    });
+    runAction(
+      "Portfolio Update",
+      "Apply Portfolio Update",
+      editMode === "SAFE"
+        ? `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 DEPOSIT/WITHDRAW VOID)`
+        : `Portfolio #${portfolioId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+      async () => {
+	        if (editMode === "SAFE") {
+	          const rebaselinePayload: PortfolioRebaselineIn = {
+	            effective_at: parseEffectiveAt(portfolioEditForm.effective_at),
+	            cumulative_deposit_amount: deposit,
+	            cumulative_withdrawal_amount: withdrawal,
+	            reason: portfolioEditForm.reason.trim() || null,
+	          };
+	          const rebased = await rebaselinePortfolio(portfolioId, rebaselinePayload);
+	          pushLog(
+	            "Portfolio Rebaseline",
+	            "INFO",
+	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+	          );
+	          await updatePortfolio(
+	            portfolioId,
+	            {
+              name,
+              type: portfolioEditForm.type.trim() || "ETC",
+              base_currency: baseCurrency,
+              exchange_code: normalizeUpper(portfolioEditForm.exchange_code) || null,
+              category: (portfolioEditForm.category.trim() || null) as
+                | "KR_STOCK"
+                | "US_STOCK"
+                | "CRYPTO"
+                | "REAL_ESTATE"
+                | "BOND"
+                | "CASH"
+                | "DEPOSIT_SAVING"
+                | "ETC"
+                | null,
+              cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
+              is_included: portfolioEditForm.is_included,
+              is_hidden: portfolioEditForm.is_hidden,
+              memo: portfolioEditForm.memo.trim() || null,
+            },
+            { edit_mode: "SAFE" },
+          );
+          return;
+        }
+        await updatePortfolio(
+          portfolioId,
+          {
+            name,
+            type: portfolioEditForm.type.trim() || "ETC",
+            base_currency: baseCurrency,
+            exchange_code: normalizeUpper(portfolioEditForm.exchange_code) || null,
+            category: (portfolioEditForm.category.trim() || null) as
+              | "KR_STOCK"
+              | "US_STOCK"
+              | "CRYPTO"
+              | "REAL_ESTATE"
+              | "BOND"
+              | "CASH"
+              | "DEPOSIT_SAVING"
+              | "ETC"
+              | null,
+            cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
+            cumulative_deposit_amount: deposit,
+            cumulative_withdrawal_amount: withdrawal,
+            is_included: portfolioEditForm.is_included,
+            is_hidden: portfolioEditForm.is_hidden,
+            memo: portfolioEditForm.memo.trim() || null,
+          },
+          { edit_mode: "HARD" },
+        );
+      },
+    );
   } catch (error) {
     pushLog("Portfolio Edit", "ERROR", getErrorMessage(error));
   }
@@ -1310,6 +1416,11 @@ function fillHoldingEditForm(item: HoldingTableRowOut): void {
   holdingEditForm.source_type = item.source_type || "MANUAL";
   holdingEditForm.is_hidden = item.is_hidden;
   holdingEditForm.memo = item.memo || "";
+  holdingEditForm.edit_mode = "SAFE";
+  holdingEditForm.effective_at = nowDateTimeLocalInput();
+  holdingEditForm.reason = "";
+  holdingEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
+  holdingEditForm.original_asset_id = String(item.asset_id);
 }
 
 function openEditHoldingModal(item: HoldingTableRowOut): void {
@@ -1329,22 +1440,71 @@ function submitHoldingEdit(): void {
     const assetId = toPositiveInt(holdingEditForm.asset_id);
     const quantity = parseRequiredDecimal(holdingEditForm.quantity, "Quantity");
     const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg cost");
+    const editMode = holdingEditForm.edit_mode;
+    if (editMode === "HARD" && !canHardEdit.value) {
+      throw new Error("HARD edit requires MAINTAINER+");
+    }
+    const nextPortfolioId = holdingEditForm.portfolio_id.trim();
+    if (editMode === "SAFE" && nextPortfolioId !== holdingEditForm.original_portfolio_id) {
+      throw new Error("SAFE(Rebaseline) mode에서는 portfolio 변경이 불가합니다. 구조 변경은 HARD 모드를 사용하세요.");
+    }
+    if (editMode === "SAFE" && String(assetId) !== holdingEditForm.original_asset_id) {
+      throw new Error("SAFE(Rebaseline) mode에서는 asset 변경이 불가합니다. 구조 변경은 HARD 모드를 사용하세요.");
+    }
 
     closeHoldingEditModal();
-    runAction("Holding Update", "Apply Holding Update", `Holding #${holdingId} 정보를 수정할까요?`, async () => {
-      await updateHolding(holdingId, {
-        portfolio_id: parseOptionalInt(holdingEditForm.portfolio_id),
-        asset_id: assetId,
-        quantity,
-        avg_price: avgPrice,
-        avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
-        invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
-        invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
-        source_type: holdingEditForm.source_type.trim() || "MANUAL",
-        is_hidden: holdingEditForm.is_hidden,
-        memo: holdingEditForm.memo.trim() || null,
-      });
-    });
+    runAction(
+      "Holding Update",
+      "Apply Holding Update",
+      editMode === "SAFE"
+        ? `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 BUY/SELL VOID)`
+        : `Holding #${holdingId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+      async () => {
+	        if (editMode === "SAFE") {
+	          const rebaselinePayload: HoldingRebaselineIn = {
+	            effective_at: parseEffectiveAt(holdingEditForm.effective_at),
+	            quantity,
+	            avg_price: avgPrice,
+	            avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
+	            invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
+	            invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
+	            reason: holdingEditForm.reason.trim() || null,
+	          };
+	          const rebased = await rebaselineHolding(holdingId, rebaselinePayload);
+	          pushLog(
+	            "Holding Rebaseline",
+	            "INFO",
+	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+	          );
+	          await updateHolding(
+	            holdingId,
+	            {
+              is_hidden: holdingEditForm.is_hidden,
+              memo: holdingEditForm.memo.trim() || null,
+            },
+            { edit_mode: "SAFE" },
+          );
+          return;
+        }
+
+        await updateHolding(
+          holdingId,
+          {
+            portfolio_id: parseOptionalInt(holdingEditForm.portfolio_id),
+            asset_id: assetId,
+            quantity,
+            avg_price: avgPrice,
+            avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
+            invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
+            invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
+            source_type: holdingEditForm.source_type.trim() || "MANUAL",
+            is_hidden: holdingEditForm.is_hidden,
+            memo: holdingEditForm.memo.trim() || null,
+          },
+          { edit_mode: "HARD" },
+        );
+      },
+    );
   } catch (error) {
     pushLog("Holding Edit", "ERROR", getErrorMessage(error));
   }
@@ -1423,6 +1583,11 @@ function fillLiabilityEditForm(item: LiabilityTableRowOut): void {
   liabilityEditForm.is_included = item.is_included;
   liabilityEditForm.is_hidden = item.is_hidden;
   liabilityEditForm.memo = item.memo || "";
+  liabilityEditForm.edit_mode = "SAFE";
+  liabilityEditForm.effective_at = nowDateTimeLocalInput();
+  liabilityEditForm.reason = "";
+  liabilityEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
+  liabilityEditForm.original_currency = item.currency || "KRW";
 }
 
 function openEditLiabilityModal(item: LiabilityTableRowOut): void {
@@ -1444,30 +1609,87 @@ function submitLiabilityEdit(): void {
     const balance = parseRequiredDecimal(liabilityEditForm.outstanding_balance, "Outstanding balance");
     const currency = normalizeUpper(liabilityEditForm.currency);
     if (currency.length !== 3) throw new Error("Currency must be 3 letters");
+    const editMode = liabilityEditForm.edit_mode;
+    if (editMode === "HARD" && !canHardEdit.value) {
+      throw new Error("HARD edit requires MAINTAINER+");
+    }
+    if (editMode === "SAFE" && liabilityEditForm.portfolio_id.trim() !== liabilityEditForm.original_portfolio_id) {
+      throw new Error("SAFE(Rebaseline) mode에서는 portfolio 변경이 불가합니다. 구조 변경은 HARD 모드를 사용하세요.");
+    }
+    if (editMode === "SAFE" && currency !== normalizeUpper(liabilityEditForm.original_currency)) {
+      throw new Error("SAFE(Rebaseline) mode에서는 currency 변경이 불가합니다. 구조 변경은 HARD 모드를 사용하세요.");
+    }
 
     closeLiabilityEditModal();
-    runAction("Liability Update", "Apply Liability Update", `Liability #${liabilityId} 정보를 수정할까요?`, async () => {
-      const updated = await updateLiability(liabilityId, {
-        portfolio_id: parseOptionalInt(liabilityEditForm.portfolio_id),
-        name,
-        liability_type: liabilityEditForm.liability_type.trim() || "ETC",
-        currency,
-        outstanding_balance: balance,
-        interest_rate: parseOptionalDecimal(liabilityEditForm.interest_rate),
-        monthly_payment: parseOptionalDecimal(liabilityEditForm.monthly_payment),
-        source_type: liabilityEditForm.source_type.trim() || "MANUAL",
-        is_included: liabilityEditForm.is_included,
-        is_hidden: liabilityEditForm.is_hidden,
-        memo: liabilityEditForm.memo.trim() || null,
-      });
-      if (updated.auto_cash_holding_created) {
-        pushLog(
-          "Auto Cash Holding",
-          "INFO",
-          `Auto cash holding created (${currency}) for portfolio #${updated.portfolio_id ?? "-"}.`,
+    runAction(
+      "Liability Update",
+      "Apply Liability Update",
+      editMode === "SAFE"
+        ? `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 LOAN_BORROW/LOAN_REPAY VOID)`
+        : `Liability #${liabilityId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+      async () => {
+	        if (editMode === "SAFE") {
+	          const rebaselinePayload: LiabilityRebaselineIn = {
+	            effective_at: parseEffectiveAt(liabilityEditForm.effective_at),
+	            outstanding_balance: balance,
+	            reason: liabilityEditForm.reason.trim() || null,
+	          };
+	          const rebased = await rebaselineLiability(liabilityId, rebaselinePayload);
+	          pushLog(
+	            "Liability Rebaseline",
+	            "INFO",
+	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+	          );
+	          const updatedSafe = await updateLiability(
+	            liabilityId,
+	            {
+              name,
+              liability_type: liabilityEditForm.liability_type.trim() || "ETC",
+              interest_rate: parseOptionalDecimal(liabilityEditForm.interest_rate),
+              monthly_payment: parseOptionalDecimal(liabilityEditForm.monthly_payment),
+              source_type: liabilityEditForm.source_type.trim() || "MANUAL",
+              is_included: liabilityEditForm.is_included,
+              is_hidden: liabilityEditForm.is_hidden,
+              memo: liabilityEditForm.memo.trim() || null,
+            },
+            { edit_mode: "SAFE" },
+          );
+          if (updatedSafe.auto_cash_holding_created) {
+            pushLog(
+              "Auto Cash Holding",
+              "INFO",
+              `Auto cash holding created (${currency}) for portfolio #${updatedSafe.portfolio_id ?? "-"}.`,
+            );
+          }
+          return;
+        }
+
+        const updatedHard = await updateLiability(
+          liabilityId,
+          {
+            portfolio_id: parseOptionalInt(liabilityEditForm.portfolio_id),
+            name,
+            liability_type: liabilityEditForm.liability_type.trim() || "ETC",
+            currency,
+            outstanding_balance: balance,
+            interest_rate: parseOptionalDecimal(liabilityEditForm.interest_rate),
+            monthly_payment: parseOptionalDecimal(liabilityEditForm.monthly_payment),
+            source_type: liabilityEditForm.source_type.trim() || "MANUAL",
+            is_included: liabilityEditForm.is_included,
+            is_hidden: liabilityEditForm.is_hidden,
+            memo: liabilityEditForm.memo.trim() || null,
+          },
+          { edit_mode: "HARD" },
         );
-      }
-    });
+        if (updatedHard.auto_cash_holding_created) {
+          pushLog(
+            "Auto Cash Holding",
+            "INFO",
+            `Auto cash holding created (${currency}) for portfolio #${updatedHard.portfolio_id ?? "-"}.`,
+          );
+        }
+      },
+    );
   } catch (error) {
     pushLog("Liability Edit", "ERROR", getErrorMessage(error));
   }
@@ -1497,6 +1719,62 @@ function toggleLiabilityHidden(item: LiabilityTableRowOut): void {
     `Liability #${item.id} 숨김 값을 ${item.is_hidden ? "OFF" : "ON"}로 변경할까요?`,
     async () => {
       await updateLiability(item.id, { is_hidden: !item.is_hidden });
+    },
+  );
+}
+
+async function loadEntityHistory(entityType: EntityType, entityId: number, title: string): Promise<void> {
+  entityHistoryState.entity_type = entityType;
+  entityHistoryState.entity_id = entityId;
+  entityHistoryState.title = title;
+  entityHistoryState.loading = true;
+  try {
+    const page = await getEntityHistory({
+      entity_type: entityType,
+      entity_id: entityId,
+      page: 1,
+      page_size: 30,
+      sort_by: "created_at",
+      sort_order: "desc",
+    });
+    entityHistoryState.items = page.items;
+  } catch (error) {
+    pushLog("Entity History", "ERROR", getErrorMessage(error));
+    entityHistoryState.items = [];
+  } finally {
+    entityHistoryState.loading = false;
+  }
+}
+
+function openEntityHistory(entityType: EntityType, entityId: number, title: string): void {
+  entityHistoryModal.open = true;
+  void loadEntityHistory(entityType, entityId, title);
+}
+
+function closeEntityHistory(): void {
+  if (loading.action || loading.confirm) return;
+  entityHistoryModal.open = false;
+  entityHistoryState.reverting_id = 0;
+}
+
+function askRevertEntityHistory(item: EntityHistoryItemOut): void {
+  runAction(
+    "Entity Revert",
+    "Revert Change",
+    `History #${item.id} 변경을 원복할까요?`,
+    async () => {
+      entityHistoryState.reverting_id = item.id;
+      await revertEntityHistory(item.id);
+      await loadEntityHistory(
+        entityHistoryState.entity_type,
+        entityHistoryState.entity_id,
+        entityHistoryState.title,
+      );
+    },
+    {
+      onFinally: () => {
+        entityHistoryState.reverting_id = 0;
+      },
     },
   );
 }
@@ -2116,17 +2394,26 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_trade_supported ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex min-w-max flex-nowrap gap-1">
-                  <button
-                    type="button"
-                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
-                    :disabled="!canManageAssets || isBusy"
-                    @click.stop="openEditAssetModal(item)"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    v-if="item.quote_mode === 'AUTO'"
-                    type="button"
+	                  <button
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="!canManageAssets || isBusy"
+	                    @click.stop="openEditAssetModal(item)"
+	                  >
+	                    Edit
+	                  </button>
+	                  <button
+	                    v-if="canManageEntityHistory"
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click.stop="openEntityHistory('ASSET', item.id, `Asset #${item.id} ${item.name}`)"
+	                  >
+	                    History
+	                  </button>
+	                  <button
+	                    v-if="item.quote_mode === 'AUTO'"
+	                    type="button"
                     class="rounded border border-sky-300 px-2 py-0.5 text-sky-700 transition hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-900/20 dark:focus:ring-sky-700"
                     :disabled="!canManageQuotes || isBusy"
                     @click.stop="askQuoteTestAsset(item)"
@@ -2504,15 +2791,24 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex min-w-max flex-nowrap gap-1">
-                  <button
-                    type="button"
-                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
-                    :disabled="!canManageAssets || isBusy"
-                    @click="openEditPortfolioModal(item)"
-                  >
-                    Edit
-                  </button>
-                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
+	                  <button
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="!canManageAssets || isBusy"
+	                    @click="openEditPortfolioModal(item)"
+	                  >
+	                    Edit
+	                  </button>
+	                  <button
+	                    v-if="canManageEntityHistory"
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click="openEntityHistory('PORTFOLIO', item.id, `Portfolio #${item.id} ${item.name}`)"
+	                  >
+	                    History
+	                  </button>
+	                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="!canManageAssets || isBusy" @click="togglePortfolioHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="!canManageAssets || isBusy" @click="askDeletePortfolio(item)">Delete</button>
                 </div>
@@ -2716,15 +3012,24 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
-                    :disabled="isBusy"
-                    @click="openEditHoldingModal(item)"
-                  >
-                    Edit
-                  </button>
-                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleHoldingHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
+	                  <button
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click="openEditHoldingModal(item)"
+	                  >
+	                    Edit
+	                  </button>
+	                  <button
+	                    v-if="canManageEntityHistory"
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click="openEntityHistory('HOLDING', item.id, `Holding #${item.id} ${item.asset_name}`)"
+	                  >
+	                    History
+	                  </button>
+	                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleHoldingHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteHolding(item)">Delete</button>
                 </div>
               </td>
@@ -2875,15 +3180,24 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
-                    :disabled="isBusy"
-                    @click="openEditLiabilityModal(item)"
-                  >
-                    Edit
-                  </button>
-                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
+	                  <button
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click="openEditLiabilityModal(item)"
+	                  >
+	                    Edit
+	                  </button>
+	                  <button
+	                    v-if="canManageEntityHistory"
+	                    type="button"
+	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	                    :disabled="isBusy"
+	                    @click="openEntityHistory('LIABILITY', item.id, `Liability #${item.id} ${item.name}`)"
+	                  >
+	                    History
+	                  </button>
+	                  <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityIncluded(item)">{{ item.is_included ? "Exclude" : "Include" }}</button>
                   <button type="button" class="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="toggleLiabilityHidden(item)">{{ item.is_hidden ? "Unhide" : "Hide" }}</button>
                   <button type="button" class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20" :disabled="isBusy" @click="askDeleteLiability(item)">Delete</button>
                 </div>
@@ -3077,10 +3391,57 @@ onBeforeUnmount(() => {
 
   <div v-if="portfolioEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closePortfolioEditModal">
     <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Portfolio #{{ portfolioEditForm.id }}</h3>
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">핵심 운영값(집계 포함/숨김/입출금 누적/메모)을 수정할 수 있습니다.</p>
+	      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Portfolio #{{ portfolioEditForm.id }}</h3>
+	      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">핵심 운영값(집계 포함/숨김/입출금 누적/메모)을 수정할 수 있습니다.</p>
+	      <div class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+	        <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Edit Mode</p>
+	        <div class="mt-2 flex flex-wrap items-center gap-4 text-xs">
+	          <label class="inline-flex items-center gap-2">
+	            <input v-model="portfolioEditForm.edit_mode" type="radio" value="SAFE" />
+	            <span>Rebaseline (Recommended)</span>
+	          </label>
+	          <label class="inline-flex items-center gap-2">
+	            <input
+	              v-model="portfolioEditForm.edit_mode"
+	              type="radio"
+	              value="HARD"
+	              :disabled="!canHardEdit || loading.action || loading.confirm"
+	            />
+	            <span>Edit(Hard)</span>
+	          </label>
+	        </div>
+	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
+	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
+	        </p>
+	        <template v-if="portfolioEditForm.edit_mode === 'SAFE'">
+	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+	            <label class="text-xs">
+	              Effective At (KST)
+	              <input
+	                v-model="portfolioEditForm.effective_at"
+	                type="datetime-local"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	            <label class="text-xs">
+	              Reason (optional)
+	              <input
+	                v-model="portfolioEditForm.reason"
+	                placeholder="예: 월말 정산 기준점 보정"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	          </div>
+	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+	            SAFE는 기준일 이전 DEPOSIT/WITHDRAW 거래를 VOID하고 baseline을 생성합니다.
+	          </p>
+	        </template>
+	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
+	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
+	        </p>
+	      </div>
 
-      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+	      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
         <label class="text-xs"
           >Name
           <input
@@ -3181,17 +3542,64 @@ onBeforeUnmount(() => {
 
   <div v-if="holdingEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeHoldingEditModal">
     <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Holding #{{ holdingEditForm.id }}</h3>
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Asset/포트폴리오/수량/평단/투입금/숨김/메모를 수정합니다.</p>
+	      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Holding #{{ holdingEditForm.id }}</h3>
+	      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Asset/포트폴리오/수량/평단/투입금/숨김/메모를 수정합니다.</p>
+	      <div class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+	        <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Edit Mode</p>
+	        <div class="mt-2 flex flex-wrap items-center gap-4 text-xs">
+	          <label class="inline-flex items-center gap-2">
+	            <input v-model="holdingEditForm.edit_mode" type="radio" value="SAFE" />
+	            <span>Rebaseline (Recommended)</span>
+	          </label>
+	          <label class="inline-flex items-center gap-2">
+	            <input
+	              v-model="holdingEditForm.edit_mode"
+	              type="radio"
+	              value="HARD"
+	              :disabled="!canHardEdit || loading.action || loading.confirm"
+	            />
+	            <span>Edit(Hard)</span>
+	          </label>
+	        </div>
+	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
+	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
+	        </p>
+	        <template v-if="holdingEditForm.edit_mode === 'SAFE'">
+	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+	            <label class="text-xs">
+	              Effective At (KST)
+	              <input
+	                v-model="holdingEditForm.effective_at"
+	                type="datetime-local"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	            <label class="text-xs">
+	              Reason (optional)
+	              <input
+	                v-model="holdingEditForm.reason"
+	                placeholder="예: 과거 수동 입력 정합화"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	          </div>
+	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+	            SAFE는 기준일 이전 BUY/SELL 거래를 VOID하고 baseline BUY를 생성합니다. SAFE에서는 Asset/Portfolio 구조 변경이 불가합니다.
+	          </p>
+	        </template>
+	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
+	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
+	        </p>
+	      </div>
 
-      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+	      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
         <label class="text-xs"
           >Asset
-          <select
-            v-model="holdingEditForm.asset_id"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            :disabled="lookupLoading || loading.action || loading.confirm"
-          >
+	          <select
+	            v-model="holdingEditForm.asset_id"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	            :disabled="lookupLoading || loading.action || loading.confirm || holdingEditForm.edit_mode === 'SAFE'"
+	          >
             <option value="">Select Asset</option>
             <option v-for="item in sortedHoldingAssetOptions" :key="item.id" :value="String(item.id)">
               {{ item.id }} - {{ item.name }} ({{ item.exchange_code }})
@@ -3200,11 +3608,11 @@ onBeforeUnmount(() => {
         </label>
         <label class="text-xs"
           >Portfolio (optional)
-          <select
-            v-model="holdingEditForm.portfolio_id"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            :disabled="lookupLoading || loading.action || loading.confirm"
-          >
+	          <select
+	            v-model="holdingEditForm.portfolio_id"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	            :disabled="lookupLoading || loading.action || loading.confirm || holdingEditForm.edit_mode === 'SAFE'"
+	          >
             <option value="">Unassigned</option>
             <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
               {{ item.id }} - {{ item.name }}
@@ -3252,10 +3660,11 @@ onBeforeUnmount(() => {
         </label>
         <label class="text-xs"
           >Source Type
-          <select
-            v-model="holdingEditForm.source_type"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-          >
+	          <select
+	            v-model="holdingEditForm.source_type"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	            :disabled="holdingEditForm.edit_mode === 'SAFE'"
+	          >
             <option v-for="opt in holdingSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
           </select>
         </label>
@@ -3293,19 +3702,66 @@ onBeforeUnmount(() => {
     </section>
   </div>
 
-  <div v-if="liabilityEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeLiabilityEditModal">
+	  <div v-if="liabilityEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeLiabilityEditModal">
     <section class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Liability #{{ liabilityEditForm.id }}</h3>
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">부채 메타/잔액/금리/월납입/포함/숨김 상태를 수정합니다.</p>
+	      <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Edit Liability #{{ liabilityEditForm.id }}</h3>
+	      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">부채 메타/잔액/금리/월납입/포함/숨김 상태를 수정합니다.</p>
+	      <div class="mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+	        <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Edit Mode</p>
+	        <div class="mt-2 flex flex-wrap items-center gap-4 text-xs">
+	          <label class="inline-flex items-center gap-2">
+	            <input v-model="liabilityEditForm.edit_mode" type="radio" value="SAFE" />
+	            <span>Rebaseline (Recommended)</span>
+	          </label>
+	          <label class="inline-flex items-center gap-2">
+	            <input
+	              v-model="liabilityEditForm.edit_mode"
+	              type="radio"
+	              value="HARD"
+	              :disabled="!canHardEdit || loading.action || loading.confirm"
+	            />
+	            <span>Edit(Hard)</span>
+	          </label>
+	        </div>
+	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
+	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
+	        </p>
+	        <template v-if="liabilityEditForm.edit_mode === 'SAFE'">
+	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+	            <label class="text-xs">
+	              Effective At (KST)
+	              <input
+	                v-model="liabilityEditForm.effective_at"
+	                type="datetime-local"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	            <label class="text-xs">
+	              Reason (optional)
+	              <input
+	                v-model="liabilityEditForm.reason"
+	                placeholder="예: 대출잔액 재기준점"
+	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	              />
+	            </label>
+	          </div>
+	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+	            SAFE는 기준일 이전 LOAN_BORROW/LOAN_REPAY를 VOID하고 baseline LOAN_BORROW를 생성합니다. LOAN_INTEREST는 원금 비영향으로 유지됩니다.
+	          </p>
+	        </template>
+	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
+	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
+	        </p>
+	      </div>
 
-      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+	      <div class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
         <label class="text-xs"
           >Portfolio (optional)
-          <select
-            v-model="liabilityEditForm.portfolio_id"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-            :disabled="lookupLoading || loading.action || loading.confirm"
-          >
+	          <select
+	            v-model="liabilityEditForm.portfolio_id"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	            :disabled="lookupLoading || loading.action || loading.confirm || liabilityEditForm.edit_mode === 'SAFE'"
+	          >
             <option value="">Unassigned</option>
             <option v-for="item in sortedHoldingPortfolioOptions" :key="item.id" :value="String(item.id)">
               {{ item.id }} - {{ item.name }}
@@ -3330,11 +3786,12 @@ onBeforeUnmount(() => {
         </label>
         <label class="text-xs"
           >Currency
-          <input
-            v-model="liabilityEditForm.currency"
-            maxlength="3"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
-          />
+	          <input
+	            v-model="liabilityEditForm.currency"
+	            maxlength="3"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
+	            :disabled="liabilityEditForm.edit_mode === 'SAFE'"
+	          />
         </label>
         <label class="text-xs"
           >Outstanding Balance
@@ -3397,10 +3854,83 @@ onBeforeUnmount(() => {
           Apply
         </button>
       </div>
-    </section>
-  </div>
+	    </section>
+	  </div>
 
-  <div v-if="confirmModal.open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeConfirm">
+	  <div v-if="entityHistoryModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeEntityHistory">
+	    <section class="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+	      <div class="flex flex-wrap items-start justify-between gap-2">
+	        <div>
+	          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Entity History</h3>
+	          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+	            {{ entityHistoryState.title }} · {{ entityHistoryState.entity_type }} #{{ entityHistoryState.entity_id }}
+	          </p>
+	        </div>
+	        <button
+	          type="button"
+	          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
+	          :disabled="loading.action || loading.confirm"
+	          @click="closeEntityHistory"
+	        >
+	          Close
+	        </button>
+	      </div>
+	      <div v-if="entityHistoryState.loading" class="mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+	        Loading history...
+	      </div>
+	      <div v-else-if="entityHistoryState.items.length === 0" class="mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+	        No history found.
+	      </div>
+	      <div v-else class="mt-4 max-h-[70vh] space-y-3 overflow-y-auto pr-1">
+	        <article
+	          v-for="item in entityHistoryState.items"
+	          :key="item.id"
+	          class="rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+	        >
+	          <div class="flex flex-wrap items-center justify-between gap-2">
+	            <div class="text-xs text-slate-600 dark:text-slate-300">
+	              <span class="font-semibold text-slate-900 dark:text-slate-100">#{{ item.id }} {{ item.action }}</span>
+	              <span class="mx-1">·</span>
+	              <span>{{ formatDateTime(item.created_at) }}</span>
+	              <span class="mx-1">·</span>
+	              <span>{{ item.actor_email || "-" }}</span>
+	            </div>
+	            <button
+	              type="button"
+	              class="rounded border border-rose-300 px-2 py-0.5 text-xs text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700"
+	              :disabled="isBusy || entityHistoryState.reverting_id === item.id"
+	              @click="askRevertEntityHistory(item)"
+	            >
+	              {{ entityHistoryState.reverting_id === item.id ? "Reverting..." : "Revert" }}
+	            </button>
+	          </div>
+	          <p v-if="item.reason" class="mt-1 text-xs text-slate-500 dark:text-slate-400">reason: {{ item.reason }}</p>
+	          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+	            changed:
+	            <span class="font-medium text-slate-700 dark:text-slate-200">
+	              {{ item.changed_fields && item.changed_fields.length > 0 ? item.changed_fields.join(", ") : "-" }}
+	            </span>
+	          </p>
+	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+	            <div>
+	              <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">before</p>
+	              <pre class="mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200">{{
+	                JSON.stringify(item.before ?? {}, null, 2)
+	              }}</pre>
+	            </div>
+	            <div>
+	              <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">after</p>
+	              <pre class="mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200">{{
+	                JSON.stringify(item.after ?? {}, null, 2)
+	              }}</pre>
+	            </div>
+	          </div>
+	        </article>
+	      </div>
+	    </section>
+	  </div>
+
+	  <div v-if="confirmModal.open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeConfirm">
     <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
       <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ confirmModal.title }}</h3>
       <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ confirmModal.message }}</p>

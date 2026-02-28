@@ -16,6 +16,7 @@ from app.models.fx_rate import FxRate
 from app.models.user_setting import UserSetting
 from app.models.valuation_snapshot import ValuationSnapshot
 from app.models.transaction import Transaction
+from app.models.entity_change_log import EntityChangeLog
 
 __all__ = [
     "Base",
@@ -37,4 +38,5 @@ __all__ = [
     "UserSetting",
     "ValuationSnapshot",
     "Transaction",
+    "EntityChangeLog",
 ]

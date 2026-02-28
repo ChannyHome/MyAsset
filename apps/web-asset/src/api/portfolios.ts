@@ -1,6 +1,16 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
 
+export type EditMode = "SAFE" | "HARD";
+
+export type RebaselineOut = {
+  entity_type: string;
+  entity_id: number;
+  voided_transactions: number;
+  baseline_transaction_ids: number[];
+  affected_scope: string;
+};
+
 export type PortfolioCategory =
   | "KR_STOCK"
   | "US_STOCK"
@@ -110,6 +120,13 @@ export type PortfolioCreateIn = {
 
 export type PortfolioUpdateIn = Partial<PortfolioCreateIn>;
 
+export type PortfolioRebaselineIn = {
+  effective_at: string;
+  cumulative_deposit_amount: string | number;
+  cumulative_withdrawal_amount: string | number;
+  reason?: string | null;
+};
+
 export type PortfolioCashAccountOut = {
   id: number;
   owner_user_id: number;
@@ -141,8 +158,22 @@ export async function createPortfolio(payload: PortfolioCreateIn): Promise<Portf
   return data;
 }
 
-export async function updatePortfolio(portfolioId: number, payload: PortfolioUpdateIn): Promise<PortfolioOut> {
-  const { data } = await http.patch<PortfolioOut>(`/portfolios/${portfolioId}`, payload);
+export async function updatePortfolio(
+  portfolioId: number,
+  payload: PortfolioUpdateIn,
+  options?: { edit_mode?: EditMode },
+): Promise<PortfolioOut> {
+  const { data } = await http.patch<PortfolioOut>(`/portfolios/${portfolioId}`, payload, {
+    params: options?.edit_mode ? { edit_mode: options.edit_mode } : undefined,
+  });
+  return data;
+}
+
+export async function rebaselinePortfolio(
+  portfolioId: number,
+  payload: PortfolioRebaselineIn,
+): Promise<RebaselineOut> {
+  const { data } = await http.post<RebaselineOut>(`/portfolios/${portfolioId}/rebaseline`, payload);
   return data;
 }
 

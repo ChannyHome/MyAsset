@@ -14,6 +14,7 @@ from app.models.latest_quote import LatestQuote
 from app.models.household import HouseholdMember
 from app.models.holding import Holding
 from app.models.portfolio import Portfolio
+from app.models.transaction import Transaction
 from app.schemas.holding import (
     HoldingCreate,
     HoldingHiddenUpdate,
@@ -24,8 +25,16 @@ from app.schemas.holding import (
     HoldingUpdate,
 )
 from app.schemas.asset import SortOrder
+from app.schemas.entity_change import EditMode, HoldingRebaselineIn, RebaselineOut
 from app.schemas.performance import HoldingPerformanceOut
 from app.services.trade_ledger import TradeSyncError, ensure_holding_baseline_transaction
+from app.services.entity_change_log import (
+    EntityLogInput,
+    actor_from_user,
+    snapshot_holding,
+    write_entity_change_log,
+)
+from app.services.entity_rebaseline import RebaselineConflictError, rebaseline_holding
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.user_seed import SeedUser
 
@@ -76,6 +85,32 @@ def _ensure_unique_holding(
             status_code=status.HTTP_409_CONFLICT,
             detail="Holding already exists for the same portfolio and asset",
         )
+
+
+def _is_maintainer_plus(role: str | None) -> bool:
+    normalized = (role or "").upper()
+    return normalized in {"MAINTAINER", "ADMIN"}
+
+
+def _has_posted_holding_trades(
+    db: Session,
+    *,
+    owner_user_id: int,
+    portfolio_id: int | None,
+    asset_id: int,
+) -> bool:
+    if portfolio_id is None:
+        return False
+    existing_id = db.scalar(
+        select(Transaction.id).where(
+            Transaction.owner_user_id == owner_user_id,
+            Transaction.portfolio_id == portfolio_id,
+            Transaction.asset_id == asset_id,
+            Transaction.status == "POSTED",
+            Transaction.txn_type.in_(("BUY", "SELL")),
+        ).limit(1)
+    )
+    return existing_id is not None
 
 
 def _resolve_scope_user_ids(
@@ -484,6 +519,7 @@ def create_holding(
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> Holding:
+    actor_user_id, actor_email = actor_from_user(current_user)
     data = payload.model_dump()
     data["avg_price_currency"] = (data.get("avg_price_currency") or "KRW").upper()
     data["invested_amount_currency"] = (data.get("invested_amount_currency") or "KRW").upper()
@@ -513,6 +549,20 @@ def create_holding(
                 executed_at=datetime.now(UTC).replace(tzinfo=None),
                 strict_fx=settings.fx_strict_mode,
             )
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="HOLDING",
+                entity_id=holding.id,
+                owner_user_id=current_user.id,
+                action="CREATE",
+                before=None,
+                after=snapshot_holding(holding),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except MissingFxRateError as exc:
         db.rollback()
@@ -534,10 +584,13 @@ def create_holding(
 def update_holding(
     holding_id: int,
     payload: HoldingUpdate,
+    edit_mode: EditMode = Query(default=EditMode.SAFE),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> Holding:
     holding = _get_owned_holding(db, holding_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_holding(holding)
     updates = payload.model_dump(exclude_unset=True)
     if "avg_price_currency" in updates and updates["avg_price_currency"] is not None:
         updates["avg_price_currency"] = updates["avg_price_currency"].upper()
@@ -560,12 +613,39 @@ def update_holding(
         exclude_holding_id=holding.id,
     )
 
+    ledger_fields = {
+        "quantity",
+        "avg_price",
+        "avg_price_currency",
+        "invested_amount",
+        "invested_amount_currency",
+        "source_type",
+    }
+    touches_ledger_fields = any(field in updates for field in ledger_fields)
+    if edit_mode == EditMode.HARD and not _is_maintainer_plus(current_user.role):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="HARD edit requires MAINTAINER+")
+
+    if (
+        edit_mode == EditMode.SAFE
+        and touches_ledger_fields
+        and _has_posted_holding_trades(
+            db,
+            owner_user_id=current_user.id,
+            portfolio_id=next_portfolio_id,
+            asset_id=next_asset_id,
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ledger-managed holding has posted BUY/SELL trades. Use /holdings/{id}/rebaseline or edit_mode=HARD.",
+        )
+
     for key, value in updates.items():
         setattr(holding, key, value)
 
     try:
         db.flush()
-        if holding.portfolio_id is not None:
+        if edit_mode == EditMode.SAFE and holding.portfolio_id is not None:
             ensure_holding_baseline_transaction(
                 db=db,
                 owner_user_id=current_user.id,
@@ -574,6 +654,21 @@ def update_holding(
                 executed_at=datetime.now(UTC).replace(tzinfo=None),
                 strict_fx=settings.fx_strict_mode,
             )
+        after_snapshot = snapshot_holding(holding)
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="HOLDING",
+                entity_id=holding.id,
+                owner_user_id=current_user.id,
+                action="UPDATE_HARD" if edit_mode == EditMode.HARD else "UPDATE_SAFE",
+                before=before_snapshot,
+                after=after_snapshot,
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except MissingFxRateError as exc:
         db.rollback()
@@ -589,6 +684,63 @@ def update_holding(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid holding payload") from exc
     db.refresh(holding)
     return holding
+
+
+@router.post("/{holding_id}/rebaseline", response_model=RebaselineOut)
+def rebaseline_holding_endpoint(
+    holding_id: int,
+    payload: HoldingRebaselineIn,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> RebaselineOut:
+    holding = _get_owned_holding(db, holding_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_holding(holding)
+    try:
+        result = rebaseline_holding(
+            db=db,
+            owner_user_id=current_user.id,
+            holding=holding,
+            payload=payload,
+            strict_fx=settings.fx_strict_mode,
+        )
+        db.flush()
+        db.refresh(holding)
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="HOLDING",
+                entity_id=holding.id,
+                owner_user_id=current_user.id,
+                action="REBASELINE",
+                before=before_snapshot,
+                after=snapshot_holding(holding),
+                reason=payload.reason,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
+        db.commit()
+    except RebaselineConflictError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return RebaselineOut(
+        entity_type="HOLDING",
+        entity_id=holding.id,
+        voided_transactions=result.voided_transactions,
+        baseline_transaction_ids=result.baseline_transaction_ids,
+        affected_scope=result.affected_scope,
+    )
 
 
 @router.patch("/{holding_id}/hidden", response_model=HoldingOut)
@@ -612,7 +764,23 @@ def delete_holding(
     current_user: SeedUser = Depends(get_current_user),
 ) -> Response:
     holding = _get_owned_holding(db, holding_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_holding(holding)
     db.delete(holding)
+    write_entity_change_log(
+        db,
+        EntityLogInput(
+            entity_type="HOLDING",
+            entity_id=holding_id,
+            owner_user_id=current_user.id,
+            action="DELETE",
+            before=before_snapshot,
+            after=None,
+            reason=None,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        ),
+    )
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

@@ -16,6 +16,12 @@ from app.schemas.asset import (
     AssetUpdate,
     SortOrder,
 )
+from app.services.entity_change_log import (
+    EntityLogInput,
+    actor_from_user,
+    snapshot_asset,
+    write_entity_change_log,
+)
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -123,8 +129,9 @@ def list_assets_table(
 def create_asset(
     payload: AssetCreate,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
+    current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Asset:
+    actor_user_id, actor_email = actor_from_user(current_user)
     asset_data = payload.model_dump()
     asset_data["asset_class"] = asset_data["asset_class"].upper()
     asset_data["currency"] = asset_data["currency"].upper()
@@ -135,6 +142,21 @@ def create_asset(
     asset = Asset(**asset_data)
     db.add(asset)
     try:
+        db.flush()
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="ASSET",
+                entity_id=asset.id,
+                owner_user_id=current_user.id,
+                action="CREATE",
+                before=None,
+                after=snapshot_asset(asset),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -148,11 +170,13 @@ def update_asset(
     asset_id: int,
     payload: AssetUpdate,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
+    current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Asset:
     asset = db.scalar(select(Asset).where(Asset.id == asset_id))
     if asset is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_asset(asset)
 
     updates = payload.model_dump(exclude_unset=True)
     if "asset_class" in updates and updates["asset_class"] is not None:
@@ -166,6 +190,21 @@ def update_asset(
         setattr(asset, key, value)
 
     try:
+        db.flush()
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="ASSET",
+                entity_id=asset.id,
+                owner_user_id=current_user.id,
+                action="UPDATE_HARD",
+                before=before_snapshot,
+                after=snapshot_asset(asset),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -178,12 +217,28 @@ def update_asset(
 def delete_asset(
     asset_id: int,
     db: Session = Depends(get_db),
-    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
+    current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
 ) -> Response:
     asset = db.scalar(select(Asset).where(Asset.id == asset_id))
     if asset is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_asset(asset)
 
     db.delete(asset)
+    write_entity_change_log(
+        db,
+        EntityLogInput(
+            entity_type="ASSET",
+            entity_id=asset_id,
+            owner_user_id=current_user.id,
+            action="DELETE",
+            before=before_snapshot,
+            after=None,
+            reason=None,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        ),
+    )
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

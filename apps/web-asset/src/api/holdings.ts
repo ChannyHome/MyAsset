@@ -1,5 +1,6 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
+import type { EditMode, RebaselineOut } from "./portfolios";
 
 export type HoldingOut = {
   id: number;
@@ -129,6 +130,16 @@ export type HoldingCreateIn = {
 
 export type HoldingUpdateIn = Partial<HoldingCreateIn>;
 
+export type HoldingRebaselineIn = {
+  effective_at: string;
+  quantity: string | number;
+  avg_price: string | number;
+  avg_price_currency?: string;
+  invested_amount?: string | number | null;
+  invested_amount_currency?: string | null;
+  reason?: string | null;
+};
+
 export async function getHoldings(params: HoldingsQuery = {}): Promise<HoldingOut[]> {
   const { data } = await http.get<HoldingOut[]>("/holdings", { params });
   return data;
@@ -151,8 +162,19 @@ export async function createHolding(payload: HoldingCreateIn): Promise<HoldingOu
   return data;
 }
 
-export async function updateHolding(holdingId: number, payload: HoldingUpdateIn): Promise<HoldingOut> {
-  const { data } = await http.patch<HoldingOut>(`/holdings/${holdingId}`, payload);
+export async function updateHolding(
+  holdingId: number,
+  payload: HoldingUpdateIn,
+  options?: { edit_mode?: EditMode },
+): Promise<HoldingOut> {
+  const { data } = await http.patch<HoldingOut>(`/holdings/${holdingId}`, payload, {
+    params: options?.edit_mode ? { edit_mode: options.edit_mode } : undefined,
+  });
+  return data;
+}
+
+export async function rebaselineHolding(holdingId: number, payload: HoldingRebaselineIn): Promise<RebaselineOut> {
+  const { data } = await http.post<RebaselineOut>(`/holdings/${holdingId}/rebaseline`, payload);
   return data;
 }
 

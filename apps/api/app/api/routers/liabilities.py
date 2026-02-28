@@ -12,7 +12,9 @@ from app.models.asset import Asset
 from app.models.holding import Holding
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
+from app.models.transaction import Transaction
 from app.schemas.asset import SortOrder
+from app.schemas.entity_change import EditMode, LiabilityRebaselineIn, RebaselineOut
 from app.schemas.liability import (
     LiabilityCreate,
     LiabilityHiddenUpdate,
@@ -22,6 +24,13 @@ from app.schemas.liability import (
     LiabilityTableSortBy,
     LiabilityUpdate,
 )
+from app.services.entity_change_log import (
+    EntityLogInput,
+    actor_from_user,
+    snapshot_liability,
+    write_entity_change_log,
+)
+from app.services.entity_rebaseline import RebaselineConflictError, rebaseline_liability
 from app.services.trade_ledger import (
     TradeSyncError,
     ensure_liability_baseline_transaction,
@@ -80,6 +89,23 @@ def _has_cash_holding_for_currency(
         if _is_cash_asset(symbol, meta_json):
             return True
     return False
+
+
+def _is_maintainer_plus(role: str | None) -> bool:
+    normalized = (role or "").upper()
+    return normalized in {"MAINTAINER", "ADMIN"}
+
+
+def _has_posted_liability_principal_trades(db: Session, *, owner_user_id: int, liability_id: int) -> bool:
+    existing_id = db.scalar(
+        select(Transaction.id).where(
+            Transaction.owner_user_id == owner_user_id,
+            Transaction.liability_id == liability_id,
+            Transaction.status == "POSTED",
+            Transaction.txn_type.in_(("LOAN_BORROW", "LOAN_REPAY")),
+        ).limit(1)
+    )
+    return existing_id is not None
 
 
 @router.get("", response_model=list[LiabilityOut])
@@ -291,6 +317,7 @@ def create_liability(
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> LiabilityOut:
+    actor_user_id, actor_email = actor_from_user(current_user)
     data = payload.model_dump()
     _validate_portfolio(db, current_user.id, data.get("portfolio_id"))
 
@@ -322,6 +349,20 @@ def create_liability(
                 currency=liability.currency,
             )
             auto_cash_holding_created = not had_cash_holding
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="LIABILITY",
+                entity_id=liability.id,
+                owner_user_id=current_user.id,
+                action="CREATE",
+                before=None,
+                after=snapshot_liability(liability),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except TradeSyncError as exc:
         db.rollback()
@@ -346,14 +387,36 @@ def create_liability(
 def update_liability(
     liability_id: int,
     payload: LiabilityUpdate,
+    edit_mode: EditMode = Query(default=EditMode.SAFE),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> LiabilityOut:
     liability = _get_owned_liability(db, liability_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_liability(liability)
 
     updates = payload.model_dump(exclude_unset=True)
     next_portfolio_id = updates.get("portfolio_id", liability.portfolio_id)
     _validate_portfolio(db, current_user.id, next_portfolio_id)
+
+    if edit_mode == EditMode.HARD and not _is_maintainer_plus(current_user.role):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="HARD edit requires MAINTAINER+")
+
+    ledger_fields = {"outstanding_balance"}
+    touches_ledger_fields = any(field in updates for field in ledger_fields)
+    if (
+        edit_mode == EditMode.SAFE
+        and touches_ledger_fields
+        and _has_posted_liability_principal_trades(
+            db,
+            owner_user_id=current_user.id,
+            liability_id=liability.id,
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ledger-managed liability has posted LOAN_BORROW/LOAN_REPAY trades. Use /liabilities/{id}/rebaseline or edit_mode=HARD.",
+        )
 
     for key, value in updates.items():
         setattr(liability, key, value)
@@ -361,7 +424,7 @@ def update_liability(
     auto_cash_holding_created = False
     try:
         db.flush()
-        if liability.portfolio_id is not None:
+        if edit_mode == EditMode.SAFE and liability.portfolio_id is not None:
             ensure_liability_baseline_transaction(
                 db=db,
                 owner_user_id=current_user.id,
@@ -384,6 +447,20 @@ def update_liability(
                 currency=liability.currency,
             )
             auto_cash_holding_created = not had_cash_holding
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="LIABILITY",
+                entity_id=liability.id,
+                owner_user_id=current_user.id,
+                action="UPDATE_HARD" if edit_mode == EditMode.HARD else "UPDATE_SAFE",
+                before=before_snapshot,
+                after=snapshot_liability(liability),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except TradeSyncError as exc:
         db.rollback()
@@ -401,6 +478,63 @@ def update_liability(
     db.refresh(liability)
     return LiabilityOut.model_validate(liability).model_copy(
         update={"auto_cash_holding_created": auto_cash_holding_created}
+    )
+
+
+@router.post("/{liability_id}/rebaseline", response_model=RebaselineOut)
+def rebaseline_liability_endpoint(
+    liability_id: int,
+    payload: LiabilityRebaselineIn,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> RebaselineOut:
+    liability = _get_owned_liability(db, liability_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_liability(liability)
+    try:
+        result = rebaseline_liability(
+            db=db,
+            owner_user_id=current_user.id,
+            liability=liability,
+            payload=payload,
+            strict_fx=settings.fx_strict_mode,
+        )
+        db.flush()
+        db.refresh(liability)
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="LIABILITY",
+                entity_id=liability.id,
+                owner_user_id=current_user.id,
+                action="REBASELINE",
+                before=before_snapshot,
+                after=snapshot_liability(liability),
+                reason=payload.reason,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
+        db.commit()
+    except RebaselineConflictError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return RebaselineOut(
+        entity_type="LIABILITY",
+        entity_id=liability.id,
+        voided_transactions=result.voided_transactions,
+        baseline_transaction_ids=result.baseline_transaction_ids,
+        affected_scope=result.affected_scope,
     )
 
 
@@ -425,7 +559,23 @@ def delete_liability(
     current_user: SeedUser = Depends(get_current_user),
 ) -> Response:
     liability = _get_owned_liability(db, liability_id, current_user.id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_liability(liability)
     db.delete(liability)
+    write_entity_change_log(
+        db,
+        EntityLogInput(
+            entity_type="LIABILITY",
+            entity_id=liability_id,
+            owner_user_id=current_user.id,
+            action="DELETE",
+            before=before_snapshot,
+            after=None,
+            reason=None,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+        ),
+    )
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

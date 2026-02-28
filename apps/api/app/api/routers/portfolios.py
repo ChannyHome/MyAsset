@@ -13,8 +13,10 @@ from app.models.holding import Holding
 from app.models.liability import Liability
 from app.models.latest_quote import LatestQuote
 from app.models.portfolio import Portfolio
+from app.models.transaction import Transaction
 from app.schemas.performance import PortfolioPerformanceOut
 from app.schemas.asset import SortOrder
+from app.schemas.entity_change import EditMode, PortfolioRebaselineIn, RebaselineOut
 from app.schemas.portfolio import (
     PortfolioCreate,
     PortfolioCashAccountOut,
@@ -26,6 +28,13 @@ from app.schemas.portfolio import (
     PortfolioUpdate,
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
+from app.services.entity_change_log import (
+    EntityLogInput,
+    actor_from_user,
+    snapshot_portfolio,
+    write_entity_change_log,
+)
+from app.services.entity_rebaseline import RebaselineConflictError, rebaseline_portfolio
 from app.services.trade_ledger import (
     TradeSyncError,
     ensure_portfolio_cash_account_for_currency,
@@ -61,6 +70,23 @@ def _get_owned_portfolio(db: Session, owner_user_id: int, portfolio_id: int) -> 
     if portfolio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
     return portfolio
+
+
+def _is_maintainer_plus(role: str | None) -> bool:
+    normalized = (role or "").upper()
+    return normalized in {"MAINTAINER", "ADMIN"}
+
+
+def _has_posted_portfolio_cashflow_trades(db: Session, *, owner_user_id: int, portfolio_id: int) -> bool:
+    existing_id = db.scalar(
+        select(Transaction.id).where(
+            Transaction.owner_user_id == owner_user_id,
+            Transaction.portfolio_id == portfolio_id,
+            Transaction.status == "POSTED",
+            Transaction.txn_type.in_(("DEPOSIT", "WITHDRAW")),
+        ).limit(1)
+    )
+    return existing_id is not None
 
 
 @router.get("", response_model=list[PortfolioOut])
@@ -502,6 +528,7 @@ def create_portfolio(
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> Portfolio:
+    actor_user_id, actor_email = actor_from_user(current_user)
     portfolio_data = payload.model_dump()
     portfolio_data["base_currency"] = portfolio_data["base_currency"].upper()
     if portfolio_data.get("exchange_code"):
@@ -523,6 +550,20 @@ def create_portfolio(
             portfolio_id=portfolio.id,
             currency=portfolio.base_currency,
         )
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="PORTFOLIO",
+                entity_id=portfolio.id,
+                owner_user_id=current_user.id,
+                action="CREATE",
+                before=None,
+                after=snapshot_portfolio(portfolio),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except TradeSyncError as exc:
         db.rollback()
@@ -538,6 +579,7 @@ def create_portfolio(
 def update_portfolio(
     portfolio_id: int,
     payload: PortfolioUpdate,
+    edit_mode: EditMode = Query(default=EditMode.SAFE),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> Portfolio:
@@ -545,28 +587,63 @@ def update_portfolio(
     if portfolio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
 
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_portfolio(portfolio)
     updates = payload.model_dump(exclude_unset=True)
     if "base_currency" in updates and updates["base_currency"] is not None:
         updates["base_currency"] = updates["base_currency"].upper()
     if "exchange_code" in updates and updates["exchange_code"] is not None:
         updates["exchange_code"] = updates["exchange_code"].upper()
 
+    ledger_fields = {"cumulative_deposit_amount", "cumulative_withdrawal_amount"}
+    touches_ledger_fields = any(field in updates for field in ledger_fields)
+    if edit_mode == EditMode.HARD and not _is_maintainer_plus(current_user.role):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="HARD edit requires MAINTAINER+")
+    if (
+        edit_mode == EditMode.SAFE
+        and touches_ledger_fields
+        and _has_posted_portfolio_cashflow_trades(
+            db,
+            owner_user_id=current_user.id,
+            portfolio_id=portfolio.id,
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ledger-managed portfolio cashflow has posted DEPOSIT/WITHDRAW trades. Use /portfolios/{id}/rebaseline or edit_mode=HARD.",
+        )
+
     for key, value in updates.items():
         setattr(portfolio, key, value)
 
     try:
         db.flush()
-        ensure_portfolio_cashflow_baseline_transactions(
-            db=db,
-            owner_user_id=current_user.id,
-            portfolio_id=portfolio.id,
-            executed_at=datetime.now(UTC).replace(tzinfo=None),
-        )
+        if edit_mode == EditMode.SAFE:
+            ensure_portfolio_cashflow_baseline_transactions(
+                db=db,
+                owner_user_id=current_user.id,
+                portfolio_id=portfolio.id,
+                executed_at=datetime.now(UTC).replace(tzinfo=None),
+            )
         ensure_portfolio_cash_account_for_currency(
             db=db,
             owner_user_id=current_user.id,
             portfolio_id=portfolio.id,
             currency=portfolio.base_currency,
+        )
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="PORTFOLIO",
+                entity_id=portfolio.id,
+                owner_user_id=current_user.id,
+                action="UPDATE_HARD" if edit_mode == EditMode.HARD else "UPDATE_SAFE",
+                before=before_snapshot,
+                after=snapshot_portfolio(portfolio),
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
         )
         db.commit()
     except TradeSyncError as exc:
@@ -580,6 +657,63 @@ def update_portfolio(
     return portfolio
 
 
+@router.post("/{portfolio_id}/rebaseline", response_model=RebaselineOut)
+def rebaseline_portfolio_endpoint(
+    portfolio_id: int,
+    payload: PortfolioRebaselineIn,
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> RebaselineOut:
+    portfolio = _get_owned_portfolio(db, current_user.id, portfolio_id)
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_portfolio(portfolio)
+    try:
+        result = rebaseline_portfolio(
+            db=db,
+            owner_user_id=current_user.id,
+            portfolio=portfolio,
+            payload=payload,
+            strict_fx=settings.fx_strict_mode,
+        )
+        db.flush()
+        db.refresh(portfolio)
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="PORTFOLIO",
+                entity_id=portfolio.id,
+                owner_user_id=current_user.id,
+                action="REBASELINE",
+                before=before_snapshot,
+                after=snapshot_portfolio(portfolio),
+                reason=payload.reason,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
+        db.commit()
+    except RebaselineConflictError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except MissingFxRateError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+    except TradeSyncError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    return RebaselineOut(
+        entity_type="PORTFOLIO",
+        entity_id=portfolio.id,
+        voided_transactions=result.voided_transactions,
+        baseline_transaction_ids=result.baseline_transaction_ids,
+        affected_scope=result.affected_scope,
+    )
+
+
 @router.delete("/{portfolio_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_portfolio(
     portfolio_id: int,
@@ -590,8 +724,24 @@ def delete_portfolio(
     if portfolio is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portfolio not found")
 
+    actor_user_id, actor_email = actor_from_user(current_user)
+    before_snapshot = snapshot_portfolio(portfolio)
     db.delete(portfolio)
     try:
+        write_entity_change_log(
+            db,
+            EntityLogInput(
+                entity_type="PORTFOLIO",
+                entity_id=portfolio_id,
+                owner_user_id=current_user.id,
+                action="DELETE",
+                before=before_snapshot,
+                after=None,
+                reason=None,
+                actor_user_id=actor_user_id,
+                actor_email=actor_email,
+            ),
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()

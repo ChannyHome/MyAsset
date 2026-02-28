@@ -170,6 +170,35 @@
 - `Lab`: MAINTAINER/ADMIN only
 - `Guest`: blocked from real-data trade endpoints (403)
 
+### Step 18 (done): Agent Edit stabilization (Rebaseline-first + Hard + Revert history)
+- Added DB table:
+  - `entity_change_logs`
+  - migration: `038_entity_change_logs`
+- Added APIs:
+  - `POST /api/v1/holdings/{id}/rebaseline`
+  - `POST /api/v1/portfolios/{id}/rebaseline`
+  - `POST /api/v1/liabilities/{id}/rebaseline`
+  - `GET /api/v1/admin/entity-history`
+  - `POST /api/v1/admin/entity-history/{history_id}/revert`
+- Extended APIs:
+  - `PATCH /api/v1/holdings/{id}?edit_mode=SAFE|HARD` (default `SAFE`)
+  - `PATCH /api/v1/portfolios/{id}?edit_mode=SAFE|HARD` (default `SAFE`)
+  - `PATCH /api/v1/liabilities/{id}?edit_mode=SAFE|HARD` (default `SAFE`)
+- Operation policy:
+  - `SAFE(Rebaseline)`:
+    - voids posted ledger transactions up to `effective_at`
+    - writes new baseline transaction(s)
+    - runs sync/rebuild path for deterministic ledger state
+  - `HARD`:
+    - MAINTAINER+ only
+    - direct override for emergency/temporary correction
+    - can be overwritten by next sync/rebuild
+- Agent UI:
+  - Edit modal mode toggle (`Rebaseline` default / `Edit(Hard)`)
+  - `effective_at` + `reason` input
+  - per-row `History` button on Asset/Portfolio/Holding/Liability
+  - history drawer with diff + `Revert`
+
 ## KPI / Accounting Standard (Commercial Terms)
 The UI and API now use the same KPI vocabulary across `Home / Report / Agent / Trade`.
 
@@ -297,6 +326,19 @@ cd apps/api
   - 매수한 자산 holding 수량/평단/투입원금 자동 반영
 5. `VOID` 동작 확인
   - 거래 취소 후 holdings/portfolio 수치가 역반영되는지 확인
+
+## Rebaseline/Hard stage test checklist
+1. `SAFE(Rebaseline)` 동작
+  - Holding/Portfolio/Liability Edit에서 모드를 `Rebaseline`으로 두고 저장
+  - 기준시각(`effective_at`) 이전의 POSTED 거래가 VOID되는지 확인
+  - baseline 거래 생성 후 집계값이 의도값으로 맞는지 확인
+2. `HARD` 권한/동작
+  - USER로 `edit_mode=HARD` 호출 시 403 확인
+  - MAINTAINER/ADMIN에서 HARD 저장 후 `trades/rebuild` 실행 시 원장값 우선으로 재정렬되는지 확인
+3. History/Revert
+  - Agent 테이블의 `History`에서 변경 이력 노출 확인
+  - `Revert` 실행 후 target 엔티티 값 복구 확인
+  - Holding/Portfolio/Liability revert는 내부 Rebaseline 경로로 동작하는지 확인
 
 ## Frontend troubleshooting
 - `Remote 모듈 연결에 실패했습니다`가 보이면:

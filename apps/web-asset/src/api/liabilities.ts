@@ -1,5 +1,6 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
+import type { EditMode, RebaselineOut } from "./portfolios";
 
 export type LiabilityOut = {
   id: number;
@@ -80,6 +81,12 @@ export type LiabilityCreateIn = {
 
 export type LiabilityUpdateIn = Partial<LiabilityCreateIn>;
 
+export type LiabilityRebaselineIn = {
+  effective_at: string;
+  outstanding_balance: string | number;
+  reason?: string | null;
+};
+
 export async function getLiabilities(params: LiabilitiesQuery = {}): Promise<LiabilityOut[]> {
   const { data } = await http.get<LiabilityOut[]>("/liabilities", { params });
   return data;
@@ -95,8 +102,22 @@ export async function createLiability(payload: LiabilityCreateIn): Promise<Liabi
   return data;
 }
 
-export async function updateLiability(liabilityId: number, payload: LiabilityUpdateIn): Promise<LiabilityOut> {
-  const { data } = await http.patch<LiabilityOut>(`/liabilities/${liabilityId}`, payload);
+export async function updateLiability(
+  liabilityId: number,
+  payload: LiabilityUpdateIn,
+  options?: { edit_mode?: EditMode },
+): Promise<LiabilityOut> {
+  const { data } = await http.patch<LiabilityOut>(`/liabilities/${liabilityId}`, payload, {
+    params: options?.edit_mode ? { edit_mode: options.edit_mode } : undefined,
+  });
+  return data;
+}
+
+export async function rebaselineLiability(
+  liabilityId: number,
+  payload: LiabilityRebaselineIn,
+): Promise<RebaselineOut> {
+  const { data } = await http.post<RebaselineOut>(`/liabilities/${liabilityId}/rebaseline`, payload);
   return data;
 }
 
