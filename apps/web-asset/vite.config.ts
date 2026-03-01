@@ -13,6 +13,7 @@ export default defineConfig({
       exposes: {
         "./HomePage": "./src/pages/HomePage.vue",
         "./DashboardPage": "./src/pages/DashboardPage.vue",
+        "./SnapshotPage": "./src/pages/SnapshotPage.vue",
         "./ReportPage": "./src/pages/ReportPage.vue",
         "./AgentPage": "./src/pages/AgentPage.vue",
         "./TradePage": "./src/pages/TradePage.vue",

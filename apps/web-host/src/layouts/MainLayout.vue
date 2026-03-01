@@ -3,6 +3,7 @@ import type { Component } from "vue";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import {
   Bot,
+  Camera,
   ChartColumn,
   FlaskConical,
   Home,
@@ -36,6 +37,7 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/snapshot", label: "Snapshot", icon: Camera },
   { to: "/trade", label: "Trade", icon: ArrowLeftRight },
   { to: "/agent", label: "Agent", icon: Bot },
   { to: "/report", label: "Report", icon: ChartColumn },

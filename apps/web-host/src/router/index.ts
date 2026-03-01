@@ -9,6 +9,7 @@ import {
   RemoteHomePage,
   RemoteLabPage,
   RemoteReportPage,
+  RemoteSnapshotPage,
   RemoteTradePage,
 } from "../remotes";
 import BudgetComingSoonPage from "../pages/BudgetComingSoonPage.vue";
@@ -51,6 +52,7 @@ const routes: RouteRecordRaw[] = [
       { path: "", redirect: "/home" },
       { path: "home", name: "home", component: RemoteHomePage },
       { path: "dashboard", name: "dashboard", component: RemoteDashboardPage },
+      { path: "snapshot", name: "snapshot", component: RemoteSnapshotPage },
       { path: "agent", name: "agent", component: RemoteAgentPage },
       { path: "trade", name: "trade", component: RemoteTradePage },
       { path: "report", name: "report", component: RemoteReportPage },

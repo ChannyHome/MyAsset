@@ -12,8 +12,14 @@ async function createLiability(payload) {
   const { data } = await http.post("/liabilities", payload);
   return data;
 }
-async function updateLiability(liabilityId, payload) {
-  const { data } = await http.patch(`/liabilities/${liabilityId}`, payload);
+async function updateLiability(liabilityId, payload, options) {
+  const { data } = await http.patch(`/liabilities/${liabilityId}`, payload, {
+    params: options?.edit_mode ? { edit_mode: options.edit_mode } : void 0
+  });
+  return data;
+}
+async function rebaselineLiability(liabilityId, payload) {
+  const { data } = await http.post(`/liabilities/${liabilityId}/rebaseline`, payload);
   return data;
 }
 async function deleteLiability(liabilityId) {
@@ -32,8 +38,14 @@ async function createPortfolio(payload) {
   const { data } = await http.post("/portfolios", payload);
   return data;
 }
-async function updatePortfolio(portfolioId, payload) {
-  const { data } = await http.patch(`/portfolios/${portfolioId}`, payload);
+async function updatePortfolio(portfolioId, payload, options) {
+  const { data } = await http.patch(`/portfolios/${portfolioId}`, payload, {
+    params: options?.edit_mode ? { edit_mode: options.edit_mode } : void 0
+  });
+  return data;
+}
+async function rebaselinePortfolio(portfolioId, payload) {
+  const { data } = await http.post(`/portfolios/${portfolioId}/rebaseline`, payload);
   return data;
 }
 async function deletePortfolio(portfolioId) {
@@ -52,4 +64,4 @@ async function setPortfolioCashAccount(portfolioId, currency, payload) {
   return data;
 }
 
-export { getPortfoliosTable as a, getLiabilities as b, getPortfolios as c, createPortfolio as d, getPortfolioCashAccounts as e, createLiability as f, getLiabilitiesTable as g, updateLiability as h, deletePortfolio as i, deleteLiability as j, setPortfolioCashAccount as s, updatePortfolio as u };
+export { getPortfoliosTable as a, getLiabilities as b, getPortfolios as c, createPortfolio as d, getPortfolioCashAccounts as e, createLiability as f, getLiabilitiesTable as g, rebaselineLiability as h, updateLiability as i, deletePortfolio as j, deleteLiability as k, rebaselinePortfolio as r, setPortfolioCashAccount as s, updatePortfolio as u };

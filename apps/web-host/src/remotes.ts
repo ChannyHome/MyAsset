@@ -16,6 +16,7 @@ function createRemotePage(loader: () => Promise<RemoteModule>): RemoteLoader {
 
 export const RemoteHomePage: RemoteLoader = createRemotePage(() => import("web_asset/HomePage"));
 export const RemoteDashboardPage: RemoteLoader = createRemotePage(() => import("web_asset/DashboardPage"));
+export const RemoteSnapshotPage: RemoteLoader = createRemotePage(() => import("web_asset/SnapshotPage"));
 export const RemoteAgentPage: RemoteLoader = createRemotePage(() => import("web_asset/AgentPage"));
 export const RemoteTradePage: RemoteLoader = createRemotePage(() => import("web_asset/TradePage"));
 export const RemoteReportPage: RemoteLoader = createRemotePage(() => import("web_asset/ReportPage"));

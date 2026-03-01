@@ -11,6 +11,12 @@ from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.portfolio_cash_account import PortfolioCashAccount
 from app.models.release_note import ReleaseNote
+from app.models.snapshot import (
+    SnapshotHoldingRow,
+    SnapshotLiabilityRow,
+    SnapshotPortfolioRow,
+    SnapshotSet,
+)
 from app.models.user import User
 from app.models.fx_rate import FxRate
 from app.models.user_setting import UserSetting
@@ -27,6 +33,10 @@ __all__ = [
     "Portfolio",
     "PortfolioCashAccount",
     "ReleaseNote",
+    "SnapshotSet",
+    "SnapshotPortfolioRow",
+    "SnapshotHoldingRow",
+    "SnapshotLiabilityRow",
     "Asset",
     "AssetQuote",
     "LatestQuote",

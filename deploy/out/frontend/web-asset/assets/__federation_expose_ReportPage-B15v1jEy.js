@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { _ as _sfc_main$2, g as getSummary, b as getNetworthSeries } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Bn1Zxn3x.js';
-import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-DZ-X-Mpj.js';
+import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-r6VxmkS0.js';
 import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CzzTML-M.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
 import { f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';

@@ -1,7 +1,7 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { h as http, f as formatDateTimeSeoul, s as seoulDateToUtcNaiveIso, A as AxiosError } from './datetime-D3NoeBy6.js';
 import { a as getAssets } from './assets-RV6m6tbW.js';
-import { c as getPortfolios, b as getLiabilities } from './portfolios-DZ-X-Mpj.js';
+import { c as getPortfolios, b as getLiabilities } from './portfolios-r6VxmkS0.js';
 
 async function getTrades(params = {}) {
   const { data } = await http.get("/trades", { params });
