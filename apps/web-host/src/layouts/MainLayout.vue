@@ -115,9 +115,13 @@ function isDesktopViewport() {
   return window.matchMedia("(min-width: 768px)").matches;
 }
 
-function openSidebar() {
+function toggleSidebar() {
   if (isDesktopViewport()) {
-    uiStore.setSidebarCollapsed(false);
+    uiStore.setSidebarCollapsed(!uiStore.sidebarCollapsed);
+    return;
+  }
+  if (uiStore.mobileSidebarOpen) {
+    uiStore.closeMobileSidebar();
     return;
   }
   uiStore.openMobileSidebar();
@@ -174,8 +178,8 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-          aria-label="Open sidebar"
-          @click="openSidebar()"
+          aria-label="Toggle sidebar"
+          @click="toggleSidebar()"
         >
           <Menu class="h-5 w-5" />
         </button>
@@ -190,17 +194,6 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </header>
-
-    <button
-      v-if="uiStore.sidebarCollapsed"
-      type="button"
-      class="fixed left-4 top-4 z-30 hidden h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-slate-700 shadow-sm backdrop-blur transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 md:inline-flex dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200 dark:hover:bg-slate-800"
-      aria-label="Open sidebar"
-      title="Open sidebar"
-      @click="openSidebar()"
-    >
-      <Menu class="h-5 w-5" />
-    </button>
 
     <div class="flex min-h-[calc(100vh-57px)] md:min-h-screen">
       <div
@@ -230,7 +223,7 @@ onBeforeUnmount(() => {
           </div>
           <button
             type="button"
-            class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
+            class="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border border-slate-300 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800 md:hidden"
             aria-label="Close sidebar"
             title="Close sidebar"
             @click="closeSidebar()"

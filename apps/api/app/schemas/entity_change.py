@@ -15,6 +15,7 @@ class EditMode(str, Enum):
 
 class HoldingRebaselineIn(BaseModel):
     effective_at: datetime
+    rebaseline_all_history: bool = False
     quantity: Decimal = Field(ge=0)
     avg_price: Decimal = Field(ge=0)
     avg_price_currency: str = Field(default="KRW", min_length=3, max_length=3)
@@ -25,6 +26,7 @@ class HoldingRebaselineIn(BaseModel):
 
 class PortfolioRebaselineIn(BaseModel):
     effective_at: datetime
+    rebaseline_all_history: bool = False
     cumulative_deposit_amount: Decimal = Field(ge=0)
     cumulative_withdrawal_amount: Decimal = Field(ge=0)
     reason: str | None = Field(default=None, max_length=255)
@@ -32,6 +34,7 @@ class PortfolioRebaselineIn(BaseModel):
 
 class LiabilityRebaselineIn(BaseModel):
     effective_at: datetime
+    rebaseline_all_history: bool = False
     outstanding_balance: Decimal = Field(ge=0)
     reason: str | None = Field(default=None, max_length=255)
 

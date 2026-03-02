@@ -414,6 +414,15 @@ def set_portfolio_cash_account_mapping(
         currency=normalized_currency,
         asset_id=asset.id,
     )
+    # Normalize mapped cash holding immediately from ledger transactions.
+    # This guarantees canonical cash representation:
+    # quantity=balance, avg_price=1, invested_amount=balance.
+    rebuild_cash_holding_from_trades(
+        db,
+        owner_user_id=owner_user_id,
+        portfolio_id=portfolio_id,
+        currency=normalized_currency,
+    )
     return mapping, holding, asset
 
 
@@ -543,10 +552,18 @@ def rebuild_cash_holdings_for_portfolio(
             .where(
                 Holding.owner_user_id == owner_user_id,
                 Holding.portfolio_id == portfolio_id,
-                Holding.source_type == "AUTO",
+                Asset.symbol.ilike("CASH_%"),
             )
         ).all()
     ]
+    mapped_currencies = list(
+        db.scalars(
+            select(PortfolioCashAccount.currency).where(
+                PortfolioCashAccount.owner_user_id == owner_user_id,
+                PortfolioCashAccount.portfolio_id == portfolio_id,
+            )
+        ).all()
+    )
     liability_currencies = list(
         db.scalars(
             select(Liability.currency).where(
@@ -558,7 +575,12 @@ def rebuild_cash_holdings_for_portfolio(
 
     currencies = {
         _normalize_currency(ccy)
-        for ccy in [*txn_currencies, *auto_cash_holding_currencies, *liability_currencies]
+        for ccy in [
+            *txn_currencies,
+            *auto_cash_holding_currencies,
+            *mapped_currencies,
+            *liability_currencies,
+        ]
         if ccy is not None
     }
     affected = 0
@@ -948,6 +970,11 @@ def ensure_holding_baseline_transaction(
     if asset is None:
         raise TradeSyncError("Asset does not exist")
 
+    if _is_cash_balance_asset(asset):
+        # Cash balance holdings are derived from cash-applicable transactions.
+        # Do not create BUY baseline transactions for these assets.
+        return False
+
     existing_stmt = select(Transaction.id).where(
         Transaction.owner_user_id == owner_user_id,
         Transaction.portfolio_id == portfolio_id,
@@ -1107,6 +1134,10 @@ def rebuild_holding_from_trades(
     if asset is None:
         raise TradeSyncError("Asset not found while rebuilding holding")
 
+    if _is_cash_balance_asset(asset):
+        # Auto cash balance holdings are rebuilt from cash deltas, not BUY/SELL lot logic.
+        return False
+
     txns = list(
         db.scalars(
             select(Transaction)
@@ -1179,7 +1210,6 @@ def rebuild_holding_from_trades(
     holding.avg_price_currency = _normalize_currency(asset.currency)
     holding.invested_amount = _quantize_money(invested) if qty > 0 else Decimal("0")
     holding.invested_amount_currency = _normalize_currency(asset.currency)
-    holding.source_type = "AUTO"
     return True
 
 

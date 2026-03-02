@@ -122,6 +122,7 @@ export type PortfolioUpdateIn = Partial<PortfolioCreateIn>;
 
 export type PortfolioRebaselineIn = {
   effective_at: string;
+  rebaseline_all_history?: boolean;
   cumulative_deposit_amount: string | number;
   cumulative_withdrawal_amount: string | number;
   reason?: string | null;

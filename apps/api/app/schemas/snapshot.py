@@ -231,3 +231,13 @@ class SnapshotCsvPreviewOut(BaseModel):
     portfolio_rows: list[SnapshotPortfolioRowOut]
     holding_rows: list[SnapshotHoldingRowOut]
     liability_rows: list[SnapshotLiabilityRowOut]
+
+
+class SnapshotDeleteIn(BaseModel):
+    ids: list[int]
+
+
+class SnapshotDeleteOut(BaseModel):
+    requested: int
+    deleted: int
+    deleted_ids: list[int]

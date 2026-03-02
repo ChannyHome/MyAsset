@@ -275,6 +275,7 @@ const portfolioEditForm = reactive({
   is_hidden: false,
   memo: "",
   edit_mode: "SAFE" as EditMode,
+  rebaseline_all_history: false,
   effective_at: "",
   reason: "",
 });
@@ -291,6 +292,7 @@ const holdingEditForm = reactive({
   is_hidden: false,
   memo: "",
   edit_mode: "SAFE" as EditMode,
+  rebaseline_all_history: false,
   effective_at: "",
   reason: "",
   original_portfolio_id: "",
@@ -310,6 +312,7 @@ const liabilityEditForm = reactive({
   is_hidden: false,
   memo: "",
   edit_mode: "SAFE" as EditMode,
+  rebaseline_all_history: false,
   effective_at: "",
   reason: "",
   original_portfolio_id: "",
@@ -428,6 +431,8 @@ const realEstateMetaJsonExample = `{
 }`;
 const assetMetaJsonPlaceholder = `예시 (부동산) :
 ${realEstateMetaJsonExample}`;
+const AUTO_CASH_EDIT_GUIDE =
+  "Auto Cash Balance는 거래 원장 기반으로 계산됩니다. Trade(DEPOSIT/WITHDRAW/ADJUSTMENT)로 수정하세요.";
 
 function formatDateTime(value: string | null | undefined): string {
   return formatDateTimeSeoul(value);
@@ -502,8 +507,20 @@ function formatFxRate(value: string | number): string {
   }).format(amount);
 }
 
-function holdingCurrencyCode(item: HoldingTableRowOut): string {
+function holdingPriceCurrencyCode(item: HoldingTableRowOut): string {
   return normalizeUpper(item.current_price_currency || item.asset_currency || "KRW");
+}
+
+function holdingAvgCostCurrencyCode(item: HoldingTableRowOut): string {
+  return normalizeUpper(item.avg_cost_currency || item.avg_price_currency || item.asset_currency || "KRW");
+}
+
+function holdingCostBasisCurrencyCode(item: HoldingTableRowOut): string {
+  return normalizeUpper(item.cost_basis_currency || item.invested_amount_currency || holdingAvgCostCurrencyCode(item));
+}
+
+function holdingEvaluatedCurrencyCode(item: HoldingTableRowOut): string {
+  return normalizeUpper(item.cost_basis_currency || holdingPriceCurrencyCode(item));
 }
 
 function quotePriceText(item: AssetTableRowOut): string {
@@ -525,6 +542,13 @@ function isCashBalanceAssetOption(asset: AssetOut): boolean {
   const meta = asset.meta_json;
   if (!meta || typeof meta !== "object" || Array.isArray(meta)) return false;
   return normalizeUpper(String((meta as Record<string, unknown>).asset_subtype || "")) === "CASH_BALANCE";
+}
+
+function isAutoCashHoldingRow(item: HoldingTableRowOut): boolean {
+  const symbol = normalizeUpper(item.asset_symbol || "");
+  if (symbol.startsWith("CASH_")) return true;
+  const assetName = normalizeUpper(item.asset_name || "");
+  return assetName.includes("AUTO CASH BALANCE");
 }
 
 function normalizeQuoteJobStatus(value: string | null | undefined): QuoteJobStatus {
@@ -1182,6 +1206,7 @@ function fillPortfolioEditForm(item: PortfolioTableRowOut): void {
   portfolioEditForm.is_hidden = item.is_hidden;
   portfolioEditForm.memo = item.memo || "";
   portfolioEditForm.edit_mode = "SAFE";
+  portfolioEditForm.rebaseline_all_history = false;
   portfolioEditForm.effective_at = nowDateTimeLocalInput();
   portfolioEditForm.reason = "";
 }
@@ -1214,6 +1239,7 @@ function submitPortfolioEdit(): void {
     const deposit = parseRequiredDecimal(portfolioEditForm.cumulative_deposit_amount, "Cumulative deposit");
     const withdrawal = parseRequiredDecimal(portfolioEditForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
     const editMode = portfolioEditForm.edit_mode;
+    const rebaselineAllHistory = !!portfolioEditForm.rebaseline_all_history;
     if (editMode === "HARD" && !canHardEdit.value) {
       throw new Error("HARD edit requires MAINTAINER+");
     }
@@ -1223,25 +1249,28 @@ function submitPortfolioEdit(): void {
       "Portfolio Update",
       "Apply Portfolio Update",
       editMode === "SAFE"
-        ? `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 DEPOSIT/WITHDRAW VOID)`
+        ? rebaselineAllHistory
+          ? `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 DEPOSIT/WITHDRAW VOID)`
+          : `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 DEPOSIT/WITHDRAW VOID)`
         : `Portfolio #${portfolioId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
       async () => {
-	        if (editMode === "SAFE") {
-	          const rebaselinePayload: PortfolioRebaselineIn = {
-	            effective_at: parseEffectiveAt(portfolioEditForm.effective_at),
-	            cumulative_deposit_amount: deposit,
-	            cumulative_withdrawal_amount: withdrawal,
-	            reason: portfolioEditForm.reason.trim() || null,
-	          };
-	          const rebased = await rebaselinePortfolio(portfolioId, rebaselinePayload);
-	          pushLog(
-	            "Portfolio Rebaseline",
-	            "INFO",
-	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
-	          );
-	          await updatePortfolio(
-	            portfolioId,
-	            {
+        if (editMode === "SAFE") {
+          const rebaselinePayload: PortfolioRebaselineIn = {
+            effective_at: parseEffectiveAt(portfolioEditForm.effective_at),
+            cumulative_deposit_amount: deposit,
+            cumulative_withdrawal_amount: withdrawal,
+            rebaseline_all_history: rebaselineAllHistory,
+            reason: portfolioEditForm.reason.trim() || null,
+          };
+          const rebased = await rebaselinePortfolio(portfolioId, rebaselinePayload);
+          pushLog(
+            "Portfolio Rebaseline",
+            "INFO",
+            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+          );
+          await updatePortfolio(
+            portfolioId,
+            {
               name,
               type: portfolioEditForm.type.trim() || "ETC",
               base_currency: baseCurrency,
@@ -1417,6 +1446,7 @@ function fillHoldingEditForm(item: HoldingTableRowOut): void {
   holdingEditForm.is_hidden = item.is_hidden;
   holdingEditForm.memo = item.memo || "";
   holdingEditForm.edit_mode = "SAFE";
+  holdingEditForm.rebaseline_all_history = false;
   holdingEditForm.effective_at = nowDateTimeLocalInput();
   holdingEditForm.reason = "";
   holdingEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
@@ -1424,6 +1454,14 @@ function fillHoldingEditForm(item: HoldingTableRowOut): void {
 }
 
 function openEditHoldingModal(item: HoldingTableRowOut): void {
+  if (isAutoCashHoldingRow(item)) {
+    pushLog(
+      "Holding Edit",
+      "INFO",
+      "Auto Cash Balance is ledger-derived. Use Trade (DEPOSIT/WITHDRAW/ADJUSTMENT) to change balance.",
+    );
+    return;
+  }
   fillHoldingEditForm(item);
   holdingEditModal.open = true;
   void loadHoldingLookupOptions(true);
@@ -1441,6 +1479,7 @@ function submitHoldingEdit(): void {
     const quantity = parseRequiredDecimal(holdingEditForm.quantity, "Quantity");
     const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg cost");
     const editMode = holdingEditForm.edit_mode;
+    const rebaselineAllHistory = !!holdingEditForm.rebaseline_all_history;
     if (editMode === "HARD" && !canHardEdit.value) {
       throw new Error("HARD edit requires MAINTAINER+");
     }
@@ -1457,28 +1496,31 @@ function submitHoldingEdit(): void {
       "Holding Update",
       "Apply Holding Update",
       editMode === "SAFE"
-        ? `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 BUY/SELL VOID)`
+        ? rebaselineAllHistory
+          ? `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 BUY/SELL VOID)`
+          : `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 BUY/SELL VOID)`
         : `Holding #${holdingId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
       async () => {
-	        if (editMode === "SAFE") {
-	          const rebaselinePayload: HoldingRebaselineIn = {
-	            effective_at: parseEffectiveAt(holdingEditForm.effective_at),
-	            quantity,
-	            avg_price: avgPrice,
-	            avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
-	            invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
-	            invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
-	            reason: holdingEditForm.reason.trim() || null,
-	          };
-	          const rebased = await rebaselineHolding(holdingId, rebaselinePayload);
-	          pushLog(
-	            "Holding Rebaseline",
-	            "INFO",
-	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
-	          );
-	          await updateHolding(
-	            holdingId,
-	            {
+        if (editMode === "SAFE") {
+          const rebaselinePayload: HoldingRebaselineIn = {
+            effective_at: parseEffectiveAt(holdingEditForm.effective_at),
+            quantity,
+            avg_price: avgPrice,
+            avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
+            invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
+            invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
+            rebaseline_all_history: rebaselineAllHistory,
+            reason: holdingEditForm.reason.trim() || null,
+          };
+          const rebased = await rebaselineHolding(holdingId, rebaselinePayload);
+          pushLog(
+            "Holding Rebaseline",
+            "INFO",
+            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+          );
+          await updateHolding(
+            holdingId,
+            {
               is_hidden: holdingEditForm.is_hidden,
               memo: holdingEditForm.memo.trim() || null,
             },
@@ -1584,6 +1626,7 @@ function fillLiabilityEditForm(item: LiabilityTableRowOut): void {
   liabilityEditForm.is_hidden = item.is_hidden;
   liabilityEditForm.memo = item.memo || "";
   liabilityEditForm.edit_mode = "SAFE";
+  liabilityEditForm.rebaseline_all_history = false;
   liabilityEditForm.effective_at = nowDateTimeLocalInput();
   liabilityEditForm.reason = "";
   liabilityEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
@@ -1610,6 +1653,7 @@ function submitLiabilityEdit(): void {
     const currency = normalizeUpper(liabilityEditForm.currency);
     if (currency.length !== 3) throw new Error("Currency must be 3 letters");
     const editMode = liabilityEditForm.edit_mode;
+    const rebaselineAllHistory = !!liabilityEditForm.rebaseline_all_history;
     if (editMode === "HARD" && !canHardEdit.value) {
       throw new Error("HARD edit requires MAINTAINER+");
     }
@@ -1625,24 +1669,27 @@ function submitLiabilityEdit(): void {
       "Liability Update",
       "Apply Liability Update",
       editMode === "SAFE"
-        ? `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 LOAN_BORROW/LOAN_REPAY VOID)`
+        ? rebaselineAllHistory
+          ? `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 LOAN_BORROW/LOAN_REPAY VOID)`
+          : `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 LOAN_BORROW/LOAN_REPAY VOID)`
         : `Liability #${liabilityId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
       async () => {
-	        if (editMode === "SAFE") {
-	          const rebaselinePayload: LiabilityRebaselineIn = {
-	            effective_at: parseEffectiveAt(liabilityEditForm.effective_at),
-	            outstanding_balance: balance,
-	            reason: liabilityEditForm.reason.trim() || null,
-	          };
-	          const rebased = await rebaselineLiability(liabilityId, rebaselinePayload);
-	          pushLog(
-	            "Liability Rebaseline",
-	            "INFO",
-	            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
-	          );
-	          const updatedSafe = await updateLiability(
-	            liabilityId,
-	            {
+        if (editMode === "SAFE") {
+          const rebaselinePayload: LiabilityRebaselineIn = {
+            effective_at: parseEffectiveAt(liabilityEditForm.effective_at),
+            outstanding_balance: balance,
+            rebaseline_all_history: rebaselineAllHistory,
+            reason: liabilityEditForm.reason.trim() || null,
+          };
+          const rebased = await rebaselineLiability(liabilityId, rebaselinePayload);
+          pushLog(
+            "Liability Rebaseline",
+            "INFO",
+            `voided=${rebased.voided_transactions}, baseline=${rebased.baseline_transaction_ids.join(",") || "-"}`,
+          );
+          const updatedSafe = await updateLiability(
+            liabilityId,
+            {
               name,
               liability_type: liabilityEditForm.liability_type.trim() || "ETC",
               interest_rate: parseOptionalDecimal(liabilityEditForm.interest_rate),
@@ -2995,31 +3042,43 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_name }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.asset_symbol || "-" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatQuantity(item.quantity) }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.avg_cost ?? item.avg_price, holdingCurrencyCode(item)) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 {{
-                  item.cost_basis_total === null || item.cost_basis_total === undefined
-                    ? (item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCurrencyCode(item)))
-                    : formatMoney(item.cost_basis_total, holdingCurrencyCode(item))
+                  item.avg_cost === null || item.avg_cost === undefined
+                    ? formatMoney(item.avg_price, holdingAvgCostCurrencyCode(item))
+                    : formatMoney(item.avg_cost, holdingAvgCostCurrencyCode(item))
                 }}
               </td>
               <td class="px-2 py-1.5 whitespace-nowrap">
-                {{ item.current_price === null ? "-" : formatMoney(item.current_price, holdingCurrencyCode(item)) }}
+                {{
+                  item.cost_basis_total === null || item.cost_basis_total === undefined
+                    ? (item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCostBasisCurrencyCode(item)))
+                    : formatMoney(item.cost_basis_total, holdingCostBasisCurrencyCode(item))
+                }}
               </td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.evaluated_amount, holdingCurrencyCode(item)) }}</td>
+              <td class="px-2 py-1.5 whitespace-nowrap">
+                {{ item.current_price === null ? "-" : formatMoney(item.current_price, holdingPriceCurrencyCode(item)) }}
+              </td>
+              <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.evaluated_amount, holdingEvaluatedCurrencyCode(item)) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.pnl_pct === null ? "-" : `${Number(item.pnl_pct).toFixed(2)}%` }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">
                 <div class="flex flex-wrap gap-1">
-	                  <button
-	                    type="button"
-	                    class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600"
-	                    :disabled="isBusy"
-	                    @click="openEditHoldingModal(item)"
-	                  >
-	                    Edit
-	                  </button>
+		                  <button
+		                    type="button"
+		                    class="rounded border border-slate-300 px-2 py-0.5 transition focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:focus:ring-slate-600"
+		                    :class="
+		                      isAutoCashHoldingRow(item)
+		                        ? 'cursor-not-allowed opacity-50'
+		                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+		                    "
+		                    :disabled="isBusy || isAutoCashHoldingRow(item)"
+		                    :title="isAutoCashHoldingRow(item) ? AUTO_CASH_EDIT_GUIDE : 'Edit holding'"
+		                    @click="openEditHoldingModal(item)"
+		                  >
+		                    Edit
+		                  </button>
 	                  <button
 	                    v-if="canManageEntityHistory"
 	                    type="button"
@@ -3037,10 +3096,13 @@ onBeforeUnmount(() => {
             <tr v-if="holdingRows.length === 0">
               <td colspan="13" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No holdings found</td>
             </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
+	          </tbody>
+	        </table>
+	      </div>
+	      <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+	        {{ AUTO_CASH_EDIT_GUIDE }}
+	      </p>
+	      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
         <div class="flex flex-wrap items-center gap-2">
           <span>Total: {{ holdingQuery.total }}</span>
           <span>|</span>
@@ -3413,8 +3475,8 @@ onBeforeUnmount(() => {
 	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
 	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
 	        </p>
-	        <template v-if="portfolioEditForm.edit_mode === 'SAFE'">
-	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+		        <template v-if="portfolioEditForm.edit_mode === 'SAFE'">
+		          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
 	            <label class="text-xs">
 	              Effective At (KST)
 	              <input
@@ -3423,19 +3485,23 @@ onBeforeUnmount(() => {
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
 	            </label>
-	            <label class="text-xs">
-	              Reason (optional)
+		            <label class="text-xs">
+		              Reason (optional)
 	              <input
 	                v-model="portfolioEditForm.reason"
 	                placeholder="예: 월말 정산 기준점 보정"
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
-	            </label>
-	          </div>
-	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-	            SAFE는 기준일 이전 DEPOSIT/WITHDRAW 거래를 VOID하고 baseline을 생성합니다.
-	          </p>
-	        </template>
+		            </label>
+		            <label class="text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700">
+		              <input v-model="portfolioEditForm.rebaseline_all_history" type="checkbox" />
+		              <span>Rebaseline all history (기준시각 무시)</span>
+		            </label>
+		          </div>
+		          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+		            SAFE 기본값은 기준일 이전 거래만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다.
+		          </p>
+		        </template>
 	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
 	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
 	        </p>
@@ -3564,8 +3630,8 @@ onBeforeUnmount(() => {
 	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
 	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
 	        </p>
-	        <template v-if="holdingEditForm.edit_mode === 'SAFE'">
-	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+		        <template v-if="holdingEditForm.edit_mode === 'SAFE'">
+		          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
 	            <label class="text-xs">
 	              Effective At (KST)
 	              <input
@@ -3574,19 +3640,24 @@ onBeforeUnmount(() => {
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
 	            </label>
-	            <label class="text-xs">
-	              Reason (optional)
+		            <label class="text-xs">
+		              Reason (optional)
 	              <input
 	                v-model="holdingEditForm.reason"
 	                placeholder="예: 과거 수동 입력 정합화"
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
-	            </label>
-	          </div>
-	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-	            SAFE는 기준일 이전 BUY/SELL 거래를 VOID하고 baseline BUY를 생성합니다. SAFE에서는 Asset/Portfolio 구조 변경이 불가합니다.
-	          </p>
-	        </template>
+		            </label>
+		            <label class="text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700">
+		              <input v-model="holdingEditForm.rebaseline_all_history" type="checkbox" />
+		              <span>Rebaseline all history (기준시각 무시)</span>
+		            </label>
+		          </div>
+		          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+		            SAFE 기본값은 기준일 이전 BUY/SELL만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다.
+		            SAFE에서는 Asset/Portfolio 구조 변경이 불가합니다.
+		          </p>
+		        </template>
 	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
 	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
 	        </p>
@@ -3726,8 +3797,8 @@ onBeforeUnmount(() => {
 	        <p v-if="!canHardEdit" class="mt-2 text-[11px] text-amber-600 dark:text-amber-300">
 	          HARD 모드는 MAINTAINER+ 권한이 필요합니다.
 	        </p>
-	        <template v-if="liabilityEditForm.edit_mode === 'SAFE'">
-	          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+		        <template v-if="liabilityEditForm.edit_mode === 'SAFE'">
+		          <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
 	            <label class="text-xs">
 	              Effective At (KST)
 	              <input
@@ -3736,19 +3807,24 @@ onBeforeUnmount(() => {
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
 	            </label>
-	            <label class="text-xs">
-	              Reason (optional)
+		            <label class="text-xs">
+		              Reason (optional)
 	              <input
 	                v-model="liabilityEditForm.reason"
 	                placeholder="예: 대출잔액 재기준점"
 	                class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
 	              />
-	            </label>
-	          </div>
-	          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-	            SAFE는 기준일 이전 LOAN_BORROW/LOAN_REPAY를 VOID하고 baseline LOAN_BORROW를 생성합니다. LOAN_INTEREST는 원금 비영향으로 유지됩니다.
-	          </p>
-	        </template>
+		            </label>
+		            <label class="text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700">
+		              <input v-model="liabilityEditForm.rebaseline_all_history" type="checkbox" />
+		              <span>Rebaseline all history (기준시각 무시)</span>
+		            </label>
+		          </div>
+		          <p class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+		            SAFE 기본값은 기준일 이전 LOAN_BORROW/LOAN_REPAY만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다.
+		            LOAN_INTEREST는 원금 비영향으로 유지됩니다.
+		          </p>
+		        </template>
 	        <p v-else class="mt-2 text-[11px] text-rose-600 dark:text-rose-300">
 	          HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다.
 	        </p>

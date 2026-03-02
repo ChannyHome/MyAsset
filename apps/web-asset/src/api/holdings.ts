@@ -132,6 +132,7 @@ export type HoldingUpdateIn = Partial<HoldingCreateIn>;
 
 export type HoldingRebaselineIn = {
   effective_at: string;
+  rebaseline_all_history?: boolean;
   quantity: string | number;
   avg_price: string | number;
   avg_price_currency?: string;

@@ -208,6 +208,12 @@ export type SnapshotCsvPreviewOut = {
   liability_rows: SnapshotLiabilityRowOut[];
 };
 
+export type SnapshotDeleteOut = {
+  requested: number;
+  deleted: number;
+  deleted_ids: number[];
+};
+
 export type SnapshotListQuery = {
   page?: number;
   page_size?: number;
@@ -328,5 +334,10 @@ export async function previewSnapshotCsv(file: File): Promise<SnapshotCsvPreview
   const { data } = await http.post<SnapshotCsvPreviewOut>("/snapshots/csv/preview", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return data;
+}
+
+export async function deleteSnapshots(ids: number[]): Promise<SnapshotDeleteOut> {
+  const { data } = await http.post<SnapshotDeleteOut>("/snapshots/delete", { ids });
   return data;
 }

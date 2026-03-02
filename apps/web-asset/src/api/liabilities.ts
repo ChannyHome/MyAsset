@@ -83,6 +83,7 @@ export type LiabilityUpdateIn = Partial<LiabilityCreateIn>;
 
 export type LiabilityRebaselineIn = {
   effective_at: string;
+  rebaseline_all_history?: boolean;
   outstanding_balance: string | number;
   reason?: string | null;
 };

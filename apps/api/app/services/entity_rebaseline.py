@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.asset import Asset
 from app.models.holding import Holding
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
@@ -17,6 +18,8 @@ from app.schemas.entity_change import (
 from app.services.trade_ledger import (
     TradeSyncError,
     normalize_trade_payload,
+    rebuild_cash_holdings_for_portfolio,
+    rebuild_portfolio_cashflow,
     sync_single_trade_scope,
 )
 
@@ -43,6 +46,17 @@ def normalize_effective_at(value: datetime) -> datetime:
     return value.astimezone(UTC).replace(tzinfo=None)
 
 
+def _is_cash_balance_asset(asset: Asset | None) -> bool:
+    if asset is None:
+        return False
+    meta = asset.meta_json if isinstance(asset.meta_json, dict) else {}
+    subtype = str(meta.get("asset_subtype") or "").upper()
+    if subtype == "CASH_BALANCE":
+        return True
+    symbol = (asset.symbol or "").upper()
+    return symbol.startswith("CASH_")
+
+
 def _void_txns(txns: list[Transaction]) -> int:
     count = 0
     for txn in txns:
@@ -62,20 +76,24 @@ def rebaseline_holding(
 ) -> RebaselineResult:
     if holding.portfolio_id is None:
         raise TradeSyncError("Holding rebaseline requires portfolio-linked holding")
+    asset = db.scalar(select(Asset).where(Asset.id == holding.asset_id))
+    if _is_cash_balance_asset(asset):
+        raise TradeSyncError(
+            "Cash balance holding is ledger-derived. "
+            "Use DEPOSIT/WITHDRAW/ADJUSTMENT or portfolio rebaseline for cash correction."
+        )
 
     effective_at = normalize_effective_at(payload.effective_at)
-    txns = list(
-        db.scalars(
-            select(Transaction).where(
-                Transaction.owner_user_id == owner_user_id,
-                Transaction.portfolio_id == holding.portfolio_id,
-                Transaction.asset_id == holding.asset_id,
-                Transaction.status == "POSTED",
-                Transaction.txn_type.in_(_HOLDING_TXN_TYPES),
-                Transaction.executed_at <= effective_at,
-            )
-        ).all()
+    txns_stmt = select(Transaction).where(
+        Transaction.owner_user_id == owner_user_id,
+        Transaction.portfolio_id == holding.portfolio_id,
+        Transaction.asset_id == holding.asset_id,
+        Transaction.status == "POSTED",
+        Transaction.txn_type.in_(_HOLDING_TXN_TYPES),
     )
+    if not payload.rebaseline_all_history:
+        txns_stmt = txns_stmt.where(Transaction.executed_at <= effective_at)
+    txns = list(db.scalars(txns_stmt).all())
     voided = _void_txns(txns)
 
     quantity = Decimal(payload.quantity)
@@ -106,7 +124,7 @@ def rebaseline_holding(
                 "executed_at": effective_at,
                 "memo": f"REBASELINE holding_id={holding.id}",
                 "source_type": "AUTO",
-                "auto_apply_cash_holding": False,
+                "auto_apply_cash_holding": True,
                 "auto_apply_portfolio_cashflow": False,
             },
             strict_fx=strict_fx,
@@ -115,6 +133,9 @@ def rebaseline_holding(
         db.add(baseline_txn)
         db.flush()
         baseline_ids.append(int(baseline_txn.id))
+
+    # Session maker uses autoflush=False; flush before rebuilding from queries.
+    db.flush()
 
     try:
         sync_single_trade_scope(
@@ -143,17 +164,15 @@ def rebaseline_portfolio(
     strict_fx: bool,
 ) -> RebaselineResult:
     effective_at = normalize_effective_at(payload.effective_at)
-    txns = list(
-        db.scalars(
-            select(Transaction).where(
-                Transaction.owner_user_id == owner_user_id,
-                Transaction.portfolio_id == portfolio.id,
-                Transaction.status == "POSTED",
-                Transaction.txn_type.in_(_PORTFOLIO_TXN_TYPES),
-                Transaction.executed_at <= effective_at,
-            )
-        ).all()
+    txns_stmt = select(Transaction).where(
+        Transaction.owner_user_id == owner_user_id,
+        Transaction.portfolio_id == portfolio.id,
+        Transaction.status == "POSTED",
+        Transaction.txn_type.in_(_PORTFOLIO_TXN_TYPES),
     )
+    if not payload.rebaseline_all_history:
+        txns_stmt = txns_stmt.where(Transaction.executed_at <= effective_at)
+    txns = list(db.scalars(txns_stmt).all())
     voided = _void_txns(txns)
 
     deposit_amount = Decimal(payload.cumulative_deposit_amount)
@@ -174,7 +193,7 @@ def rebaseline_portfolio(
                 "executed_at": effective_at,
                 "memo": f"REBASELINE portfolio_deposit portfolio_id={portfolio.id}",
                 "source_type": "AUTO",
-                "auto_apply_cash_holding": False,
+                "auto_apply_cash_holding": True,
                 "auto_apply_portfolio_cashflow": True,
             },
             strict_fx=strict_fx,
@@ -196,7 +215,7 @@ def rebaseline_portfolio(
                 "executed_at": effective_at,
                 "memo": f"REBASELINE portfolio_withdraw portfolio_id={portfolio.id}",
                 "source_type": "AUTO",
-                "auto_apply_cash_holding": False,
+                "auto_apply_cash_holding": True,
                 "auto_apply_portfolio_cashflow": True,
             },
             strict_fx=strict_fx,
@@ -206,13 +225,22 @@ def rebaseline_portfolio(
         db.flush()
         baseline_ids.append(int(withdraw_txn.id))
 
+    # Session maker uses autoflush=False; flush before rebuilding from queries.
+    db.flush()
+
     try:
-        sync_single_trade_scope(
-            db=db,
+        # Rebaseline 결과를 있는 그대로 반영해야 하므로,
+        # portfolio cashflow baseline 자동 생성 경로를 우회하고
+        # 집계 재계산만 수행한다.
+        rebuild_portfolio_cashflow(
+            db,
             owner_user_id=owner_user_id,
             portfolio_id=portfolio.id,
-            asset_id=None,
-            liability_id=None,
+        )
+        rebuild_cash_holdings_for_portfolio(
+            db,
+            owner_user_id=owner_user_id,
+            portfolio_id=portfolio.id,
         )
     except TradeSyncError as exc:
         raise RebaselineConflictError(str(exc)) from exc
@@ -236,17 +264,15 @@ def rebaseline_liability(
         raise TradeSyncError("Liability rebaseline requires portfolio-linked liability")
 
     effective_at = normalize_effective_at(payload.effective_at)
-    txns = list(
-        db.scalars(
-            select(Transaction).where(
-                Transaction.owner_user_id == owner_user_id,
-                Transaction.liability_id == liability.id,
-                Transaction.status == "POSTED",
-                Transaction.txn_type.in_(_LIABILITY_PRINCIPAL_TXN_TYPES),
-                Transaction.executed_at <= effective_at,
-            )
-        ).all()
+    txns_stmt = select(Transaction).where(
+        Transaction.owner_user_id == owner_user_id,
+        Transaction.liability_id == liability.id,
+        Transaction.status == "POSTED",
+        Transaction.txn_type.in_(_LIABILITY_PRINCIPAL_TXN_TYPES),
     )
+    if not payload.rebaseline_all_history:
+        txns_stmt = txns_stmt.where(Transaction.executed_at <= effective_at)
+    txns = list(db.scalars(txns_stmt).all())
     voided = _void_txns(txns)
 
     balance = Decimal(payload.outstanding_balance)
@@ -277,6 +303,9 @@ def rebaseline_liability(
         db.add(baseline_txn)
         db.flush()
         baseline_ids.append(int(baseline_txn.id))
+
+    # Session maker uses autoflush=False; flush before rebuilding from queries.
+    db.flush()
 
     try:
         sync_single_trade_scope(

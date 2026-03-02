@@ -25,6 +25,8 @@ from app.schemas.snapshot import (
     SnapshotAllocationOut,
     SnapshotCaptureIn,
     SnapshotCsvPreviewOut,
+    SnapshotDeleteIn,
+    SnapshotDeleteOut,
     SnapshotHoldingRowOut,
     SnapshotHoldingSortBy,
     SnapshotHoldingTablePageOut,
@@ -189,6 +191,45 @@ def list_snapshots(
         q=query_text,
         sort_by=sort_by,
         sort_order=sort_order,
+    )
+
+
+@router.post("/delete", response_model=SnapshotDeleteOut)
+def delete_snapshots(
+    payload: SnapshotDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> SnapshotDeleteOut:
+    requested_ids = [int(i) for i in payload.ids if int(i) > 0]
+    if not requested_ids:
+        raise HTTPException(status_code=400, detail="ids is required")
+    if len(requested_ids) > 500:
+        raise HTTPException(status_code=400, detail="Too many snapshot ids in one request (max 500)")
+
+    allowed_ids = filter_snapshot_ids_for_user(db, current_user.id, requested_ids)
+    if not allowed_ids:
+        return SnapshotDeleteOut(requested=len(requested_ids), deleted=0, deleted_ids=[])
+
+    db.query(SnapshotHoldingRow).filter(SnapshotHoldingRow.snapshot_id.in_(allowed_ids)).delete(
+        synchronize_session=False
+    )
+    db.query(SnapshotLiabilityRow).filter(SnapshotLiabilityRow.snapshot_id.in_(allowed_ids)).delete(
+        synchronize_session=False
+    )
+    db.query(SnapshotPortfolioRow).filter(SnapshotPortfolioRow.snapshot_id.in_(allowed_ids)).delete(
+        synchronize_session=False
+    )
+    deleted = (
+        db.query(SnapshotSet)
+        .filter(SnapshotSet.owner_user_id == current_user.id, SnapshotSet.id.in_(allowed_ids))
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+
+    return SnapshotDeleteOut(
+        requested=len(requested_ids),
+        deleted=int(deleted),
+        deleted_ids=allowed_ids,
     )
 
 
