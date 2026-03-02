@@ -204,6 +204,7 @@ def list_holdings_table(
     sort_by: HoldingTableSortBy = Query(default=HoldingTableSortBy.UPDATED_AT),
     sort_order: SortOrder = Query(default=SortOrder.DESC),
     q: str | None = Query(default=None, min_length=1, max_length=100),
+    portfolio_id: int | None = Query(default=None, ge=1),
     display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = True,
     include_excluded_portfolios: bool = True,
@@ -216,6 +217,8 @@ def list_holdings_table(
     pnl_pct_expr = ((evaluated_expr - invested_expr) / func.nullif(invested_expr, 0)) * 100
 
     filters = [Holding.owner_user_id == current_user.id]
+    if portfolio_id is not None:
+        filters.append(Holding.portfolio_id == portfolio_id)
     if not include_hidden:
         filters.append(Holding.is_hidden.is_(False))
         filters.append(or_(Holding.portfolio_id.is_(None), Portfolio.is_hidden.is_(False)))

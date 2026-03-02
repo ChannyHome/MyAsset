@@ -191,6 +191,7 @@ def list_portfolios_table(
     sort_by: PortfolioTableSortBy = Query(default=PortfolioTableSortBy.UPDATED_AT),
     sort_order: SortOrder = Query(default=SortOrder.DESC),
     q: str | None = Query(default=None, min_length=1, max_length=100),
+    portfolio_id: int | None = Query(default=None, ge=1),
     display_currency: str | None = Query(default=None, min_length=3, max_length=3),
     include_hidden: bool = True,
     include_excluded: bool = True,
@@ -199,6 +200,8 @@ def list_portfolios_table(
 ) -> PortfolioTablePageOut:
     query_text = q.strip() if q else None
     filters = [Portfolio.owner_user_id == current_user.id]
+    if portfolio_id is not None:
+        filters.append(Portfolio.id == portfolio_id)
     if not include_hidden:
         filters.append(Portfolio.is_hidden.is_(False))
     if not include_excluded:

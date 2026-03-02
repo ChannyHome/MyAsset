@@ -110,6 +110,7 @@ export type HoldingsTableQuery = {
   sort_by?: HoldingTableSortBy;
   sort_order?: SortOrder;
   q?: string;
+  portfolio_id?: number;
   display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded_portfolios?: boolean;

@@ -56,6 +56,7 @@ export type SnapshotAllocationItemOut = {
   label: string;
   value: string | number;
   ratio_pct: string | number;
+  return_pct?: string | number | null;
 };
 
 export type SnapshotAllocationOut = {

@@ -99,6 +99,7 @@ export type PortfoliosTableQuery = {
   sort_by?: PortfolioTableSortBy;
   sort_order?: SortOrder;
   q?: string;
+  portfolio_id?: number;
   display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded?: boolean;

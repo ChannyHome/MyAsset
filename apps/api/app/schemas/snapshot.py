@@ -69,6 +69,7 @@ class SnapshotAllocationItemOut(BaseModel):
     label: str
     value: Decimal
     ratio_pct: Decimal
+    return_pct: Decimal | None = None
 
 
 class SnapshotAllocationOut(BaseModel):

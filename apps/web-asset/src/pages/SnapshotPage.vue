@@ -1,8 +1,8 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 
 import { getAllocation, getNetworthSeries, getSummary, type AnalyticsSummaryV2Out } from "../api/analytics";
-import { getHoldingsTable, type HoldingTableRowOut, type HoldingTableSortBy } from "../api/holdings";
+import { getHoldingsPerformance, getHoldingsTable, type HoldingPerformanceOut, type HoldingTableRowOut, type HoldingTableSortBy } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut, type LiabilityTableSortBy } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut, type PortfolioTableSortBy } from "../api/portfolios";
 import {
@@ -39,6 +39,7 @@ type DisplayCurrency = "KRW" | "USD";
 type SourceType = "LIVE" | "SNAPSHOT" | "CSV_PREVIEW";
 type KpiMode = "SUMMARY" | "PORTFOLIOS";
 type TrendMode = "SUMMARY" | "PORTFOLIO_RETURN";
+type DashboardTarget = "GROSS" | "LIABILITIES" | "NET" | "HOLDINGS";
 
 type SummaryVm = {
   gross: number;
@@ -65,6 +66,7 @@ type PortfolioVm = {
 
 type HoldingVm = {
   id: number;
+  assetId: number | null;
   portfolioId: number | null;
   portfolioName: string;
   assetName: string;
@@ -101,6 +103,7 @@ type TrendPoint = { snapshotId: number; label: string; gross: number; liabilitie
 type TrendLine = { key: string; label: string; values: Array<{ snapshotId: number; value: number }> };
 
 const AMOUNT_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
+const SNAPSHOT_SECTION_STATE_STORAGE_KEY = "myasset:snapshot:section-expanded";
 
 type Html2CanvasFn = (
   element: HTMLElement,
@@ -154,6 +157,22 @@ function formatPercent(value: number | null | undefined): string {
 
 function formatDateTime(value: string | null | undefined): string {
   return formatDateTimeSeoul(value);
+}
+
+function deriveReturnPct(
+  rawReturnPct: string | number | null | undefined,
+  profit: number,
+  costBasis: number,
+): number | null {
+  const normalized = toNullable(rawReturnPct);
+  if (normalized != null) return normalized;
+  if (costBasis > 0) {
+    return (profit / costBasis) * 100;
+  }
+  if (Math.abs(profit) < 1e-9) {
+    return 0;
+  }
+  return null;
 }
 
 function toLivePortfolioSortBy(
@@ -323,7 +342,7 @@ function drawDonutForExport(documentRef: Document): void {
 }
 
 function applyAmountMaskForExport(documentRef: Document): void {
-  const maskedNodes = documentRef.querySelectorAll<HTMLElement>(".amount-mask");
+  const maskedNodes = documentRef.querySelectorAll<HTMLElement>("[style*='blur(6px)'], .amount-mask");
 
   const calcMaskWidthCh = (text: string): number => {
     const compactLength = text.replace(/\s+/g, "").length;
@@ -449,7 +468,7 @@ function topNWithOthers(items: AllocationVm[], topN = 10): AllocationVm[] {
   return [...head, { key: "others", label: "Others", value: others.value, ratioPct: others.ratio }];
 }
 
-const { displayCurrency, ensureInitialized, settingsSaving, setDisplayCurrency } = useDisplayCurrency();
+const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 
 const sourceType = ref<SourceType>("LIVE");
 const appliedSnapshotId = ref<number | null>(null);
@@ -459,16 +478,18 @@ const loading = ref(false);
 const errorMessage = ref("");
 const toastMessage = ref("");
 const captureLoading = ref(false);
-const dashboardExpanded = ref(true);
+const dashboardExpanded = ref(false);
+const trendExpanded = ref(false);
+const portfoliosExpanded = ref(false);
+const holdingsExpanded = ref(false);
+const liabilitiesExpanded = ref(false);
 const amountMaskEnabled = ref(false);
 const exportingDashboardImage = ref(false);
 const snapshotDashboardRef = ref<HTMLElement | null>(null);
 
 const kpiMode = ref<KpiMode>("SUMMARY");
-const kpiPortfolioKey = ref("ALL");
-const donutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "HOLDINGS">("GROSS");
+const dashboardTarget = ref<DashboardTarget>("GROSS");
 const donutStart = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
-const treemapTarget = ref<"GROSS" | "HOLDINGS">("GROSS");
 const holdingsPortfolioKey = ref("ALL");
 
 const summaryVm = ref<SummaryVm | null>(null);
@@ -477,6 +498,7 @@ const snapshotSummary = ref<SnapshotSummaryOut | null>(null);
 const portfolioRows = ref<PortfolioVm[]>([]);
 const holdingRows = ref<HoldingVm[]>([]);
 const liabilityRows = ref<LiabilityVm[]>([]);
+const liveHoldingPerformanceRows = ref<HoldingPerformanceOut[]>([]);
 
 const portfolioTable = reactive({
   page: 1,
@@ -597,8 +619,8 @@ const portfolioOptions = computed(() => {
 });
 
 const kpiPortfolioRows = computed(() => {
-  if (kpiPortfolioKey.value === "ALL") return portfolioRows.value;
-  const pid = Number(kpiPortfolioKey.value);
+  if (holdingsPortfolioKey.value === "ALL") return portfolioRows.value;
+  const pid = Number(holdingsPortfolioKey.value);
   if (!Number.isFinite(pid)) return portfolioRows.value;
   return portfolioRows.value.filter((item) => item.portfolioId === pid);
 });
@@ -645,6 +667,75 @@ const trendPortfolioOptions = computed(() =>
   portfolioOptions.value.filter((item) => item.key !== "UNASSIGNED"),
 );
 const maskedClass = computed(() => (amountMaskEnabled.value ? "amount-mask" : ""));
+const portfolioReturnByKey = computed(() => {
+  const map = new Map<string, number | null>();
+  for (const row of portfolioRows.value) {
+    const key = `portfolio:${row.portfolioId == null ? "none" : String(row.portfolioId)}`;
+    map.set(key, row.returnPct ?? null);
+  }
+  return map;
+});
+const holdingTableReturnByAssetKey = computed(() => {
+  const map = new Map<string, number | null>();
+  for (const row of holdingRows.value) {
+    const key = `asset:${row.assetId ?? row.id}`;
+    if (!map.has(key)) {
+      map.set(key, row.returnPct ?? null);
+    }
+  }
+  return map;
+});
+
+const liveHoldingReturnByAssetKey = computed(() => {
+  const map = new Map<string, number | null>();
+  const portfolioIdFilter = holdingsPortfolioKey.value === "ALL" ? null : Number(holdingsPortfolioKey.value);
+  const byAsset = new Map<number, { invested: number; pnl: number; fallbackPct: number | null }>();
+
+  for (const row of liveHoldingPerformanceRows.value) {
+    if (portfolioIdFilter != null && row.portfolio_id !== portfolioIdFilter) continue;
+    const assetId = Number(row.asset_id);
+    if (!Number.isFinite(assetId)) continue;
+
+    const invested = toNumber(row.invested_amount ?? row.cost_basis_total ?? 0);
+    const pnl = toNumber(row.pnl_amount ?? 0);
+    const fallbackPct = toNullable(row.pnl_pct ?? null);
+    const prev = byAsset.get(assetId);
+    if (!prev) {
+      byAsset.set(assetId, { invested: Math.max(0, invested), pnl, fallbackPct });
+      continue;
+    }
+    prev.invested += Math.max(0, invested);
+    prev.pnl += pnl;
+    if (prev.fallbackPct == null && fallbackPct != null) prev.fallbackPct = fallbackPct;
+  }
+
+  for (const [assetId, agg] of byAsset.entries()) {
+    const key = `asset:${assetId}`;
+    if (agg.invested > 0) {
+      map.set(key, (agg.pnl / agg.invested) * 100);
+    } else {
+      map.set(key, agg.fallbackPct ?? null);
+    }
+  }
+
+  return map;
+});
+
+function resolveAllocationReturnPct(
+  rawReturnPct: string | number | null | undefined,
+  target: "GROSS" | "LIABILITIES" | "NET" | "HOLDINGS",
+  key: string,
+): number | null {
+  const normalized = toNullable(rawReturnPct);
+  if (normalized != null) return normalized;
+  if (target === "GROSS" || target === "NET") {
+    return portfolioReturnByKey.value.get(key) ?? null;
+  }
+  if (target === "HOLDINGS") {
+    return sourceType.value === "LIVE" ? (liveHoldingReturnByAssetKey.value.get(key) ?? null) : (holdingTableReturnByAssetKey.value.get(key) ?? null);
+  }
+  return null;
+}
 
 function loadMaskFromStorage(): void {
   if (typeof window === "undefined") return;
@@ -654,6 +745,34 @@ function loadMaskFromStorage(): void {
 function saveMaskToStorage(): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(AMOUNT_MASK_STORAGE_KEY, amountMaskEnabled.value ? "1" : "0");
+}
+
+function loadSectionStateFromStorage(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(SNAPSHOT_SECTION_STATE_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<"dashboard" | "trend" | "portfolios" | "holdings" | "liabilities", boolean>>;
+    if (typeof parsed.dashboard === "boolean") dashboardExpanded.value = parsed.dashboard;
+    if (typeof parsed.trend === "boolean") trendExpanded.value = parsed.trend;
+    if (typeof parsed.portfolios === "boolean") portfoliosExpanded.value = parsed.portfolios;
+    if (typeof parsed.holdings === "boolean") holdingsExpanded.value = parsed.holdings;
+    if (typeof parsed.liabilities === "boolean") liabilitiesExpanded.value = parsed.liabilities;
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
+function saveSectionStateToStorage(): void {
+  if (typeof window === "undefined") return;
+  const payload = {
+    dashboard: dashboardExpanded.value,
+    trend: trendExpanded.value,
+    portfolios: portfoliosExpanded.value,
+    holdings: holdingsExpanded.value,
+    liabilities: liabilitiesExpanded.value,
+  };
+  window.localStorage.setItem(SNAPSHOT_SECTION_STATE_STORAGE_KEY, JSON.stringify(payload));
 }
 
 function mapSummaryFromLive(row: AnalyticsSummaryV2Out): SummaryVm {
@@ -680,15 +799,17 @@ function mapSummaryFromSnapshot(row: SnapshotSummaryOut, currency: DisplayCurren
 }
 
 function mapPortfolioFromLive(row: PortfolioTableRowOut): PortfolioVm {
+  const invested = toNumber(row.net_contribution_total);
+  const profit = toNumber(row.portfolio_profit_total ?? row.total_pnl_amount);
   return {
     id: row.id,
     portfolioId: row.id,
     name: row.name,
     type: row.type,
     current: toNumber(row.gross_assets_total),
-    invested: toNumber(row.net_contribution_total),
-    profit: toNumber(row.portfolio_profit_total ?? row.total_pnl_amount),
-    returnPct: toNullable(row.total_return_pct),
+    invested,
+    profit,
+    returnPct: deriveReturnPct(row.total_return_pct, profit, invested),
     liabilities: toNumber(row.liabilities_total),
     net: toNumber(row.net_assets_total),
     debtAdjusted: toNumber(row.debt_adjusted_principal_total ?? row.principal_minus_debt_total),
@@ -696,15 +817,17 @@ function mapPortfolioFromLive(row: PortfolioTableRowOut): PortfolioVm {
 }
 
 function mapPortfolioFromSnapshot(row: SnapshotPortfolioRowOut): PortfolioVm {
+  const invested = toNumber(row.invested_principal);
+  const profit = toNumber(row.portfolio_profit);
   return {
     id: row.id,
     portfolioId: row.portfolio_id,
     name: row.portfolio_name,
     type: row.portfolio_type,
     current: toNumber(row.current),
-    invested: toNumber(row.invested_principal),
-    profit: toNumber(row.portfolio_profit),
-    returnPct: toNullable(row.return_pct),
+    invested,
+    profit,
+    returnPct: deriveReturnPct(row.return_pct, profit, invested),
     liabilities: toNumber(row.liabilities),
     net: toNumber(row.net_assets),
     debtAdjusted: toNumber(row.debt_adjusted_principal),
@@ -712,8 +835,11 @@ function mapPortfolioFromSnapshot(row: SnapshotPortfolioRowOut): PortfolioVm {
 }
 
 function mapHoldingFromLive(row: HoldingTableRowOut): HoldingVm {
+  const costBasis = toNumber(row.cost_basis_total);
+  const profit = toNumber(row.pnl_amount);
   return {
     id: row.id,
+    assetId: row.asset_id ?? null,
     portfolioId: row.portfolio_id,
     portfolioName: row.portfolio_name || "Unassigned",
     assetName: row.asset_name,
@@ -723,15 +849,18 @@ function mapHoldingFromLive(row: HoldingTableRowOut): HoldingVm {
     avgCost: toNumber(row.avg_cost),
     avgCostCurrency: row.avg_cost_currency || "KRW",
     evaluated: toNumber(row.evaluated_amount),
-    costBasis: toNumber(row.cost_basis_total),
-    profit: toNumber(row.pnl_amount),
-    returnPct: toNullable(row.pnl_pct),
+    costBasis,
+    profit,
+    returnPct: deriveReturnPct(row.pnl_pct, profit, costBasis),
   };
 }
 
 function mapHoldingFromSnapshot(row: SnapshotHoldingRowOut): HoldingVm {
+  const costBasis = toNumber(row.cost_basis);
+  const profit = toNumber(row.profit);
   return {
     id: row.id,
+    assetId: row.asset_id ?? null,
     portfolioId: row.portfolio_id,
     portfolioName: row.portfolio_name,
     assetName: row.asset_name,
@@ -741,9 +870,9 @@ function mapHoldingFromSnapshot(row: SnapshotHoldingRowOut): HoldingVm {
     avgCost: toNumber(row.avg_cost),
     avgCostCurrency: row.avg_cost_currency,
     evaluated: toNumber(row.evaluated),
-    costBasis: toNumber(row.cost_basis),
-    profit: toNumber(row.profit),
-    returnPct: toNullable(row.return_pct),
+    costBasis,
+    profit,
+    returnPct: deriveReturnPct(row.return_pct, profit, costBasis),
   };
 }
 
@@ -839,6 +968,19 @@ async function loadSummary(): Promise<void> {
   summaryVm.value = mapSummaryFromSnapshot(appliedCsvPreview.value.summary, summaryCurrency.value);
 }
 
+async function loadLiveHoldingPerformanceRows(): Promise<void> {
+  if (sourceType.value !== "LIVE") {
+    liveHoldingPerformanceRows.value = [];
+    return;
+  }
+  const out = await getHoldingsPerformance({
+    display_currency: displayCurrency.value,
+    include_hidden: false,
+    include_excluded_portfolios: false,
+  });
+  liveHoldingPerformanceRows.value = out;
+}
+
 function applyCsvPortfolioTable(): void {
   if (!appliedCsvPreview.value) {
     portfolioRows.value = [];
@@ -931,12 +1073,12 @@ async function loadPortfolioTable(): Promise<void> {
         page_size: portfolioTable.pageSize,
         sort_by: toLivePortfolioSortBy(portfolioTable.sortBy),
         sort_order: portfolioTable.sortOrder,
+        portfolio_id: tablePortfolioId.value,
         display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       });
-      const mapped = out.items.map(mapPortfolioFromLive);
-      portfolioRows.value = tablePortfolioId.value == null ? mapped : mapped.filter((item) => item.portfolioId === tablePortfolioId.value);
+      portfolioRows.value = out.items.map(mapPortfolioFromLive);
       portfolioTable.total = out.total;
       return;
     }
@@ -970,15 +1112,12 @@ async function loadHoldingTable(): Promise<void> {
         sort_by: toLiveHoldingSortBy(holdingTable.sortBy),
         sort_order: holdingTable.sortOrder,
         q: holdingTable.q || undefined,
+        portfolio_id: tablePortfolioId.value,
         display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded_portfolios: false,
       });
-      let mapped = out.items.map(mapHoldingFromLive);
-      if (tablePortfolioId.value != null) {
-        mapped = mapped.filter((item) => item.portfolioId === tablePortfolioId.value);
-      }
-      holdingRows.value = mapped;
+      holdingRows.value = out.items.map(mapHoldingFromLive);
       holdingTable.total = out.total;
       return;
     }
@@ -1013,15 +1152,12 @@ async function loadLiabilityTable(): Promise<void> {
         sort_by: toLiveLiabilitySortBy(liabilityTable.sortBy),
         sort_order: liabilityTable.sortOrder,
         q: liabilityTable.q || undefined,
+        portfolio_id: tablePortfolioId.value,
         display_currency: displayCurrency.value,
         include_hidden: false,
         include_excluded: false,
       });
-      let mapped = out.items.map(mapLiabilityFromLive);
-      if (tablePortfolioId.value != null) {
-        mapped = mapped.filter((item) => item.portfolioId === tablePortfolioId.value);
-      }
-      liabilityRows.value = mapped;
+      liabilityRows.value = out.items.map(mapLiabilityFromLive);
       liabilityTable.total = out.total;
       return;
     }
@@ -1054,8 +1190,8 @@ async function loadAllocations(): Promise<void> {
       holdingsPortfolioKey.value === "ALL" ? undefined : Number.isFinite(Number(holdingsPortfolioKey.value)) ? Number(holdingsPortfolioKey.value) : undefined;
     if (sourceType.value === "LIVE") {
       const out = await getAllocation({
-        target: donutTarget.value === "HOLDINGS" ? "HOLDINGS" : donutTarget.value,
-        group_by: donutTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        target: dashboardTarget.value,
+        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
         top_n: 10,
         portfolio_id: holdingsPortfolio,
         display_currency: displayCurrency.value,
@@ -1066,14 +1202,15 @@ async function loadAllocations(): Promise<void> {
         label: item.label,
         value: toNumber(item.value),
         ratioPct: toNumber(item.ratio_pct),
+        returnPct: resolveAllocationReturnPct(item.return_pct, dashboardTarget.value, item.key),
       }));
       return;
     }
     if (sourceType.value === "SNAPSHOT") {
       if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
       const out = await getSnapshotAllocation(appliedSnapshotId.value, {
-        target: donutTarget.value,
-        group_by: donutTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        target: dashboardTarget.value,
+        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
         top_n: 10,
         portfolio_id: holdingsPortfolio,
         display_currency: displayCurrency.value,
@@ -1084,10 +1221,11 @@ async function loadAllocations(): Promise<void> {
         label: item.label,
         value: toNumber(item.value),
         ratioPct: toNumber(item.ratio_pct),
+        returnPct: resolveAllocationReturnPct(item.return_pct, dashboardTarget.value, item.key),
       }));
       return;
     }
-    const local = localAllocation(donutTarget.value, holdingsPortfolio);
+    const local = localAllocation(dashboardTarget.value, holdingsPortfolio);
     donutTotal.value = local.total;
     donutItems.value = local.items;
   } catch (error) {
@@ -1107,8 +1245,8 @@ async function loadTreemap(): Promise<void> {
       holdingsPortfolioKey.value === "ALL" ? undefined : Number.isFinite(Number(holdingsPortfolioKey.value)) ? Number(holdingsPortfolioKey.value) : undefined;
     if (sourceType.value === "LIVE") {
       const out = await getAllocation({
-        target: treemapTarget.value === "HOLDINGS" ? "HOLDINGS" : "GROSS",
-        group_by: treemapTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        target: dashboardTarget.value,
+        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
         top_n: 10,
         portfolio_id: holdingsPortfolio,
         display_currency: displayCurrency.value,
@@ -1118,14 +1256,19 @@ async function loadTreemap(): Promise<void> {
         label: item.label,
         value: toNumber(item.value),
         ratioPct: toNumber(item.ratio_pct),
+        returnPct: resolveAllocationReturnPct(
+          item.return_pct,
+          dashboardTarget.value,
+          item.key,
+        ),
       }));
       return;
     }
     if (sourceType.value === "SNAPSHOT") {
       if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
       const out = await getSnapshotAllocation(appliedSnapshotId.value, {
-        target: treemapTarget.value === "HOLDINGS" ? "HOLDINGS" : "GROSS",
-        group_by: treemapTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        target: dashboardTarget.value,
+        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
         top_n: 10,
         portfolio_id: holdingsPortfolio,
         display_currency: displayCurrency.value,
@@ -1135,10 +1278,15 @@ async function loadTreemap(): Promise<void> {
         label: item.label,
         value: toNumber(item.value),
         ratioPct: toNumber(item.ratio_pct),
+        returnPct: resolveAllocationReturnPct(
+          item.return_pct,
+          dashboardTarget.value,
+          item.key,
+        ),
       }));
       return;
     }
-    const local = localAllocation(treemapTarget.value === "HOLDINGS" ? "HOLDINGS" : "GROSS", holdingsPortfolio);
+    const local = localAllocation(dashboardTarget.value, holdingsPortfolio);
     treemapItems.value = local.items;
   } catch (error) {
     treemapError.value = error instanceof Error ? error.message : "Failed to load treemap";
@@ -1248,7 +1396,7 @@ async function reloadAll(options?: { preserveToast?: boolean }): Promise<void> {
   errorMessage.value = "";
   try {
     await loadSummary();
-    await Promise.all([loadPortfolioTable(), loadHoldingTable(), loadLiabilityTable()]);
+    await Promise.all([loadPortfolioTable(), loadHoldingTable(), loadLiabilityTable(), loadLiveHoldingPerformanceRows()]);
     await Promise.all([loadAllocations(), loadTreemap()]);
     if (sourceType.value !== "CSV_PREVIEW") {
       await loadSnapshotCatalog();
@@ -1545,6 +1693,7 @@ function toggleTrendSnapshot(id: number, checked: boolean): void {
 
 onMounted(async () => {
   loadMaskFromStorage();
+  loadSectionStateFromStorage();
   await ensureInitialized();
   await reloadAll();
 });
@@ -1554,6 +1703,10 @@ watch(
   () => saveMaskToStorage(),
 );
 watch(
+  () => [dashboardExpanded.value, trendExpanded.value, portfoliosExpanded.value, holdingsExpanded.value, liabilitiesExpanded.value],
+  () => saveSectionStateToStorage(),
+);
+watch(
   () => displayCurrency.value,
   async (next, prev) => {
     if (next === prev) return;
@@ -1561,12 +1714,11 @@ watch(
   },
 );
 watch(
-  () => [donutTarget.value, holdingsPortfolioKey.value, sourceType.value],
-  () => void loadAllocations(),
-);
-watch(
-  () => [treemapTarget.value, holdingsPortfolioKey.value, sourceType.value],
-  () => void loadTreemap(),
+  () => [dashboardTarget.value, holdingsPortfolioKey.value, sourceType.value],
+  () => {
+    void loadAllocations();
+    void loadTreemap();
+  },
 );
 watch(
   () => [portfolioTable.page, portfolioTable.pageSize, portfolioTable.sortBy, portfolioTable.sortOrder, tablePortfolioKey.value, sourceType.value],
@@ -1602,26 +1754,6 @@ watch(
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Preview-only analysis mode. Live Home/Report/Dashboard data is not modified.
           </p>
-        </div>
-        <div class="inline-flex rounded-xl border border-slate-300 p-1 dark:border-slate-700">
-          <button
-            type="button"
-            class="rounded-lg px-3 py-1.5 text-sm font-semibold"
-            :class="displayCurrency === 'KRW' ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
-            :disabled="settingsSaving"
-            @click="setDisplayCurrency('KRW')"
-          >
-            KRW
-          </button>
-          <button
-            type="button"
-            class="rounded-lg px-3 py-1.5 text-sm font-semibold"
-            :class="displayCurrency === 'USD' ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
-            :disabled="settingsSaving"
-            @click="setDisplayCurrency('USD')"
-          >
-            USD
-          </button>
         </div>
       </div>
     </header>
@@ -1673,11 +1805,15 @@ watch(
           </button>
           <button
             type="button"
-            class="rounded-xl border border-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
-            :disabled="exportingDashboardImage || loading || !dashboardExpanded"
-            @click="exportSnapshotDashboardImage"
+            class="rounded-xl border px-4 py-2 text-sm font-semibold transition-colors"
+            :class="
+              amountMaskEnabled
+                ? 'border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+            "
+            @click="amountMaskEnabled = !amountMaskEnabled"
           >
-            {{ exportingDashboardImage ? "Exporting..." : "Export Dashboard PNG" }}
+            Amount Blur {{ amountMaskEnabled ? "ON" : "OFF" }}
           </button>
         </div>
       </div>
@@ -1700,11 +1836,19 @@ watch(
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="trendExpanded = !trendExpanded"
+          >
+            {{ trendExpanded ? "Collapse" : "Expand" }}
+          </button>
           <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendMode === 'SUMMARY' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendMode = 'SUMMARY'">Summary</button>
           <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendMode === 'PORTFOLIO_RETURN' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendMode = 'PORTFOLIO_RETURN'">Portfolio Return</button>
           <button type="button" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" @click="trendSettingsOpen = !trendSettingsOpen">{{ trendSettingsOpen ? "Hide Settings" : "Settings" }}</button>
         </div>
       </div>
+      <template v-if="trendExpanded">
       <div v-if="trendMode === 'SUMMARY'" class="mt-3 flex flex-wrap items-center gap-4 text-xs">
         <label class="inline-flex items-center gap-2"><input v-model="trendVisibility.gross" type="checkbox" class="h-4 w-4 rounded" /> Gross</label>
         <label class="inline-flex items-center gap-2"><input v-model="trendVisibility.liabilities" type="checkbox" class="h-4 w-4 rounded" /> Liabilities</label>
@@ -1756,6 +1900,8 @@ watch(
           <p class="text-xs text-slate-500 dark:text-slate-400">{{ trendInspect || "Hover/click a point to inspect value." }}</p>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Snapshot Trend.</p>
     </article>
 
     <div v-if="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
@@ -1879,13 +2025,24 @@ watch(
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Holdings Table</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol</p>
         </div>
-        <input
-          v-model="holdingTable.q"
-          type="text"
-          placeholder="Search holdings..."
-          class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            v-if="holdingsExpanded"
+            v-model="holdingTable.q"
+            type="text"
+            placeholder="Search holdings..."
+            class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="holdingsExpanded = !holdingsExpanded"
+          >
+            {{ holdingsExpanded ? "Collapse" : "Expand" }}
+          </button>
+        </div>
       </div>
+      <template v-if="holdingsExpanded">
       <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
         <table class="min-w-[1180px] text-xs">
           <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -1930,6 +2087,8 @@ watch(
           <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="holdingTable.page >= Math.max(1, Math.ceil(holdingTable.total / holdingTable.pageSize))" @click="holdingTable.page += 1">Next</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Holdings Table.</p>
     </article>
 
     <article class="order-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1938,13 +2097,24 @@ watch(
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Liabilities Table</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Liability / Balance / Type</p>
         </div>
-        <input
-          v-model="liabilityTable.q"
-          type="text"
-          placeholder="Search liabilities..."
-          class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        />
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            v-if="liabilitiesExpanded"
+            v-model="liabilityTable.q"
+            type="text"
+            placeholder="Search liabilities..."
+            class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="liabilitiesExpanded = !liabilitiesExpanded"
+          >
+            {{ liabilitiesExpanded ? "Collapse" : "Expand" }}
+          </button>
+        </div>
       </div>
+      <template v-if="liabilitiesExpanded">
       <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
         <table class="min-w-[780px] text-xs">
           <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -1975,6 +2145,8 @@ watch(
           <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="liabilityTable.page >= Math.max(1, Math.ceil(liabilityTable.total / liabilityTable.pageSize))" @click="liabilityTable.page += 1">Next</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Liabilities Table.</p>
     </article>
 
     <article class="order-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -2013,26 +2185,16 @@ watch(
               >
                 Portfolios
               </button>
-              <select
-                v-if="kpiMode === 'PORTFOLIOS'"
-                v-model="kpiPortfolioKey"
-                class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                <option value="ALL">All</option>
-                <option v-for="item in portfolioOptions" :key="`kpi-${item.key}`" :value="item.key">
-                  {{ item.label }}
-                </option>
-              </select>
             </div>
             <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Donut</span>
+              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Target</span>
               <button
                 v-for="target in (['GROSS', 'LIABILITIES', 'NET', 'HOLDINGS'] as const)"
                 :key="target"
                 type="button"
                 class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
-                :class="donutTarget === target ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-                @click="donutTarget = target"
+                :class="dashboardTarget === target ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+                @click="dashboardTarget = target"
               >
                 {{ target }}
               </button>
@@ -2051,19 +2213,6 @@ watch(
               </button>
             </div>
             <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Treemap</span>
-              <button
-                v-for="target in (['GROSS', 'HOLDINGS'] as const)"
-                :key="target"
-                type="button"
-                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
-                :class="treemapTarget === target ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-                @click="treemapTarget = target"
-              >
-                {{ target }}
-              </button>
-            </div>
-            <div class="inline-flex items-center gap-2">
               <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Portfolio</span>
               <select
                 v-model="holdingsPortfolioKey"
@@ -2076,10 +2225,6 @@ watch(
               </select>
             </div>
             <div class="ml-auto flex flex-wrap items-center gap-2">
-              <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                <input v-model="amountMaskEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                Amount Blur
-              </label>
               <button
                 type="button"
                 class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -2126,7 +2271,7 @@ watch(
           />
           <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <AllocationDonutCard
-              :title="`Allocation | ${donutTarget}`"
+              :title="`Allocation | ${dashboardTarget}`"
               :subtitle="`Top N + Others (${holdingsPortfolioKey === 'ALL' ? 'all portfolios' : 'filtered portfolio'})`"
               :currency="summaryCurrency"
               :total="donutTotal"
@@ -2137,8 +2282,12 @@ watch(
               :error="donutError"
             />
             <AllocationTreemapCard
-              :title="`Treemap | ${treemapTarget}`"
-              :subtitle="`Target=${treemapTarget} ${holdingsPortfolioKey === 'ALL' ? '| all portfolios' : '| filtered portfolio'}`"
+              title="Treemap Holdings"
+              :subtitle="
+                dashboardTarget === 'HOLDINGS'
+                  ? `Target=HOLDINGS | group_by=ASSET | color=return ${holdingsPortfolioKey === 'ALL' ? '' : `| ${portfolioOptions.find((p) => p.key === holdingsPortfolioKey)?.label || 'filtered portfolio'}`}`
+                  : `Target=${dashboardTarget} | group_by=PORTFOLIO | color=return`
+              "
               :currency="summaryCurrency"
               :items="treemapItems"
               :mask-amounts="amountMaskEnabled"
@@ -2157,17 +2306,18 @@ watch(
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Portfolios Table</h2>
           <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Current / Invested Principal / Profit / Return</p>
         </div>
-        <div class="flex items-center gap-2 text-xs">
-          <label class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <label v-if="portfoliosExpanded" class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
             <input
               type="checkbox"
               :checked="tablePortfolioKey === 'ALL'"
               class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
               @change="selectAllPortfoliosForTables()"
             />
-            All
+            <span>All</span>
           </label>
           <select
+            v-if="portfoliosExpanded"
             :value="tablePortfolioKey"
             class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             @change="setTablePortfolioKey(($event.target as HTMLSelectElement).value)"
@@ -2177,8 +2327,16 @@ watch(
               {{ item.label }}
             </option>
           </select>
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="portfoliosExpanded = !portfoliosExpanded"
+          >
+            {{ portfoliosExpanded ? "Collapse" : "Expand" }}
+          </button>
         </div>
       </div>
+      <template v-if="portfoliosExpanded">
       <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
         <table class="min-w-[880px] text-xs">
           <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -2242,6 +2400,16 @@ watch(
           <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="portfolioTable.page >= Math.max(1, Math.ceil(portfolioTable.total / portfolioTable.pageSize))" @click="portfolioTable.page += 1">Next</button>
         </div>
       </div>
+      </template>
+      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Portfolios Table.</p>
     </article>
   </main>
 </template>
+
+
+
+
+
+
+
+

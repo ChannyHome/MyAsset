@@ -60,6 +60,7 @@ export type LiabilitiesTableQuery = {
   sort_by?: LiabilityTableSortBy;
   sort_order?: SortOrder;
   q?: string;
+  portfolio_id?: number;
   display_currency?: "KRW" | "USD";
   include_hidden?: boolean;
   include_excluded?: boolean;

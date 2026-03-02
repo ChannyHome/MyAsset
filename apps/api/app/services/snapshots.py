@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 from collections import defaultdict
@@ -72,9 +72,19 @@ def get_user_snapshot_display_currency(db: Session, user_id: int) -> str:
 
 
 def _holding_effective_cost_basis(holding: Holding) -> tuple[Decimal, str]:
-    if holding.invested_amount is not None:
-        return Decimal(holding.invested_amount), holding.invested_amount_currency
-    return Decimal(holding.quantity) * Decimal(holding.avg_price), holding.avg_price_currency
+    invested = Decimal(holding.invested_amount) if holding.invested_amount is not None else None
+    fallback_cost = Decimal(holding.quantity) * Decimal(holding.avg_price)
+
+    # Align snapshot cost-basis with live holdings logic:
+    # when invested_amount is zero but avg-cost basis exists, use avg-cost fallback.
+    if invested is not None:
+        if invested > 0:
+            return invested, holding.invested_amount_currency
+        if invested == 0 and fallback_cost > 0:
+            return fallback_cost, holding.avg_price_currency
+        return invested, holding.invested_amount_currency
+
+    return fallback_cost, holding.avg_price_currency
 
 
 def capture_user_snapshot(
@@ -676,3 +686,4 @@ def filter_snapshot_ids_for_user(db: Session, owner_user_id: int, snapshot_ids: 
     ).all()
     allowed = set(rows)
     return [snapshot_id for snapshot_id in ids if snapshot_id in allowed]
+

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed } from "vue";
 
 type AllocationItem = {
@@ -27,16 +27,6 @@ const props = withDefaults(
   },
 );
 
-const palette = [
-  "hsl(160, 65%, 36%)",
-  "hsl(196, 75%, 36%)",
-  "hsl(232, 62%, 40%)",
-  "hsl(36, 78%, 42%)",
-  "hsl(286, 62%, 42%)",
-  "hsl(176, 72%, 34%)",
-  "hsl(348, 65%, 38%)",
-];
-
 type ReturnRange = {
   hasRange: boolean;
   min: number;
@@ -51,9 +41,9 @@ function normalize(min: number, max: number, value: number): number {
   return Math.max(0, Math.min(1, (value - min) / denom));
 }
 
-function colorForReturn(returnPct: number | null | undefined, index: number, range: ReturnRange): string {
+function colorForReturn(returnPct: number | null | undefined, range: ReturnRange): string {
   if (returnPct == null || !Number.isFinite(returnPct)) {
-    return palette[index % palette.length] ?? "hsl(215, 14%, 38%)";
+    return "hsl(215, 14%, 38%)";
   }
   if (returnPct === 0) {
     return "hsl(215, 14%, 38%)";
@@ -95,9 +85,9 @@ const returnRange = computed<ReturnRange>(() => {
 const normalizedItems = computed(() =>
   props.items
     .filter((item) => Number.isFinite(item.value) && item.ratioPct > 0)
-    .map((item, index) => ({
+    .map((item) => ({
       ...item,
-      backgroundColor: colorForReturn(item.returnPct, index, returnRange.value),
+      backgroundColor: colorForReturn(item.returnPct, returnRange.value),
       weight: Math.max(1, Math.round(item.ratioPct * 100)),
     })),
 );
@@ -177,3 +167,5 @@ function formatSignedPercent(value: number | null | undefined): string {
     </div>
   </article>
 </template>
+
+

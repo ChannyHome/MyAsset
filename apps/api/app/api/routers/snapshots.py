@@ -278,7 +278,16 @@ def get_snapshot_allocation(
         allowed_text = " | ".join(sorted(allowed[normalized_target]))
         raise HTTPException(status_code=400, detail=f"group_by for {normalized_target} must be {allowed_text}")
 
-    buckets: dict[tuple[str, str], Decimal] = defaultdict(lambda: Decimal("0"))
+    def _new_bucket() -> dict[str, Decimal]:
+        return {
+            "value": Decimal("0"),
+            "profit": Decimal("0"),
+            "cost_basis": Decimal("0"),
+            "fallback_sum": Decimal("0"),
+            "fallback_count": Decimal("0"),
+        }
+
+    buckets: dict[tuple[str, str], dict[str, Decimal]] = defaultdict(_new_bucket)
 
     if normalized_target in {"GROSS", "HOLDINGS"}:
         stmt = select(SnapshotHoldingRow).where(SnapshotHoldingRow.snapshot_id == snapshot.id)
@@ -287,13 +296,21 @@ def get_snapshot_allocation(
         rows = db.scalars(stmt).all()
         for row in rows:
             value = row.evaluated_usd if target_currency == "USD" else row.evaluated_krw
+            profit = row.profit_usd if target_currency == "USD" else row.profit_krw
+            cost_basis = row.cost_basis_usd if target_currency == "USD" else row.cost_basis_krw
             if normalized_group_by == "PORTFOLIO":
                 key = (f"portfolio:{row.portfolio_id or 'none'}", row.portfolio_name)
             elif normalized_group_by == "ASSET_CLASS":
                 key = (f"asset_class:{row.asset_class}", row.asset_class)
             else:
                 key = (f"asset:{row.asset_id or row.id}", f"{row.asset_name} ({row.symbol or '-'})")
-            buckets[key] += Decimal(value)
+            bucket = buckets[key]
+            bucket["value"] += Decimal(value)
+            bucket["profit"] += Decimal(profit)
+            bucket["cost_basis"] += Decimal(cost_basis)
+            if row.return_pct is not None:
+                bucket["fallback_sum"] += Decimal(row.return_pct)
+                bucket["fallback_count"] += Decimal("1")
     elif normalized_target == "LIABILITIES":
         rows = db.scalars(select(SnapshotLiabilityRow).where(SnapshotLiabilityRow.snapshot_id == snapshot.id)).all()
         for row in rows:
@@ -302,40 +319,74 @@ def get_snapshot_allocation(
                 key = (f"portfolio:{row.portfolio_id or 'none'}", row.portfolio_name)
             else:
                 key = (f"liability_type:{row.liability_type}", row.liability_type)
-            buckets[key] += Decimal(value)
+            bucket = buckets[key]
+            bucket["value"] += Decimal(value)
     else:
         rows = db.scalars(select(SnapshotPortfolioRow).where(SnapshotPortfolioRow.snapshot_id == snapshot.id)).all()
         for row in rows:
             value = row.net_assets_usd if target_currency == "USD" else row.net_assets_krw
+            profit = row.portfolio_profit_usd if target_currency == "USD" else row.portfolio_profit_krw
+            cost_basis = row.invested_principal_usd if target_currency == "USD" else row.invested_principal_krw
             key = (f"portfolio:{row.portfolio_id or 'none'}", row.portfolio_name)
-            buckets[key] += Decimal(value)
+            bucket = buckets[key]
+            bucket["value"] += Decimal(value)
+            bucket["profit"] += Decimal(profit)
+            bucket["cost_basis"] += Decimal(cost_basis)
+            if row.return_pct is not None:
+                bucket["fallback_sum"] += Decimal(row.return_pct)
+                bucket["fallback_count"] += Decimal("1")
 
-    sorted_items = sorted(((key, label, value) for (key, label), value in buckets.items()), key=lambda x: x[2], reverse=True)
+    sorted_items = sorted(
+        ((key, label, metrics) for (key, label), metrics in buckets.items()),
+        key=lambda x: x[2]["value"],
+        reverse=True,
+    )
     if len(sorted_items) > top_n:
         pinned = sorted_items[:top_n]
-        others_value = sum((item[2] for item in sorted_items[top_n:]), Decimal("0"))
-        sorted_items = [*pinned, ("others", others_label, others_value)] if others_value != 0 else pinned
+        others_metrics = _new_bucket()
+        for _, _, metrics in sorted_items[top_n:]:
+            others_metrics["value"] += metrics["value"]
+            others_metrics["profit"] += metrics["profit"]
+            others_metrics["cost_basis"] += metrics["cost_basis"]
+            others_metrics["fallback_sum"] += metrics["fallback_sum"]
+            others_metrics["fallback_count"] += metrics["fallback_count"]
+        sorted_items = [*pinned, ("others", others_label, others_metrics)] if others_metrics["value"] != 0 else pinned
 
-    total = sum((value for _, _, value in sorted_items), Decimal("0"))
+    total = sum((metrics["value"] for _, _, metrics in sorted_items), Decimal("0"))
     ratio_denominator = total
     ratio_transform = lambda value: value  # noqa: E731
     if normalized_target == "NET":
-        positive_total = sum((value for _, _, value in sorted_items if value > 0), Decimal("0"))
+        positive_total = sum((metrics["value"] for _, _, metrics in sorted_items if metrics["value"] > 0), Decimal("0"))
         if positive_total > 0:
             ratio_denominator = positive_total
             ratio_transform = lambda value: value if value > 0 else Decimal("0")  # noqa: E731
         else:
-            ratio_denominator = sum((abs(value) for _, _, value in sorted_items), Decimal("0"))
+            ratio_denominator = sum((abs(metrics["value"]) for _, _, metrics in sorted_items), Decimal("0"))
             ratio_transform = abs
+
+    def _resolve_return_pct(metrics: dict[str, Decimal]) -> Decimal | None:
+        if normalized_target == "LIABILITIES":
+            return None
+        cost_basis = metrics["cost_basis"]
+        if cost_basis > 0:
+            return (metrics["profit"] / cost_basis) * Decimal("100")
+        if metrics["fallback_count"] > 0:
+            return metrics["fallback_sum"] / metrics["fallback_count"]
+        return None
 
     items = [
         SnapshotAllocationItemOut(
             key=key,
             label=label,
-            value=value,
-            ratio_pct=(ratio_transform(value) / ratio_denominator * Decimal("100")) if ratio_denominator else Decimal("0"),
+            value=metrics["value"],
+            ratio_pct=(
+                (ratio_transform(metrics["value"]) / ratio_denominator * Decimal("100"))
+                if ratio_denominator
+                else Decimal("0")
+            ),
+            return_pct=_resolve_return_pct(metrics),
         )
-        for key, label, value in sorted_items
+        for key, label, metrics in sorted_items
     ]
 
     return SnapshotAllocationOut(
