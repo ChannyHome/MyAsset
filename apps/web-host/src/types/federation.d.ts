@@ -10,6 +10,12 @@ declare module "web_asset/DashboardPage" {
   export default component;
 }
 
+declare module "web_asset/SnapshotPage" {
+  import type { DefineComponent } from "vue";
+  const component: DefineComponent<object, object, unknown>;
+  export default component;
+}
+
 declare module "web_asset/AgentPage" {
   import type { DefineComponent } from "vue";
   const component: DefineComponent<object, object, unknown>;

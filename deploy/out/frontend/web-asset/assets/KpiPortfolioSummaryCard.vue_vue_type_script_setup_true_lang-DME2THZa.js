@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { u as useUiStore } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Bn1Zxn3x.js';
+import { u as useUiStore } from './ui-CcTyauVO.js';
 
 const {defineComponent:_defineComponent$3} = await importShared('vue');
 
@@ -30,16 +30,16 @@ const _hoisted_10$3 = ["data-donut-stops", "data-donut-start-angle"];
 const _hoisted_11$3 = { class: "absolute left-1/2 top-1/2 flex h-[6rem] w-[6rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white px-1 text-center text-[12px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" };
 const _hoisted_12$3 = ["onClick"];
 const _hoisted_13$3 = { class: "block max-w-[8.6rem] truncate leading-tight text-slate-700 md:max-w-none md:break-words dark:text-slate-200" };
-const _hoisted_14$1 = { class: "shrink-0 font-semibold text-slate-700 dark:text-slate-200" };
-const _hoisted_15$1 = {
+const _hoisted_14$2 = { class: "shrink-0 font-semibold text-slate-700 dark:text-slate-200" };
+const _hoisted_15$2 = {
   key: 0,
   class: "absolute left-2 right-2 top-full z-20 mt-1 rounded-md border border-slate-300 bg-slate-950/95 px-2 py-1 text-[11px] text-slate-100 shadow-lg"
 };
-const _hoisted_16 = {
+const _hoisted_16$1 = {
   key: 0,
   class: "rounded-lg bg-slate-50 px-2 py-2 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400"
 };
-const {computed: computed$2,onBeforeUnmount,onMounted: onMounted$1,ref} = await importShared('vue');
+const {computed: computed$2,onBeforeUnmount,onMounted: onMounted$1,ref: ref$1} = await importShared('vue');
 
 const {storeToRefs: storeToRefs$1} = await importShared('pinia');
 const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
@@ -79,8 +79,8 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
         color: palette[index % palette.length]
       }))
     );
-    const viewportWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1280);
-    const activeLegendTooltipKey = ref(null);
+    const viewportWidth = ref$1(typeof window !== "undefined" ? window.innerWidth : 1280);
+    const activeLegendTooltipKey = ref$1(null);
     function updateViewportWidth() {
       viewportWidth.value = window.innerWidth;
       if (viewportWidth.value >= 768) {
@@ -218,11 +218,11 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
                   }, null, 4),
                   _createElementVNode$3("span", _hoisted_13$3, _toDisplayString$3(item.label), 1)
                 ], 8, _hoisted_12$3),
-                _createElementVNode$3("span", _hoisted_14$1, _toDisplayString$3(formatPercent(item.ratioPct)), 1),
-                isMobileViewport.value && activeLegendTooltipKey.value === item.key ? (_openBlock$3(), _createElementBlock$3("div", _hoisted_15$1, _toDisplayString$3(item.label), 1)) : _createCommentVNode$3("", true)
+                _createElementVNode$3("span", _hoisted_14$2, _toDisplayString$3(formatPercent(item.ratioPct)), 1),
+                isMobileViewport.value && activeLegendTooltipKey.value === item.key ? (_openBlock$3(), _createElementBlock$3("div", _hoisted_15$2, _toDisplayString$3(item.label), 1)) : _createCommentVNode$3("", true)
               ]);
             }), 128)),
-            displayItems.value.length === 0 ? (_openBlock$3(), _createElementBlock$3("li", _hoisted_16, " No allocation data. ")) : _createCommentVNode$3("", true)
+            displayItems.value.length === 0 ? (_openBlock$3(), _createElementBlock$3("li", _hoisted_16$1, " No allocation data. ")) : _createCommentVNode$3("", true)
           ], 2)
         ]))
       ]);
@@ -232,7 +232,7 @@ const _sfc_main$3 = /* @__PURE__ */ _defineComponent$3({
 
 const {defineComponent:_defineComponent$2} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString$2,createElementVNode:_createElementVNode$2,openBlock:_openBlock$2,createElementBlock:_createElementBlock$2,createCommentVNode:_createCommentVNode$2,renderList:_renderList$1,Fragment:_Fragment$1,createTextVNode:_createTextVNode$1,normalizeStyle:_normalizeStyle$2} = await importShared('vue');
+const {toDisplayString:_toDisplayString$2,createElementVNode:_createElementVNode$2,openBlock:_openBlock$2,createElementBlock:_createElementBlock$2,createCommentVNode:_createCommentVNode$2,renderList:_renderList$1,Fragment:_Fragment$1,createTextVNode:_createTextVNode$2,normalizeStyle:_normalizeStyle$2} = await importShared('vue');
 
 const _hoisted_1$2 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2$2 = { class: "flex items-start justify-between gap-2" };
@@ -280,15 +280,6 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
   },
   setup(__props) {
     const props = __props;
-    const palette = [
-      "hsl(160, 65%, 36%)",
-      "hsl(196, 75%, 36%)",
-      "hsl(232, 62%, 40%)",
-      "hsl(36, 78%, 42%)",
-      "hsl(286, 62%, 42%)",
-      "hsl(176, 72%, 34%)",
-      "hsl(348, 65%, 38%)"
-    ];
     function normalize(min, max, value) {
       const denom = max - min;
       if (!Number.isFinite(denom) || denom === 0) {
@@ -296,9 +287,9 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
       }
       return Math.max(0, Math.min(1, (value - min) / denom));
     }
-    function colorForReturn(returnPct, index, range) {
+    function colorForReturn(returnPct, range) {
       if (returnPct == null || !Number.isFinite(returnPct)) {
-        return palette[index % palette.length] ?? "hsl(215, 14%, 38%)";
+        return "hsl(215, 14%, 38%)";
       }
       if (returnPct === 0) {
         return "hsl(215, 14%, 38%)";
@@ -329,9 +320,9 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
       };
     });
     const normalizedItems = computed$1(
-      () => props.items.filter((item) => Number.isFinite(item.value) && item.ratioPct > 0).map((item, index) => ({
+      () => props.items.filter((item) => Number.isFinite(item.value) && item.ratioPct > 0).map((item) => ({
         ...item,
-        backgroundColor: colorForReturn(item.returnPct, index, returnRange.value),
+        backgroundColor: colorForReturn(item.returnPct, returnRange.value),
         weight: Math.max(1, Math.round(item.ratioPct * 100))
       }))
     );
@@ -375,9 +366,9 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
                 _createElementVNode$2("p", _hoisted_11$2, _toDisplayString$2(item.label), 1),
                 _createElementVNode$2("div", _hoisted_12$2, [
                   _createElementVNode$2("p", null, [
-                    _createTextVNode$1(_toDisplayString$2(formatPercent(item.ratioPct)) + " ", 1),
+                    _createTextVNode$2(_toDisplayString$2(formatPercent(item.ratioPct)) + " ", 1),
                     item.returnPct != null ? (_openBlock$2(), _createElementBlock$2(_Fragment$1, { key: 0 }, [
-                      _createTextVNode$1("| " + _toDisplayString$2(formatSignedPercent(item.returnPct)), 1)
+                      _createTextVNode$2("| " + _toDisplayString$2(formatSignedPercent(item.returnPct)), 1)
                     ], 64)) : _createCommentVNode$2("", true)
                   ]),
                   _createElementVNode$2("p", {
@@ -397,7 +388,7 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
 
 const {defineComponent:_defineComponent$1} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,normalizeStyle:_normalizeStyle$1,createTextVNode:_createTextVNode,normalizeClass:_normalizeClass$1} = await importShared('vue');
+const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,normalizeStyle:_normalizeStyle$1,createTextVNode:_createTextVNode$1,normalizeClass:_normalizeClass$1} = await importShared('vue');
 
 const _hoisted_1$1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2$1 = { class: "flex items-start justify-between gap-2" };
@@ -415,8 +406,8 @@ const _hoisted_10$1 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-8
 const _hoisted_11$1 = { class: "font-semibold text-slate-800 dark:text-slate-100" };
 const _hoisted_12$1 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_13$1 = { class: "font-semibold text-slate-800 dark:text-slate-100" };
-const _hoisted_14 = { class: "mt-0.5 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_15 = {
+const _hoisted_14$1 = { class: "mt-0.5 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_15$1 = {
   key: 0,
   class: "mt-3 text-[11px] text-slate-500 dark:text-slate-400"
 };
@@ -476,22 +467,22 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
         _createElementVNode$1("div", _hoisted_6$1, [
           _createElementVNode$1("div", _hoisted_7$1, [
             _createElementVNode$1("p", _hoisted_8$1, [
-              _cache[1] || (_cache[1] = _createTextVNode(" Gross: ", -1)),
+              _cache[1] || (_cache[1] = _createTextVNode$1(" Gross: ", -1)),
               _createElementVNode$1("span", {
                 style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString$1(formatCurrency(__props.grossAssetsTotal, __props.currency)), 5),
               _createElementVNode$1("span", {
                 class: _normalizeClass$1(toneClass(__props.grossReturnPct))
               }, [
-                _createTextVNode(" ( " + _toDisplayString$1(formatSignedPercent(__props.grossReturnPct)) + ", ", 1),
+                _createTextVNode$1(" ( " + _toDisplayString$1(formatSignedPercent(__props.grossReturnPct)) + ", ", 1),
                 _createElementVNode$1("span", {
                   style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
                 }, _toDisplayString$1(formatSignedCurrency(__props.grossProfitTotal, __props.currency)), 5),
-                _cache[0] || (_cache[0] = _createTextVNode(" ) ", -1))
+                _cache[0] || (_cache[0] = _createTextVNode$1(" ) ", -1))
               ], 2)
             ]),
             _createElementVNode$1("p", _hoisted_9$1, [
-              _cache[2] || (_cache[2] = _createTextVNode(" vs invested principal ", -1)),
+              _cache[2] || (_cache[2] = _createTextVNode$1(" vs invested principal ", -1)),
               _createElementVNode$1("span", {
                 style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, " (" + _toDisplayString$1(formatCurrency(__props.investedPrincipalTotal, __props.currency)) + ") ", 5)
@@ -499,7 +490,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
           ]),
           _createElementVNode$1("div", _hoisted_10$1, [
             _createElementVNode$1("p", _hoisted_11$1, [
-              _cache[3] || (_cache[3] = _createTextVNode(" Liabilities: ", -1)),
+              _cache[3] || (_cache[3] = _createTextVNode$1(" Liabilities: ", -1)),
               _createElementVNode$1("span", {
                 style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString$1(formatCurrency(__props.liabilitiesTotal, __props.currency)), 5)
@@ -507,29 +498,29 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
           ]),
           _createElementVNode$1("div", _hoisted_12$1, [
             _createElementVNode$1("p", _hoisted_13$1, [
-              _cache[5] || (_cache[5] = _createTextVNode(" Net: ", -1)),
+              _cache[5] || (_cache[5] = _createTextVNode$1(" Net: ", -1)),
               _createElementVNode$1("span", {
                 style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString$1(formatCurrency(__props.netAssetsTotal, __props.currency)), 5),
               _createElementVNode$1("span", {
                 class: _normalizeClass$1(toneClass(__props.netReturnPct))
               }, [
-                _createTextVNode(" ( " + _toDisplayString$1(formatSignedPercent(__props.netReturnPct)) + ", ", 1),
+                _createTextVNode$1(" ( " + _toDisplayString$1(formatSignedPercent(__props.netReturnPct)) + ", ", 1),
                 _createElementVNode$1("span", {
                   style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
                 }, _toDisplayString$1(formatSignedCurrency(__props.netProfitTotal, __props.currency)), 5),
-                _cache[4] || (_cache[4] = _createTextVNode(" ) ", -1))
+                _cache[4] || (_cache[4] = _createTextVNode$1(" ) ", -1))
               ], 2)
             ]),
-            _createElementVNode$1("p", _hoisted_14, [
-              _cache[6] || (_cache[6] = _createTextVNode(" vs debt-adjusted principal ", -1)),
+            _createElementVNode$1("p", _hoisted_14$1, [
+              _cache[6] || (_cache[6] = _createTextVNode$1(" vs debt-adjusted principal ", -1)),
               _createElementVNode$1("span", {
                 style: _normalizeStyle$1(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, " (" + _toDisplayString$1(formatCurrency(__props.principalMinusDebtTotal, __props.currency)) + ") ", 5)
             ])
           ])
         ]),
-        __props.asOf ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_15, "as_of: " + _toDisplayString$1(__props.asOf), 1)) : _createCommentVNode$1("", true)
+        __props.asOf ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_15$1, "as_of: " + _toDisplayString$1(__props.asOf), 1)) : _createCommentVNode$1("", true)
       ]);
     };
   }
@@ -537,7 +528,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,renderList:_renderList,Fragment:_Fragment,unref:_unref,normalizeClass:_normalizeClass,normalizeStyle:_normalizeStyle} = await importShared('vue');
+const {toDisplayString:_toDisplayString,createElementVNode:_createElementVNode,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createTextVNode:_createTextVNode,renderList:_renderList,Fragment:_Fragment,unref:_unref,normalizeClass:_normalizeClass,normalizeStyle:_normalizeStyle} = await importShared('vue');
 
 const _hoisted_1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_2 = { class: "flex items-start justify-between gap-2" };
@@ -556,12 +547,23 @@ const _hoisted_7 = {
   class: "mt-3 max-h-[24rem] overflow-auto rounded-xl border border-slate-200 dark:border-slate-700"
 };
 const _hoisted_8 = { class: "min-w-[860px] text-left text-xs" };
-const _hoisted_9 = { class: "sticky-col-cell sticky-col-width sticky left-0 z-10 bg-white px-3 py-2 dark:bg-slate-900" };
-const _hoisted_10 = ["title"];
-const _hoisted_11 = ["title"];
-const _hoisted_12 = { class: "px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_13 = { class: "px-3 py-2 text-right text-slate-700 dark:text-slate-300" };
-const {computed,onMounted} = await importShared('vue');
+const _hoisted_9 = { class: "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300" };
+const _hoisted_10 = { class: "sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_11 = { class: "text-[11px] opacity-80" };
+const _hoisted_12 = { class: "px-3 py-2 text-right" };
+const _hoisted_13 = { class: "text-[11px] opacity-80" };
+const _hoisted_14 = { class: "px-3 py-2 text-right" };
+const _hoisted_15 = { class: "text-[11px] opacity-80" };
+const _hoisted_16 = { class: "px-3 py-2 text-right" };
+const _hoisted_17 = { class: "text-[11px] opacity-80" };
+const _hoisted_18 = { class: "px-3 py-2 text-right" };
+const _hoisted_19 = { class: "text-[11px] opacity-80" };
+const _hoisted_20 = { class: "sticky-col-cell sticky-col-width sticky left-0 z-10 bg-white px-3 py-2 dark:bg-slate-900" };
+const _hoisted_21 = ["title"];
+const _hoisted_22 = ["title"];
+const _hoisted_23 = { class: "px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_24 = { class: "px-3 py-2 text-right text-slate-700 dark:text-slate-300" };
+const {computed,onMounted,ref} = await importShared('vue');
 
 const {storeToRefs} = await importShared('pinia');
 const _sfc_main = /* @__PURE__ */ _defineComponent({
@@ -610,9 +612,44 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
       return toNumber(row.cumulative_deposit_amount) - toNumber(row.cumulative_withdrawal_amount);
     }
-    const rows = computed(
-      () => [...props.portfolios].sort((a, b) => Number(a.id) - Number(b.id))
-    );
+    const sortBy = ref("current");
+    const sortOrder = ref("desc");
+    function toggleSort(key) {
+      if (sortBy.value === key) {
+        sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+        return;
+      }
+      sortBy.value = key;
+      sortOrder.value = key === "portfolio" ? "asc" : "desc";
+    }
+    function sortIndicator(key) {
+      if (sortBy.value !== key) return "↕";
+      return sortOrder.value === "asc" ? "↑" : "↓";
+    }
+    const rows = computed(() => {
+      const base = [...props.portfolios];
+      base.sort((a, b) => {
+        if (sortBy.value === "portfolio") {
+          const byName = (a.name || "").localeCompare(b.name || "", "ko");
+          if (byName !== 0) return byName;
+          return Number(a.id) - Number(b.id);
+        }
+        if (sortBy.value === "current") {
+          return toNumber(a.gross_assets_total) - toNumber(b.gross_assets_total);
+        }
+        if (sortBy.value === "principal") {
+          return netContribution(a) - netContribution(b);
+        }
+        if (sortBy.value === "profit") {
+          return toNumber(a.portfolio_profit_total ?? a.total_pnl_amount) - toNumber(b.portfolio_profit_total ?? b.total_pnl_amount);
+        }
+        return toNumber(a.total_return_pct ?? null) - toNumber(b.total_return_pct ?? null);
+      });
+      if (sortOrder.value === "desc") {
+        base.reverse();
+      }
+      return base;
+    });
     onMounted(() => {
       if (typeof uiStore.init === "function") {
         uiStore.init();
@@ -629,37 +666,82 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ]),
         rows.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_6, " No portfolio KPI data. ")) : (_openBlock(), _createElementBlock("div", _hoisted_7, [
           _createElementVNode("table", _hoisted_8, [
-            _cache[0] || (_cache[0] = _createElementVNode("thead", { class: "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300" }, [
+            _createElementVNode("thead", _hoisted_9, [
               _createElementVNode("tr", null, [
-                _createElementVNode("th", { class: "sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 dark:bg-slate-800" }, " Portfolio "),
-                _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Current Value"),
-                _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Principal"),
-                _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Profit"),
-                _createElementVNode("th", { class: "px-3 py-2 text-right" }, "Return")
+                _createElementVNode("th", _hoisted_10, [
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
+                    onClick: _cache[0] || (_cache[0] = ($event) => toggleSort("portfolio"))
+                  }, [
+                    _cache[5] || (_cache[5] = _createTextVNode(" Portfolio ", -1)),
+                    _createElementVNode("span", _hoisted_11, _toDisplayString(sortIndicator("portfolio")), 1)
+                  ])
+                ]),
+                _createElementVNode("th", _hoisted_12, [
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
+                    onClick: _cache[1] || (_cache[1] = ($event) => toggleSort("current"))
+                  }, [
+                    _cache[6] || (_cache[6] = _createTextVNode(" Current Value ", -1)),
+                    _createElementVNode("span", _hoisted_13, _toDisplayString(sortIndicator("current")), 1)
+                  ])
+                ]),
+                _createElementVNode("th", _hoisted_14, [
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
+                    onClick: _cache[2] || (_cache[2] = ($event) => toggleSort("principal"))
+                  }, [
+                    _cache[7] || (_cache[7] = _createTextVNode(" Principal ", -1)),
+                    _createElementVNode("span", _hoisted_15, _toDisplayString(sortIndicator("principal")), 1)
+                  ])
+                ]),
+                _createElementVNode("th", _hoisted_16, [
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
+                    onClick: _cache[3] || (_cache[3] = ($event) => toggleSort("profit"))
+                  }, [
+                    _cache[8] || (_cache[8] = _createTextVNode(" Profit ", -1)),
+                    _createElementVNode("span", _hoisted_17, _toDisplayString(sortIndicator("profit")), 1)
+                  ])
+                ]),
+                _createElementVNode("th", _hoisted_18, [
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
+                    onClick: _cache[4] || (_cache[4] = ($event) => toggleSort("return"))
+                  }, [
+                    _cache[9] || (_cache[9] = _createTextVNode(" Return ", -1)),
+                    _createElementVNode("span", _hoisted_19, _toDisplayString(sortIndicator("return")), 1)
+                  ])
+                ])
               ])
-            ], -1)),
+            ]),
             _createElementVNode("tbody", null, [
               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(rows.value, (row) => {
                 return _openBlock(), _createElementBlock("tr", {
                   key: row.id,
                   class: "border-t border-slate-200 dark:border-slate-800"
                 }, [
-                  _createElementVNode("td", _hoisted_9, [
+                  _createElementVNode("td", _hoisted_20, [
                     _createElementVNode("p", {
                       title: `#${row.id} ${row.name}`,
                       class: _normalizeClass(["font-semibold text-slate-900 dark:text-slate-100", _unref(nameClampEnabled) ? "name-clamp-2" : void 0])
-                    }, " #" + _toDisplayString(row.id) + " " + _toDisplayString(row.name), 11, _hoisted_10),
+                    }, " #" + _toDisplayString(row.id) + " " + _toDisplayString(row.name), 11, _hoisted_21),
                     _createElementVNode("p", {
                       title: row.type,
                       class: "text-[11px] text-slate-500 dark:text-slate-400"
-                    }, _toDisplayString(row.type), 9, _hoisted_11)
+                    }, _toDisplayString(row.type), 9, _hoisted_22)
                   ]),
-                  _createElementVNode("td", _hoisted_12, [
+                  _createElementVNode("td", _hoisted_23, [
                     _createElementVNode("span", {
                       style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
                     }, _toDisplayString(formatCurrency(toNumber(row.gross_assets_total), row.base_currency || __props.currency)), 5)
                   ]),
-                  _createElementVNode("td", _hoisted_13, [
+                  _createElementVNode("td", _hoisted_24, [
                     _createElementVNode("span", {
                       style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
                     }, _toDisplayString(formatCurrency(netContribution(row), row.base_currency || __props.currency)), 5)

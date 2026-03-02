@@ -30,25 +30,27 @@ import {
 import type { SortOrder } from "../api/assets";
 import AllocationDonutCard from "../components/AllocationDonutCard.vue";
 import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
+import DashboardPanelContainer from "../components/DashboardPanelContainer.vue";
 import KpiPortfolioSummaryCard from "../components/KpiPortfolioSummaryCard.vue";
 import KpiSummaryCard from "../components/KpiSummaryCard.vue";
+import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue";
+import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
+import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
+import {
+  useDashboardDataAdapter,
+  type DashboardAllocationVm,
+  type DashboardSummaryVm,
+  type DashboardTarget,
+} from "../composables/useDashboardDataAdapter";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 type DisplayCurrency = "KRW" | "USD";
 type SourceType = "LIVE" | "SNAPSHOT" | "CSV_PREVIEW";
 type KpiMode = "SUMMARY" | "PORTFOLIOS";
 type TrendMode = "SUMMARY" | "PORTFOLIO_RETURN";
-type DashboardTarget = "GROSS" | "LIABILITIES" | "NET" | "HOLDINGS";
 
-type SummaryVm = {
-  gross: number;
-  liabilities: number;
-  net: number;
-  invested: number;
-  debtAdjusted: number;
-  asOf: string | null;
-};
+type SummaryVm = DashboardSummaryVm;
 
 type PortfolioVm = {
   id: number;
@@ -91,13 +93,7 @@ type LiabilityVm = {
   balanceCurrency: string;
 };
 
-type AllocationVm = {
-  key: string;
-  label: string;
-  value: number;
-  ratioPct: number;
-  returnPct?: number | null;
-};
+type AllocationVm = DashboardAllocationVm;
 
 type TrendPoint = { snapshotId: number; label: string; gross: number; liabilities: number; net: number };
 type TrendLine = { key: string; label: string; values: Array<{ snapshotId: number; value: number }> };
@@ -492,7 +488,6 @@ const dashboardTarget = ref<DashboardTarget>("GROSS");
 const donutStart = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const holdingsPortfolioKey = ref("ALL");
 
-const summaryVm = ref<SummaryVm | null>(null);
 const snapshotSummary = ref<SnapshotSummaryOut | null>(null);
 
 const portfolioRows = ref<PortfolioVm[]>([]);
@@ -534,14 +529,6 @@ const tablePortfolioId = computed<number | undefined>(() => {
   return Number.isFinite(parsed) ? parsed : undefined;
 });
 
-const donutItems = ref<AllocationVm[]>([]);
-const donutTotal = ref(0);
-const donutLoading = ref(false);
-const donutError = ref("");
-const treemapItems = ref<AllocationVm[]>([]);
-const treemapLoading = ref(false);
-const treemapError = ref("");
-
 const trendMode = ref<TrendMode>("SUMMARY");
 const trendSettingsOpen = ref(false);
 const trendVisibility = reactive({ gross: true, liabilities: true, net: true });
@@ -579,6 +566,82 @@ const csvPreviewLoading = ref(false);
 const csvPreviewError = ref("");
 const csvPreviewData = ref<SnapshotCsvPreviewOut | null>(null);
 const csvFileName = ref("");
+
+const snapshotDashboardData = useDashboardDataAdapter({
+  target: dashboardTarget,
+  portfolioKey: holdingsPortfolioKey,
+  displayCurrency,
+  loadSummary: async (targetCurrency) => {
+    const normalizedCurrency: DisplayCurrency = targetCurrency === "USD" ? "USD" : "KRW";
+    if (sourceType.value === "LIVE") {
+      const out = await getSummary({ display_currency: normalizedCurrency });
+      snapshotSummary.value = null;
+      return mapSummaryFromLive(out);
+    }
+    if (sourceType.value === "SNAPSHOT") {
+      if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
+      const out = await getSnapshotSummary(appliedSnapshotId.value);
+      snapshotSummary.value = out;
+      return mapSummaryFromSnapshot(out, normalizedCurrency);
+    }
+    if (!appliedCsvPreview.value) throw new Error("CSV preview not applied");
+    snapshotSummary.value = appliedCsvPreview.value.summary;
+    return mapSummaryFromSnapshot(appliedCsvPreview.value.summary, normalizedCurrency);
+  },
+  loadAllocation: async ({ target, portfolioId, displayCurrency: targetCurrency }) => {
+    const normalizedCurrency: DisplayCurrency = targetCurrency === "USD" ? "USD" : "KRW";
+    if (sourceType.value === "LIVE") {
+      const out = await getAllocation({
+        target,
+        group_by: target === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        top_n: 10,
+        portfolio_id: portfolioId,
+        display_currency: normalizedCurrency,
+      });
+      return {
+        total: toNumber(out.total),
+        items: out.items.map((item) => ({
+          key: item.key,
+          label: item.label,
+          value: toNumber(item.value),
+          ratioPct: toNumber(item.ratio_pct),
+          returnPct: toNullable(item.return_pct),
+        })),
+      };
+    }
+    if (sourceType.value === "SNAPSHOT") {
+      if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
+      const out = await getSnapshotAllocation(appliedSnapshotId.value, {
+        target,
+        group_by: target === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+        top_n: 10,
+        portfolio_id: portfolioId,
+        display_currency: normalizedCurrency,
+      });
+      return {
+        total: toNumber(out.total),
+        items: out.items.map((item) => ({
+          key: item.key,
+          label: item.label,
+          value: toNumber(item.value),
+          ratioPct: toNumber(item.ratio_pct),
+          returnPct: toNullable(item.return_pct),
+        })),
+      };
+    }
+    return localAllocation(target, portfolioId);
+  },
+  resolveReturnPct: resolveAllocationReturnPct,
+});
+
+const summaryVm = snapshotDashboardData.summary;
+const donutItems = snapshotDashboardData.donutItems;
+const donutTotal = snapshotDashboardData.donutTotal;
+const donutLoading = snapshotDashboardData.donutLoading;
+const donutError = snapshotDashboardData.donutError;
+const treemapItems = snapshotDashboardData.treemapItems;
+const treemapLoading = snapshotDashboardData.treemapLoading;
+const treemapError = snapshotDashboardData.treemapError;
 
 const modalAllChecked = computed(
   () =>
@@ -666,7 +729,6 @@ const trendSnapshotOptions = computed(() =>
 const trendPortfolioOptions = computed(() =>
   portfolioOptions.value.filter((item) => item.key !== "UNASSIGNED"),
 );
-const maskedClass = computed(() => (amountMaskEnabled.value ? "amount-mask" : ""));
 const portfolioReturnByKey = computed(() => {
   const map = new Map<string, number | null>();
   for (const row of portfolioRows.value) {
@@ -949,25 +1011,6 @@ function localAllocation(
   return { total, items: topNWithOthers(items, 10) };
 }
 
-async function loadSummary(): Promise<void> {
-  if (sourceType.value === "LIVE") {
-    const out = await getSummary({ display_currency: displayCurrency.value });
-    summaryVm.value = mapSummaryFromLive(out);
-    snapshotSummary.value = null;
-    return;
-  }
-  if (sourceType.value === "SNAPSHOT") {
-    if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
-    const out = await getSnapshotSummary(appliedSnapshotId.value);
-    snapshotSummary.value = out;
-    summaryVm.value = mapSummaryFromSnapshot(out, summaryCurrency.value);
-    return;
-  }
-  if (!appliedCsvPreview.value) throw new Error("CSV preview not applied");
-  snapshotSummary.value = appliedCsvPreview.value.summary;
-  summaryVm.value = mapSummaryFromSnapshot(appliedCsvPreview.value.summary, summaryCurrency.value);
-}
-
 async function loadLiveHoldingPerformanceRows(): Promise<void> {
   if (sourceType.value !== "LIVE") {
     liveHoldingPerformanceRows.value = [];
@@ -1182,120 +1225,6 @@ async function loadLiabilityTable(): Promise<void> {
   }
 }
 
-async function loadAllocations(): Promise<void> {
-  donutLoading.value = true;
-  donutError.value = "";
-  try {
-    const holdingsPortfolio =
-      holdingsPortfolioKey.value === "ALL" ? undefined : Number.isFinite(Number(holdingsPortfolioKey.value)) ? Number(holdingsPortfolioKey.value) : undefined;
-    if (sourceType.value === "LIVE") {
-      const out = await getAllocation({
-        target: dashboardTarget.value,
-        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
-        top_n: 10,
-        portfolio_id: holdingsPortfolio,
-        display_currency: displayCurrency.value,
-      });
-      donutTotal.value = toNumber(out.total);
-      donutItems.value = out.items.map((item) => ({
-        key: item.key,
-        label: item.label,
-        value: toNumber(item.value),
-        ratioPct: toNumber(item.ratio_pct),
-        returnPct: resolveAllocationReturnPct(item.return_pct, dashboardTarget.value, item.key),
-      }));
-      return;
-    }
-    if (sourceType.value === "SNAPSHOT") {
-      if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
-      const out = await getSnapshotAllocation(appliedSnapshotId.value, {
-        target: dashboardTarget.value,
-        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
-        top_n: 10,
-        portfolio_id: holdingsPortfolio,
-        display_currency: displayCurrency.value,
-      });
-      donutTotal.value = toNumber(out.total);
-      donutItems.value = out.items.map((item) => ({
-        key: item.key,
-        label: item.label,
-        value: toNumber(item.value),
-        ratioPct: toNumber(item.ratio_pct),
-        returnPct: resolveAllocationReturnPct(item.return_pct, dashboardTarget.value, item.key),
-      }));
-      return;
-    }
-    const local = localAllocation(dashboardTarget.value, holdingsPortfolio);
-    donutTotal.value = local.total;
-    donutItems.value = local.items;
-  } catch (error) {
-    donutError.value = error instanceof Error ? error.message : "Failed to load allocation";
-    donutItems.value = [];
-    donutTotal.value = 0;
-  } finally {
-    donutLoading.value = false;
-  }
-}
-
-async function loadTreemap(): Promise<void> {
-  treemapLoading.value = true;
-  treemapError.value = "";
-  try {
-    const holdingsPortfolio =
-      holdingsPortfolioKey.value === "ALL" ? undefined : Number.isFinite(Number(holdingsPortfolioKey.value)) ? Number(holdingsPortfolioKey.value) : undefined;
-    if (sourceType.value === "LIVE") {
-      const out = await getAllocation({
-        target: dashboardTarget.value,
-        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
-        top_n: 10,
-        portfolio_id: holdingsPortfolio,
-        display_currency: displayCurrency.value,
-      });
-      treemapItems.value = out.items.map((item) => ({
-        key: item.key,
-        label: item.label,
-        value: toNumber(item.value),
-        ratioPct: toNumber(item.ratio_pct),
-        returnPct: resolveAllocationReturnPct(
-          item.return_pct,
-          dashboardTarget.value,
-          item.key,
-        ),
-      }));
-      return;
-    }
-    if (sourceType.value === "SNAPSHOT") {
-      if (!appliedSnapshotId.value) throw new Error("Snapshot id is missing");
-      const out = await getSnapshotAllocation(appliedSnapshotId.value, {
-        target: dashboardTarget.value,
-        group_by: dashboardTarget.value === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
-        top_n: 10,
-        portfolio_id: holdingsPortfolio,
-        display_currency: displayCurrency.value,
-      });
-      treemapItems.value = out.items.map((item) => ({
-        key: item.key,
-        label: item.label,
-        value: toNumber(item.value),
-        ratioPct: toNumber(item.ratio_pct),
-        returnPct: resolveAllocationReturnPct(
-          item.return_pct,
-          dashboardTarget.value,
-          item.key,
-        ),
-      }));
-      return;
-    }
-    const local = localAllocation(dashboardTarget.value, holdingsPortfolio);
-    treemapItems.value = local.items;
-  } catch (error) {
-    treemapError.value = error instanceof Error ? error.message : "Failed to load treemap";
-    treemapItems.value = [];
-  } finally {
-    treemapLoading.value = false;
-  }
-}
-
 async function loadSnapshotCatalog(): Promise<void> {
   const out = await getSnapshots({
     page: 1,
@@ -1395,9 +1324,9 @@ async function reloadAll(options?: { preserveToast?: boolean }): Promise<void> {
   loading.value = true;
   errorMessage.value = "";
   try {
-    await loadSummary();
+    await snapshotDashboardData.refreshSummary();
     await Promise.all([loadPortfolioTable(), loadHoldingTable(), loadLiabilityTable(), loadLiveHoldingPerformanceRows()]);
-    await Promise.all([loadAllocations(), loadTreemap()]);
+    await snapshotDashboardData.refreshAllocation();
     if (sourceType.value !== "CSV_PREVIEW") {
       await loadSnapshotCatalog();
     }
@@ -1593,11 +1522,6 @@ function toggleSort(target: { sortBy: string; sortOrder: SortOrder; page: number
   target.page = 1;
 }
 
-function sortMark(sortBy: string, key: string, sortOrder: SortOrder): string {
-  if (sortBy !== key) return "↕";
-  return sortOrder === "asc" ? "↑" : "↓";
-}
-
 function setTablePortfolioKey(value: string): void {
   tablePortfolioKey.value = value;
   portfolioTable.page = 1;
@@ -1716,8 +1640,7 @@ watch(
 watch(
   () => [dashboardTarget.value, holdingsPortfolioKey.value, sourceType.value],
   () => {
-    void loadAllocations();
-    void loadTreemap();
+    void snapshotDashboardData.refreshAllocation();
   },
 );
 watch(
@@ -2019,152 +1942,57 @@ watch(
         </div>
       </div>
     </div>
-    <article class="order-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Holdings Table</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <input
-            v-if="holdingsExpanded"
-            v-model="holdingTable.q"
-            type="text"
-            placeholder="Search holdings..."
-            class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-          <button
-            type="button"
-            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            @click="holdingsExpanded = !holdingsExpanded"
-          >
-            {{ holdingsExpanded ? "Collapse" : "Expand" }}
-          </button>
-        </div>
-      </div>
-      <template v-if="holdingsExpanded">
-      <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
-        <table class="min-w-[1180px] text-xs">
-          <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-            <tr>
-              <th class="sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 text-left dark:bg-slate-800">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'portfolio')">
-                  Portfolio {{ sortMark(holdingTable.sortBy, 'portfolio', holdingTable.sortOrder) }}
-                </button>
-              </th>
-              <th class="px-3 py-2 text-left"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'asset')">Asset {{ sortMark(holdingTable.sortBy, 'asset', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'price')">Price {{ sortMark(holdingTable.sortBy, 'price', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'avg_cost')">Avg Cost {{ sortMark(holdingTable.sortBy, 'avg_cost', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'evaluated')">Evaluated {{ sortMark(holdingTable.sortBy, 'evaluated', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'cost_basis')">Cost Basis {{ sortMark(holdingTable.sortBy, 'cost_basis', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'profit')">Profit {{ sortMark(holdingTable.sortBy, 'profit', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'return')">Return {{ sortMark(holdingTable.sortBy, 'return', holdingTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-left"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(holdingTable, 'symbol')">Symbol {{ sortMark(holdingTable.sortBy, 'symbol', holdingTable.sortOrder) }}</button></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="holdingTable.loading"><td colspan="9" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">Loading holdings...</td></tr>
-            <tr v-else-if="holdingRows.length === 0"><td colspan="9" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No holding rows.</td></tr>
-            <tr v-for="row in holdingRows" :key="`h-${row.id}`" class="border-t border-slate-200 dark:border-slate-800">
-              <td class="sticky-col-cell sticky-col-width sticky left-0 z-10 bg-white px-3 py-2 dark:bg-slate-900">{{ row.portfolioName }}</td>
-              <td class="px-3 py-2">{{ row.assetName }}</td>
-              <td class="px-3 py-2 text-right"><span :class="maskedClass">{{ formatCurrency(row.price, row.priceCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right"><span :class="maskedClass">{{ formatCurrency(row.avgCost, row.avgCostCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right font-semibold"><span :class="maskedClass">{{ formatCurrency(row.evaluated, summaryCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right"><span :class="maskedClass">{{ formatCurrency(row.costBasis, summaryCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right font-semibold" :class="row.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'"><span :class="maskedClass">{{ row.profit >= 0 ? "+" : "" }}{{ formatCurrency(row.profit, summaryCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right font-semibold" :class="(row.returnPct ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'">{{ formatPercent(row.returnPct) }}</td>
-              <td class="px-3 py-2">{{ row.symbol || "-" }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <p>Total: {{ holdingTable.total }}</p>
-        <div class="inline-flex items-center gap-2">
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="holdingTable.page <= 1" @click="holdingTable.page -= 1">Prev</button>
-          <span>Page {{ holdingTable.page }} / {{ Math.max(1, Math.ceil(holdingTable.total / holdingTable.pageSize)) }}</span>
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="holdingTable.page >= Math.max(1, Math.ceil(holdingTable.total / holdingTable.pageSize))" @click="holdingTable.page += 1">Next</button>
-        </div>
-      </div>
-      </template>
-      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Holdings Table.</p>
-    </article>
+    <HoldingsStatusTableCard
+      class="order-4"
+      title="Holdings Table"
+      subtitle="Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol"
+      :expanded="holdingsExpanded"
+      :loading="holdingTable.loading"
+      :rows="holdingRows"
+      :total="holdingTable.total"
+      :page="holdingTable.page"
+      :page-size="holdingTable.pageSize"
+      :sort-by="holdingTable.sortBy"
+      :sort-order="holdingTable.sortOrder"
+      :search-term="holdingTable.q"
+      :mask-amounts="amountMaskEnabled"
+      :display-currency="summaryCurrency"
+      @toggle="holdingsExpanded = !holdingsExpanded"
+      @sort="toggleSort(holdingTable, $event)"
+      @set-page="holdingTable.page = $event"
+      @update:search-term="holdingTable.q = $event"
+    />
 
-    <article class="order-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Liabilities Table</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Liability / Balance / Type</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <input
-            v-if="liabilitiesExpanded"
-            v-model="liabilityTable.q"
-            type="text"
-            placeholder="Search liabilities..."
-            class="w-full max-w-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none ring-emerald-400/60 focus:ring dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-          <button
-            type="button"
-            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            @click="liabilitiesExpanded = !liabilitiesExpanded"
-          >
-            {{ liabilitiesExpanded ? "Collapse" : "Expand" }}
-          </button>
-        </div>
-      </div>
-      <template v-if="liabilitiesExpanded">
-      <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
-        <table class="min-w-[780px] text-xs">
-          <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-            <tr>
-              <th class="sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 text-left dark:bg-slate-800"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(liabilityTable, 'portfolio')">Portfolio {{ sortMark(liabilityTable.sortBy, 'portfolio', liabilityTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-left"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(liabilityTable, 'liability')">Liability {{ sortMark(liabilityTable.sortBy, 'liability', liabilityTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-right"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(liabilityTable, 'balance')">Balance {{ sortMark(liabilityTable.sortBy, 'balance', liabilityTable.sortOrder) }}</button></th>
-              <th class="px-3 py-2 text-left"><button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(liabilityTable, 'type')">Type {{ sortMark(liabilityTable.sortBy, 'type', liabilityTable.sortOrder) }}</button></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="liabilityTable.loading"><td colspan="4" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">Loading liabilities...</td></tr>
-            <tr v-else-if="liabilityRows.length === 0"><td colspan="4" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No liability rows.</td></tr>
-            <tr v-for="row in liabilityRows" :key="`l-${row.id}`" class="border-t border-slate-200 dark:border-slate-800">
-              <td class="sticky-col-cell sticky-col-width sticky left-0 z-10 bg-white px-3 py-2 dark:bg-slate-900">{{ row.portfolioName }}</td>
-              <td class="px-3 py-2">{{ row.name }}</td>
-              <td class="px-3 py-2 text-right font-semibold"><span :class="maskedClass">{{ formatCurrency(row.balance, row.balanceCurrency) }}</span></td>
-              <td class="px-3 py-2">{{ row.type }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <p>Total: {{ liabilityTable.total }}</p>
-        <div class="inline-flex items-center gap-2">
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="liabilityTable.page <= 1" @click="liabilityTable.page -= 1">Prev</button>
-          <span>Page {{ liabilityTable.page }} / {{ Math.max(1, Math.ceil(liabilityTable.total / liabilityTable.pageSize)) }}</span>
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="liabilityTable.page >= Math.max(1, Math.ceil(liabilityTable.total / liabilityTable.pageSize))" @click="liabilityTable.page += 1">Next</button>
-        </div>
-      </div>
-      </template>
-      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Liabilities Table.</p>
-    </article>
+    <LiabilitiesStatusTableCard
+      class="order-5"
+      title="Liabilities Table"
+      subtitle="Portfolio / Liability / Balance / Type"
+      :expanded="liabilitiesExpanded"
+      :loading="liabilityTable.loading"
+      :rows="liabilityRows"
+      :total="liabilityTable.total"
+      :page="liabilityTable.page"
+      :page-size="liabilityTable.pageSize"
+      :sort-by="liabilityTable.sortBy"
+      :sort-order="liabilityTable.sortOrder"
+      :search-term="liabilityTable.q"
+      :mask-amounts="amountMaskEnabled"
+      @toggle="liabilitiesExpanded = !liabilitiesExpanded"
+      @sort="toggleSort(liabilityTable, $event)"
+      @set-page="liabilityTable.page = $event"
+      @update:search-term="liabilityTable.q = $event"
+    />
 
-    <article class="order-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-center justify-between gap-2">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Snapshot Dashboard Panel</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">KPI, Donut, Treemap from the applied snapshot dataset.</p>
-        </div>
-        <button
-          type="button"
-          class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          @click="dashboardExpanded = !dashboardExpanded"
-        >
-          {{ dashboardExpanded ? "Collapse" : "Expand" }}
-        </button>
-      </div>
-
-      <div v-if="dashboardExpanded" class="mt-4 space-y-4">
+    <DashboardPanelContainer
+      class="order-2"
+      title="Snapshot Dashboard Panel"
+      description="KPI, Donut, Treemap from the applied snapshot dataset."
+      source-mode="SNAPSHOT"
+      :expanded="dashboardExpanded"
+      collapsed-message="Collapsed. Click Expand to preview snapshot dashboard."
+      @toggle="dashboardExpanded = !dashboardExpanded"
+    >
+      <template #controls>
         <div class="rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
           <div class="flex flex-wrap items-center gap-3 text-sm">
             <div class="inline-flex items-center gap-2">
@@ -2243,166 +2071,85 @@ watch(
             </div>
           </div>
         </div>
-        <div ref="snapshotDashboardRef" class="space-y-4">
-          <KpiSummaryCard
-            v-if="kpiMode === 'SUMMARY' && summaryVm"
-            :currency="summaryCurrency"
-            :gross-assets-total="summaryVm.gross"
-            :liabilities-total="summaryVm.liabilities"
-            :net-assets-total="summaryVm.net"
-            :invested-principal-total="summaryVm.invested"
-            :principal-minus-debt-total="summaryVm.debtAdjusted"
-            :gross-return-pct="kpiGrossReturn"
-            :net-return-pct="kpiNetReturn"
-            :gross-profit-total="kpiGrossProfit"
-            :net-profit-total="kpiNetProfit"
-            :as-of="asOfText"
-            title="KPI Summary"
-            subtitle="Included in snapshot analysis"
-            :mask-amounts="amountMaskEnabled"
-          />
-          <KpiPortfolioSummaryCard
-            v-if="kpiMode === 'PORTFOLIOS'"
-            :currency="summaryCurrency"
-            :portfolios="kpiPortfolioCardRows"
-            :mask-amounts="amountMaskEnabled"
-            title="KPI Portfolios"
-            subtitle="Portfolio-level KPI for the applied source"
-          />
-          <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <AllocationDonutCard
-              :title="`Allocation | ${dashboardTarget}`"
-              :subtitle="`Top N + Others (${holdingsPortfolioKey === 'ALL' ? 'all portfolios' : 'filtered portfolio'})`"
-              :currency="summaryCurrency"
-              :total="donutTotal"
-              :items="donutItems"
-              :start-position="donutStart"
-              :mask-amounts="amountMaskEnabled"
-              :loading="donutLoading"
-              :error="donutError"
-            />
-            <AllocationTreemapCard
-              title="Treemap Holdings"
-              :subtitle="
-                dashboardTarget === 'HOLDINGS'
-                  ? `Target=HOLDINGS | group_by=ASSET | color=return ${holdingsPortfolioKey === 'ALL' ? '' : `| ${portfolioOptions.find((p) => p.key === holdingsPortfolioKey)?.label || 'filtered portfolio'}`}`
-                  : `Target=${dashboardTarget} | group_by=PORTFOLIO | color=return`
-              "
-              :currency="summaryCurrency"
-              :items="treemapItems"
-              :mask-amounts="amountMaskEnabled"
-              :loading="treemapLoading"
-              :error="treemapError"
-            />
-          </div>
-        </div>
-      </div>
-      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to preview snapshot dashboard.</p>
-    </article>
-
-    <article class="order-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Portfolios Table</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Portfolio / Current / Invested Principal / Profit / Return</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <label v-if="portfoliosExpanded" class="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              :checked="tablePortfolioKey === 'ALL'"
-              class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-              @change="selectAllPortfoliosForTables()"
-            />
-            <span>All</span>
-          </label>
-          <select
-            v-if="portfoliosExpanded"
-            :value="tablePortfolioKey"
-            class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            @change="setTablePortfolioKey(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="ALL">All portfolios</option>
-            <option v-for="item in portfolioOptions" :key="`table-portfolio-${item.key}`" :value="item.key">
-              {{ item.label }}
-            </option>
-          </select>
-          <button
-            type="button"
-            class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            @click="portfoliosExpanded = !portfoliosExpanded"
-          >
-            {{ portfoliosExpanded ? "Collapse" : "Expand" }}
-          </button>
-        </div>
-      </div>
-      <template v-if="portfoliosExpanded">
-      <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
-        <table class="min-w-[880px] text-xs">
-          <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-            <tr>
-              <th class="sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 text-left dark:bg-slate-800">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(portfolioTable, 'portfolio')">
-                  Portfolio {{ sortMark(portfolioTable.sortBy, 'portfolio', portfolioTable.sortOrder) }}
-                </button>
-              </th>
-              <th class="px-3 py-2 text-right">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(portfolioTable, 'current')">
-                  Current {{ sortMark(portfolioTable.sortBy, 'current', portfolioTable.sortOrder) }}
-                </button>
-              </th>
-              <th class="px-3 py-2 text-right">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(portfolioTable, 'invested_principal')">
-                  Invested {{ sortMark(portfolioTable.sortBy, 'invested_principal', portfolioTable.sortOrder) }}
-                </button>
-              </th>
-              <th class="px-3 py-2 text-right">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(portfolioTable, 'portfolio_profit')">
-                  Profit {{ sortMark(portfolioTable.sortBy, 'portfolio_profit', portfolioTable.sortOrder) }}
-                </button>
-              </th>
-              <th class="px-3 py-2 text-right">
-                <button type="button" class="inline-flex items-center gap-1 font-semibold" @click="toggleSort(portfolioTable, 'return')">
-                  Return {{ sortMark(portfolioTable.sortBy, 'return', portfolioTable.sortOrder) }}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="portfolioTable.loading">
-              <td colspan="5" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">Loading portfolios...</td>
-            </tr>
-            <tr v-else-if="portfolioRows.length === 0">
-              <td colspan="5" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No portfolio rows.</td>
-            </tr>
-            <tr v-for="row in portfolioRows" :key="`p-${row.id}`" class="border-t border-slate-200 dark:border-slate-800">
-              <td class="sticky-col-cell sticky-col-width sticky left-0 z-10 bg-white px-3 py-2 dark:bg-slate-900">
-                <p class="font-semibold text-slate-900 dark:text-slate-100">{{ row.name }}</p>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ row.type || "-" }}</p>
-              </td>
-              <td class="px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100"><span :class="maskedClass">{{ formatCurrency(row.current, summaryCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300"><span :class="maskedClass">{{ formatCurrency(row.invested, summaryCurrency) }}</span></td>
-              <td class="px-3 py-2 text-right font-semibold" :class="row.profit >= 0 ? 'text-emerald-500' : 'text-rose-500'">
-                <span :class="maskedClass">{{ row.profit >= 0 ? "+" : "" }}{{ formatCurrency(row.profit, summaryCurrency) }}</span>
-              </td>
-              <td class="px-3 py-2 text-right font-semibold" :class="(row.returnPct ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'">
-                {{ formatPercent(row.returnPct) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <p>Total: {{ portfolioTable.total }}</p>
-        <div class="inline-flex items-center gap-2">
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="portfolioTable.page <= 1" @click="portfolioTable.page -= 1">Prev</button>
-          <span>Page {{ portfolioTable.page }} / {{ Math.max(1, Math.ceil(portfolioTable.total / portfolioTable.pageSize)) }}</span>
-          <button type="button" class="rounded-lg border border-slate-300 px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" :disabled="portfolioTable.page >= Math.max(1, Math.ceil(portfolioTable.total / portfolioTable.pageSize))" @click="portfolioTable.page += 1">Next</button>
-        </div>
-      </div>
       </template>
-      <p v-else class="mt-3 text-sm text-slate-500 dark:text-slate-400">Collapsed. Click Expand to open Portfolios Table.</p>
-    </article>
+      <div ref="snapshotDashboardRef" class="space-y-4">
+        <KpiSummaryCard
+          v-if="kpiMode === 'SUMMARY' && summaryVm"
+          :currency="summaryCurrency"
+          :gross-assets-total="summaryVm.gross"
+          :liabilities-total="summaryVm.liabilities"
+          :net-assets-total="summaryVm.net"
+          :invested-principal-total="summaryVm.invested"
+          :principal-minus-debt-total="summaryVm.debtAdjusted"
+          :gross-return-pct="kpiGrossReturn"
+          :net-return-pct="kpiNetReturn"
+          :gross-profit-total="kpiGrossProfit"
+          :net-profit-total="kpiNetProfit"
+          :as-of="asOfText"
+          title="KPI Summary"
+          subtitle="Included in snapshot analysis"
+          :mask-amounts="amountMaskEnabled"
+        />
+        <KpiPortfolioSummaryCard
+          v-if="kpiMode === 'PORTFOLIOS'"
+          :currency="summaryCurrency"
+          :portfolios="kpiPortfolioCardRows"
+          :mask-amounts="amountMaskEnabled"
+          title="KPI Portfolios"
+          subtitle="Portfolio-level KPI for the applied source"
+        />
+        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <AllocationDonutCard
+            :title="`Allocation | ${dashboardTarget}`"
+            :subtitle="`Top N + Others (${holdingsPortfolioKey === 'ALL' ? 'all portfolios' : 'filtered portfolio'})`"
+            :currency="summaryCurrency"
+            :total="donutTotal"
+            :items="donutItems"
+            :start-position="donutStart"
+            :mask-amounts="amountMaskEnabled"
+            :loading="donutLoading"
+            :error="donutError"
+          />
+          <AllocationTreemapCard
+            title="Treemap Holdings"
+            :subtitle="
+              dashboardTarget === 'HOLDINGS'
+                ? `Target=HOLDINGS | group_by=ASSET | color=return ${holdingsPortfolioKey === 'ALL' ? '' : `| ${portfolioOptions.find((p) => p.key === holdingsPortfolioKey)?.label || 'filtered portfolio'}`}`
+                : `Target=${dashboardTarget} | group_by=PORTFOLIO | color=return`
+            "
+            :currency="summaryCurrency"
+            :items="treemapItems"
+            :mask-amounts="amountMaskEnabled"
+            :loading="treemapLoading"
+            :error="treemapError"
+          />
+        </div>
+      </div>
+    </DashboardPanelContainer>
+
+    <PortfolioStatusTableCard
+      class="order-3"
+      title="Portfolios Table"
+      subtitle="Portfolio / Current / Invested Principal / Profit / Return"
+      :expanded="portfoliosExpanded"
+      :loading="portfolioTable.loading"
+      :rows="portfolioRows"
+      :total="portfolioTable.total"
+      :page="portfolioTable.page"
+      :page-size="portfolioTable.pageSize"
+      :sort-by="portfolioTable.sortBy"
+      :sort-order="portfolioTable.sortOrder"
+      :currency="summaryCurrency"
+      :mask-amounts="amountMaskEnabled"
+      :show-filter="true"
+      :portfolio-key="tablePortfolioKey"
+      :portfolio-options="portfolioOptions"
+      @toggle="portfoliosExpanded = !portfoliosExpanded"
+      @sort="toggleSort(portfolioTable, $event)"
+      @set-page="portfolioTable.page = $event"
+      @select-all="selectAllPortfoliosForTables()"
+      @set-portfolio-key="setTablePortfolioKey($event)"
+    />
   </main>
 </template>
 

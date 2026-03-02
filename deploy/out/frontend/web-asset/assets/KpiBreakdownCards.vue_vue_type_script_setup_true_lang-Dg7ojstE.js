@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { u as useUiStore } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Bn1Zxn3x.js';
+import { u as useUiStore } from './ui-CcTyauVO.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

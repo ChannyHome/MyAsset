@@ -1,12 +1,10 @@
 ﻿<script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 
 import {
   getAllocation,
   getNetworthSeries,
   getSummary,
-  type AnalyticsAllocationOut,
-  type AnalyticsNetworthSeriesOut,
   type AnalyticsSummaryV2Out,
 } from "../api/analytics";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
@@ -15,23 +13,35 @@ import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
 import NetworthTrendCard from "../components/NetworthTrendCard.vue";
 import KpiSummaryCard from "../components/KpiSummaryCard.vue";
 import KpiPortfolioSummaryCard from "../components/KpiPortfolioSummaryCard.vue";
-import { getHoldingsPerformance, type HoldingPerformanceOut } from "../api/holdings";
+import DashboardPanelContainer from "../components/DashboardPanelContainer.vue";
+import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue";
+import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
+import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
+import type {
+  HoldingStatusRow,
+  LiabilityStatusRow,
+  PortfolioOption,
+  PortfolioStatusRow,
+  SortOrder as TableSortOrder,
+} from "../components/statusTableTypes";
+import { getHoldingsPerformance, getHoldingsTable, type HoldingPerformanceOut, type HoldingTableRowOut } from "../api/holdings";
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
+import {
+  useDashboardDataAdapter,
+  type DashboardAllocationVm,
+} from "../composables/useDashboardDataAdapter";
 import type { ReleaseNoteItem } from "../data/releaseNotes";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
-type AllocationUiItem = {
-  key: string;
-  label: string;
-  value: number;
-  ratioPct: number;
-  returnPct?: number | null;
-};
-
 const LIVE_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
+const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
+
+type HomePortfolioSortKey = "portfolio" | "current" | "invested_principal" | "portfolio_profit" | "return";
+type HomeHoldingSortKey = "portfolio" | "asset" | "price" | "avg_cost" | "evaluated" | "cost_basis" | "profit" | "return" | "symbol";
+type HomeLiabilitySortKey = "portfolio" | "liability" | "balance" | "type";
 
 type Html2CanvasFn = (
   element: HTMLElement,
@@ -103,6 +113,38 @@ function formatDateTime(value: string | null | undefined): string {
   return formatDateTimeSeoul(value);
 }
 
+function getHomeTablePageSize(): number {
+  if (typeof window === "undefined") return 10;
+  return window.matchMedia("(max-width: 768px)").matches ? 6 : 10;
+}
+
+function toHomePortfolioSortBy(key: HomePortfolioSortKey) {
+  if (key === "portfolio") return "name" as const;
+  if (key === "current") return "gross_assets_total" as const;
+  if (key === "invested_principal") return "net_contribution_total" as const;
+  if (key === "portfolio_profit") return "portfolio_profit_total" as const;
+  return "total_return_pct" as const;
+}
+
+function toHomeHoldingSortBy(key: HomeHoldingSortKey) {
+  if (key === "portfolio") return "portfolio_name" as const;
+  if (key === "asset") return "asset_name" as const;
+  if (key === "price") return "current_price" as const;
+  if (key === "avg_cost") return "avg_price" as const;
+  if (key === "evaluated") return "evaluated_amount" as const;
+  if (key === "cost_basis") return "invested_amount" as const;
+  if (key === "profit") return "evaluated_amount" as const;
+  if (key === "return") return "pnl_pct" as const;
+  return "asset_symbol" as const;
+}
+
+function toHomeLiabilitySortBy(key: HomeLiabilitySortKey) {
+  if (key === "portfolio") return "portfolio_name" as const;
+  if (key === "liability") return "name" as const;
+  if (key === "balance") return "outstanding_balance" as const;
+  return "liability_type" as const;
+}
+
 const loading = ref(false);
 const errorMessage = ref("");
 const summary = ref<AnalyticsSummaryV2Out | null>(null);
@@ -111,27 +153,55 @@ const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
 const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
 const liveDashboardExpanded = ref(false);
+const homePortfoliosExpanded = ref(false);
+const homeHoldingsExpanded = ref(false);
+const homeLiabilitiesExpanded = ref(false);
 const reportPanelExpanded = ref(false);
 const releaseNotesExpanded = ref(false);
 const exportingImage = ref(false);
-const liveDonutTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "PORTFOLIOS">("GROSS");
+const liveDashboardTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "HOLDINGS">("GROSS");
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
-const liveTreemapTarget = ref<"GROSS" | "PORTFOLIOS">("GROSS");
 const liveKpiTarget = ref<"SUMMARY" | "PORTFOLIOS">("SUMMARY");
 const liveMaskAmounts = ref(false);
 const livePortfolioKey = ref("ALL");
-const liveKpiPortfolioKey = computed({
-  get: () => livePortfolioKey.value,
-  set: (value: string) => {
-    livePortfolioKey.value = value;
-  },
+const homePortfolioKey = ref("ALL");
+const homePortfolioRows = ref<PortfolioStatusRow[]>([]);
+const homeHoldingRows = ref<HoldingStatusRow[]>([]);
+const homeLiabilityRows = ref<LiabilityStatusRow[]>([]);
+const homeHoldingSearchTerm = ref("");
+const homeLiabilitySearchTerm = ref("");
+let homeHoldingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let homeLiabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const homePortfolioTable = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  sortBy: "current" as HomePortfolioSortKey,
+  sortOrder: "desc" as TableSortOrder,
+  loading: false,
 });
+
+const homeHoldingTable = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  sortBy: "evaluated" as HomeHoldingSortKey,
+  sortOrder: "desc" as TableSortOrder,
+  q: "",
+  loading: false,
+});
+
+const homeLiabilityTable = reactive({
+  page: 1,
+  pageSize: 10,
+  total: 0,
+  sortBy: "balance" as HomeLiabilitySortKey,
+  sortOrder: "desc" as TableSortOrder,
+  q: "",
+  loading: false,
+});
+
 const liveDashboardRef = ref<HTMLElement | null>(null);
-const allocationGross = ref<AnalyticsAllocationOut | null>(null);
-const allocationLiabilities = ref<AnalyticsAllocationOut | null>(null);
-const allocationNet = ref<AnalyticsAllocationOut | null>(null);
-const allocationHoldings = ref<AnalyticsAllocationOut | null>(null);
-const networthSeries = ref<AnalyticsNetworthSeriesOut | null>(null);
 const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
@@ -167,21 +237,14 @@ const liveKpiPortfolioRows = computed(() => {
   return portfolios.value.filter((item) => Number(item.id) === parsed);
 });
 
-const donutData = computed(() => {
-  if (liveDonutTarget.value === "GROSS") return allocationGross.value;
-  if (liveDonutTarget.value === "LIABILITIES") return allocationLiabilities.value;
-  if (liveDonutTarget.value === "NET") return allocationNet.value;
-  return allocationHoldings.value;
+const homePortfolioId = computed<number | undefined>(() => {
+  if (homePortfolioKey.value === "ALL") return undefined;
+  const parsed = Number(homePortfolioKey.value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 });
 
-const donutItems = computed<AllocationUiItem[]>(() =>
-  (donutData.value?.items ?? []).map((item) => ({
-    key: item.key,
-    label: item.label,
-    value: toNumber(item.value),
-    ratioPct: toNumber(item.ratio_pct),
-    returnPct: null,
-  })),
+const homePortfolioOptions = computed<PortfolioOption[]>(() =>
+  portfolios.value.map((item) => ({ key: String(item.id), label: item.name })),
 );
 
 const portfolioReturnById = computed(() => {
@@ -226,50 +289,90 @@ const holdingReturnByAssetId = computed(() => {
   return map;
 });
 
-const liveTreemapItems = computed<AllocationUiItem[]>(() =>
-  (
-    liveTreemapTarget.value === "GROSS" ? allocationGross.value?.items ?? [] : allocationHoldings.value?.items ?? []
-  ).map((item) => ({
-    key: item.key,
-    label: item.label,
-    value: toNumber(item.value),
-    ratioPct: toNumber(item.ratio_pct),
-    returnPct:
-      liveTreemapTarget.value === "GROSS"
-        ? (() => {
-            const match = item.key.match(/^portfolio:(\d+)$/);
-            if (!match) return null;
-            return portfolioReturnById.value.get(Number(match[1])) ?? null;
-          })()
-        : (() => {
-            const match = item.key.match(/^asset:(\d+)$/);
-            if (!match) return null;
-            return holdingReturnByAssetId.value.get(Number(match[1])) ?? null;
-          })(),
-  })),
-);
+function resolveLiveAllocationReturnPct(
+  rawReturnPct: number | null | undefined,
+  target: "GROSS" | "LIABILITIES" | "NET" | "HOLDINGS",
+  key: string,
+): number | null {
+  if (rawReturnPct != null && Number.isFinite(rawReturnPct)) {
+    return rawReturnPct;
+  }
+  if (target === "GROSS" || target === "NET") {
+    const match = key.match(/^portfolio:(\d+)$/);
+    if (!match) return null;
+    return portfolioReturnById.value.get(Number(match[1])) ?? null;
+  }
+  if (target === "HOLDINGS") {
+    const match = key.match(/^asset:(\d+)$/);
+    if (!match) return null;
+    return holdingReturnByAssetId.value.get(Number(match[1])) ?? null;
+  }
+  return null;
+}
 
-const trendPoints = computed(() =>
-  (networthSeries.value?.points ?? []).map((point) => ({
-    label: point.snapshot_date,
-    gross: toNumber(point.gross_assets_total),
-    liabilities: toNumber(point.liabilities_total),
-    net: toNumber(point.net_assets_total),
-  })),
-);
+const liveDashboardData = useDashboardDataAdapter({
+  target: liveDashboardTarget,
+  portfolioKey: livePortfolioKey,
+  displayCurrency,
+  loadSummary: async () => ({
+    gross: grossAssetsTotal.value,
+    liabilities: liabilitiesTotal.value,
+    net: netAssetsTotal.value,
+    invested: investedPrincipalTotal.value,
+    debtAdjusted: principalMinusDebtTotal.value,
+    asOf: summary.value?.as_of ?? null,
+  }),
+  loadAllocation: async ({ target, portfolioId, displayCurrency: targetCurrency }) => {
+    const normalizedCurrency = targetCurrency === "USD" ? "USD" : "KRW";
+    const out = await getAllocation({
+      target,
+      group_by: target === "HOLDINGS" ? "ASSET" : "PORTFOLIO",
+      top_n: 10,
+      portfolio_id: portfolioId,
+      display_currency: normalizedCurrency,
+    });
+    return {
+      total: toNumber(out.total),
+      items: out.items.map((item) => ({
+        key: item.key,
+        label: item.label,
+        value: toNumber(item.value),
+        ratioPct: toNumber(item.ratio_pct),
+        returnPct: item.return_pct == null ? null : toNumber(item.return_pct),
+      })),
+    };
+  },
+  loadTrend: async (targetCurrency) => {
+    const normalizedCurrency = targetCurrency === "USD" ? "USD" : "KRW";
+    const out = await getNetworthSeries({
+      display_currency: normalizedCurrency,
+      bucket: "DAY",
+      limit: 90,
+    });
+    return out.points.map((point) => ({
+      label: point.snapshot_date,
+      gross: toNumber(point.gross_assets_total),
+      liabilities: toNumber(point.liabilities_total),
+      net: toNumber(point.net_assets_total),
+    }));
+  },
+  resolveReturnPct: resolveLiveAllocationReturnPct,
+});
 
-const kpiGrossReturnPct = computed(() => (summary.value?.principal_return_pct == null ? null : toNumber(summary.value.principal_return_pct)));
-const kpiNetReturnPct = computed(() => (summary.value?.net_assets_return_pct == null ? null : toNumber(summary.value.net_assets_return_pct)));
-const kpiGrossProfitTotal = computed(() =>
-  toNumber(summary.value?.principal_profit_total ?? toNumber(summary.value?.gross_assets_total) - toNumber(summary.value?.invested_principal_total)),
-);
-const kpiNetProfitTotal = computed(() =>
-  toNumber(
-    summary.value?.net_assets_profit_total ??
-      toNumber(summary.value?.net_assets_total) -
-        toNumber(summary.value?.debt_adjusted_principal_total ?? summary.value?.principal_minus_debt_total),
-  ),
-);
+const donutItems = computed<DashboardAllocationVm[]>(() => liveDashboardData.donutItems.value);
+const donutTotal = computed(() => liveDashboardData.donutTotal.value);
+const liveTreemapItems = computed<DashboardAllocationVm[]>(() => liveDashboardData.treemapItems.value);
+const trendPoints = computed(() => liveDashboardData.trendPoints.value);
+const kpiGrossReturnPct = computed(() => liveDashboardData.kpiGrossReturn.value);
+const kpiNetReturnPct = computed(() => liveDashboardData.kpiNetReturn.value);
+const kpiGrossProfitTotal = computed(() => liveDashboardData.kpiGrossProfit.value);
+const kpiNetProfitTotal = computed(() => liveDashboardData.kpiNetProfit.value);
+const dashboardDonutLoading = computed(() => loading.value || liveDashboardData.donutLoading.value);
+const dashboardDonutError = computed(() => liveDashboardData.donutError.value || errorMessage.value);
+const dashboardTreemapLoading = computed(() => loading.value || liveDashboardData.treemapLoading.value);
+const dashboardTreemapError = computed(() => liveDashboardData.treemapError.value || errorMessage.value);
+const dashboardTrendLoading = computed(() => loading.value || liveDashboardData.trendLoading.value);
+const dashboardTrendError = computed(() => liveDashboardData.trendError.value || errorMessage.value);
 
 const topHoldings = computed(() =>
   [...holdings.value]
@@ -314,11 +417,6 @@ async function loadHomeData() {
       holdingsOut,
       liabilitiesOut,
       portfoliosOut,
-      grossAllocationOut,
-      liabilitiesAllocationOut,
-      netAllocationOut,
-      holdingsAllocationOut,
-      networthSeriesOut,
     ] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
       getHoldingsPerformance({ display_currency: displayCurrency.value }),
@@ -340,49 +438,18 @@ async function loadHomeData() {
         include_hidden: false,
         include_excluded: false,
       }),
-      getAllocation({
-        target: "GROSS",
-        group_by: "PORTFOLIO",
-        top_n: 10,
-        display_currency: displayCurrency.value,
-      }),
-      getAllocation({
-        target: "LIABILITIES",
-        group_by: "PORTFOLIO",
-        top_n: 10,
-        display_currency: displayCurrency.value,
-      }),
-      getAllocation({
-        target: "NET",
-        group_by: "PORTFOLIO",
-        top_n: 10,
-        display_currency: displayCurrency.value,
-      }),
-      getAllocation({
-        target: "HOLDINGS",
-        group_by: "ASSET",
-        top_n: 10,
-        portfolio_id: livePortfolioId.value,
-        display_currency: displayCurrency.value,
-      }),
-      getNetworthSeries({
-        display_currency: displayCurrency.value,
-        bucket: "DAY",
-        limit: 90,
-      }),
     ]);
 
     summary.value = summaryOut;
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
-    allocationGross.value = grossAllocationOut;
-    allocationLiabilities.value = liabilitiesAllocationOut;
-    allocationNet.value = netAllocationOut;
-    allocationHoldings.value = holdingsAllocationOut;
-    networthSeries.value = networthSeriesOut;
+    await liveDashboardData.refreshAllDashboard();
     if (livePortfolioKey.value !== "ALL" && !portfoliosOut.items.some((item) => String(item.id) === livePortfolioKey.value)) {
       livePortfolioKey.value = "ALL";
+    }
+    if (homePortfolioKey.value !== "ALL" && !portfoliosOut.items.some((item) => String(item.id) === homePortfolioKey.value)) {
+      homePortfolioKey.value = "ALL";
     }
     try {
       const noteRows = await getReleaseNotes({ limit: 20 });
@@ -391,11 +458,175 @@ async function loadHomeData() {
     } catch {
       releaseNoteItems.value = [];
     }
+    if (homePortfoliosExpanded.value) {
+      void loadHomePortfolioTable();
+    }
+    if (homeHoldingsExpanded.value) {
+      void loadHomeHoldingTable();
+    }
+    if (homeLiabilitiesExpanded.value) {
+      void loadHomeLiabilityTable();
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to load dashboard data: ${message}`;
   } finally {
     loading.value = false;
+  }
+}
+
+function mapHomePortfolioRow(row: PortfolioTableRowOut): PortfolioStatusRow {
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    current: toNumber(row.gross_assets_total),
+    invested: toNumber(row.net_contribution_total),
+    profit: toNumber(row.portfolio_profit_total ?? row.total_pnl_amount),
+    returnPct: row.total_return_pct == null ? null : toNumber(row.total_return_pct),
+  };
+}
+
+function mapHomeHoldingRow(row: HoldingTableRowOut): HoldingStatusRow {
+  return {
+    id: row.id,
+    portfolioName: row.portfolio_name || "Unassigned",
+    assetName: row.asset_name,
+    symbol: row.asset_symbol,
+    price: toNumber(row.current_price),
+    priceCurrency: row.current_price_currency || summaryDisplayCurrency.value || "KRW",
+    avgCost: toNumber(row.avg_cost),
+    avgCostCurrency: row.avg_cost_currency || summaryDisplayCurrency.value || "KRW",
+    evaluated: toNumber(row.evaluated_amount),
+    costBasis: toNumber(row.cost_basis_total),
+    profit: toNumber(row.pnl_amount),
+    returnPct: row.pnl_pct == null ? null : toNumber(row.pnl_pct),
+  };
+}
+
+function mapHomeLiabilityRow(row: LiabilityTableRowOut): LiabilityStatusRow {
+  return {
+    id: row.id,
+    portfolioName: row.portfolio_name || "Unassigned",
+    name: row.name,
+    type: row.liability_type,
+    balance: toNumber(row.outstanding_balance),
+    balanceCurrency: row.currency || summaryDisplayCurrency.value || "KRW",
+  };
+}
+
+function toggleHomeSort<T extends { sortBy: string; sortOrder: TableSortOrder; page: number }>(state: T, key: string): void {
+  if (state.sortBy === key) {
+    state.sortOrder = state.sortOrder === "asc" ? "desc" : "asc";
+  } else {
+    state.sortBy = key;
+    state.sortOrder = "desc";
+  }
+  state.page = 1;
+}
+
+function toggleHomePortfolioSort(key: string): void {
+  toggleHomeSort(homePortfolioTable, key as HomePortfolioSortKey);
+}
+
+function toggleHomeHoldingSort(key: string): void {
+  toggleHomeSort(homeHoldingTable, key as HomeHoldingSortKey);
+}
+
+function toggleHomeLiabilitySort(key: string): void {
+  toggleHomeSort(homeLiabilityTable, key as HomeLiabilitySortKey);
+}
+
+function selectHomeAllPortfolios(): void {
+  if (homePortfolioKey.value === "ALL") {
+    return;
+  }
+  homePortfolioKey.value = "ALL";
+}
+
+function loadHomeTableSectionState(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(HOME_TABLE_SECTION_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<"portfolios" | "holdings" | "liabilities", boolean>>;
+    if (typeof parsed.portfolios === "boolean") homePortfoliosExpanded.value = parsed.portfolios;
+    if (typeof parsed.holdings === "boolean") homeHoldingsExpanded.value = parsed.holdings;
+    if (typeof parsed.liabilities === "boolean") homeLiabilitiesExpanded.value = parsed.liabilities;
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
+function saveHomeTableSectionState(): void {
+  if (typeof window === "undefined") return;
+  const payload = {
+    portfolios: homePortfoliosExpanded.value,
+    holdings: homeHoldingsExpanded.value,
+    liabilities: homeLiabilitiesExpanded.value,
+  };
+  window.localStorage.setItem(HOME_TABLE_SECTION_STORAGE_KEY, JSON.stringify(payload));
+}
+
+async function loadHomePortfolioTable(): Promise<void> {
+  homePortfolioTable.loading = true;
+  try {
+    const out = await getPortfoliosTable({
+      page: homePortfolioTable.page,
+      page_size: homePortfolioTable.pageSize,
+      sort_by: toHomePortfolioSortBy(homePortfolioTable.sortBy),
+      sort_order: homePortfolioTable.sortOrder,
+      portfolio_id: homePortfolioId.value,
+      display_currency: displayCurrency.value,
+      include_hidden: false,
+      include_excluded: false,
+    });
+    homePortfolioRows.value = out.items.map(mapHomePortfolioRow);
+    homePortfolioTable.total = out.total;
+  } finally {
+    homePortfolioTable.loading = false;
+  }
+}
+
+async function loadHomeHoldingTable(): Promise<void> {
+  homeHoldingTable.loading = true;
+  try {
+    const out = await getHoldingsTable({
+      page: homeHoldingTable.page,
+      page_size: homeHoldingTable.pageSize,
+      sort_by: toHomeHoldingSortBy(homeHoldingTable.sortBy),
+      sort_order: homeHoldingTable.sortOrder,
+      q: homeHoldingTable.q || undefined,
+      portfolio_id: homePortfolioId.value,
+      display_currency: displayCurrency.value,
+      include_hidden: false,
+      include_excluded_portfolios: false,
+    });
+    homeHoldingRows.value = out.items.map(mapHomeHoldingRow);
+    homeHoldingTable.total = out.total;
+  } finally {
+    homeHoldingTable.loading = false;
+  }
+}
+
+async function loadHomeLiabilityTable(): Promise<void> {
+  homeLiabilityTable.loading = true;
+  try {
+    const out = await getLiabilitiesTable({
+      page: homeLiabilityTable.page,
+      page_size: homeLiabilityTable.pageSize,
+      sort_by: toHomeLiabilitySortBy(homeLiabilityTable.sortBy),
+      sort_order: homeLiabilityTable.sortOrder,
+      q: homeLiabilityTable.q || undefined,
+      portfolio_id: homePortfolioId.value,
+      display_currency: displayCurrency.value,
+      include_hidden: false,
+      include_excluded: false,
+    });
+    homeLiabilityRows.value = out.items.map(mapHomeLiabilityRow);
+    homeLiabilityTable.total = out.total;
+  } finally {
+    homeLiabilityTable.loading = false;
   }
 }
 
@@ -622,7 +853,12 @@ onMounted(async () => {
     } else if (saved === "0" || saved === "false") {
       liveMaskAmounts.value = false;
     }
+    loadHomeTableSectionState();
   }
+  const pageSize = getHomeTablePageSize();
+  homePortfolioTable.pageSize = pageSize;
+  homeHoldingTable.pageSize = pageSize;
+  homeLiabilityTable.pageSize = pageSize;
   await ensureInitialized();
   await loadHomeData();
 });
@@ -637,11 +873,11 @@ watch(
 );
 
 watch(
-  () => livePortfolioKey.value,
-  (next, prev) => {
+  () => [liveDashboardTarget.value, livePortfolioKey.value] as const,
+  ([nextTarget, nextPortfolio], [prevTarget, prevPortfolio]) => {
     if (!summary.value) return;
-    if (next !== prev) {
-      void loadHomeData();
+    if (nextTarget !== prevTarget || nextPortfolio !== prevPortfolio) {
+      void liveDashboardData.refreshAllocation();
     }
   },
 );
@@ -651,6 +887,112 @@ watch(
   (next) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(LIVE_MASK_STORAGE_KEY, next ? "1" : "0");
+  },
+);
+
+watch(
+  () => [homePortfoliosExpanded.value, homeHoldingsExpanded.value, homeLiabilitiesExpanded.value],
+  ([nextPortfolios, nextHoldings, nextLiabilities], [prevPortfolios, prevHoldings, prevLiabilities]) => {
+    saveHomeTableSectionState();
+    if (nextPortfolios && !prevPortfolios) {
+      void loadHomePortfolioTable();
+    }
+    if (nextHoldings && !prevHoldings) {
+      void loadHomeHoldingTable();
+    }
+    if (nextLiabilities && !prevLiabilities) {
+      void loadHomeLiabilityTable();
+    }
+  },
+);
+
+watch(
+  () => homePortfolioKey.value,
+  () => {
+    homePortfolioTable.page = 1;
+    homeHoldingTable.page = 1;
+    homeLiabilityTable.page = 1;
+    if (homePortfoliosExpanded.value) {
+      void loadHomePortfolioTable();
+    }
+    if (homeHoldingsExpanded.value) {
+      void loadHomeHoldingTable();
+    }
+    if (homeLiabilitiesExpanded.value) {
+      void loadHomeLiabilityTable();
+    }
+  },
+);
+
+watch(
+  () => [
+    homePortfolioTable.page,
+    homePortfolioTable.pageSize,
+    homePortfolioTable.sortBy,
+    homePortfolioTable.sortOrder,
+    displayCurrency.value,
+  ],
+  () => {
+    if (!homePortfoliosExpanded.value) return;
+    void loadHomePortfolioTable();
+  },
+);
+
+watch(
+  () => [
+    homeHoldingTable.page,
+    homeHoldingTable.pageSize,
+    homeHoldingTable.sortBy,
+    homeHoldingTable.sortOrder,
+    homeHoldingTable.q,
+    displayCurrency.value,
+  ],
+  () => {
+    if (!homeHoldingsExpanded.value) return;
+    void loadHomeHoldingTable();
+  },
+);
+
+watch(
+  () => [
+    homeLiabilityTable.page,
+    homeLiabilityTable.pageSize,
+    homeLiabilityTable.sortBy,
+    homeLiabilityTable.sortOrder,
+    homeLiabilityTable.q,
+    displayCurrency.value,
+  ],
+  () => {
+    if (!homeLiabilitiesExpanded.value) return;
+    void loadHomeLiabilityTable();
+  },
+);
+
+watch(
+  () => homeHoldingSearchTerm.value,
+  (next) => {
+    if (homeHoldingSearchDebounceTimer) {
+      clearTimeout(homeHoldingSearchDebounceTimer);
+    }
+    homeHoldingSearchDebounceTimer = setTimeout(() => {
+      homeHoldingTable.q = next.trim();
+      homeHoldingTable.page = 1;
+      homeHoldingSearchDebounceTimer = null;
+    }, 300);
+  },
+);
+
+watch(
+  () => homeLiabilitySearchTerm.value,
+  (next) => {
+    if (homeLiabilitySearchDebounceTimer) {
+      clearTimeout(homeLiabilitySearchDebounceTimer);
+    }
+    homeLiabilitySearchDebounceTimer = setTimeout(() => {
+      homeLiabilityTable.q = next.trim();
+      homeLiabilityTable.page = 1;
+      homeLiabilitySearchDebounceTimer = null;
+    }, 300);
   },
 );
 </script>
@@ -706,236 +1048,229 @@ watch(
       </button>
     </article>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Live Dashboard Panel</h2>
-          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Default is collapsed. Expand to preview dashboard widgets and export image.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          @click="toggleLiveDashboard"
-        >
-          {{ liveDashboardExpanded ? "Collapse" : "Expand" }}
-        </button>
-      </div>
+    <DashboardPanelContainer
+      title="Live Dashboard Panel"
+      description="Default is collapsed. Expand to preview dashboard widgets and export image."
+      source-mode="LIVE"
+      :expanded="liveDashboardExpanded"
+      collapsed-message="Collapsed. Click Expand to preview and export."
+      @toggle="toggleLiveDashboard"
+    >
+      <template #controls>
+        <div class="rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
+          <div class="flex flex-wrap items-center gap-3 text-sm">
+            <div class="inline-flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">KPI</span>
+              <button
+                type="button"
+                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                :class="liveKpiTarget === 'SUMMARY' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+                @click="liveKpiTarget = 'SUMMARY'"
+              >
+                Summary
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                :class="liveKpiTarget === 'PORTFOLIOS' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+                @click="liveKpiTarget = 'PORTFOLIOS'"
+              >
+                Portfolios
+              </button>
+            </div>
 
-      <div v-if="liveDashboardExpanded" class="mt-4 space-y-3">
-        <div class="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/50">
-          <div class="flex items-center gap-1">
-            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">KPI</span>
-            <button
-              v-for="mode in ['SUMMARY', 'PORTFOLIOS']"
-              :key="`home-kpi-${mode}`"
-              type="button"
-              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
-              :class="
-                liveKpiTarget === mode
-                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              "
-              @click="liveKpiTarget = mode as 'SUMMARY' | 'PORTFOLIOS'"
-            >
-              {{ mode }}
-            </button>
-          </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Target</span>
+              <button
+                v-for="target in (['GROSS', 'LIABILITIES', 'NET', 'HOLDINGS'] as const)"
+                :key="`home-target-${target}`"
+                type="button"
+                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                :class="liveDashboardTarget === target ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+                @click="liveDashboardTarget = target"
+              >
+                {{ target }}
+              </button>
+            </div>
 
-          <div v-if="liveKpiTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
-            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
-            <select
-              v-model="liveKpiPortfolioKey"
-              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-            >
-              <option value="ALL">All</option>
-              <option v-for="item in portfolios" :key="`home-kpi-portfolio-${item.id}`" :value="String(item.id)">
-                {{ item.name }}
-              </option>
-            </select>
-          </div>
+            <div class="inline-flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Start</span>
+              <button
+                v-for="pos in (['TOP', 'RIGHT', 'LEFT'] as const)"
+                :key="`home-donut-start-${pos}`"
+                type="button"
+                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                :class="liveDonutStartPosition === pos ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+                @click="liveDonutStartPosition = pos"
+              >
+                {{ pos }}
+              </button>
+            </div>
 
-          <div class="mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" />
+            <div class="inline-flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Portfolio</span>
+              <select
+                v-model="livePortfolioKey"
+                class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                <option value="ALL">All</option>
+                <option v-for="item in portfolios" :key="`home-live-portfolio-${item.id}`" :value="String(item.id)">
+                  {{ item.name }}
+                </option>
+              </select>
+            </div>
 
-          <div class="flex items-center gap-1">
-            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Donut</span>
-            <button
-              v-for="mode in ['GROSS', 'LIABILITIES', 'NET', 'PORTFOLIOS']"
-              :key="`home-donut-${mode}`"
-              type="button"
-              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
-              :class="
-                liveDonutTarget === mode
-                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              "
-              @click="liveDonutTarget = mode as 'GROSS' | 'LIABILITIES' | 'NET' | 'PORTFOLIOS'"
-            >
-              {{ mode }}
-            </button>
-          </div>
-          <div class="mx-1 hidden h-5 w-px bg-slate-300 dark:bg-slate-700 sm:block" />
-          <div class="flex items-center gap-1">
-            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Start</span>
-            <button
-              v-for="pos in ['TOP', 'RIGHT', 'LEFT']"
-              :key="`home-donut-start-${pos}`"
-              type="button"
-              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
-              :class="
-                liveDonutStartPosition === pos
-                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              "
-              @click="liveDonutStartPosition = pos as 'TOP' | 'RIGHT' | 'LEFT'"
-            >
-              {{ pos }}
-            </button>
-          </div>
-
-          <div v-if="liveDonutTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
-            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
-            <select
-              v-model="livePortfolioKey"
-              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-            >
-              <option value="ALL">All</option>
-              <option v-for="item in portfolios" :key="`home-donut-portfolio-${item.id}`" :value="String(item.id)">
-                {{ item.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="mx-2 h-5 w-px bg-slate-300 dark:bg-slate-700" />
-
-          <div class="flex items-center gap-1">
-            <span class="mr-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">Treemap</span>
-            <button
-              v-for="mode in ['GROSS', 'PORTFOLIOS']"
-              :key="`home-treemap-${mode}`"
-              type="button"
-              class="rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors"
-              :class="
-                liveTreemapTarget === mode
-                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/20 dark:text-indigo-300'
-                  : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-              "
-              @click="liveTreemapTarget = mode as 'GROSS' | 'PORTFOLIOS'"
-            >
-              {{ mode }}
-            </button>
-          </div>
-
-          <div v-if="liveTreemapTarget === 'PORTFOLIOS'" class="flex items-center gap-2">
-            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">Portfolio</label>
-            <select
-              v-model="livePortfolioKey"
-              class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-            >
-              <option value="ALL">All</option>
-              <option v-for="item in portfolios" :key="`home-treemap-portfolio-${item.id}`" :value="String(item.id)">
-                {{ item.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              @click="printLiveDashboard"
-            >
-              Print
-            </button>
-            <button
-              type="button"
-              class="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
-              :disabled="exportingImage || loading"
-              @click="exportLiveDashboardImage"
-            >
-              {{ exportingImage ? "Exporting..." : "Export PNG" }}
-            </button>
+            <div class="ml-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="printLiveDashboard"
+              >
+                Print
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+                :disabled="exportingImage || loading || !liveDashboardExpanded"
+                @click="exportLiveDashboardImage"
+              >
+                {{ exportingImage ? "Exporting..." : "Export PNG" }}
+              </button>
+            </div>
           </div>
         </div>
+      </template>
 
-        <div ref="liveDashboardRef" class="grid grid-cols-1 gap-3 xl:grid-cols-2">
-          <div class="xl:col-span-2">
-            <KpiSummaryCard
-              v-if="liveKpiTarget === 'SUMMARY'"
-              title="KPI Summary"
-              subtitle="Included in print/snapshot"
-              :currency="summaryDisplayCurrency"
-              :gross-assets-total="grossAssetsTotal"
-              :liabilities-total="liabilitiesTotal"
-              :net-assets-total="netAssetsTotal"
-              :invested-principal-total="investedPrincipalTotal"
-              :principal-minus-debt-total="principalMinusDebtTotal"
-              :gross-return-pct="kpiGrossReturnPct"
-              :net-return-pct="kpiNetReturnPct"
-              :gross-profit-total="kpiGrossProfitTotal"
-              :net-profit-total="kpiNetProfitTotal"
-              :as-of="asOf"
-              :mask-amounts="liveMaskAmounts"
-            />
-            <KpiPortfolioSummaryCard
-              v-else
-              title="KPI Portfolios"
-              subtitle="Per portfolio | Included in print/snapshot"
-              :currency="summaryDisplayCurrency"
-              :portfolios="liveKpiPortfolioRows"
-              :mask-amounts="liveMaskAmounts"
-            />
-          </div>
-
-          <AllocationDonutCard
-            :title="`Allocation | ${liveDonutTarget}`"
-            :subtitle="
-              liveDonutTarget === 'PORTFOLIOS'
-                ? `HOLDINGS by ${livePortfolioLabel}`
-                : 'Top N + Others (grouped by Portfolio)'
-            "
+      <div ref="liveDashboardRef" class="grid grid-cols-1 gap-3 xl:grid-cols-2">
+        <div class="xl:col-span-2">
+          <KpiSummaryCard
+            v-if="liveKpiTarget === 'SUMMARY'"
+            title="KPI Summary"
+            subtitle="Included in print/snapshot"
             :currency="summaryDisplayCurrency"
-            :total="toNumber(donutData?.total)"
-            :items="donutItems"
-            :start-position="liveDonutStartPosition"
+            :gross-assets-total="grossAssetsTotal"
+            :liabilities-total="liabilitiesTotal"
+            :net-assets-total="netAssetsTotal"
+            :invested-principal-total="investedPrincipalTotal"
+            :principal-minus-debt-total="principalMinusDebtTotal"
+            :gross-return-pct="kpiGrossReturnPct"
+            :net-return-pct="kpiNetReturnPct"
+            :gross-profit-total="kpiGrossProfitTotal"
+            :net-profit-total="kpiNetProfitTotal"
+            :as-of="asOf"
             :mask-amounts="liveMaskAmounts"
-            :loading="loading"
-            :error="errorMessage"
           />
-
-          <AllocationTreemapCard
-            title="Treemap Holdings"
-            :subtitle="
-              liveTreemapTarget === 'GROSS'
-                ? 'Target=GROSS | group_by=PORTFOLIO | color=return'
-                : `Target=HOLDINGS | group_by=ASSET | ${livePortfolioLabel} | color=return`
-            "
+          <KpiPortfolioSummaryCard
+            v-else
+            title="KPI Portfolios"
+            subtitle="Per portfolio | Included in print/snapshot"
             :currency="summaryDisplayCurrency"
-            :items="liveTreemapItems"
+            :portfolios="liveKpiPortfolioRows"
             :mask-amounts="liveMaskAmounts"
-            :loading="loading"
-            :error="errorMessage"
           />
+        </div>
 
-          <div class="xl:col-span-2">
-            <NetworthTrendCard
-              title="Networth Trend"
-              subtitle="valuation_snapshots | bucket=DAY"
-              :currency="summaryDisplayCurrency"
-              :points="trendPoints"
-              :mask-amounts="liveMaskAmounts"
-              :loading="loading"
-              :error="errorMessage"
-            />
-          </div>
+        <AllocationDonutCard
+          :title="`Allocation | ${liveDashboardTarget}`"
+          :subtitle="`Top N + Others (${livePortfolioKey === 'ALL' ? 'all portfolios' : 'filtered portfolio'})`"
+          :currency="summaryDisplayCurrency"
+          :total="donutTotal"
+          :items="donutItems"
+          :start-position="liveDonutStartPosition"
+          :mask-amounts="liveMaskAmounts"
+          :loading="dashboardDonutLoading"
+          :error="dashboardDonutError"
+        />
+
+        <AllocationTreemapCard
+          :title="`Treemap | ${liveDashboardTarget}`"
+          :subtitle="
+            liveDashboardTarget === 'HOLDINGS'
+              ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey === 'ALL' ? '' : `| ${livePortfolioLabel}`}`
+              : `Target=${liveDashboardTarget} | group_by=PORTFOLIO | color=return`
+          "
+          :currency="summaryDisplayCurrency"
+          :items="liveTreemapItems"
+          :mask-amounts="liveMaskAmounts"
+          :loading="dashboardTreemapLoading"
+          :error="dashboardTreemapError"
+        />
+
+        <div class="xl:col-span-2">
+          <NetworthTrendCard
+            title="Networth Trend"
+            subtitle="valuation_snapshots | bucket=DAY"
+            :currency="summaryDisplayCurrency"
+            :points="trendPoints"
+            :mask-amounts="liveMaskAmounts"
+            :loading="dashboardTrendLoading"
+            :error="dashboardTrendError"
+          />
         </div>
       </div>
+    </DashboardPanelContainer>
 
-      <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        Collapsed. Click <span class="font-semibold">Expand</span> to preview and export.
-      </p>
-    </article>
+    <PortfolioStatusTableCard
+      title="Portfolios Table"
+      subtitle="Portfolio / Current / Invested Principal / Profit / Return"
+      :expanded="homePortfoliosExpanded"
+      :loading="homePortfolioTable.loading"
+      :rows="homePortfolioRows"
+      :total="homePortfolioTable.total"
+      :page="homePortfolioTable.page"
+      :page-size="homePortfolioTable.pageSize"
+      :sort-by="homePortfolioTable.sortBy"
+      :sort-order="homePortfolioTable.sortOrder"
+      :currency="summaryDisplayCurrency"
+      :mask-amounts="liveMaskAmounts"
+      :show-filter="true"
+      :portfolio-key="homePortfolioKey"
+      :portfolio-options="homePortfolioOptions"
+      @toggle="homePortfoliosExpanded = !homePortfoliosExpanded"
+      @sort="toggleHomePortfolioSort"
+      @set-page="homePortfolioTable.page = $event"
+      @select-all="selectHomeAllPortfolios"
+      @set-portfolio-key="homePortfolioKey = $event"
+    />
+
+    <HoldingsStatusTableCard
+      title="Holdings Table"
+      subtitle="Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol"
+      :expanded="homeHoldingsExpanded"
+      :loading="homeHoldingTable.loading"
+      :rows="homeHoldingRows"
+      :total="homeHoldingTable.total"
+      :page="homeHoldingTable.page"
+      :page-size="homeHoldingTable.pageSize"
+      :sort-by="homeHoldingTable.sortBy"
+      :sort-order="homeHoldingTable.sortOrder"
+      :search-term="homeHoldingSearchTerm"
+      :mask-amounts="liveMaskAmounts"
+      :display-currency="summaryDisplayCurrency"
+      @toggle="homeHoldingsExpanded = !homeHoldingsExpanded"
+      @sort="toggleHomeHoldingSort"
+      @set-page="homeHoldingTable.page = $event"
+      @update:search-term="homeHoldingSearchTerm = $event"
+    />
+
+    <LiabilitiesStatusTableCard
+      title="Liabilities Table"
+      subtitle="Portfolio / Liability / Balance / Type"
+      :expanded="homeLiabilitiesExpanded"
+      :loading="homeLiabilityTable.loading"
+      :rows="homeLiabilityRows"
+      :total="homeLiabilityTable.total"
+      :page="homeLiabilityTable.page"
+      :page-size="homeLiabilityTable.pageSize"
+      :sort-by="homeLiabilityTable.sortBy"
+      :sort-order="homeLiabilityTable.sortOrder"
+      :search-term="homeLiabilitySearchTerm"
+      :mask-amounts="liveMaskAmounts"
+      @toggle="homeLiabilitiesExpanded = !homeLiabilitiesExpanded"
+      @sort="toggleHomeLiabilitySort"
+      @set-page="homeLiabilityTable.page = $event"
+      @update:search-term="homeLiabilitySearchTerm = $event"
+    />
 
     <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-3">

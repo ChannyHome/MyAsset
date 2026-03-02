@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 
 import type { PortfolioTableRowOut } from "../api/portfolios";
@@ -62,9 +62,50 @@ function netContribution(row: PortfolioTableRowOut): number {
   return toNumber(row.cumulative_deposit_amount) - toNumber(row.cumulative_withdrawal_amount);
 }
 
-const rows = computed(() =>
-  [...props.portfolios].sort((a, b) => Number(a.id) - Number(b.id)),
-);
+type SortKey = "portfolio" | "current" | "principal" | "profit" | "return";
+type SortOrder = "asc" | "desc";
+
+const sortBy = ref<SortKey>("current");
+const sortOrder = ref<SortOrder>("desc");
+
+function toggleSort(key: SortKey): void {
+  if (sortBy.value === key) {
+    sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+    return;
+  }
+  sortBy.value = key;
+  sortOrder.value = key === "portfolio" ? "asc" : "desc";
+}
+
+function sortIndicator(key: SortKey): string {
+  if (sortBy.value !== key) return "↕";
+  return sortOrder.value === "asc" ? "↑" : "↓";
+}
+
+const rows = computed(() => {
+  const base = [...props.portfolios];
+  base.sort((a, b) => {
+    if (sortBy.value === "portfolio") {
+      const byName = (a.name || "").localeCompare(b.name || "", "ko");
+      if (byName !== 0) return byName;
+      return Number(a.id) - Number(b.id);
+    }
+    if (sortBy.value === "current") {
+      return toNumber(a.gross_assets_total) - toNumber(b.gross_assets_total);
+    }
+    if (sortBy.value === "principal") {
+      return netContribution(a) - netContribution(b);
+    }
+    if (sortBy.value === "profit") {
+      return toNumber(a.portfolio_profit_total ?? a.total_pnl_amount) - toNumber(b.portfolio_profit_total ?? b.total_pnl_amount);
+    }
+    return toNumber(a.total_return_pct ?? null) - toNumber(b.total_return_pct ?? null);
+  });
+  if (sortOrder.value === "desc") {
+    base.reverse();
+  }
+  return base;
+});
 
 onMounted(() => {
   if (typeof uiStore.init === "function") {
@@ -99,12 +140,55 @@ onMounted(() => {
             <th
               class="sticky-col-head sticky-col-width sticky left-0 z-20 bg-slate-50 px-3 py-2 dark:bg-slate-800"
             >
-              Portfolio
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
+                @click="toggleSort('portfolio')"
+              >
+                Portfolio
+                <span class="text-[11px] opacity-80">{{ sortIndicator("portfolio") }}</span>
+              </button>
             </th>
-            <th class="px-3 py-2 text-right">Current Value</th>
-            <th class="px-3 py-2 text-right">Principal</th>
-            <th class="px-3 py-2 text-right">Profit</th>
-            <th class="px-3 py-2 text-right">Return</th>
+            <th class="px-3 py-2 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
+                @click="toggleSort('current')"
+              >
+                Current Value
+                <span class="text-[11px] opacity-80">{{ sortIndicator("current") }}</span>
+              </button>
+            </th>
+            <th class="px-3 py-2 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
+                @click="toggleSort('principal')"
+              >
+                Principal
+                <span class="text-[11px] opacity-80">{{ sortIndicator("principal") }}</span>
+              </button>
+            </th>
+            <th class="px-3 py-2 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
+                @click="toggleSort('profit')"
+              >
+                Profit
+                <span class="text-[11px] opacity-80">{{ sortIndicator("profit") }}</span>
+              </button>
+            </th>
+            <th class="px-3 py-2 text-right">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
+                @click="toggleSort('return')"
+              >
+                Return
+                <span class="text-[11px] opacity-80">{{ sortIndicator("return") }}</span>
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody>

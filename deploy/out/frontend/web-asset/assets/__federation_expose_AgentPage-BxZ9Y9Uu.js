@@ -418,7 +418,7 @@ const _hoisted_303 = { class: "px-2 py-1.5 whitespace-nowrap" };
 const _hoisted_304 = { class: "px-2 py-1.5 whitespace-nowrap" };
 const _hoisted_305 = { class: "px-2 py-1.5 whitespace-nowrap" };
 const _hoisted_306 = { class: "flex flex-wrap gap-1" };
-const _hoisted_307 = ["disabled", "onClick"];
+const _hoisted_307 = ["disabled", "title", "onClick"];
 const _hoisted_308 = ["disabled", "onClick"];
 const _hoisted_309 = ["disabled", "onClick"];
 const _hoisted_310 = ["disabled", "onClick"];
@@ -555,139 +555,142 @@ const _hoisted_425 = {
 const _hoisted_426 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
 const _hoisted_427 = { class: "text-xs" };
 const _hoisted_428 = { class: "text-xs" };
-const _hoisted_429 = {
+const _hoisted_429 = { class: "text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700" };
+const _hoisted_430 = {
   key: 2,
   class: "mt-2 text-[11px] text-rose-600 dark:text-rose-300"
 };
-const _hoisted_430 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_431 = { class: "text-xs" };
+const _hoisted_431 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
 const _hoisted_432 = { class: "text-xs" };
-const _hoisted_433 = ["value"];
-const _hoisted_434 = { class: "text-xs" };
+const _hoisted_433 = { class: "text-xs" };
+const _hoisted_434 = ["value"];
 const _hoisted_435 = { class: "text-xs" };
 const _hoisted_436 = { class: "text-xs" };
-const _hoisted_437 = ["value"];
-const _hoisted_438 = { class: "text-xs" };
-const _hoisted_439 = ["value"];
-const _hoisted_440 = { class: "text-xs" };
+const _hoisted_437 = { class: "text-xs" };
+const _hoisted_438 = ["value"];
+const _hoisted_439 = { class: "text-xs" };
+const _hoisted_440 = ["value"];
 const _hoisted_441 = { class: "text-xs" };
-const _hoisted_442 = { class: "text-xs md:col-span-2" };
-const _hoisted_443 = { class: "text-xs md:col-span-2 flex flex-wrap items-center gap-4" };
-const _hoisted_444 = { class: "mt-4 flex justify-end gap-2" };
-const _hoisted_445 = ["disabled"];
+const _hoisted_442 = { class: "text-xs" };
+const _hoisted_443 = { class: "text-xs md:col-span-2" };
+const _hoisted_444 = { class: "text-xs md:col-span-2 flex flex-wrap items-center gap-4" };
+const _hoisted_445 = { class: "mt-4 flex justify-end gap-2" };
 const _hoisted_446 = ["disabled"];
-const _hoisted_447 = { class: "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_448 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_449 = { class: "mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700" };
-const _hoisted_450 = { class: "mt-2 flex flex-wrap items-center gap-4 text-xs" };
-const _hoisted_451 = { class: "inline-flex items-center gap-2" };
+const _hoisted_447 = ["disabled"];
+const _hoisted_448 = { class: "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_449 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_450 = { class: "mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700" };
+const _hoisted_451 = { class: "mt-2 flex flex-wrap items-center gap-4 text-xs" };
 const _hoisted_452 = { class: "inline-flex items-center gap-2" };
-const _hoisted_453 = ["disabled"];
-const _hoisted_454 = {
+const _hoisted_453 = { class: "inline-flex items-center gap-2" };
+const _hoisted_454 = ["disabled"];
+const _hoisted_455 = {
   key: 0,
   class: "mt-2 text-[11px] text-amber-600 dark:text-amber-300"
 };
-const _hoisted_455 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_456 = { class: "text-xs" };
+const _hoisted_456 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
 const _hoisted_457 = { class: "text-xs" };
-const _hoisted_458 = {
+const _hoisted_458 = { class: "text-xs" };
+const _hoisted_459 = { class: "text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700" };
+const _hoisted_460 = {
   key: 2,
   class: "mt-2 text-[11px] text-rose-600 dark:text-rose-300"
 };
-const _hoisted_459 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_460 = { class: "text-xs" };
-const _hoisted_461 = ["disabled"];
-const _hoisted_462 = ["value"];
-const _hoisted_463 = { class: "text-xs" };
-const _hoisted_464 = ["disabled"];
-const _hoisted_465 = ["value"];
-const _hoisted_466 = { class: "text-xs" };
-const _hoisted_467 = { class: "text-xs" };
+const _hoisted_461 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_462 = { class: "text-xs" };
+const _hoisted_463 = ["disabled"];
+const _hoisted_464 = ["value"];
+const _hoisted_465 = { class: "text-xs" };
+const _hoisted_466 = ["disabled"];
+const _hoisted_467 = ["value"];
 const _hoisted_468 = { class: "text-xs" };
-const _hoisted_469 = ["value"];
+const _hoisted_469 = { class: "text-xs" };
 const _hoisted_470 = { class: "text-xs" };
-const _hoisted_471 = { class: "text-xs" };
-const _hoisted_472 = ["value"];
+const _hoisted_471 = ["value"];
+const _hoisted_472 = { class: "text-xs" };
 const _hoisted_473 = { class: "text-xs" };
-const _hoisted_474 = ["disabled"];
-const _hoisted_475 = ["value"];
-const _hoisted_476 = { class: "text-xs md:col-span-2" };
-const _hoisted_477 = { class: "text-xs md:col-span-2" };
-const _hoisted_478 = { class: "mt-4 flex justify-end gap-2" };
-const _hoisted_479 = ["disabled"];
-const _hoisted_480 = ["disabled"];
-const _hoisted_481 = { class: "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_482 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_483 = { class: "mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700" };
-const _hoisted_484 = { class: "mt-2 flex flex-wrap items-center gap-4 text-xs" };
-const _hoisted_485 = { class: "inline-flex items-center gap-2" };
-const _hoisted_486 = { class: "inline-flex items-center gap-2" };
-const _hoisted_487 = ["disabled"];
-const _hoisted_488 = {
+const _hoisted_474 = ["value"];
+const _hoisted_475 = { class: "text-xs" };
+const _hoisted_476 = ["disabled"];
+const _hoisted_477 = ["value"];
+const _hoisted_478 = { class: "text-xs md:col-span-2" };
+const _hoisted_479 = { class: "text-xs md:col-span-2" };
+const _hoisted_480 = { class: "mt-4 flex justify-end gap-2" };
+const _hoisted_481 = ["disabled"];
+const _hoisted_482 = ["disabled"];
+const _hoisted_483 = { class: "w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_484 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_485 = { class: "mt-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700" };
+const _hoisted_486 = { class: "mt-2 flex flex-wrap items-center gap-4 text-xs" };
+const _hoisted_487 = { class: "inline-flex items-center gap-2" };
+const _hoisted_488 = { class: "inline-flex items-center gap-2" };
+const _hoisted_489 = ["disabled"];
+const _hoisted_490 = {
   key: 0,
   class: "mt-2 text-[11px] text-amber-600 dark:text-amber-300"
 };
-const _hoisted_489 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_490 = { class: "text-xs" };
-const _hoisted_491 = { class: "text-xs" };
-const _hoisted_492 = {
+const _hoisted_491 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_492 = { class: "text-xs" };
+const _hoisted_493 = { class: "text-xs" };
+const _hoisted_494 = { class: "text-xs md:col-span-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-2 dark:border-slate-700" };
+const _hoisted_495 = {
   key: 2,
   class: "mt-2 text-[11px] text-rose-600 dark:text-rose-300"
 };
-const _hoisted_493 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_494 = { class: "text-xs" };
-const _hoisted_495 = ["disabled"];
-const _hoisted_496 = ["value"];
+const _hoisted_496 = { class: "mt-3 grid grid-cols-1 gap-2 md:grid-cols-2" };
 const _hoisted_497 = { class: "text-xs" };
-const _hoisted_498 = { class: "text-xs" };
+const _hoisted_498 = ["disabled"];
 const _hoisted_499 = ["value"];
 const _hoisted_500 = { class: "text-xs" };
-const _hoisted_501 = ["disabled"];
-const _hoisted_502 = { class: "text-xs" };
+const _hoisted_501 = { class: "text-xs" };
+const _hoisted_502 = ["value"];
 const _hoisted_503 = { class: "text-xs" };
-const _hoisted_504 = { class: "text-xs" };
+const _hoisted_504 = ["disabled"];
 const _hoisted_505 = { class: "text-xs" };
-const _hoisted_506 = ["value"];
-const _hoisted_507 = { class: "text-xs md:col-span-2" };
-const _hoisted_508 = { class: "text-xs md:col-span-2 flex flex-wrap items-center gap-4" };
-const _hoisted_509 = { class: "mt-4 flex justify-end gap-2" };
-const _hoisted_510 = ["disabled"];
-const _hoisted_511 = ["disabled"];
-const _hoisted_512 = { class: "w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_513 = { class: "flex flex-wrap items-start justify-between gap-2" };
-const _hoisted_514 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_515 = ["disabled"];
-const _hoisted_516 = {
+const _hoisted_506 = { class: "text-xs" };
+const _hoisted_507 = { class: "text-xs" };
+const _hoisted_508 = { class: "text-xs" };
+const _hoisted_509 = ["value"];
+const _hoisted_510 = { class: "text-xs md:col-span-2" };
+const _hoisted_511 = { class: "text-xs md:col-span-2 flex flex-wrap items-center gap-4" };
+const _hoisted_512 = { class: "mt-4 flex justify-end gap-2" };
+const _hoisted_513 = ["disabled"];
+const _hoisted_514 = ["disabled"];
+const _hoisted_515 = { class: "w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_516 = { class: "flex flex-wrap items-start justify-between gap-2" };
+const _hoisted_517 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_518 = ["disabled"];
+const _hoisted_519 = {
   key: 0,
   class: "mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400"
 };
-const _hoisted_517 = {
+const _hoisted_520 = {
   key: 1,
   class: "mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400"
 };
-const _hoisted_518 = {
+const _hoisted_521 = {
   key: 2,
   class: "mt-4 max-h-[70vh] space-y-3 overflow-y-auto pr-1"
 };
-const _hoisted_519 = { class: "flex flex-wrap items-center justify-between gap-2" };
-const _hoisted_520 = { class: "text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_521 = { class: "font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_522 = ["disabled", "onClick"];
-const _hoisted_523 = {
+const _hoisted_522 = { class: "flex flex-wrap items-center justify-between gap-2" };
+const _hoisted_523 = { class: "text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_524 = { class: "font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_525 = ["disabled", "onClick"];
+const _hoisted_526 = {
   key: 0,
   class: "mt-1 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_524 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_525 = { class: "font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_526 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
-const _hoisted_527 = { class: "mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200" };
-const _hoisted_528 = { class: "mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200" };
-const _hoisted_529 = { class: "w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_530 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_531 = { class: "mt-2 text-sm text-slate-600 dark:text-slate-300" };
-const _hoisted_532 = { class: "mt-4 flex justify-end gap-2" };
-const _hoisted_533 = ["disabled"];
-const _hoisted_534 = ["disabled"];
+const _hoisted_527 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_528 = { class: "font-medium text-slate-700 dark:text-slate-200" };
+const _hoisted_529 = { class: "mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" };
+const _hoisted_530 = { class: "mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200" };
+const _hoisted_531 = { class: "mt-1 max-h-40 overflow-auto rounded-lg bg-slate-50 p-2 text-[11px] leading-tight text-slate-700 dark:bg-slate-950 dark:text-slate-200" };
+const _hoisted_532 = { class: "w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_533 = { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_534 = { class: "mt-2 text-sm text-slate-600 dark:text-slate-300" };
+const _hoisted_535 = { class: "mt-4 flex justify-end gap-2" };
+const _hoisted_536 = ["disabled"];
+const _hoisted_537 = ["disabled"];
 const {computed,onBeforeUnmount,onMounted,reactive,ref,watch} = await importShared('vue');
 const COLLAPSE_STATE_STORAGE_KEY = "myasset.agent.collapse.v1";
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
@@ -700,6 +703,7 @@ const realEstateMetaJsonExample = `{
   "apt_name": "청명마을삼성",
   "lookback_months": 12
 }`;
+const AUTO_CASH_EDIT_GUIDE = "Auto Cash Balance는 거래 원장 기반으로 계산됩니다. Trade(DEPOSIT/WITHDRAW/ADJUSTMENT)로 수정하세요.";
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "AgentPage",
   setup(__props) {
@@ -860,6 +864,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       is_hidden: false,
       memo: "",
       edit_mode: "SAFE",
+      rebaseline_all_history: false,
       effective_at: "",
       reason: ""
     });
@@ -876,6 +881,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       is_hidden: false,
       memo: "",
       edit_mode: "SAFE",
+      rebaseline_all_history: false,
       effective_at: "",
       reason: "",
       original_portfolio_id: "",
@@ -895,6 +901,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       is_hidden: false,
       memo: "",
       edit_mode: "SAFE",
+      rebaseline_all_history: false,
       effective_at: "",
       reason: "",
       original_portfolio_id: "",
@@ -1064,8 +1071,17 @@ ${realEstateMetaJsonExample}`;
         maximumFractionDigits: 4
       }).format(amount);
     }
-    function holdingCurrencyCode(item) {
+    function holdingPriceCurrencyCode(item) {
       return normalizeUpper(item.current_price_currency || item.asset_currency || "KRW");
+    }
+    function holdingAvgCostCurrencyCode(item) {
+      return normalizeUpper(item.avg_cost_currency || item.avg_price_currency || item.asset_currency || "KRW");
+    }
+    function holdingCostBasisCurrencyCode(item) {
+      return normalizeUpper(item.cost_basis_currency || item.invested_amount_currency || holdingAvgCostCurrencyCode(item));
+    }
+    function holdingEvaluatedCurrencyCode(item) {
+      return normalizeUpper(item.cost_basis_currency || holdingPriceCurrencyCode(item));
     }
     function quotePriceText(item) {
       if (item.quote_price === null || item.quote_price === void 0 || !item.quote_currency) return "-";
@@ -1083,6 +1099,12 @@ ${realEstateMetaJsonExample}`;
       const meta = asset.meta_json;
       if (!meta || typeof meta !== "object" || Array.isArray(meta)) return false;
       return normalizeUpper(String(meta.asset_subtype || "")) === "CASH_BALANCE";
+    }
+    function isAutoCashHoldingRow(item) {
+      const symbol = normalizeUpper(item.asset_symbol || "");
+      if (symbol.startsWith("CASH_")) return true;
+      const assetName = normalizeUpper(item.asset_name || "");
+      return assetName.includes("AUTO CASH BALANCE");
     }
     function normalizeQuoteJobStatus(value) {
       const upper = String(value || "").toUpperCase();
@@ -1647,6 +1669,7 @@ ${realEstateMetaJsonExample}`;
       portfolioEditForm.is_hidden = item.is_hidden;
       portfolioEditForm.memo = item.memo || "";
       portfolioEditForm.edit_mode = "SAFE";
+      portfolioEditForm.rebaseline_all_history = false;
       portfolioEditForm.effective_at = nowDateTimeLocalInput();
       portfolioEditForm.reason = "";
     }
@@ -1676,6 +1699,7 @@ ${realEstateMetaJsonExample}`;
         const deposit = parseRequiredDecimal(portfolioEditForm.cumulative_deposit_amount, "Cumulative deposit");
         const withdrawal = parseRequiredDecimal(portfolioEditForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
         const editMode = portfolioEditForm.edit_mode;
+        const rebaselineAllHistory = !!portfolioEditForm.rebaseline_all_history;
         if (editMode === "HARD" && !canHardEdit.value) {
           throw new Error("HARD edit requires MAINTAINER+");
         }
@@ -1683,13 +1707,14 @@ ${realEstateMetaJsonExample}`;
         runAction(
           "Portfolio Update",
           "Apply Portfolio Update",
-          editMode === "SAFE" ? `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 DEPOSIT/WITHDRAW VOID)` : `Portfolio #${portfolioId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+          editMode === "SAFE" ? rebaselineAllHistory ? `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 DEPOSIT/WITHDRAW VOID)` : `Portfolio #${portfolioId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 DEPOSIT/WITHDRAW VOID)` : `Portfolio #${portfolioId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
           async () => {
             if (editMode === "SAFE") {
               const rebaselinePayload = {
                 effective_at: parseEffectiveAt(portfolioEditForm.effective_at),
                 cumulative_deposit_amount: deposit,
                 cumulative_withdrawal_amount: withdrawal,
+                rebaseline_all_history: rebaselineAllHistory,
                 reason: portfolioEditForm.reason.trim() || null
               };
               const rebased = await rebaselinePortfolio(portfolioId, rebaselinePayload);
@@ -1850,12 +1875,21 @@ ${realEstateMetaJsonExample}`;
       holdingEditForm.is_hidden = item.is_hidden;
       holdingEditForm.memo = item.memo || "";
       holdingEditForm.edit_mode = "SAFE";
+      holdingEditForm.rebaseline_all_history = false;
       holdingEditForm.effective_at = nowDateTimeLocalInput();
       holdingEditForm.reason = "";
       holdingEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
       holdingEditForm.original_asset_id = String(item.asset_id);
     }
     function openEditHoldingModal(item) {
+      if (isAutoCashHoldingRow(item)) {
+        pushLog(
+          "Holding Edit",
+          "INFO",
+          "Auto Cash Balance is ledger-derived. Use Trade (DEPOSIT/WITHDRAW/ADJUSTMENT) to change balance."
+        );
+        return;
+      }
       fillHoldingEditForm(item);
       holdingEditModal.open = true;
       void loadHoldingLookupOptions(true);
@@ -1871,6 +1905,7 @@ ${realEstateMetaJsonExample}`;
         const quantity = parseRequiredDecimal(holdingEditForm.quantity, "Quantity");
         const avgPrice = parseRequiredDecimal(holdingEditForm.avg_price, "Avg cost");
         const editMode = holdingEditForm.edit_mode;
+        const rebaselineAllHistory = !!holdingEditForm.rebaseline_all_history;
         if (editMode === "HARD" && !canHardEdit.value) {
           throw new Error("HARD edit requires MAINTAINER+");
         }
@@ -1885,7 +1920,7 @@ ${realEstateMetaJsonExample}`;
         runAction(
           "Holding Update",
           "Apply Holding Update",
-          editMode === "SAFE" ? `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 BUY/SELL VOID)` : `Holding #${holdingId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+          editMode === "SAFE" ? rebaselineAllHistory ? `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 BUY/SELL VOID)` : `Holding #${holdingId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 BUY/SELL VOID)` : `Holding #${holdingId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
           async () => {
             if (editMode === "SAFE") {
               const rebaselinePayload = {
@@ -1895,6 +1930,7 @@ ${realEstateMetaJsonExample}`;
                 avg_price_currency: normalizeUpper(holdingEditForm.avg_price_currency) || "KRW",
                 invested_amount: parseOptionalDecimal(holdingEditForm.invested_amount),
                 invested_amount_currency: normalizeUpper(holdingEditForm.invested_amount_currency) || "KRW",
+                rebaseline_all_history: rebaselineAllHistory,
                 reason: holdingEditForm.reason.trim() || null
               };
               const rebased = await rebaselineHolding(holdingId, rebaselinePayload);
@@ -2005,6 +2041,7 @@ ${realEstateMetaJsonExample}`;
       liabilityEditForm.is_hidden = item.is_hidden;
       liabilityEditForm.memo = item.memo || "";
       liabilityEditForm.edit_mode = "SAFE";
+      liabilityEditForm.rebaseline_all_history = false;
       liabilityEditForm.effective_at = nowDateTimeLocalInput();
       liabilityEditForm.reason = "";
       liabilityEditForm.original_portfolio_id = item.portfolio_id === null ? "" : String(item.portfolio_id);
@@ -2028,6 +2065,7 @@ ${realEstateMetaJsonExample}`;
         const currency = normalizeUpper(liabilityEditForm.currency);
         if (currency.length !== 3) throw new Error("Currency must be 3 letters");
         const editMode = liabilityEditForm.edit_mode;
+        const rebaselineAllHistory = !!liabilityEditForm.rebaseline_all_history;
         if (editMode === "HARD" && !canHardEdit.value) {
           throw new Error("HARD edit requires MAINTAINER+");
         }
@@ -2041,12 +2079,13 @@ ${realEstateMetaJsonExample}`;
         runAction(
           "Liability Update",
           "Apply Liability Update",
-          editMode === "SAFE" ? `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 LOAN_BORROW/LOAN_REPAY VOID)` : `Liability #${liabilityId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
+          editMode === "SAFE" ? rebaselineAllHistory ? `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준시각 무시, 전체 LOAN_BORROW/LOAN_REPAY VOID)` : `Liability #${liabilityId}를 Rebaseline 기준으로 수정할까요? (기준일 이전 LOAN_BORROW/LOAN_REPAY VOID)` : `Liability #${liabilityId}를 HARD 모드로 수정할까요? (다음 sync/rebuild에서 덮어써질 수 있음)`,
           async () => {
             if (editMode === "SAFE") {
               const rebaselinePayload = {
                 effective_at: parseEffectiveAt(liabilityEditForm.effective_at),
                 outstanding_balance: balance,
+                rebaseline_all_history: rebaselineAllHistory,
                 reason: liabilityEditForm.reason.trim() || null
               };
               const rebased = await rebaselineLiability(liabilityId, rebaselinePayload);
@@ -2499,8 +2538,8 @@ ${realEstateMetaJsonExample}`;
           _createElementVNode("header", _hoisted_2, [
             _createElementVNode("div", _hoisted_3, [
               _createElementVNode("div", null, [
-                _cache[173] || (_cache[173] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300" }, "Agent", -1)),
-                _cache[174] || (_cache[174] = _createElementVNode("h1", { class: "mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Asset Control Console", -1)),
+                _cache[176] || (_cache[176] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-300" }, "Agent", -1)),
+                _cache[177] || (_cache[177] = _createElementVNode("h1", { class: "mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Asset Control Console", -1)),
                 _createElementVNode("p", _hoisted_4, "Role: " + _toDisplayString(me.value?.role || "-") + " / " + _toDisplayString(me.value?.email || "-"), 1)
               ]),
               _createElementVNode("div", _hoisted_5, [
@@ -2515,7 +2554,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_7, [
             _createElementVNode("div", _hoisted_8, [
-              _cache[175] || (_cache[175] = _createElementVNode("div", null, [
+              _cache[178] || (_cache[178] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Secrets Vault (Admin)"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Manage exchange/broker/bank/API credentials by provider+key. List values are masked.")
               ], -1)),
@@ -2539,7 +2578,7 @@ ${realEstateMetaJsonExample}`;
             !canManageAppSecrets.value ? (_openBlock(), _createElementBlock("p", _hoisted_12, " Only ADMIN can view/create/update/deactivate secrets. ")) : secretsVaultCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_13, "섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.")) : (_openBlock(), _createElementBlock(_Fragment, { key: 2 }, [
               _createElementVNode("div", _hoisted_14, [
                 _createElementVNode("label", _hoisted_15, [
-                  _cache[176] || (_cache[176] = _createTextVNode("Provider ", -1)),
+                  _cache[179] || (_cache[179] = _createTextVNode("Provider ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => secretForm.provider = $event),
                     placeholder: "e.g. DATA_GO_KR / UPBIT / KIWOOM / KORBANK",
@@ -2549,7 +2588,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_16, [
-                  _cache[177] || (_cache[177] = _createTextVNode("Key Name ", -1)),
+                  _cache[180] || (_cache[180] = _createTextVNode("Key Name ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => secretForm.key_name = $event),
                     placeholder: "e.g. SERVICE_KEY / ACCESS_TOKEN",
@@ -2570,7 +2609,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_18, [
-                  _cache[178] || (_cache[178] = _createTextVNode("Description ", -1)),
+                  _cache[181] || (_cache[181] = _createTextVNode("Description ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => secretForm.description = $event),
                     placeholder: "description (optional)",
@@ -2586,7 +2625,7 @@ ${realEstateMetaJsonExample}`;
                   }, null, 512), [
                     [_vModelCheckbox, secretForm.is_active]
                   ]),
-                  _cache[179] || (_cache[179] = _createElementVNode("span", { class: "ml-1" }, "Active", -1))
+                  _cache[182] || (_cache[182] = _createElementVNode("span", { class: "ml-1" }, "Active", -1))
                 ])
               ]),
               _createElementVNode("div", _hoisted_20, [
@@ -2600,7 +2639,7 @@ ${realEstateMetaJsonExample}`;
               ]),
               _createElementVNode("div", _hoisted_23, [
                 _createElementVNode("table", _hoisted_24, [
-                  _cache[181] || (_cache[181] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
+                  _cache[184] || (_cache[184] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
                     _createElementVNode("tr", null, [
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "ID"),
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Provider"),
@@ -2641,7 +2680,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ]);
                     }), 128)),
-                    appSecrets.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_35, [..._cache[180] || (_cache[180] = [
+                    appSecrets.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_35, [..._cache[183] || (_cache[183] = [
                       _createElementVNode("td", {
                         colspan: "7",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -2654,7 +2693,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_36, [
             _createElementVNode("div", _hoisted_37, [
-              _cache[182] || (_cache[182] = _createElementVNode("div", null, [
+              _cache[185] || (_cache[185] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Current Assets Status"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "현재 등록된 자산 목록과 상태입니다. 행 클릭 시 Quote Actions와 동기화됩니다.")
               ], -1)),
@@ -2720,7 +2759,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[9] || (_cache[9] = ($event) => toggleSort("id"))
                         }, [
-                          _cache[183] || (_cache[183] = _createTextVNode("ID ", -1)),
+                          _cache[186] || (_cache[186] = _createTextVNode("ID ", -1)),
                           _createElementVNode("span", _hoisted_50, _toDisplayString(sortIndicator("id")), 1)
                         ])
                       ]),
@@ -2730,7 +2769,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[10] || (_cache[10] = ($event) => toggleSort("name"))
                         }, [
-                          _cache[184] || (_cache[184] = _createTextVNode("Name ", -1)),
+                          _cache[187] || (_cache[187] = _createTextVNode("Name ", -1)),
                           _createElementVNode("span", _hoisted_52, _toDisplayString(sortIndicator("name")), 1)
                         ])
                       ]),
@@ -2740,7 +2779,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[11] || (_cache[11] = ($event) => toggleSort("symbol"))
                         }, [
-                          _cache[185] || (_cache[185] = _createTextVNode("Symbol ", -1)),
+                          _cache[188] || (_cache[188] = _createTextVNode("Symbol ", -1)),
                           _createElementVNode("span", _hoisted_54, _toDisplayString(sortIndicator("symbol")), 1)
                         ])
                       ]),
@@ -2750,7 +2789,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[12] || (_cache[12] = ($event) => toggleSort("price"))
                         }, [
-                          _cache[186] || (_cache[186] = _createTextVNode("Price ", -1)),
+                          _cache[189] || (_cache[189] = _createTextVNode("Price ", -1)),
                           _createElementVNode("span", _hoisted_56, _toDisplayString(sortIndicator("price")), 1)
                         ])
                       ]),
@@ -2760,7 +2799,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[13] || (_cache[13] = ($event) => toggleSort("currency"))
                         }, [
-                          _cache[187] || (_cache[187] = _createTextVNode("Currency ", -1)),
+                          _cache[190] || (_cache[190] = _createTextVNode("Currency ", -1)),
                           _createElementVNode("span", _hoisted_58, _toDisplayString(sortIndicator("currency")), 1)
                         ])
                       ]),
@@ -2770,7 +2809,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[14] || (_cache[14] = ($event) => toggleSort("asset_class"))
                         }, [
-                          _cache[188] || (_cache[188] = _createTextVNode("Class ", -1)),
+                          _cache[191] || (_cache[191] = _createTextVNode("Class ", -1)),
                           _createElementVNode("span", _hoisted_60, _toDisplayString(sortIndicator("asset_class")), 1)
                         ])
                       ]),
@@ -2780,7 +2819,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[15] || (_cache[15] = ($event) => toggleSort("updated_at"))
                         }, [
-                          _cache[189] || (_cache[189] = _createTextVNode("Updated ", -1)),
+                          _cache[192] || (_cache[192] = _createTextVNode("Updated ", -1)),
                           _createElementVNode("span", _hoisted_62, _toDisplayString(sortIndicator("updated_at")), 1)
                         ])
                       ]),
@@ -2790,7 +2829,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[16] || (_cache[16] = ($event) => toggleSort("quote_mode"))
                         }, [
-                          _cache[190] || (_cache[190] = _createTextVNode("Quote ", -1)),
+                          _cache[193] || (_cache[193] = _createTextVNode("Quote ", -1)),
                           _createElementVNode("span", _hoisted_64, _toDisplayString(sortIndicator("quote_mode")), 1)
                         ])
                       ]),
@@ -2800,7 +2839,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[17] || (_cache[17] = ($event) => toggleSort("quote_as_of"))
                         }, [
-                          _cache[191] || (_cache[191] = _createTextVNode("Quote As Of ", -1)),
+                          _cache[194] || (_cache[194] = _createTextVNode("Quote As Of ", -1)),
                           _createElementVNode("span", _hoisted_66, _toDisplayString(sortIndicator("quote_as_of")), 1)
                         ])
                       ]),
@@ -2810,7 +2849,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[18] || (_cache[18] = ($event) => toggleSort("exchange_code"))
                         }, [
-                          _cache[192] || (_cache[192] = _createTextVNode("Exchange ", -1)),
+                          _cache[195] || (_cache[195] = _createTextVNode("Exchange ", -1)),
                           _createElementVNode("span", _hoisted_68, _toDisplayString(sortIndicator("exchange_code")), 1)
                         ])
                       ]),
@@ -2820,7 +2859,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[19] || (_cache[19] = ($event) => toggleSort("source"))
                         }, [
-                          _cache[193] || (_cache[193] = _createTextVNode("Source ", -1)),
+                          _cache[196] || (_cache[196] = _createTextVNode("Source ", -1)),
                           _createElementVNode("span", _hoisted_70, _toDisplayString(sortIndicator("source")), 1)
                         ])
                       ]),
@@ -2830,11 +2869,11 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[20] || (_cache[20] = ($event) => toggleSort("trade"))
                         }, [
-                          _cache[194] || (_cache[194] = _createTextVNode("Trade ", -1)),
+                          _cache[197] || (_cache[197] = _createTextVNode("Trade ", -1)),
                           _createElementVNode("span", _hoisted_72, _toDisplayString(sortIndicator("trade")), 1)
                         ])
                       ]),
-                      _cache[195] || (_cache[195] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
+                      _cache[198] || (_cache[198] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
                     ])
                   ]),
                   _createElementVNode("tbody", null, [
@@ -2893,7 +2932,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ], 10, _hoisted_73);
                     }), 128)),
-                    assets.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_94, [..._cache[196] || (_cache[196] = [
+                    assets.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_94, [..._cache[199] || (_cache[199] = [
                       _createElementVNode("td", {
                         colspan: "13",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -2905,11 +2944,11 @@ ${realEstateMetaJsonExample}`;
               _createElementVNode("div", _hoisted_95, [
                 _createElementVNode("div", _hoisted_96, [
                   _createElementVNode("span", null, "Total: " + _toDisplayString(assetsQuery.total), 1),
-                  _cache[199] || (_cache[199] = _createElementVNode("span", null, "|", -1)),
+                  _cache[202] || (_cache[202] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("span", null, "Page " + _toDisplayString(assetsQuery.page) + " / " + _toDisplayString(totalPages.value), 1),
-                  _cache[200] || (_cache[200] = _createElementVNode("span", null, "|", -1)),
+                  _cache[203] || (_cache[203] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("label", null, [
-                    _cache[198] || (_cache[198] = _createTextVNode(" Size ", -1)),
+                    _cache[201] || (_cache[201] = _createTextVNode(" Size ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => assetsQuery.pageSize = $event),
                       class: "ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950",
@@ -2917,7 +2956,7 @@ ${realEstateMetaJsonExample}`;
                         assetsQuery.page = 1;
                         refreshData();
                       })
-                    }, [..._cache[197] || (_cache[197] = [
+                    }, [..._cache[200] || (_cache[200] = [
                       _createElementVNode("option", { value: 10 }, "10", -1),
                       _createElementVNode("option", { value: 20 }, "20", -1),
                       _createElementVNode("option", { value: 50 }, "50", -1),
@@ -2951,13 +2990,13 @@ ${realEstateMetaJsonExample}`;
                   onClick: openCreateAssetModal
                 }, " Create Asset ", 8, _hoisted_99)
               ]),
-              _cache[201] || (_cache[201] = _createElementVNode("p", { class: "mt-2 text-xs text-slate-500 dark:text-slate-400" }, "Create/Edit/Delete는 Admin/Maintainer 전용입니다.", -1)),
+              _cache[204] || (_cache[204] = _createElementVNode("p", { class: "mt-2 text-xs text-slate-500 dark:text-slate-400" }, "Create/Edit/Delete는 Admin/Maintainer 전용입니다.", -1)),
               !canManageAssets.value ? (_openBlock(), _createElementBlock("p", _hoisted_100, " USER/SUPERUSER는 Asset 생성/수정/삭제 권한이 없습니다. Admin/Maintainer에게 요청하세요. ")) : _createCommentVNode("", true)
             ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_101, "섹션이 접혀 있습니다. Expand 버튼으로 열어주세요."))
           ]),
           _createElementVNode("article", _hoisted_102, [
             _createElementVNode("div", _hoisted_103, [
-              _cache[202] || (_cache[202] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quote Actions (Admin/Maintainer)", -1)),
+              _cache[205] || (_cache[205] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quote Actions (Admin/Maintainer)", -1)),
               canManageQuotes.value ? (_openBlock(), _createElementBlock("button", {
                 key: 0,
                 type: "button",
@@ -2970,12 +3009,12 @@ ${realEstateMetaJsonExample}`;
             !canManageQuotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_106, "권한이 없어 조회만 가능합니다.")) : quoteActionsCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_107, "폼이 접혀 있습니다. Expand 버튼으로 열어주세요.")) : (_openBlock(), _createElementBlock(_Fragment, { key: 3 }, [
               _createElementVNode("div", _hoisted_108, [
                 _createElementVNode("label", _hoisted_109, [
-                  _cache[204] || (_cache[204] = _createTextVNode("Asset ", -1)),
+                  _cache[207] || (_cache[207] = _createTextVNode("Asset ", -1)),
                   _withDirectives(_createElementVNode("select", {
                     "onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => manualQuoteForm.asset_id = $event),
                     class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                   }, [
-                    _cache[203] || (_cache[203] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                    _cache[206] || (_cache[206] = _createElementVNode("option", { value: "" }, "Select", -1)),
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(assets.value, (item) => {
                       return _openBlock(), _createElementBlock("option", {
                         key: item.id,
@@ -2987,7 +3026,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_111, [
-                  _cache[205] || (_cache[205] = _createTextVNode("Price ", -1)),
+                  _cache[208] || (_cache[208] = _createTextVNode("Price ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => manualQuoteForm.price = $event),
                     placeholder: "예: 810000000",
@@ -2997,7 +3036,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_112, [
-                  _cache[206] || (_cache[206] = _createTextVNode("Currency ", -1)),
+                  _cache[209] || (_cache[209] = _createTextVNode("Currency ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => manualQuoteForm.currency = $event),
                     maxlength: "3",
@@ -3008,7 +3047,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_113, [
-                  _cache[207] || (_cache[207] = _createTextVNode("As Of ", -1)),
+                  _cache[210] || (_cache[210] = _createTextVNode("As Of ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[29] || (_cache[29] = ($event) => manualQuoteForm.as_of = $event),
                     type: "datetime-local",
@@ -3030,7 +3069,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_116, [
             _createElementVNode("div", _hoisted_117, [
-              _cache[208] || (_cache[208] = _createElementVNode("div", null, [
+              _cache[211] || (_cache[211] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes (Admin)"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Home 하단 Release Notes 카드를 Agent에서 직접 관리합니다.")
               ], -1)),
@@ -3054,7 +3093,7 @@ ${realEstateMetaJsonExample}`;
             !canManageReleaseNotes.value ? (_openBlock(), _createElementBlock("p", _hoisted_121, " Only ADMIN can view/create/update/unpublish release notes. ")) : releaseNotesSectionCollapsed.value ? (_openBlock(), _createElementBlock("p", _hoisted_122, " 섹션이 접혀 있습니다. Expand 버튼으로 열어주세요. ")) : (_openBlock(), _createElementBlock(_Fragment, { key: 2 }, [
               _createElementVNode("div", _hoisted_123, [
                 _createElementVNode("label", _hoisted_124, [
-                  _cache[209] || (_cache[209] = _createTextVNode("Released At (optional) ", -1)),
+                  _cache[212] || (_cache[212] = _createTextVNode("Released At (optional) ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[31] || (_cache[31] = ($event) => releaseNoteForm.released_at = $event),
                     type: "datetime-local",
@@ -3064,7 +3103,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_125, [
-                  _cache[210] || (_cache[210] = _createTextVNode("Title ", -1)),
+                  _cache[213] || (_cache[213] = _createTextVNode("Title ", -1)),
                   _withDirectives(_createElementVNode("input", {
                     "onUpdate:modelValue": _cache[32] || (_cache[32] = ($event) => releaseNoteForm.title = $event),
                     class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
@@ -3073,7 +3112,7 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ]),
                 _createElementVNode("label", _hoisted_126, [
-                  _cache[211] || (_cache[211] = _createTextVNode("Summary ", -1)),
+                  _cache[214] || (_cache[214] = _createTextVNode("Summary ", -1)),
                   _withDirectives(_createElementVNode("textarea", {
                     "onUpdate:modelValue": _cache[33] || (_cache[33] = ($event) => releaseNoteForm.summary = $event),
                     rows: "3",
@@ -3089,7 +3128,7 @@ ${realEstateMetaJsonExample}`;
                   }, null, 512), [
                     [_vModelCheckbox, releaseNoteForm.is_published]
                   ]),
-                  _cache[212] || (_cache[212] = _createElementVNode("span", { class: "ml-1" }, "Published", -1))
+                  _cache[215] || (_cache[215] = _createElementVNode("span", { class: "ml-1" }, "Published", -1))
                 ])
               ]),
               _createElementVNode("div", _hoisted_128, [
@@ -3103,7 +3142,7 @@ ${realEstateMetaJsonExample}`;
               ]),
               _createElementVNode("div", _hoisted_131, [
                 _createElementVNode("table", _hoisted_132, [
-                  _cache[214] || (_cache[214] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
+                  _cache[217] || (_cache[217] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
                     _createElementVNode("tr", null, [
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "ID"),
                       _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Released At"),
@@ -3144,7 +3183,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ]);
                     }), 128)),
-                    releaseNotes.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_143, [..._cache[213] || (_cache[213] = [
+                    releaseNotes.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_143, [..._cache[216] || (_cache[216] = [
                       _createElementVNode("td", {
                         colspan: "7",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -3157,7 +3196,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_144, [
             _createElementVNode("div", _hoisted_145, [
-              _cache[215] || (_cache[215] = _createElementVNode("div", null, [
+              _cache[218] || (_cache[218] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Portfolios Status"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Server-side sort/pagination/search 적용")
               ], -1)),
@@ -3210,7 +3249,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[38] || (_cache[38] = ($event) => togglePortfolioSort("id"))
                         }, [
-                          _cache[216] || (_cache[216] = _createTextVNode("ID ", -1)),
+                          _cache[219] || (_cache[219] = _createTextVNode("ID ", -1)),
                           _createElementVNode("span", _hoisted_156, _toDisplayString(portfolioSortIndicator("id")), 1)
                         ])
                       ]),
@@ -3220,7 +3259,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[39] || (_cache[39] = ($event) => togglePortfolioSort("name"))
                         }, [
-                          _cache[217] || (_cache[217] = _createTextVNode("Name ", -1)),
+                          _cache[220] || (_cache[220] = _createTextVNode("Name ", -1)),
                           _createElementVNode("span", _hoisted_158, _toDisplayString(portfolioSortIndicator("name")), 1)
                         ])
                       ]),
@@ -3230,7 +3269,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[40] || (_cache[40] = ($event) => togglePortfolioSort("type"))
                         }, [
-                          _cache[218] || (_cache[218] = _createTextVNode("Type ", -1)),
+                          _cache[221] || (_cache[221] = _createTextVNode("Type ", -1)),
                           _createElementVNode("span", _hoisted_160, _toDisplayString(portfolioSortIndicator("type")), 1)
                         ])
                       ]),
@@ -3240,7 +3279,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[41] || (_cache[41] = ($event) => togglePortfolioSort("category"))
                         }, [
-                          _cache[219] || (_cache[219] = _createTextVNode("Category ", -1)),
+                          _cache[222] || (_cache[222] = _createTextVNode("Category ", -1)),
                           _createElementVNode("span", _hoisted_162, _toDisplayString(portfolioSortIndicator("category")), 1)
                         ])
                       ]),
@@ -3250,7 +3289,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[42] || (_cache[42] = ($event) => togglePortfolioSort("exchange_code"))
                         }, [
-                          _cache[220] || (_cache[220] = _createTextVNode("Exchange ", -1)),
+                          _cache[223] || (_cache[223] = _createTextVNode("Exchange ", -1)),
                           _createElementVNode("span", _hoisted_164, _toDisplayString(portfolioSortIndicator("exchange_code")), 1)
                         ])
                       ]),
@@ -3260,19 +3299,19 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[43] || (_cache[43] = ($event) => togglePortfolioSort("base_currency"))
                         }, [
-                          _cache[221] || (_cache[221] = _createTextVNode("Currency ", -1)),
+                          _cache[224] || (_cache[224] = _createTextVNode("Currency ", -1)),
                           _createElementVNode("span", _hoisted_166, _toDisplayString(portfolioSortIndicator("base_currency")), 1)
                         ])
                       ]),
-                      _cache[236] || (_cache[236] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Included", -1)),
-                      _cache[237] || (_cache[237] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
+                      _cache[239] || (_cache[239] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Included", -1)),
+                      _cache[240] || (_cache[240] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
                       _createElementVNode("th", _hoisted_167, [
                         _createElementVNode("button", {
                           type: "button",
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[44] || (_cache[44] = ($event) => togglePortfolioSort("cumulative_deposit_amount"))
                         }, [
-                          _cache[222] || (_cache[222] = _createTextVNode("Deposit ", -1)),
+                          _cache[225] || (_cache[225] = _createTextVNode("Deposit ", -1)),
                           _createElementVNode("span", _hoisted_168, _toDisplayString(portfolioSortIndicator("cumulative_deposit_amount")), 1)
                         ])
                       ]),
@@ -3282,7 +3321,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[45] || (_cache[45] = ($event) => togglePortfolioSort("cumulative_withdrawal_amount"))
                         }, [
-                          _cache[223] || (_cache[223] = _createTextVNode("Withdrawal ", -1)),
+                          _cache[226] || (_cache[226] = _createTextVNode("Withdrawal ", -1)),
                           _createElementVNode("span", _hoisted_170, _toDisplayString(portfolioSortIndicator("cumulative_withdrawal_amount")), 1)
                         ])
                       ]),
@@ -3292,7 +3331,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[46] || (_cache[46] = ($event) => togglePortfolioSort("principal_net"))
                         }, [
-                          _cache[224] || (_cache[224] = _createTextVNode("Net Contribution ", -1)),
+                          _cache[227] || (_cache[227] = _createTextVNode("Net Contribution ", -1)),
                           _createElementVNode("span", _hoisted_172, _toDisplayString(portfolioSortIndicator("principal_net")), 1)
                         ])
                       ]),
@@ -3302,7 +3341,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[47] || (_cache[47] = ($event) => togglePortfolioSort("gross_assets_total"))
                         }, [
-                          _cache[225] || (_cache[225] = _createTextVNode("Gross Assets ", -1)),
+                          _cache[228] || (_cache[228] = _createTextVNode("Gross Assets ", -1)),
                           _createElementVNode("span", _hoisted_174, _toDisplayString(portfolioSortIndicator("gross_assets_total")), 1)
                         ])
                       ]),
@@ -3312,7 +3351,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[48] || (_cache[48] = ($event) => togglePortfolioSort("liabilities_total"))
                         }, [
-                          _cache[226] || (_cache[226] = _createTextVNode("Liabilities ", -1)),
+                          _cache[229] || (_cache[229] = _createTextVNode("Liabilities ", -1)),
                           _createElementVNode("span", _hoisted_176, _toDisplayString(portfolioSortIndicator("liabilities_total")), 1)
                         ])
                       ]),
@@ -3322,7 +3361,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[49] || (_cache[49] = ($event) => togglePortfolioSort("net_assets_total"))
                         }, [
-                          _cache[227] || (_cache[227] = _createTextVNode("Net Assets ", -1)),
+                          _cache[230] || (_cache[230] = _createTextVNode("Net Assets ", -1)),
                           _createElementVNode("span", _hoisted_178, _toDisplayString(portfolioSortIndicator("net_assets_total")), 1)
                         ])
                       ]),
@@ -3332,7 +3371,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[50] || (_cache[50] = ($event) => togglePortfolioSort("debt_adjusted_principal_total"))
                         }, [
-                          _cache[228] || (_cache[228] = _createTextVNode("Debt-Adjusted Principal ", -1)),
+                          _cache[231] || (_cache[231] = _createTextVNode("Debt-Adjusted Principal ", -1)),
                           _createElementVNode("span", _hoisted_180, _toDisplayString(portfolioSortIndicator("debt_adjusted_principal_total")), 1)
                         ])
                       ]),
@@ -3342,7 +3381,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[51] || (_cache[51] = ($event) => togglePortfolioSort("net_assets_profit_total"))
                         }, [
-                          _cache[229] || (_cache[229] = _createTextVNode("Net Profit ", -1)),
+                          _cache[232] || (_cache[232] = _createTextVNode("Net Profit ", -1)),
                           _createElementVNode("span", _hoisted_182, _toDisplayString(portfolioSortIndicator("net_assets_profit_total")), 1)
                         ])
                       ]),
@@ -3352,7 +3391,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[52] || (_cache[52] = ($event) => togglePortfolioSort("net_assets_return_pct"))
                         }, [
-                          _cache[230] || (_cache[230] = _createTextVNode("Net Return% ", -1)),
+                          _cache[233] || (_cache[233] = _createTextVNode("Net Return% ", -1)),
                           _createElementVNode("span", _hoisted_184, _toDisplayString(portfolioSortIndicator("net_assets_return_pct")), 1)
                         ])
                       ]),
@@ -3362,7 +3401,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[53] || (_cache[53] = ($event) => togglePortfolioSort("portfolio_profit_total"))
                         }, [
-                          _cache[231] || (_cache[231] = _createTextVNode("Portfolio Profit ", -1)),
+                          _cache[234] || (_cache[234] = _createTextVNode("Portfolio Profit ", -1)),
                           _createElementVNode("span", _hoisted_186, _toDisplayString(portfolioSortIndicator("portfolio_profit_total")), 1)
                         ])
                       ]),
@@ -3372,7 +3411,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[54] || (_cache[54] = ($event) => togglePortfolioSort("total_return_pct"))
                         }, [
-                          _cache[232] || (_cache[232] = _createTextVNode("Return% ", -1)),
+                          _cache[235] || (_cache[235] = _createTextVNode("Return% ", -1)),
                           _createElementVNode("span", _hoisted_188, _toDisplayString(portfolioSortIndicator("total_return_pct")), 1)
                         ])
                       ]),
@@ -3382,7 +3421,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[55] || (_cache[55] = ($event) => togglePortfolioSort("holding_count"))
                         }, [
-                          _cache[233] || (_cache[233] = _createTextVNode("Holdings ", -1)),
+                          _cache[236] || (_cache[236] = _createTextVNode("Holdings ", -1)),
                           _createElementVNode("span", _hoisted_190, _toDisplayString(portfolioSortIndicator("holding_count")), 1)
                         ])
                       ]),
@@ -3392,7 +3431,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[56] || (_cache[56] = ($event) => togglePortfolioSort("liability_count"))
                         }, [
-                          _cache[234] || (_cache[234] = _createTextVNode("Liabilities ", -1)),
+                          _cache[237] || (_cache[237] = _createTextVNode("Liabilities ", -1)),
                           _createElementVNode("span", _hoisted_192, _toDisplayString(portfolioSortIndicator("liability_count")), 1)
                         ])
                       ]),
@@ -3402,11 +3441,11 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[57] || (_cache[57] = ($event) => togglePortfolioSort("updated_at"))
                         }, [
-                          _cache[235] || (_cache[235] = _createTextVNode("Updated ", -1)),
+                          _cache[238] || (_cache[238] = _createTextVNode("Updated ", -1)),
                           _createElementVNode("span", _hoisted_194, _toDisplayString(portfolioSortIndicator("updated_at")), 1)
                         ])
                       ]),
-                      _cache[238] || (_cache[238] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
+                      _cache[241] || (_cache[241] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
                     ])
                   ]),
                   _createElementVNode("tbody", null, [
@@ -3474,7 +3513,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ]);
                     }), 128)),
-                    portfolioRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_224, [..._cache[239] || (_cache[239] = [
+                    portfolioRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_224, [..._cache[242] || (_cache[242] = [
                       _createElementVNode("td", {
                         colspan: "23",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -3486,11 +3525,11 @@ ${realEstateMetaJsonExample}`;
               _createElementVNode("div", _hoisted_225, [
                 _createElementVNode("div", _hoisted_226, [
                   _createElementVNode("span", null, "Total: " + _toDisplayString(portfolioQuery.total), 1),
-                  _cache[242] || (_cache[242] = _createElementVNode("span", null, "|", -1)),
+                  _cache[245] || (_cache[245] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("span", null, "Page " + _toDisplayString(portfolioQuery.page) + " / " + _toDisplayString(portfolioTotalPages.value), 1),
-                  _cache[243] || (_cache[243] = _createElementVNode("span", null, "|", -1)),
+                  _cache[246] || (_cache[246] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("label", null, [
-                    _cache[241] || (_cache[241] = _createTextVNode("Size ", -1)),
+                    _cache[244] || (_cache[244] = _createTextVNode("Size ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[58] || (_cache[58] = ($event) => portfolioQuery.pageSize = $event),
                       class: "ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950",
@@ -3498,7 +3537,7 @@ ${realEstateMetaJsonExample}`;
                         portfolioQuery.page = 1;
                         refreshData();
                       })
-                    }, [..._cache[240] || (_cache[240] = [
+                    }, [..._cache[243] || (_cache[243] = [
                       _createElementVNode("option", { value: 10 }, "10", -1),
                       _createElementVNode("option", { value: 20 }, "20", -1),
                       _createElementVNode("option", { value: 50 }, "50", -1)
@@ -3526,7 +3565,7 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("div", _hoisted_229, [
-                _cache[251] || (_cache[251] = _createElementVNode("div", { class: "flex flex-wrap items-start justify-between gap-2" }, [
+                _cache[254] || (_cache[254] = _createElementVNode("div", { class: "flex flex-wrap items-start justify-between gap-2" }, [
                   _createElementVNode("div", null, [
                     _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Representative Cash Mapping"),
                     _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Portfolio + Currency 별 대표 cash asset을 고정합니다. (입출금/Auto Cash Flow 시 이 매핑 우선) ")
@@ -3534,13 +3573,13 @@ ${realEstateMetaJsonExample}`;
                 ], -1)),
                 _createElementVNode("div", _hoisted_230, [
                   _createElementVNode("label", _hoisted_231, [
-                    _cache[245] || (_cache[245] = _createTextVNode(" Portfolio ", -1)),
+                    _cache[248] || (_cache[248] = _createTextVNode(" Portfolio ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[62] || (_cache[62] = ($event) => portfolioCashMapForm.portfolio_id = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
                       disabled: lookupLoading.value || isBusy.value || cashAccountLookupLoading.value
                     }, [
-                      _cache[244] || (_cache[244] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                      _cache[247] || (_cache[247] = _createElementVNode("option", { value: "" }, "Select", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingPortfolioOptions.value, (item) => {
                         return _openBlock(), _createElementBlock("option", {
                           key: `cash-map-${item.id}`,
@@ -3552,7 +3591,7 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_234, [
-                    _cache[246] || (_cache[246] = _createTextVNode(" Currency ", -1)),
+                    _cache[249] || (_cache[249] = _createTextVNode(" Currency ", -1)),
                     _withDirectives(_createElementVNode("input", {
                       "onUpdate:modelValue": _cache[63] || (_cache[63] = ($event) => portfolioCashMapForm.currency = $event),
                       maxlength: "3",
@@ -3564,13 +3603,13 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_236, [
-                    _cache[248] || (_cache[248] = _createTextVNode(" Cash Asset ", -1)),
+                    _cache[251] || (_cache[251] = _createTextVNode(" Cash Asset ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[64] || (_cache[64] = ($event) => portfolioCashMapForm.asset_id = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
                       disabled: isBusy.value || cashAccountLookupLoading.value
                     }, [
-                      _cache[247] || (_cache[247] = _createElementVNode("option", { value: "" }, "Select", -1)),
+                      _cache[250] || (_cache[250] = _createElementVNode("option", { value: "" }, "Select", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(cashMapAssetOptions.value, (item) => {
                         return _openBlock(), _createElementBlock("option", {
                           key: `cash-asset-${item.id}`,
@@ -3592,7 +3631,7 @@ ${realEstateMetaJsonExample}`;
                 ]),
                 _createElementVNode("div", _hoisted_241, [
                   _createElementVNode("table", _hoisted_242, [
-                    _cache[250] || (_cache[250] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
+                    _cache[253] || (_cache[253] = _createElementVNode("thead", { class: "bg-slate-50 dark:bg-slate-800" }, [
                       _createElementVNode("tr", null, [
                         _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Currency"),
                         _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Asset ID"),
@@ -3615,7 +3654,7 @@ ${realEstateMetaJsonExample}`;
                           _createElementVNode("td", _hoisted_247, _toDisplayString(formatDateTime(item.updated_at)), 1)
                         ]);
                       }), 128)),
-                      portfolioCashAccounts.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_248, [..._cache[249] || (_cache[249] = [
+                      portfolioCashAccounts.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_248, [..._cache[252] || (_cache[252] = [
                         _createElementVNode("td", {
                           colspan: "4",
                           class: "px-3 py-3 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -3635,7 +3674,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, portfolioForm.name]
                   ]),
                   _createElementVNode("label", _hoisted_251, [
-                    _cache[252] || (_cache[252] = _createTextVNode(" Type ", -1)),
+                    _cache[255] || (_cache[255] = _createTextVNode(" Type ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[66] || (_cache[66] = ($event) => portfolioForm.type = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -3666,7 +3705,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, portfolioForm.exchange_code]
                   ]),
                   _createElementVNode("label", _hoisted_253, [
-                    _cache[253] || (_cache[253] = _createTextVNode(" Category ", -1)),
+                    _cache[256] || (_cache[256] = _createTextVNode(" Category ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[69] || (_cache[69] = ($event) => portfolioForm.category = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -3682,7 +3721,7 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_255, [
-                    _cache[254] || (_cache[254] = _createTextVNode(" Cashflow Source ", -1)),
+                    _cache[257] || (_cache[257] = _createTextVNode(" Cashflow Source ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[70] || (_cache[70] = ($event) => portfolioForm.cashflow_source_type = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -3718,7 +3757,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_260, [
             _createElementVNode("div", _hoisted_261, [
-              _cache[255] || (_cache[255] = _createElementVNode("div", null, [
+              _cache[258] || (_cache[258] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Holdings Status"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Server-side sort/pagination/search 적용")
               ], -1)),
@@ -3771,7 +3810,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[74] || (_cache[74] = ($event) => toggleHoldingSort("id"))
                         }, [
-                          _cache[256] || (_cache[256] = _createTextVNode("ID ", -1)),
+                          _cache[259] || (_cache[259] = _createTextVNode("ID ", -1)),
                           _createElementVNode("span", _hoisted_272, _toDisplayString(holdingSortIndicator("id")), 1)
                         ])
                       ]),
@@ -3781,7 +3820,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[75] || (_cache[75] = ($event) => toggleHoldingSort("portfolio_name"))
                         }, [
-                          _cache[257] || (_cache[257] = _createTextVNode("Portfolio ", -1)),
+                          _cache[260] || (_cache[260] = _createTextVNode("Portfolio ", -1)),
                           _createElementVNode("span", _hoisted_274, _toDisplayString(holdingSortIndicator("portfolio_name")), 1)
                         ])
                       ]),
@@ -3791,7 +3830,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[76] || (_cache[76] = ($event) => toggleHoldingSort("asset_name"))
                         }, [
-                          _cache[258] || (_cache[258] = _createTextVNode("Asset ", -1)),
+                          _cache[261] || (_cache[261] = _createTextVNode("Asset ", -1)),
                           _createElementVNode("span", _hoisted_276, _toDisplayString(holdingSortIndicator("asset_name")), 1)
                         ])
                       ]),
@@ -3801,7 +3840,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[77] || (_cache[77] = ($event) => toggleHoldingSort("asset_symbol"))
                         }, [
-                          _cache[259] || (_cache[259] = _createTextVNode("Symbol ", -1)),
+                          _cache[262] || (_cache[262] = _createTextVNode("Symbol ", -1)),
                           _createElementVNode("span", _hoisted_278, _toDisplayString(holdingSortIndicator("asset_symbol")), 1)
                         ])
                       ]),
@@ -3811,7 +3850,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[78] || (_cache[78] = ($event) => toggleHoldingSort("quantity"))
                         }, [
-                          _cache[260] || (_cache[260] = _createTextVNode("Qty ", -1)),
+                          _cache[263] || (_cache[263] = _createTextVNode("Qty ", -1)),
                           _createElementVNode("span", _hoisted_280, _toDisplayString(holdingSortIndicator("quantity")), 1)
                         ])
                       ]),
@@ -3821,7 +3860,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[79] || (_cache[79] = ($event) => toggleHoldingSort("avg_price"))
                         }, [
-                          _cache[261] || (_cache[261] = _createTextVNode("Avg Cost ", -1)),
+                          _cache[264] || (_cache[264] = _createTextVNode("Avg Cost ", -1)),
                           _createElementVNode("span", _hoisted_282, _toDisplayString(holdingSortIndicator("avg_price")), 1)
                         ])
                       ]),
@@ -3831,7 +3870,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[80] || (_cache[80] = ($event) => toggleHoldingSort("invested_amount"))
                         }, [
-                          _cache[262] || (_cache[262] = _createTextVNode("Cost Basis ", -1)),
+                          _cache[265] || (_cache[265] = _createTextVNode("Cost Basis ", -1)),
                           _createElementVNode("span", _hoisted_284, _toDisplayString(holdingSortIndicator("invested_amount")), 1)
                         ])
                       ]),
@@ -3841,7 +3880,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[81] || (_cache[81] = ($event) => toggleHoldingSort("current_price"))
                         }, [
-                          _cache[263] || (_cache[263] = _createTextVNode("Price ", -1)),
+                          _cache[266] || (_cache[266] = _createTextVNode("Price ", -1)),
                           _createElementVNode("span", _hoisted_286, _toDisplayString(holdingSortIndicator("current_price")), 1)
                         ])
                       ]),
@@ -3851,7 +3890,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[82] || (_cache[82] = ($event) => toggleHoldingSort("evaluated_amount"))
                         }, [
-                          _cache[264] || (_cache[264] = _createTextVNode("Evaluated ", -1)),
+                          _cache[267] || (_cache[267] = _createTextVNode("Evaluated ", -1)),
                           _createElementVNode("span", _hoisted_288, _toDisplayString(holdingSortIndicator("evaluated_amount")), 1)
                         ])
                       ]),
@@ -3861,22 +3900,22 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[83] || (_cache[83] = ($event) => toggleHoldingSort("pnl_pct"))
                         }, [
-                          _cache[265] || (_cache[265] = _createTextVNode("Profit % ", -1)),
+                          _cache[268] || (_cache[268] = _createTextVNode("Profit % ", -1)),
                           _createElementVNode("span", _hoisted_290, _toDisplayString(holdingSortIndicator("pnl_pct")), 1)
                         ])
                       ]),
-                      _cache[267] || (_cache[267] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
+                      _cache[270] || (_cache[270] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
                       _createElementVNode("th", _hoisted_291, [
                         _createElementVNode("button", {
                           type: "button",
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[84] || (_cache[84] = ($event) => toggleHoldingSort("updated_at"))
                         }, [
-                          _cache[266] || (_cache[266] = _createTextVNode("Updated ", -1)),
+                          _cache[269] || (_cache[269] = _createTextVNode("Updated ", -1)),
                           _createElementVNode("span", _hoisted_292, _toDisplayString(holdingSortIndicator("updated_at")), 1)
                         ])
                       ]),
-                      _cache[268] || (_cache[268] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
+                      _cache[271] || (_cache[271] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
                     ])
                   ]),
                   _createElementVNode("tbody", null, [
@@ -3890,10 +3929,10 @@ ${realEstateMetaJsonExample}`;
                         _createElementVNode("td", _hoisted_295, _toDisplayString(item.asset_name), 1),
                         _createElementVNode("td", _hoisted_296, _toDisplayString(item.asset_symbol || "-"), 1),
                         _createElementVNode("td", _hoisted_297, _toDisplayString(formatQuantity(item.quantity)), 1),
-                        _createElementVNode("td", _hoisted_298, _toDisplayString(formatMoney(item.avg_cost ?? item.avg_price, holdingCurrencyCode(item))), 1),
-                        _createElementVNode("td", _hoisted_299, _toDisplayString(item.cost_basis_total === null || item.cost_basis_total === void 0 ? item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCurrencyCode(item)) : formatMoney(item.cost_basis_total, holdingCurrencyCode(item))), 1),
-                        _createElementVNode("td", _hoisted_300, _toDisplayString(item.current_price === null ? "-" : formatMoney(item.current_price, holdingCurrencyCode(item))), 1),
-                        _createElementVNode("td", _hoisted_301, _toDisplayString(formatMoney(item.evaluated_amount, holdingCurrencyCode(item))), 1),
+                        _createElementVNode("td", _hoisted_298, _toDisplayString(item.avg_cost === null || item.avg_cost === void 0 ? formatMoney(item.avg_price, holdingAvgCostCurrencyCode(item)) : formatMoney(item.avg_cost, holdingAvgCostCurrencyCode(item))), 1),
+                        _createElementVNode("td", _hoisted_299, _toDisplayString(item.cost_basis_total === null || item.cost_basis_total === void 0 ? item.invested_amount === null ? "-" : formatMoney(item.invested_amount, holdingCostBasisCurrencyCode(item)) : formatMoney(item.cost_basis_total, holdingCostBasisCurrencyCode(item))), 1),
+                        _createElementVNode("td", _hoisted_300, _toDisplayString(item.current_price === null ? "-" : formatMoney(item.current_price, holdingPriceCurrencyCode(item))), 1),
+                        _createElementVNode("td", _hoisted_301, _toDisplayString(formatMoney(item.evaluated_amount, holdingEvaluatedCurrencyCode(item))), 1),
                         _createElementVNode("td", _hoisted_302, _toDisplayString(item.pnl_pct === null ? "-" : `${Number(item.pnl_pct).toFixed(2)}%`), 1),
                         _createElementVNode("td", _hoisted_303, _toDisplayString(item.is_hidden ? "Y" : "N"), 1),
                         _createElementVNode("td", _hoisted_304, _toDisplayString(formatDateTime(item.updated_at)), 1),
@@ -3901,10 +3940,14 @@ ${realEstateMetaJsonExample}`;
                           _createElementVNode("div", _hoisted_306, [
                             _createElementVNode("button", {
                               type: "button",
-                              class: "rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
-                              disabled: isBusy.value,
+                              class: _normalizeClass([
+                                "rounded border border-slate-300 px-2 py-0.5 transition focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:focus:ring-slate-600",
+                                isAutoCashHoldingRow(item) ? "cursor-not-allowed opacity-50" : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                              ]),
+                              disabled: isBusy.value || isAutoCashHoldingRow(item),
+                              title: isAutoCashHoldingRow(item) ? AUTO_CASH_EDIT_GUIDE : "Edit holding",
                               onClick: ($event) => openEditHoldingModal(item)
-                            }, " Edit ", 8, _hoisted_307),
+                            }, " Edit ", 10, _hoisted_307),
                             canManageEntityHistory.value ? (_openBlock(), _createElementBlock("button", {
                               key: 0,
                               type: "button",
@@ -3928,7 +3971,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ]);
                     }), 128)),
-                    holdingRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_311, [..._cache[269] || (_cache[269] = [
+                    holdingRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_311, [..._cache[272] || (_cache[272] = [
                       _createElementVNode("td", {
                         colspan: "13",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -3937,14 +3980,15 @@ ${realEstateMetaJsonExample}`;
                   ])
                 ])
               ]),
+              _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, _toDisplayString(AUTO_CASH_EDIT_GUIDE)),
               _createElementVNode("div", _hoisted_312, [
                 _createElementVNode("div", _hoisted_313, [
                   _createElementVNode("span", null, "Total: " + _toDisplayString(holdingQuery.total), 1),
-                  _cache[272] || (_cache[272] = _createElementVNode("span", null, "|", -1)),
+                  _cache[275] || (_cache[275] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("span", null, "Page " + _toDisplayString(holdingQuery.page) + " / " + _toDisplayString(holdingTotalPages.value), 1),
-                  _cache[273] || (_cache[273] = _createElementVNode("span", null, "|", -1)),
+                  _cache[276] || (_cache[276] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("label", null, [
-                    _cache[271] || (_cache[271] = _createTextVNode("Size ", -1)),
+                    _cache[274] || (_cache[274] = _createTextVNode("Size ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[85] || (_cache[85] = ($event) => holdingQuery.pageSize = $event),
                       class: "ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950",
@@ -3952,7 +3996,7 @@ ${realEstateMetaJsonExample}`;
                         holdingQuery.page = 1;
                         refreshData();
                       })
-                    }, [..._cache[270] || (_cache[270] = [
+                    }, [..._cache[273] || (_cache[273] = [
                       _createElementVNode("option", { value: 10 }, "10", -1),
                       _createElementVNode("option", { value: 20 }, "20", -1),
                       _createElementVNode("option", { value: 50 }, "50", -1)
@@ -3982,13 +4026,13 @@ ${realEstateMetaJsonExample}`;
               quickCreateHoldingOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_316, [
                 _createElementVNode("div", _hoisted_317, [
                   _createElementVNode("label", _hoisted_318, [
-                    _cache[275] || (_cache[275] = _createTextVNode(" Portfolio (optional) ", -1)),
+                    _cache[278] || (_cache[278] = _createTextVNode(" Portfolio (optional) ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[89] || (_cache[89] = ($event) => holdingForm.portfolio_id = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
                       disabled: lookupLoading.value || isBusy.value
                     }, [
-                      _cache[274] || (_cache[274] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
+                      _cache[277] || (_cache[277] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingPortfolioOptions.value, (item) => {
                         return _openBlock(), _createElementBlock("option", {
                           key: item.id,
@@ -4000,13 +4044,13 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_321, [
-                    _cache[277] || (_cache[277] = _createTextVNode(" Asset ", -1)),
+                    _cache[280] || (_cache[280] = _createTextVNode(" Asset ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[90] || (_cache[90] = ($event) => holdingForm.asset_id = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
                       disabled: lookupLoading.value || isBusy.value
                     }, [
-                      _cache[276] || (_cache[276] = _createElementVNode("option", { value: "" }, "Select Asset", -1)),
+                      _cache[279] || (_cache[279] = _createElementVNode("option", { value: "" }, "Select Asset", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingAssetOptions.value, (item) => {
                         return _openBlock(), _createElementBlock("option", {
                           key: item.id,
@@ -4032,7 +4076,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, holdingForm.avg_price]
                   ]),
                   _createElementVNode("label", _hoisted_324, [
-                    _cache[278] || (_cache[278] = _createTextVNode(" Avg Cost Currency ", -1)),
+                    _cache[281] || (_cache[281] = _createTextVNode(" Avg Cost Currency ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[93] || (_cache[93] = ($event) => holdingForm.avg_price_currency = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
@@ -4056,7 +4100,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, holdingForm.invested_amount]
                   ]),
                   _createElementVNode("label", _hoisted_327, [
-                    _cache[279] || (_cache[279] = _createTextVNode(" Cost Basis Currency ", -1)),
+                    _cache[282] || (_cache[282] = _createTextVNode(" Cost Basis Currency ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[95] || (_cache[95] = ($event) => holdingForm.invested_amount_currency = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
@@ -4073,7 +4117,7 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_330, [
-                    _cache[280] || (_cache[280] = _createTextVNode(" Source Type ", -1)),
+                    _cache[283] || (_cache[283] = _createTextVNode(" Source Type ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[96] || (_cache[96] = ($event) => holdingForm.source_type = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -4109,7 +4153,7 @@ ${realEstateMetaJsonExample}`;
           ]),
           _createElementVNode("article", _hoisted_335, [
             _createElementVNode("div", _hoisted_336, [
-              _cache[281] || (_cache[281] = _createElementVNode("div", null, [
+              _cache[284] || (_cache[284] = _createElementVNode("div", null, [
                 _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Liabilities Status"),
                 _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Server-side sort/pagination/search 적용")
               ], -1)),
@@ -4162,7 +4206,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[100] || (_cache[100] = ($event) => toggleLiabilitySort("id"))
                         }, [
-                          _cache[282] || (_cache[282] = _createTextVNode("ID ", -1)),
+                          _cache[285] || (_cache[285] = _createTextVNode("ID ", -1)),
                           _createElementVNode("span", _hoisted_347, _toDisplayString(liabilitySortIndicator("id")), 1)
                         ])
                       ]),
@@ -4172,7 +4216,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[101] || (_cache[101] = ($event) => toggleLiabilitySort("portfolio_name"))
                         }, [
-                          _cache[283] || (_cache[283] = _createTextVNode("Portfolio ", -1)),
+                          _cache[286] || (_cache[286] = _createTextVNode("Portfolio ", -1)),
                           _createElementVNode("span", _hoisted_349, _toDisplayString(liabilitySortIndicator("portfolio_name")), 1)
                         ])
                       ]),
@@ -4182,7 +4226,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[102] || (_cache[102] = ($event) => toggleLiabilitySort("name"))
                         }, [
-                          _cache[284] || (_cache[284] = _createTextVNode("Name ", -1)),
+                          _cache[287] || (_cache[287] = _createTextVNode("Name ", -1)),
                           _createElementVNode("span", _hoisted_351, _toDisplayString(liabilitySortIndicator("name")), 1)
                         ])
                       ]),
@@ -4192,7 +4236,7 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[103] || (_cache[103] = ($event) => toggleLiabilitySort("liability_type"))
                         }, [
-                          _cache[285] || (_cache[285] = _createTextVNode("Type ", -1)),
+                          _cache[288] || (_cache[288] = _createTextVNode("Type ", -1)),
                           _createElementVNode("span", _hoisted_353, _toDisplayString(liabilitySortIndicator("liability_type")), 1)
                         ])
                       ]),
@@ -4202,18 +4246,18 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[104] || (_cache[104] = ($event) => toggleLiabilitySort("outstanding_balance"))
                         }, [
-                          _cache[286] || (_cache[286] = _createTextVNode("Balance ", -1)),
+                          _cache[289] || (_cache[289] = _createTextVNode("Balance ", -1)),
                           _createElementVNode("span", _hoisted_355, _toDisplayString(liabilitySortIndicator("outstanding_balance")), 1)
                         ])
                       ]),
-                      _cache[290] || (_cache[290] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Currency", -1)),
+                      _cache[293] || (_cache[293] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Currency", -1)),
                       _createElementVNode("th", _hoisted_356, [
                         _createElementVNode("button", {
                           type: "button",
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[105] || (_cache[105] = ($event) => toggleLiabilitySort("interest_rate"))
                         }, [
-                          _cache[287] || (_cache[287] = _createTextVNode("Rate ", -1)),
+                          _cache[290] || (_cache[290] = _createTextVNode("Rate ", -1)),
                           _createElementVNode("span", _hoisted_357, _toDisplayString(liabilitySortIndicator("interest_rate")), 1)
                         ])
                       ]),
@@ -4223,23 +4267,23 @@ ${realEstateMetaJsonExample}`;
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[106] || (_cache[106] = ($event) => toggleLiabilitySort("monthly_payment"))
                         }, [
-                          _cache[288] || (_cache[288] = _createTextVNode("Monthly ", -1)),
+                          _cache[291] || (_cache[291] = _createTextVNode("Monthly ", -1)),
                           _createElementVNode("span", _hoisted_359, _toDisplayString(liabilitySortIndicator("monthly_payment")), 1)
                         ])
                       ]),
-                      _cache[291] || (_cache[291] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Included", -1)),
-                      _cache[292] || (_cache[292] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
+                      _cache[294] || (_cache[294] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Included", -1)),
+                      _cache[295] || (_cache[295] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Hidden", -1)),
                       _createElementVNode("th", _hoisted_360, [
                         _createElementVNode("button", {
                           type: "button",
                           class: "inline-flex items-center gap-1 hover:underline",
                           onClick: _cache[107] || (_cache[107] = ($event) => toggleLiabilitySort("updated_at"))
                         }, [
-                          _cache[289] || (_cache[289] = _createTextVNode("Updated ", -1)),
+                          _cache[292] || (_cache[292] = _createTextVNode("Updated ", -1)),
                           _createElementVNode("span", _hoisted_361, _toDisplayString(liabilitySortIndicator("updated_at")), 1)
                         ])
                       ]),
-                      _cache[293] || (_cache[293] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
+                      _cache[296] || (_cache[296] = _createElementVNode("th", { class: "px-2 py-1.5 whitespace-nowrap" }, "Action", -1))
                     ])
                   ]),
                   _createElementVNode("tbody", null, [
@@ -4296,7 +4340,7 @@ ${realEstateMetaJsonExample}`;
                         ])
                       ]);
                     }), 128)),
-                    liabilityRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_380, [..._cache[294] || (_cache[294] = [
+                    liabilityRows.value.length === 0 ? (_openBlock(), _createElementBlock("tr", _hoisted_380, [..._cache[297] || (_cache[297] = [
                       _createElementVNode("td", {
                         colspan: "12",
                         class: "px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
@@ -4308,11 +4352,11 @@ ${realEstateMetaJsonExample}`;
               _createElementVNode("div", _hoisted_381, [
                 _createElementVNode("div", _hoisted_382, [
                   _createElementVNode("span", null, "Total: " + _toDisplayString(liabilityQuery.total), 1),
-                  _cache[297] || (_cache[297] = _createElementVNode("span", null, "|", -1)),
+                  _cache[300] || (_cache[300] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("span", null, "Page " + _toDisplayString(liabilityQuery.page) + " / " + _toDisplayString(liabilityTotalPages.value), 1),
-                  _cache[298] || (_cache[298] = _createElementVNode("span", null, "|", -1)),
+                  _cache[301] || (_cache[301] = _createElementVNode("span", null, "|", -1)),
                   _createElementVNode("label", null, [
-                    _cache[296] || (_cache[296] = _createTextVNode("Size ", -1)),
+                    _cache[299] || (_cache[299] = _createTextVNode("Size ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[108] || (_cache[108] = ($event) => liabilityQuery.pageSize = $event),
                       class: "ml-1 rounded border border-slate-300 px-1 py-0.5 dark:border-slate-700 dark:bg-slate-950",
@@ -4320,7 +4364,7 @@ ${realEstateMetaJsonExample}`;
                         liabilityQuery.page = 1;
                         refreshData();
                       })
-                    }, [..._cache[295] || (_cache[295] = [
+                    }, [..._cache[298] || (_cache[298] = [
                       _createElementVNode("option", { value: 10 }, "10", -1),
                       _createElementVNode("option", { value: 20 }, "20", -1),
                       _createElementVNode("option", { value: 50 }, "50", -1)
@@ -4350,13 +4394,13 @@ ${realEstateMetaJsonExample}`;
               quickCreateLiabilityOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_385, [
                 _createElementVNode("div", _hoisted_386, [
                   _createElementVNode("label", _hoisted_387, [
-                    _cache[300] || (_cache[300] = _createTextVNode(" Portfolio (optional) ", -1)),
+                    _cache[303] || (_cache[303] = _createTextVNode(" Portfolio (optional) ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[112] || (_cache[112] = ($event) => liabilityForm.portfolio_id = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950",
                       disabled: lookupLoading.value || isBusy.value
                     }, [
-                      _cache[299] || (_cache[299] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
+                      _cache[302] || (_cache[302] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingPortfolioOptions.value, (item) => {
                         return _openBlock(), _createElementBlock("option", {
                           key: item.id,
@@ -4375,7 +4419,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, liabilityForm.name]
                   ]),
                   _createElementVNode("label", _hoisted_390, [
-                    _cache[301] || (_cache[301] = _createTextVNode(" Type ", -1)),
+                    _cache[304] || (_cache[304] = _createTextVNode(" Type ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[114] || (_cache[114] = ($event) => liabilityForm.liability_type = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -4420,7 +4464,7 @@ ${realEstateMetaJsonExample}`;
                     [_vModelText, liabilityForm.monthly_payment]
                   ]),
                   _createElementVNode("label", _hoisted_392, [
-                    _cache[302] || (_cache[302] = _createTextVNode(" Source Type ", -1)),
+                    _cache[305] || (_cache[305] = _createTextVNode(" Source Type ", -1)),
                     _withDirectives(_createElementVNode("select", {
                       "onUpdate:modelValue": _cache[119] || (_cache[119] = ($event) => liabilityForm.source_type = $event),
                       class: "mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
@@ -4455,7 +4499,7 @@ ${realEstateMetaJsonExample}`;
             ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_396, "섹션이 접혀 있습니다. Expand 버튼으로 열어주세요."))
           ]),
           _createElementVNode("article", _hoisted_397, [
-            _cache[303] || (_cache[303] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Execution Log", -1)),
+            _cache[306] || (_cache[306] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Execution Log", -1)),
             _createElementVNode("ul", _hoisted_398, [
               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(logs.value, (item) => {
                 return _openBlock(), _createElementBlock("li", {
@@ -4480,10 +4524,10 @@ ${realEstateMetaJsonExample}`;
         }, [
           _createElementVNode("section", _hoisted_402, [
             _createElementVNode("h3", _hoisted_403, _toDisplayString(assetModal.mode === "CREATE" ? "Create Asset" : `Edit Asset #${assetForm.id}`), 1),
-            _cache[314] || (_cache[314] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "필수 입력: Name, Class, Currency, Quote Mode, Exchange", -1)),
+            _cache[317] || (_cache[317] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "필수 입력: Name, Class, Currency, Quote Mode, Exchange", -1)),
             _createElementVNode("div", _hoisted_404, [
               _createElementVNode("label", _hoisted_405, [
-                _cache[304] || (_cache[304] = _createTextVNode("Name ", -1)),
+                _cache[307] || (_cache[307] = _createTextVNode("Name ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[121] || (_cache[121] = ($event) => assetForm.name = $event),
                   placeholder: "예: 삼성전자",
@@ -4493,12 +4537,12 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("label", _hoisted_406, [
-                _cache[306] || (_cache[306] = _createTextVNode("Class ", -1)),
+                _cache[309] || (_cache[309] = _createTextVNode("Class ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[122] || (_cache[122] = ($event) => assetForm.asset_class = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[305] || (_cache[305] = _createElementVNode("option", {
+                  _cache[308] || (_cache[308] = _createElementVNode("option", {
                     value: "",
                     disabled: ""
                   }, "Select class", -1)),
@@ -4513,7 +4557,7 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("label", _hoisted_408, [
-                _cache[307] || (_cache[307] = _createTextVNode("Symbol ", -1)),
+                _cache[310] || (_cache[310] = _createTextVNode("Symbol ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[123] || (_cache[123] = ($event) => assetForm.symbol = $event),
                   placeholder: "예: 005930 또는 BTC",
@@ -4523,7 +4567,7 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("label", _hoisted_409, [
-                _cache[308] || (_cache[308] = _createTextVNode("Currency ", -1)),
+                _cache[311] || (_cache[311] = _createTextVNode("Currency ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[124] || (_cache[124] = ($event) => assetForm.currency = $event),
                   maxlength: "3",
@@ -4534,12 +4578,12 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("label", _hoisted_410, [
-                _cache[310] || (_cache[310] = _createTextVNode("Quote Mode ", -1)),
+                _cache[313] || (_cache[313] = _createTextVNode("Quote Mode ", -1)),
                 _withDirectives(_createElementVNode("select", {
                   "onUpdate:modelValue": _cache[125] || (_cache[125] = ($event) => assetForm.quote_mode = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[309] || (_cache[309] = _createElementVNode("option", {
+                  _cache[312] || (_cache[312] = _createElementVNode("option", {
                     value: "",
                     disabled: ""
                   }, "Select quote mode", -1)),
@@ -4554,7 +4598,7 @@ ${realEstateMetaJsonExample}`;
                 ])
               ]),
               _createElementVNode("label", _hoisted_412, [
-                _cache[311] || (_cache[311] = _createTextVNode("Exchange ", -1)),
+                _cache[314] || (_cache[314] = _createTextVNode("Exchange ", -1)),
                 _withDirectives(_createElementVNode("input", {
                   "onUpdate:modelValue": _cache[126] || (_cache[126] = ($event) => assetForm.exchange_code = $event),
                   placeholder: "예: KRX / UPBIT / KORBIT",
@@ -4570,10 +4614,10 @@ ${realEstateMetaJsonExample}`;
                 }, null, 512), [
                   [_vModelCheckbox, assetForm.is_trade_supported]
                 ]),
-                _cache[312] || (_cache[312] = _createElementVNode("span", { class: "ml-1" }, "Trade Supported", -1))
+                _cache[315] || (_cache[315] = _createElementVNode("span", { class: "ml-1" }, "Trade Supported", -1))
               ]),
               _createElementVNode("label", _hoisted_414, [
-                _cache[313] || (_cache[313] = _createTextVNode("Meta JSON ", -1)),
+                _cache[316] || (_cache[316] = _createTextVNode("Meta JSON ", -1)),
                 _withDirectives(_createElementVNode("textarea", {
                   "onUpdate:modelValue": _cache[128] || (_cache[128] = ($event) => assetForm.meta_json_text = $event),
                   rows: "4",
@@ -4607,9 +4651,9 @@ ${realEstateMetaJsonExample}`;
         }, [
           _createElementVNode("section", _hoisted_418, [
             _createElementVNode("h3", _hoisted_419, "Edit Portfolio #" + _toDisplayString(portfolioEditForm.id), 1),
-            _cache[335] || (_cache[335] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "핵심 운영값(집계 포함/숨김/입출금 누적/메모)을 수정할 수 있습니다.", -1)),
+            _cache[339] || (_cache[339] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "핵심 운영값(집계 포함/숨김/입출금 누적/메모)을 수정할 수 있습니다.", -1)),
             _createElementVNode("div", _hoisted_420, [
-              _cache[320] || (_cache[320] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
+              _cache[324] || (_cache[324] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
               _createElementVNode("div", _hoisted_421, [
                 _createElementVNode("label", _hoisted_422, [
                   _withDirectives(_createElementVNode("input", {
@@ -4619,7 +4663,7 @@ ${realEstateMetaJsonExample}`;
                   }, null, 512), [
                     [_vModelRadio, portfolioEditForm.edit_mode]
                   ]),
-                  _cache[315] || (_cache[315] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
+                  _cache[318] || (_cache[318] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
                 ]),
                 _createElementVNode("label", _hoisted_423, [
                   _withDirectives(_createElementVNode("input", {
@@ -4630,14 +4674,14 @@ ${realEstateMetaJsonExample}`;
                   }, null, 8, _hoisted_424), [
                     [_vModelRadio, portfolioEditForm.edit_mode]
                   ]),
-                  _cache[316] || (_cache[316] = _createElementVNode("span", null, "Edit(Hard)", -1))
+                  _cache[319] || (_cache[319] = _createElementVNode("span", null, "Edit(Hard)", -1))
                 ])
               ]),
               !canHardEdit.value ? (_openBlock(), _createElementBlock("p", _hoisted_425, " HARD 모드는 MAINTAINER+ 권한이 필요합니다. ")) : _createCommentVNode("", true),
               portfolioEditForm.edit_mode === "SAFE" ? (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
                 _createElementVNode("div", _hoisted_426, [
                   _createElementVNode("label", _hoisted_427, [
-                    _cache[317] || (_cache[317] = _createTextVNode(" Effective At (KST) ", -1)),
+                    _cache[320] || (_cache[320] = _createTextVNode(" Effective At (KST) ", -1)),
                     _withDirectives(_createElementVNode("input", {
                       "onUpdate:modelValue": _cache[131] || (_cache[131] = ($event) => portfolioEditForm.effective_at = $event),
                       type: "datetime-local",
@@ -4647,7 +4691,7 @@ ${realEstateMetaJsonExample}`;
                     ])
                   ]),
                   _createElementVNode("label", _hoisted_428, [
-                    _cache[318] || (_cache[318] = _createTextVNode(" Reason (optional) ", -1)),
+                    _cache[321] || (_cache[321] = _createTextVNode(" Reason (optional) ", -1)),
                     _withDirectives(_createElementVNode("input", {
                       "onUpdate:modelValue": _cache[132] || (_cache[132] = ($event) => portfolioEditForm.reason = $event),
                       placeholder: "예: 월말 정산 기준점 보정",
@@ -4655,152 +4699,161 @@ ${realEstateMetaJsonExample}`;
                     }, null, 512), [
                       [_vModelText, portfolioEditForm.reason]
                     ])
+                  ]),
+                  _createElementVNode("label", _hoisted_429, [
+                    _withDirectives(_createElementVNode("input", {
+                      "onUpdate:modelValue": _cache[133] || (_cache[133] = ($event) => portfolioEditForm.rebaseline_all_history = $event),
+                      type: "checkbox"
+                    }, null, 512), [
+                      [_vModelCheckbox, portfolioEditForm.rebaseline_all_history]
+                    ]),
+                    _cache[322] || (_cache[322] = _createElementVNode("span", null, "Rebaseline all history (기준시각 무시)", -1))
                   ])
                 ]),
-                _cache[319] || (_cache[319] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE는 기준일 이전 DEPOSIT/WITHDRAW 거래를 VOID하고 baseline을 생성합니다. ", -1))
-              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_429, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
+                _cache[323] || (_cache[323] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE 기본값은 기준일 이전 거래만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다. ", -1))
+              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_430, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
             ]),
-            _createElementVNode("div", _hoisted_430, [
-              _createElementVNode("label", _hoisted_431, [
-                _cache[321] || (_cache[321] = _createTextVNode("Name ", -1)),
+            _createElementVNode("div", _hoisted_431, [
+              _createElementVNode("label", _hoisted_432, [
+                _cache[325] || (_cache[325] = _createTextVNode("Name ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[133] || (_cache[133] = ($event) => portfolioEditForm.name = $event),
+                  "onUpdate:modelValue": _cache[134] || (_cache[134] = ($event) => portfolioEditForm.name = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.name]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_432, [
-                _cache[322] || (_cache[322] = _createTextVNode("Type ", -1)),
+              _createElementVNode("label", _hoisted_433, [
+                _cache[326] || (_cache[326] = _createTextVNode("Type ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[134] || (_cache[134] = ($event) => portfolioEditForm.type = $event),
+                  "onUpdate:modelValue": _cache[135] || (_cache[135] = ($event) => portfolioEditForm.type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(portfolioTypeOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_433);
+                    }, _toDisplayString(opt), 9, _hoisted_434);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, portfolioEditForm.type]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_434, [
-                _cache[323] || (_cache[323] = _createTextVNode("Base Currency ", -1)),
+              _createElementVNode("label", _hoisted_435, [
+                _cache[327] || (_cache[327] = _createTextVNode("Base Currency ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[135] || (_cache[135] = ($event) => portfolioEditForm.base_currency = $event),
+                  "onUpdate:modelValue": _cache[136] || (_cache[136] = ($event) => portfolioEditForm.base_currency = $event),
                   maxlength: "3",
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.base_currency]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_435, [
-                _cache[324] || (_cache[324] = _createTextVNode("Exchange Code ", -1)),
+              _createElementVNode("label", _hoisted_436, [
+                _cache[328] || (_cache[328] = _createTextVNode("Exchange Code ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[136] || (_cache[136] = ($event) => portfolioEditForm.exchange_code = $event),
+                  "onUpdate:modelValue": _cache[137] || (_cache[137] = ($event) => portfolioEditForm.exchange_code = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.exchange_code]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_436, [
-                _cache[326] || (_cache[326] = _createTextVNode("Category ", -1)),
+              _createElementVNode("label", _hoisted_437, [
+                _cache[330] || (_cache[330] = _createTextVNode("Category ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[137] || (_cache[137] = ($event) => portfolioEditForm.category = $event),
+                  "onUpdate:modelValue": _cache[138] || (_cache[138] = ($event) => portfolioEditForm.category = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
-                  _cache[325] || (_cache[325] = _createElementVNode("option", { value: "" }, "(none)", -1)),
+                  _cache[329] || (_cache[329] = _createElementVNode("option", { value: "" }, "(none)", -1)),
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(portfolioCategoryOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_437);
+                    }, _toDisplayString(opt), 9, _hoisted_438);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, portfolioEditForm.category]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_438, [
-                _cache[327] || (_cache[327] = _createTextVNode("Cashflow Source ", -1)),
+              _createElementVNode("label", _hoisted_439, [
+                _cache[331] || (_cache[331] = _createTextVNode("Cashflow Source ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[138] || (_cache[138] = ($event) => portfolioEditForm.cashflow_source_type = $event),
+                  "onUpdate:modelValue": _cache[139] || (_cache[139] = ($event) => portfolioEditForm.cashflow_source_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(portfolioCashflowSourceTypeOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_439);
+                    }, _toDisplayString(opt), 9, _hoisted_440);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, portfolioEditForm.cashflow_source_type]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_440, [
-                _cache[328] || (_cache[328] = _createTextVNode("Cumulative Deposit ", -1)),
+              _createElementVNode("label", _hoisted_441, [
+                _cache[332] || (_cache[332] = _createTextVNode("Cumulative Deposit ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[139] || (_cache[139] = ($event) => portfolioEditForm.cumulative_deposit_amount = $event),
+                  "onUpdate:modelValue": _cache[140] || (_cache[140] = ($event) => portfolioEditForm.cumulative_deposit_amount = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.cumulative_deposit_amount]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_441, [
-                _cache[329] || (_cache[329] = _createTextVNode("Cumulative Withdrawal ", -1)),
+              _createElementVNode("label", _hoisted_442, [
+                _cache[333] || (_cache[333] = _createTextVNode("Cumulative Withdrawal ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[140] || (_cache[140] = ($event) => portfolioEditForm.cumulative_withdrawal_amount = $event),
+                  "onUpdate:modelValue": _cache[141] || (_cache[141] = ($event) => portfolioEditForm.cumulative_withdrawal_amount = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.cumulative_withdrawal_amount]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_442, [
-                _cache[330] || (_cache[330] = _createTextVNode("Memo ", -1)),
+              _createElementVNode("label", _hoisted_443, [
+                _cache[334] || (_cache[334] = _createTextVNode("Memo ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[141] || (_cache[141] = ($event) => portfolioEditForm.memo = $event),
+                  "onUpdate:modelValue": _cache[142] || (_cache[142] = ($event) => portfolioEditForm.memo = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, portfolioEditForm.memo]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_443, [
+              _createElementVNode("label", _hoisted_444, [
                 _createElementVNode("span", null, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[142] || (_cache[142] = ($event) => portfolioEditForm.is_included = $event),
+                    "onUpdate:modelValue": _cache[143] || (_cache[143] = ($event) => portfolioEditForm.is_included = $event),
                     type: "checkbox"
                   }, null, 512), [
                     [_vModelCheckbox, portfolioEditForm.is_included]
                   ]),
-                  _cache[331] || (_cache[331] = _createTextVNode()),
-                  _cache[332] || (_cache[332] = _createElementVNode("span", { class: "ml-1" }, "Included", -1))
+                  _cache[335] || (_cache[335] = _createTextVNode()),
+                  _cache[336] || (_cache[336] = _createElementVNode("span", { class: "ml-1" }, "Included", -1))
                 ]),
                 _createElementVNode("span", null, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[143] || (_cache[143] = ($event) => portfolioEditForm.is_hidden = $event),
+                    "onUpdate:modelValue": _cache[144] || (_cache[144] = ($event) => portfolioEditForm.is_hidden = $event),
                     type: "checkbox"
                   }, null, 512), [
                     [_vModelCheckbox, portfolioEditForm.is_hidden]
                   ]),
-                  _cache[333] || (_cache[333] = _createTextVNode()),
-                  _cache[334] || (_cache[334] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
+                  _cache[337] || (_cache[337] = _createTextVNode()),
+                  _cache[338] || (_cache[338] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_444, [
+            _createElementVNode("div", _hoisted_445, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                 disabled: loading.action || loading.confirm,
                 onClick: closePortfolioEditModal
-              }, " Cancel ", 8, _hoisted_445),
+              }, " Cancel ", 8, _hoisted_446),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500",
                 disabled: loading.action || loading.confirm,
                 onClick: submitPortfolioEdit
-              }, " Apply ", 8, _hoisted_446)
+              }, " Apply ", 8, _hoisted_447)
             ])
           ])
         ])) : _createCommentVNode("", true),
@@ -4809,161 +4862,170 @@ ${realEstateMetaJsonExample}`;
           class: "fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4",
           onClick: _withModifiers(closeHoldingEditModal, ["self"])
         }, [
-          _createElementVNode("section", _hoisted_447, [
-            _createElementVNode("h3", _hoisted_448, "Edit Holding #" + _toDisplayString(holdingEditForm.id), 1),
-            _cache[354] || (_cache[354] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Asset/포트폴리오/수량/평단/투입금/숨김/메모를 수정합니다.", -1)),
-            _createElementVNode("div", _hoisted_449, [
-              _cache[341] || (_cache[341] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
-              _createElementVNode("div", _hoisted_450, [
-                _createElementVNode("label", _hoisted_451, [
+          _createElementVNode("section", _hoisted_448, [
+            _createElementVNode("h3", _hoisted_449, "Edit Holding #" + _toDisplayString(holdingEditForm.id), 1),
+            _cache[359] || (_cache[359] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Asset/포트폴리오/수량/평단/투입금/숨김/메모를 수정합니다.", -1)),
+            _createElementVNode("div", _hoisted_450, [
+              _cache[346] || (_cache[346] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
+              _createElementVNode("div", _hoisted_451, [
+                _createElementVNode("label", _hoisted_452, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[144] || (_cache[144] = ($event) => holdingEditForm.edit_mode = $event),
+                    "onUpdate:modelValue": _cache[145] || (_cache[145] = ($event) => holdingEditForm.edit_mode = $event),
                     type: "radio",
                     value: "SAFE"
                   }, null, 512), [
                     [_vModelRadio, holdingEditForm.edit_mode]
                   ]),
-                  _cache[336] || (_cache[336] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
+                  _cache[340] || (_cache[340] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
                 ]),
-                _createElementVNode("label", _hoisted_452, [
+                _createElementVNode("label", _hoisted_453, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[145] || (_cache[145] = ($event) => holdingEditForm.edit_mode = $event),
+                    "onUpdate:modelValue": _cache[146] || (_cache[146] = ($event) => holdingEditForm.edit_mode = $event),
                     type: "radio",
                     value: "HARD",
                     disabled: !canHardEdit.value || loading.action || loading.confirm
-                  }, null, 8, _hoisted_453), [
+                  }, null, 8, _hoisted_454), [
                     [_vModelRadio, holdingEditForm.edit_mode]
                   ]),
-                  _cache[337] || (_cache[337] = _createElementVNode("span", null, "Edit(Hard)", -1))
+                  _cache[341] || (_cache[341] = _createElementVNode("span", null, "Edit(Hard)", -1))
                 ])
               ]),
-              !canHardEdit.value ? (_openBlock(), _createElementBlock("p", _hoisted_454, " HARD 모드는 MAINTAINER+ 권한이 필요합니다. ")) : _createCommentVNode("", true),
+              !canHardEdit.value ? (_openBlock(), _createElementBlock("p", _hoisted_455, " HARD 모드는 MAINTAINER+ 권한이 필요합니다. ")) : _createCommentVNode("", true),
               holdingEditForm.edit_mode === "SAFE" ? (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
-                _createElementVNode("div", _hoisted_455, [
-                  _createElementVNode("label", _hoisted_456, [
-                    _cache[338] || (_cache[338] = _createTextVNode(" Effective At (KST) ", -1)),
+                _createElementVNode("div", _hoisted_456, [
+                  _createElementVNode("label", _hoisted_457, [
+                    _cache[342] || (_cache[342] = _createTextVNode(" Effective At (KST) ", -1)),
                     _withDirectives(_createElementVNode("input", {
-                      "onUpdate:modelValue": _cache[146] || (_cache[146] = ($event) => holdingEditForm.effective_at = $event),
+                      "onUpdate:modelValue": _cache[147] || (_cache[147] = ($event) => holdingEditForm.effective_at = $event),
                       type: "datetime-local",
                       class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                     }, null, 512), [
                       [_vModelText, holdingEditForm.effective_at]
                     ])
                   ]),
-                  _createElementVNode("label", _hoisted_457, [
-                    _cache[339] || (_cache[339] = _createTextVNode(" Reason (optional) ", -1)),
+                  _createElementVNode("label", _hoisted_458, [
+                    _cache[343] || (_cache[343] = _createTextVNode(" Reason (optional) ", -1)),
                     _withDirectives(_createElementVNode("input", {
-                      "onUpdate:modelValue": _cache[147] || (_cache[147] = ($event) => holdingEditForm.reason = $event),
+                      "onUpdate:modelValue": _cache[148] || (_cache[148] = ($event) => holdingEditForm.reason = $event),
                       placeholder: "예: 과거 수동 입력 정합화",
                       class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                     }, null, 512), [
                       [_vModelText, holdingEditForm.reason]
                     ])
+                  ]),
+                  _createElementVNode("label", _hoisted_459, [
+                    _withDirectives(_createElementVNode("input", {
+                      "onUpdate:modelValue": _cache[149] || (_cache[149] = ($event) => holdingEditForm.rebaseline_all_history = $event),
+                      type: "checkbox"
+                    }, null, 512), [
+                      [_vModelCheckbox, holdingEditForm.rebaseline_all_history]
+                    ]),
+                    _cache[344] || (_cache[344] = _createElementVNode("span", null, "Rebaseline all history (기준시각 무시)", -1))
                   ])
                 ]),
-                _cache[340] || (_cache[340] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE는 기준일 이전 BUY/SELL 거래를 VOID하고 baseline BUY를 생성합니다. SAFE에서는 Asset/Portfolio 구조 변경이 불가합니다. ", -1))
-              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_458, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
+                _cache[345] || (_cache[345] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE 기본값은 기준일 이전 BUY/SELL만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다. SAFE에서는 Asset/Portfolio 구조 변경이 불가합니다. ", -1))
+              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_460, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
             ]),
-            _createElementVNode("div", _hoisted_459, [
-              _createElementVNode("label", _hoisted_460, [
-                _cache[343] || (_cache[343] = _createTextVNode("Asset ", -1)),
+            _createElementVNode("div", _hoisted_461, [
+              _createElementVNode("label", _hoisted_462, [
+                _cache[348] || (_cache[348] = _createTextVNode("Asset ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[148] || (_cache[148] = ($event) => holdingEditForm.asset_id = $event),
+                  "onUpdate:modelValue": _cache[150] || (_cache[150] = ($event) => holdingEditForm.asset_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950",
                   disabled: lookupLoading.value || loading.action || loading.confirm || holdingEditForm.edit_mode === "SAFE"
                 }, [
-                  _cache[342] || (_cache[342] = _createElementVNode("option", { value: "" }, "Select Asset", -1)),
+                  _cache[347] || (_cache[347] = _createElementVNode("option", { value: "" }, "Select Asset", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingAssetOptions.value, (item) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: item.id,
                       value: String(item.id)
-                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name) + " (" + _toDisplayString(item.exchange_code) + ") ", 9, _hoisted_462);
+                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name) + " (" + _toDisplayString(item.exchange_code) + ") ", 9, _hoisted_464);
                   }), 128))
-                ], 8, _hoisted_461), [
+                ], 8, _hoisted_463), [
                   [_vModelSelect, holdingEditForm.asset_id]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_463, [
-                _cache[345] || (_cache[345] = _createTextVNode("Portfolio (optional) ", -1)),
+              _createElementVNode("label", _hoisted_465, [
+                _cache[350] || (_cache[350] = _createTextVNode("Portfolio (optional) ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[149] || (_cache[149] = ($event) => holdingEditForm.portfolio_id = $event),
+                  "onUpdate:modelValue": _cache[151] || (_cache[151] = ($event) => holdingEditForm.portfolio_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950",
                   disabled: lookupLoading.value || loading.action || loading.confirm || holdingEditForm.edit_mode === "SAFE"
                 }, [
-                  _cache[344] || (_cache[344] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
+                  _cache[349] || (_cache[349] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingPortfolioOptions.value, (item) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: item.id,
                       value: String(item.id)
-                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name), 9, _hoisted_465);
+                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name), 9, _hoisted_467);
                   }), 128))
-                ], 8, _hoisted_464), [
+                ], 8, _hoisted_466), [
                   [_vModelSelect, holdingEditForm.portfolio_id]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_466, [
-                _cache[346] || (_cache[346] = _createTextVNode("Quantity ", -1)),
+              _createElementVNode("label", _hoisted_468, [
+                _cache[351] || (_cache[351] = _createTextVNode("Quantity ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[150] || (_cache[150] = ($event) => holdingEditForm.quantity = $event),
+                  "onUpdate:modelValue": _cache[152] || (_cache[152] = ($event) => holdingEditForm.quantity = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, holdingEditForm.quantity]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_467, [
-                _cache[347] || (_cache[347] = _createTextVNode("Avg Cost ", -1)),
+              _createElementVNode("label", _hoisted_469, [
+                _cache[352] || (_cache[352] = _createTextVNode("Avg Cost ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[151] || (_cache[151] = ($event) => holdingEditForm.avg_price = $event),
+                  "onUpdate:modelValue": _cache[153] || (_cache[153] = ($event) => holdingEditForm.avg_price = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, holdingEditForm.avg_price]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_468, [
-                _cache[348] || (_cache[348] = _createTextVNode("Avg Cost Currency ", -1)),
+              _createElementVNode("label", _hoisted_470, [
+                _cache[353] || (_cache[353] = _createTextVNode("Avg Cost Currency ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[152] || (_cache[152] = ($event) => holdingEditForm.avg_price_currency = $event),
+                  "onUpdate:modelValue": _cache[154] || (_cache[154] = ($event) => holdingEditForm.avg_price_currency = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(holdingCurrencyOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: `holding-edit-avg-${opt}`,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_469);
+                    }, _toDisplayString(opt), 9, _hoisted_471);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, holdingEditForm.avg_price_currency]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_470, [
-                _cache[349] || (_cache[349] = _createTextVNode("Cost Basis (optional) ", -1)),
+              _createElementVNode("label", _hoisted_472, [
+                _cache[354] || (_cache[354] = _createTextVNode("Cost Basis (optional) ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[153] || (_cache[153] = ($event) => holdingEditForm.invested_amount = $event),
+                  "onUpdate:modelValue": _cache[155] || (_cache[155] = ($event) => holdingEditForm.invested_amount = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, holdingEditForm.invested_amount]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_471, [
-                _cache[350] || (_cache[350] = _createTextVNode("Cost Basis Currency ", -1)),
+              _createElementVNode("label", _hoisted_473, [
+                _cache[355] || (_cache[355] = _createTextVNode("Cost Basis Currency ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[154] || (_cache[154] = ($event) => holdingEditForm.invested_amount_currency = $event),
+                  "onUpdate:modelValue": _cache[156] || (_cache[156] = ($event) => holdingEditForm.invested_amount_currency = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(holdingCurrencyOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: `holding-edit-invested-${opt}`,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_472);
+                    }, _toDisplayString(opt), 9, _hoisted_474);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, holdingEditForm.invested_amount_currency]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_473, [
-                _cache[351] || (_cache[351] = _createTextVNode("Source Type ", -1)),
+              _createElementVNode("label", _hoisted_475, [
+                _cache[356] || (_cache[356] = _createTextVNode("Source Type ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[155] || (_cache[155] = ($event) => holdingEditForm.source_type = $event),
+                  "onUpdate:modelValue": _cache[157] || (_cache[157] = ($event) => holdingEditForm.source_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950",
                   disabled: holdingEditForm.edit_mode === "SAFE"
                 }, [
@@ -4971,44 +5033,44 @@ ${realEstateMetaJsonExample}`;
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_475);
+                    }, _toDisplayString(opt), 9, _hoisted_477);
                   }), 64))
-                ], 8, _hoisted_474), [
+                ], 8, _hoisted_476), [
                   [_vModelSelect, holdingEditForm.source_type]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_476, [
-                _cache[352] || (_cache[352] = _createTextVNode("Memo ", -1)),
+              _createElementVNode("label", _hoisted_478, [
+                _cache[357] || (_cache[357] = _createTextVNode("Memo ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[156] || (_cache[156] = ($event) => holdingEditForm.memo = $event),
+                  "onUpdate:modelValue": _cache[158] || (_cache[158] = ($event) => holdingEditForm.memo = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, holdingEditForm.memo]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_477, [
+              _createElementVNode("label", _hoisted_479, [
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[157] || (_cache[157] = ($event) => holdingEditForm.is_hidden = $event),
+                  "onUpdate:modelValue": _cache[159] || (_cache[159] = ($event) => holdingEditForm.is_hidden = $event),
                   type: "checkbox"
                 }, null, 512), [
                   [_vModelCheckbox, holdingEditForm.is_hidden]
                 ]),
-                _cache[353] || (_cache[353] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
+                _cache[358] || (_cache[358] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
               ])
             ]),
-            _createElementVNode("div", _hoisted_478, [
+            _createElementVNode("div", _hoisted_480, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                 disabled: loading.action || loading.confirm,
                 onClick: closeHoldingEditModal
-              }, " Cancel ", 8, _hoisted_479),
+              }, " Cancel ", 8, _hoisted_481),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500",
                 disabled: loading.action || loading.confirm,
                 onClick: submitHoldingEdit
-              }, " Apply ", 8, _hoisted_480)
+              }, " Apply ", 8, _hoisted_482)
             ])
           ])
         ])) : _createCommentVNode("", true),
@@ -5017,204 +5079,213 @@ ${realEstateMetaJsonExample}`;
           class: "fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4",
           onClick: _withModifiers(closeLiabilityEditModal, ["self"])
         }, [
-          _createElementVNode("section", _hoisted_481, [
-            _createElementVNode("h3", _hoisted_482, "Edit Liability #" + _toDisplayString(liabilityEditForm.id), 1),
-            _cache[375] || (_cache[375] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "부채 메타/잔액/금리/월납입/포함/숨김 상태를 수정합니다.", -1)),
-            _createElementVNode("div", _hoisted_483, [
-              _cache[360] || (_cache[360] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
-              _createElementVNode("div", _hoisted_484, [
-                _createElementVNode("label", _hoisted_485, [
+          _createElementVNode("section", _hoisted_483, [
+            _createElementVNode("h3", _hoisted_484, "Edit Liability #" + _toDisplayString(liabilityEditForm.id), 1),
+            _cache[381] || (_cache[381] = _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "부채 메타/잔액/금리/월납입/포함/숨김 상태를 수정합니다.", -1)),
+            _createElementVNode("div", _hoisted_485, [
+              _cache[366] || (_cache[366] = _createElementVNode("p", { class: "text-xs font-semibold text-slate-700 dark:text-slate-200" }, "Edit Mode", -1)),
+              _createElementVNode("div", _hoisted_486, [
+                _createElementVNode("label", _hoisted_487, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[158] || (_cache[158] = ($event) => liabilityEditForm.edit_mode = $event),
+                    "onUpdate:modelValue": _cache[160] || (_cache[160] = ($event) => liabilityEditForm.edit_mode = $event),
                     type: "radio",
                     value: "SAFE"
                   }, null, 512), [
                     [_vModelRadio, liabilityEditForm.edit_mode]
                   ]),
-                  _cache[355] || (_cache[355] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
+                  _cache[360] || (_cache[360] = _createElementVNode("span", null, "Rebaseline (Recommended)", -1))
                 ]),
-                _createElementVNode("label", _hoisted_486, [
+                _createElementVNode("label", _hoisted_488, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[159] || (_cache[159] = ($event) => liabilityEditForm.edit_mode = $event),
+                    "onUpdate:modelValue": _cache[161] || (_cache[161] = ($event) => liabilityEditForm.edit_mode = $event),
                     type: "radio",
                     value: "HARD",
                     disabled: !canHardEdit.value || loading.action || loading.confirm
-                  }, null, 8, _hoisted_487), [
+                  }, null, 8, _hoisted_489), [
                     [_vModelRadio, liabilityEditForm.edit_mode]
                   ]),
-                  _cache[356] || (_cache[356] = _createElementVNode("span", null, "Edit(Hard)", -1))
+                  _cache[361] || (_cache[361] = _createElementVNode("span", null, "Edit(Hard)", -1))
                 ])
               ]),
-              !canHardEdit.value ? (_openBlock(), _createElementBlock("p", _hoisted_488, " HARD 모드는 MAINTAINER+ 권한이 필요합니다. ")) : _createCommentVNode("", true),
+              !canHardEdit.value ? (_openBlock(), _createElementBlock("p", _hoisted_490, " HARD 모드는 MAINTAINER+ 권한이 필요합니다. ")) : _createCommentVNode("", true),
               liabilityEditForm.edit_mode === "SAFE" ? (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
-                _createElementVNode("div", _hoisted_489, [
-                  _createElementVNode("label", _hoisted_490, [
-                    _cache[357] || (_cache[357] = _createTextVNode(" Effective At (KST) ", -1)),
+                _createElementVNode("div", _hoisted_491, [
+                  _createElementVNode("label", _hoisted_492, [
+                    _cache[362] || (_cache[362] = _createTextVNode(" Effective At (KST) ", -1)),
                     _withDirectives(_createElementVNode("input", {
-                      "onUpdate:modelValue": _cache[160] || (_cache[160] = ($event) => liabilityEditForm.effective_at = $event),
+                      "onUpdate:modelValue": _cache[162] || (_cache[162] = ($event) => liabilityEditForm.effective_at = $event),
                       type: "datetime-local",
                       class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                     }, null, 512), [
                       [_vModelText, liabilityEditForm.effective_at]
                     ])
                   ]),
-                  _createElementVNode("label", _hoisted_491, [
-                    _cache[358] || (_cache[358] = _createTextVNode(" Reason (optional) ", -1)),
+                  _createElementVNode("label", _hoisted_493, [
+                    _cache[363] || (_cache[363] = _createTextVNode(" Reason (optional) ", -1)),
                     _withDirectives(_createElementVNode("input", {
-                      "onUpdate:modelValue": _cache[161] || (_cache[161] = ($event) => liabilityEditForm.reason = $event),
+                      "onUpdate:modelValue": _cache[163] || (_cache[163] = ($event) => liabilityEditForm.reason = $event),
                       placeholder: "예: 대출잔액 재기준점",
                       class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                     }, null, 512), [
                       [_vModelText, liabilityEditForm.reason]
                     ])
+                  ]),
+                  _createElementVNode("label", _hoisted_494, [
+                    _withDirectives(_createElementVNode("input", {
+                      "onUpdate:modelValue": _cache[164] || (_cache[164] = ($event) => liabilityEditForm.rebaseline_all_history = $event),
+                      type: "checkbox"
+                    }, null, 512), [
+                      [_vModelCheckbox, liabilityEditForm.rebaseline_all_history]
+                    ]),
+                    _cache[364] || (_cache[364] = _createElementVNode("span", null, "Rebaseline all history (기준시각 무시)", -1))
                   ])
                 ]),
-                _cache[359] || (_cache[359] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE는 기준일 이전 LOAN_BORROW/LOAN_REPAY를 VOID하고 baseline LOAN_BORROW를 생성합니다. LOAN_INTEREST는 원금 비영향으로 유지됩니다. ", -1))
-              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_492, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
+                _cache[365] || (_cache[365] = _createElementVNode("p", { class: "mt-2 text-[11px] text-slate-500 dark:text-slate-400" }, " SAFE 기본값은 기준일 이전 LOAN_BORROW/LOAN_REPAY만 재기준점 처리합니다. 위 옵션을 켜면 전체 과거 거래를 대상으로 처리합니다. LOAN_INTEREST는 원금 비영향으로 유지됩니다. ", -1))
+              ], 64)) : (_openBlock(), _createElementBlock("p", _hoisted_495, " HARD는 임시 강제값입니다. 이후 sync/rebuild에서 원장값으로 덮어써질 수 있습니다. "))
             ]),
-            _createElementVNode("div", _hoisted_493, [
-              _createElementVNode("label", _hoisted_494, [
-                _cache[362] || (_cache[362] = _createTextVNode("Portfolio (optional) ", -1)),
+            _createElementVNode("div", _hoisted_496, [
+              _createElementVNode("label", _hoisted_497, [
+                _cache[368] || (_cache[368] = _createTextVNode("Portfolio (optional) ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[162] || (_cache[162] = ($event) => liabilityEditForm.portfolio_id = $event),
+                  "onUpdate:modelValue": _cache[165] || (_cache[165] = ($event) => liabilityEditForm.portfolio_id = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950",
                   disabled: lookupLoading.value || loading.action || loading.confirm || liabilityEditForm.edit_mode === "SAFE"
                 }, [
-                  _cache[361] || (_cache[361] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
+                  _cache[367] || (_cache[367] = _createElementVNode("option", { value: "" }, "Unassigned", -1)),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(sortedHoldingPortfolioOptions.value, (item) => {
                     return _openBlock(), _createElementBlock("option", {
                       key: item.id,
                       value: String(item.id)
-                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name), 9, _hoisted_496);
+                    }, _toDisplayString(item.id) + " - " + _toDisplayString(item.name), 9, _hoisted_499);
                   }), 128))
-                ], 8, _hoisted_495), [
+                ], 8, _hoisted_498), [
                   [_vModelSelect, liabilityEditForm.portfolio_id]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_497, [
-                _cache[363] || (_cache[363] = _createTextVNode("Name ", -1)),
+              _createElementVNode("label", _hoisted_500, [
+                _cache[369] || (_cache[369] = _createTextVNode("Name ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[163] || (_cache[163] = ($event) => liabilityEditForm.name = $event),
+                  "onUpdate:modelValue": _cache[166] || (_cache[166] = ($event) => liabilityEditForm.name = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, liabilityEditForm.name]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_498, [
-                _cache[364] || (_cache[364] = _createTextVNode("Type ", -1)),
+              _createElementVNode("label", _hoisted_501, [
+                _cache[370] || (_cache[370] = _createTextVNode("Type ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[164] || (_cache[164] = ($event) => liabilityEditForm.liability_type = $event),
+                  "onUpdate:modelValue": _cache[167] || (_cache[167] = ($event) => liabilityEditForm.liability_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(liabilityTypeOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_499);
+                    }, _toDisplayString(opt), 9, _hoisted_502);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, liabilityEditForm.liability_type]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_500, [
-                _cache[365] || (_cache[365] = _createTextVNode("Currency ", -1)),
+              _createElementVNode("label", _hoisted_503, [
+                _cache[371] || (_cache[371] = _createTextVNode("Currency ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[165] || (_cache[165] = ($event) => liabilityEditForm.currency = $event),
+                  "onUpdate:modelValue": _cache[168] || (_cache[168] = ($event) => liabilityEditForm.currency = $event),
                   maxlength: "3",
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950",
                   disabled: liabilityEditForm.edit_mode === "SAFE"
-                }, null, 8, _hoisted_501), [
+                }, null, 8, _hoisted_504), [
                   [_vModelText, liabilityEditForm.currency]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_502, [
-                _cache[366] || (_cache[366] = _createTextVNode("Outstanding Balance ", -1)),
+              _createElementVNode("label", _hoisted_505, [
+                _cache[372] || (_cache[372] = _createTextVNode("Outstanding Balance ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[166] || (_cache[166] = ($event) => liabilityEditForm.outstanding_balance = $event),
+                  "onUpdate:modelValue": _cache[169] || (_cache[169] = ($event) => liabilityEditForm.outstanding_balance = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, liabilityEditForm.outstanding_balance]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_503, [
-                _cache[367] || (_cache[367] = _createTextVNode("Interest Rate (optional) ", -1)),
+              _createElementVNode("label", _hoisted_506, [
+                _cache[373] || (_cache[373] = _createTextVNode("Interest Rate (optional) ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[167] || (_cache[167] = ($event) => liabilityEditForm.interest_rate = $event),
+                  "onUpdate:modelValue": _cache[170] || (_cache[170] = ($event) => liabilityEditForm.interest_rate = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, liabilityEditForm.interest_rate]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_504, [
-                _cache[368] || (_cache[368] = _createTextVNode("Monthly Payment (optional) ", -1)),
+              _createElementVNode("label", _hoisted_507, [
+                _cache[374] || (_cache[374] = _createTextVNode("Monthly Payment (optional) ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[168] || (_cache[168] = ($event) => liabilityEditForm.monthly_payment = $event),
+                  "onUpdate:modelValue": _cache[171] || (_cache[171] = ($event) => liabilityEditForm.monthly_payment = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, liabilityEditForm.monthly_payment]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_505, [
-                _cache[369] || (_cache[369] = _createTextVNode("Source Type ", -1)),
+              _createElementVNode("label", _hoisted_508, [
+                _cache[375] || (_cache[375] = _createTextVNode("Source Type ", -1)),
                 _withDirectives(_createElementVNode("select", {
-                  "onUpdate:modelValue": _cache[169] || (_cache[169] = ($event) => liabilityEditForm.source_type = $event),
+                  "onUpdate:modelValue": _cache[172] || (_cache[172] = ($event) => liabilityEditForm.source_type = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, [
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(liabilitySourceTypeOptions, (opt) => {
                     return _createElementVNode("option", {
                       key: opt,
                       value: opt
-                    }, _toDisplayString(opt), 9, _hoisted_506);
+                    }, _toDisplayString(opt), 9, _hoisted_509);
                   }), 64))
                 ], 512), [
                   [_vModelSelect, liabilityEditForm.source_type]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_507, [
-                _cache[370] || (_cache[370] = _createTextVNode("Memo ", -1)),
+              _createElementVNode("label", _hoisted_510, [
+                _cache[376] || (_cache[376] = _createTextVNode("Memo ", -1)),
                 _withDirectives(_createElementVNode("input", {
-                  "onUpdate:modelValue": _cache[170] || (_cache[170] = ($event) => liabilityEditForm.memo = $event),
+                  "onUpdate:modelValue": _cache[173] || (_cache[173] = ($event) => liabilityEditForm.memo = $event),
                   class: "mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
                 }, null, 512), [
                   [_vModelText, liabilityEditForm.memo]
                 ])
               ]),
-              _createElementVNode("label", _hoisted_508, [
+              _createElementVNode("label", _hoisted_511, [
                 _createElementVNode("span", null, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[171] || (_cache[171] = ($event) => liabilityEditForm.is_included = $event),
+                    "onUpdate:modelValue": _cache[174] || (_cache[174] = ($event) => liabilityEditForm.is_included = $event),
                     type: "checkbox"
                   }, null, 512), [
                     [_vModelCheckbox, liabilityEditForm.is_included]
                   ]),
-                  _cache[371] || (_cache[371] = _createTextVNode()),
-                  _cache[372] || (_cache[372] = _createElementVNode("span", { class: "ml-1" }, "Included", -1))
+                  _cache[377] || (_cache[377] = _createTextVNode()),
+                  _cache[378] || (_cache[378] = _createElementVNode("span", { class: "ml-1" }, "Included", -1))
                 ]),
                 _createElementVNode("span", null, [
                   _withDirectives(_createElementVNode("input", {
-                    "onUpdate:modelValue": _cache[172] || (_cache[172] = ($event) => liabilityEditForm.is_hidden = $event),
+                    "onUpdate:modelValue": _cache[175] || (_cache[175] = ($event) => liabilityEditForm.is_hidden = $event),
                     type: "checkbox"
                   }, null, 512), [
                     [_vModelCheckbox, liabilityEditForm.is_hidden]
                   ]),
-                  _cache[373] || (_cache[373] = _createTextVNode()),
-                  _cache[374] || (_cache[374] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
+                  _cache[379] || (_cache[379] = _createTextVNode()),
+                  _cache[380] || (_cache[380] = _createElementVNode("span", { class: "ml-1" }, "Hidden", -1))
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_509, [
+            _createElementVNode("div", _hoisted_512, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                 disabled: loading.action || loading.confirm,
                 onClick: closeLiabilityEditModal
-              }, " Cancel ", 8, _hoisted_510),
+              }, " Cancel ", 8, _hoisted_513),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500",
                 disabled: loading.action || loading.confirm,
                 onClick: submitLiabilityEdit
-              }, " Apply ", 8, _hoisted_511)
+              }, " Apply ", 8, _hoisted_514)
             ])
           ])
         ])) : _createCommentVNode("", true),
@@ -5223,31 +5294,31 @@ ${realEstateMetaJsonExample}`;
           class: "fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4",
           onClick: _withModifiers(closeEntityHistory, ["self"])
         }, [
-          _createElementVNode("section", _hoisted_512, [
-            _createElementVNode("div", _hoisted_513, [
+          _createElementVNode("section", _hoisted_515, [
+            _createElementVNode("div", _hoisted_516, [
               _createElementVNode("div", null, [
-                _cache[376] || (_cache[376] = _createElementVNode("h3", { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Entity History", -1)),
-                _createElementVNode("p", _hoisted_514, _toDisplayString(entityHistoryState.title) + " · " + _toDisplayString(entityHistoryState.entity_type) + " #" + _toDisplayString(entityHistoryState.entity_id), 1)
+                _cache[382] || (_cache[382] = _createElementVNode("h3", { class: "text-lg font-semibold text-slate-900 dark:text-slate-100" }, "Entity History", -1)),
+                _createElementVNode("p", _hoisted_517, _toDisplayString(entityHistoryState.title) + " · " + _toDisplayString(entityHistoryState.entity_type) + " #" + _toDisplayString(entityHistoryState.entity_id), 1)
               ]),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                 disabled: loading.action || loading.confirm,
                 onClick: closeEntityHistory
-              }, " Close ", 8, _hoisted_515)
+              }, " Close ", 8, _hoisted_518)
             ]),
-            entityHistoryState.loading ? (_openBlock(), _createElementBlock("div", _hoisted_516, " Loading history... ")) : entityHistoryState.items.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_517, " No history found. ")) : (_openBlock(), _createElementBlock("div", _hoisted_518, [
+            entityHistoryState.loading ? (_openBlock(), _createElementBlock("div", _hoisted_519, " Loading history... ")) : entityHistoryState.items.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_520, " No history found. ")) : (_openBlock(), _createElementBlock("div", _hoisted_521, [
               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(entityHistoryState.items, (item) => {
                 return _openBlock(), _createElementBlock("article", {
                   key: item.id,
                   class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                 }, [
-                  _createElementVNode("div", _hoisted_519, [
-                    _createElementVNode("div", _hoisted_520, [
-                      _createElementVNode("span", _hoisted_521, "#" + _toDisplayString(item.id) + " " + _toDisplayString(item.action), 1),
-                      _cache[377] || (_cache[377] = _createElementVNode("span", { class: "mx-1" }, "·", -1)),
+                  _createElementVNode("div", _hoisted_522, [
+                    _createElementVNode("div", _hoisted_523, [
+                      _createElementVNode("span", _hoisted_524, "#" + _toDisplayString(item.id) + " " + _toDisplayString(item.action), 1),
+                      _cache[383] || (_cache[383] = _createElementVNode("span", { class: "mx-1" }, "·", -1)),
                       _createElementVNode("span", null, _toDisplayString(formatDateTime(item.created_at)), 1),
-                      _cache[378] || (_cache[378] = _createElementVNode("span", { class: "mx-1" }, "·", -1)),
+                      _cache[384] || (_cache[384] = _createElementVNode("span", { class: "mx-1" }, "·", -1)),
                       _createElementVNode("span", null, _toDisplayString(item.actor_email || "-"), 1)
                     ]),
                     _createElementVNode("button", {
@@ -5255,21 +5326,21 @@ ${realEstateMetaJsonExample}`;
                       class: "rounded border border-rose-300 px-2 py-0.5 text-xs text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20 dark:focus:ring-rose-700",
                       disabled: isBusy.value || entityHistoryState.reverting_id === item.id,
                       onClick: ($event) => askRevertEntityHistory(item)
-                    }, _toDisplayString(entityHistoryState.reverting_id === item.id ? "Reverting..." : "Revert"), 9, _hoisted_522)
+                    }, _toDisplayString(entityHistoryState.reverting_id === item.id ? "Reverting..." : "Revert"), 9, _hoisted_525)
                   ]),
-                  item.reason ? (_openBlock(), _createElementBlock("p", _hoisted_523, "reason: " + _toDisplayString(item.reason), 1)) : _createCommentVNode("", true),
-                  _createElementVNode("p", _hoisted_524, [
-                    _cache[379] || (_cache[379] = _createTextVNode(" changed: ", -1)),
-                    _createElementVNode("span", _hoisted_525, _toDisplayString(item.changed_fields && item.changed_fields.length > 0 ? item.changed_fields.join(", ") : "-"), 1)
+                  item.reason ? (_openBlock(), _createElementBlock("p", _hoisted_526, "reason: " + _toDisplayString(item.reason), 1)) : _createCommentVNode("", true),
+                  _createElementVNode("p", _hoisted_527, [
+                    _cache[385] || (_cache[385] = _createTextVNode(" changed: ", -1)),
+                    _createElementVNode("span", _hoisted_528, _toDisplayString(item.changed_fields && item.changed_fields.length > 0 ? item.changed_fields.join(", ") : "-"), 1)
                   ]),
-                  _createElementVNode("div", _hoisted_526, [
+                  _createElementVNode("div", _hoisted_529, [
                     _createElementVNode("div", null, [
-                      _cache[380] || (_cache[380] = _createElementVNode("p", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "before", -1)),
-                      _createElementVNode("pre", _hoisted_527, _toDisplayString(JSON.stringify(item.before ?? {}, null, 2)), 1)
+                      _cache[386] || (_cache[386] = _createElementVNode("p", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "before", -1)),
+                      _createElementVNode("pre", _hoisted_530, _toDisplayString(JSON.stringify(item.before ?? {}, null, 2)), 1)
                     ]),
                     _createElementVNode("div", null, [
-                      _cache[381] || (_cache[381] = _createElementVNode("p", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "after", -1)),
-                      _createElementVNode("pre", _hoisted_528, _toDisplayString(JSON.stringify(item.after ?? {}, null, 2)), 1)
+                      _cache[387] || (_cache[387] = _createElementVNode("p", { class: "text-[11px] font-semibold text-slate-600 dark:text-slate-300" }, "after", -1)),
+                      _createElementVNode("pre", _hoisted_531, _toDisplayString(JSON.stringify(item.after ?? {}, null, 2)), 1)
                     ])
                   ])
                 ]);
@@ -5282,22 +5353,22 @@ ${realEstateMetaJsonExample}`;
           class: "fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 px-4",
           onClick: _withModifiers(closeConfirm, ["self"])
         }, [
-          _createElementVNode("section", _hoisted_529, [
-            _createElementVNode("h3", _hoisted_530, _toDisplayString(confirmModal.title), 1),
-            _createElementVNode("p", _hoisted_531, _toDisplayString(confirmModal.message), 1),
-            _createElementVNode("div", _hoisted_532, [
+          _createElementVNode("section", _hoisted_532, [
+            _createElementVNode("h3", _hoisted_533, _toDisplayString(confirmModal.title), 1),
+            _createElementVNode("p", _hoisted_534, _toDisplayString(confirmModal.message), 1),
+            _createElementVNode("div", _hoisted_535, [
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:border-slate-700 dark:hover:bg-slate-800 dark:focus:ring-slate-600",
                 disabled: loading.confirm,
                 onClick: closeConfirm
-              }, " Cancel ", 8, _hoisted_533),
+              }, " Cancel ", 8, _hoisted_536),
               _createElementVNode("button", {
                 type: "button",
                 class: "rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500",
                 disabled: loading.confirm,
                 onClick: executeConfirm
-              }, _toDisplayString(loading.confirm ? "Running..." : "Confirm"), 9, _hoisted_534)
+              }, _toDisplayString(loading.confirm ? "Running..." : "Confirm"), 9, _hoisted_537)
             ])
           ])
         ])) : _createCommentVNode("", true)
