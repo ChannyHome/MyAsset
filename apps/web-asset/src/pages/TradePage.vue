@@ -54,10 +54,24 @@ const tradeTypes: TransactionType[] = [
   "DIVIDEND",
   "FEE",
   "ADJUSTMENT",
+  "BALANCE_SET",
   "LOAN_BORROW",
   "LOAN_REPAY",
   "LOAN_INTEREST",
 ];
+const tradeTypeLabelMap: Record<TransactionType, string> = {
+  BUY: "BUY",
+  SELL: "SELL",
+  DEPOSIT: "DEPOSIT",
+  WITHDRAW: "WITHDRAW",
+  DIVIDEND: "DIVIDEND",
+  FEE: "FEE",
+  ADJUSTMENT: "ADJUSTMENT",
+  BALANCE_SET: "BALANCE_SET (Set Cash Balance)",
+  LOAN_BORROW: "LOAN_BORROW",
+  LOAN_REPAY: "LOAN_REPAY",
+  LOAN_INTEREST: "LOAN_INTEREST",
+};
 const statusOptions: TransactionStatus[] = ["POSTED", "VOID"];
 const rebuildHintLines = [
   "DB/HeidiSQL에서 값 직접 수정 후 집계 복구",
@@ -106,10 +120,17 @@ const filters = reactive({
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 const isBuySell = computed(() => form.txn_type === "BUY" || form.txn_type === "SELL");
+const isBalanceSet = computed(() => form.txn_type === "BALANCE_SET");
 const isLoanTxn = computed(
   () => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY" || form.txn_type === "LOAN_INTEREST",
 );
 const canSelectAsset = computed(() => isBuySell.value || form.txn_type === "DIVIDEND");
+const amountLabel = computed(() => (isBalanceSet.value ? "Target Balance" : "Amount"));
+const amountHint = computed(() =>
+  isBalanceSet.value
+    ? "Set Cash Balance: 입력한 값이 해당 포트폴리오/통화의 현금 잔액으로 맞춰집니다."
+    : "",
+);
 const selectableLoanLiabilities = computed(() => {
   const selectedPortfolioId = toOptionalNumber(form.portfolio_id);
   return liabilities.value.filter(
@@ -263,6 +284,10 @@ function buildPayload(): TradeCreateIn {
     auto_apply_cash_holding: form.auto_apply_cash_holding,
     auto_apply_portfolio_cashflow: form.auto_apply_portfolio_cashflow,
   };
+  if (isBalanceSet.value) {
+    payload.auto_apply_cash_holding = true;
+    payload.auto_apply_portfolio_cashflow = false;
+  }
   if (isBuySell.value) {
     payload.asset_id = Number(form.asset_id);
     payload.liability_id = null;
@@ -597,6 +622,11 @@ watch(
       form.asset_id = "";
       form.liability_id = "";
       form.auto_apply_portfolio_cashflow = true;
+    } else if (next === "ADJUSTMENT" || next === "BALANCE_SET") {
+      form.asset_id = "";
+      form.liability_id = "";
+      form.auto_apply_portfolio_cashflow = false;
+      form.auto_apply_cash_holding = true;
     } else if (next === "LOAN_BORROW" || next === "LOAN_REPAY" || next === "LOAN_INTEREST") {
       form.asset_id = "";
       form.auto_apply_portfolio_cashflow = false;
@@ -801,7 +831,7 @@ onBeforeUnmount(() => {
           </label>
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Type
             <select v-model="form.txn_type" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-              <option v-for="type in tradeTypes" :key="type" :value="type">{{ type }}</option>
+              <option v-for="type in tradeTypes" :key="type" :value="type">{{ tradeTypeLabelMap[type] }}</option>
             </select>
           </label>
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Asset
@@ -826,8 +856,15 @@ onBeforeUnmount(() => {
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Unit Price
             <input v-model="form.unit_price" :disabled="!isBuySell" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950" />
           </label>
-          <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Amount
-            <input v-model="form.amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">{{ amountLabel }}
+            <input
+              v-model="form.amount"
+              :placeholder="isBalanceSet ? 'e.g. 20000' : ''"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+            />
+            <p v-if="amountHint" class="mt-1 text-[11px] normal-case text-slate-500 dark:text-slate-400">
+              {{ amountHint }}
+            </p>
           </label>
           <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Fee (optional)
             <input
@@ -853,7 +890,7 @@ onBeforeUnmount(() => {
         </label>
         <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
           <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-            <input v-model="form.auto_apply_cash_holding" type="checkbox" class="h-4 w-4" />
+            <input v-model="form.auto_apply_cash_holding" :disabled="isBalanceSet" type="checkbox" class="h-4 w-4 disabled:opacity-60" />
             <span>Auto apply to cash holding</span>
           </label>
           <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
@@ -979,7 +1016,7 @@ onBeforeUnmount(() => {
           />
           <select v-model="filters.txn_type" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
             <option value="">ALL TYPES</option>
-            <option v-for="type in tradeTypes" :key="type" :value="type">{{ type }}</option>
+            <option v-for="type in tradeTypes" :key="type" :value="type">{{ tradeTypeLabelMap[type] }}</option>
           </select>
           <select v-model="filters.status" class="rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
             <option value="">ALL STATUS</option>

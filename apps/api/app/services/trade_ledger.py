@@ -33,6 +33,7 @@ _CASH_APPLY_TYPES = {
     "DIVIDEND",
     "FEE",
     "ADJUSTMENT",
+    "BALANCE_SET",
     "LOAN_BORROW",
     "LOAN_REPAY",
     "LOAN_INTEREST",
@@ -445,6 +446,8 @@ def _cash_delta_for_transaction(txn: Transaction) -> Decimal | None:
         return -amount
     if txn.txn_type == "ADJUSTMENT":
         return amount
+    if txn.txn_type == "BALANCE_SET":
+        return None
     if txn.txn_type == "LOAN_BORROW":
         return amount
     if txn.txn_type == "LOAN_REPAY":
@@ -489,6 +492,9 @@ def rebuild_cash_holding_from_trades(
 
     balance = Decimal("0")
     for txn in txns:
+        if txn.txn_type == "BALANCE_SET":
+            balance = Decimal(txn.amount)
+            continue
         delta = _cash_delta_for_transaction(txn)
         if delta is not None:
             balance += delta
@@ -651,7 +657,7 @@ def normalize_trade_payload(
     if hasattr(raw_txn_type, "value"):
         raw_txn_type = raw_txn_type.value
     txn_type = str(raw_txn_type).upper().strip()
-    allowed_types = _BUY_SELL_TYPES | _PORTFOLIO_CASHFLOW_TYPES | _LOAN_EVENT_TYPES | {"DIVIDEND", "FEE", "ADJUSTMENT"}
+    allowed_types = _BUY_SELL_TYPES | _PORTFOLIO_CASHFLOW_TYPES | _LOAN_EVENT_TYPES | {"DIVIDEND", "FEE", "ADJUSTMENT", "BALANCE_SET"}
     if txn_type not in allowed_types:
         raise TradeSyncError("txn_type is invalid")
 
@@ -764,6 +770,14 @@ def normalize_trade_payload(
         amount = Decimal(amount)
         if asset_id is not None or liability_id is not None:
             raise TradeSyncError("asset_id/liability_id must be null for ADJUSTMENT")
+        quantity = None
+        unit_price = None
+    elif txn_type == "BALANCE_SET":
+        if amount is None:
+            raise TradeSyncError("amount is required for BALANCE_SET")
+        amount = Decimal(amount)
+        if asset_id is not None or liability_id is not None:
+            raise TradeSyncError("asset_id/liability_id must be null for BALANCE_SET")
         quantity = None
         unit_price = None
     else:

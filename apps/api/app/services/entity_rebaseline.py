@@ -80,7 +80,7 @@ def rebaseline_holding(
     if _is_cash_balance_asset(asset):
         raise TradeSyncError(
             "Cash balance holding is ledger-derived. "
-            "Use DEPOSIT/WITHDRAW/ADJUSTMENT or portfolio rebaseline for cash correction."
+            "Use DEPOSIT/WITHDRAW/ADJUSTMENT/BALANCE_SET or portfolio rebaseline for cash correction."
         )
 
     effective_at = normalize_effective_at(payload.effective_at)

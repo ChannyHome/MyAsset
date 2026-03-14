@@ -9,6 +9,7 @@ export type TransactionType =
   | "DIVIDEND"
   | "FEE"
   | "ADJUSTMENT"
+  | "BALANCE_SET"
   | "LOAN_BORROW"
   | "LOAN_REPAY"
   | "LOAN_INTEREST";
