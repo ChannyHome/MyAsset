@@ -1057,13 +1057,13 @@ watch(
       @toggle="toggleLiveDashboard"
     >
       <template #controls>
-        <div class="rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
-          <div class="flex flex-wrap items-center gap-3 text-sm">
-            <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">KPI</span>
+        <div class="rounded-2xl border border-slate-200 p-2.5 sm:p-3 dark:border-slate-700">
+          <div class="grid gap-2 sm:gap-3 text-sm md:grid-cols-[auto_1fr] md:items-center">
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">KPI</span>
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
-                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                class="rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
                 :class="liveKpiTarget === 'SUMMARY' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
                 @click="liveKpiTarget = 'SUMMARY'"
               >
@@ -1071,7 +1071,7 @@ watch(
               </button>
               <button
                 type="button"
-                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                class="rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
                 :class="liveKpiTarget === 'PORTFOLIOS' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
                 @click="liveKpiTarget = 'PORTFOLIOS'"
               >
@@ -1079,13 +1079,13 @@ watch(
               </button>
             </div>
 
-            <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Target</span>
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Target</span>
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <button
                 v-for="target in (['GROSS', 'LIABILITIES', 'NET', 'HOLDINGS'] as const)"
                 :key="`home-target-${target}`"
                 type="button"
-                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                class="rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
                 :class="liveDashboardTarget === target ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
                 @click="liveDashboardTarget = target"
               >
@@ -1093,13 +1093,13 @@ watch(
               </button>
             </div>
 
-            <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Start</span>
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Start</span>
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <button
                 v-for="pos in (['TOP', 'RIGHT', 'LEFT'] as const)"
                 :key="`home-donut-start-${pos}`"
                 type="button"
-                class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                class="rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
                 :class="liveDonutStartPosition === pos ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
                 @click="liveDonutStartPosition = pos"
               >
@@ -1107,11 +1107,11 @@ watch(
               </button>
             </div>
 
-            <div class="inline-flex items-center gap-2">
-              <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Portfolio</span>
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Portfolio</span>
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <select
                 v-model="livePortfolioKey"
-                class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                class="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
               >
                 <option value="ALL">All</option>
                 <option v-for="item in portfolios" :key="`home-live-portfolio-${item.id}`" :value="String(item.id)">
@@ -1120,17 +1120,18 @@ watch(
               </select>
             </div>
 
-            <div class="ml-auto flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Actions</span>
+            <div class="flex w-full flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end">
               <button
                 type="button"
-                class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                class="min-w-[8rem] grow rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 @click="printLiveDashboard"
               >
                 Print
               </button>
               <button
                 type="button"
-                class="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+                class="min-w-[8rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
                 :disabled="exportingImage || loading || !liveDashboardExpanded"
                 @click="exportLiveDashboardImage"
               >

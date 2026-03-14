@@ -174,22 +174,24 @@ onBeforeUnmount(() => {
     <header
       class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95"
     >
-      <div class="relative flex items-center">
-        <button
-          type="button"
-          class="relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
-          aria-label="Toggle sidebar"
-          @click="toggleSidebar()"
-        >
-          <Menu class="h-5 w-5" />
-        </button>
-        <div class="pointer-events-none absolute inset-x-12 text-center">
-          <p class="truncate text-lg font-bold leading-tight">{{ pageTitle }}</p>
-        </div>
-        <div class="relative z-10 ml-auto inline-flex shrink-0 items-center gap-2">
-          <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      <div class="relative flex items-center gap-2">
+        <div class="relative z-10 inline-flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-300 text-lg transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 dark:border-slate-700 dark:hover:bg-slate-800"
+            aria-label="Toggle sidebar"
+            @click="toggleSidebar()"
+          >
+            <Menu class="h-5 w-5" />
+          </button>
+          <span class="text-[11px] font-medium whitespace-nowrap text-slate-500 dark:text-slate-400">
             Seoul {{ seoulNowClockText }}
           </span>
+        </div>
+        <div class="min-w-0 flex-1 text-center md:pointer-events-none md:absolute md:inset-x-12">
+          <p class="truncate text-xl font-bold leading-tight md:text-lg">{{ pageTitle }}</p>
+        </div>
+        <div class="relative z-10 ml-auto inline-flex shrink-0 items-center gap-2">
           <GlobalDisplayCurrencyToggle />
         </div>
       </div>
