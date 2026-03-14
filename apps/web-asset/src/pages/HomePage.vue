@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { AxiosError } from "axios";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
 import {
   getAllocation,
@@ -28,6 +29,8 @@ import { getHoldingsPerformance, getHoldingsTable, type HoldingPerformanceOut, t
 import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabilities";
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
+import { getMe, type AuthMeOut } from "../api/auth";
+import { getQuoteUpdateJobStatus, updateQuotesNow } from "../api/quotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import {
   useDashboardDataAdapter,
@@ -37,7 +40,11 @@ import type { ReleaseNoteItem } from "../data/releaseNotes";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 const LIVE_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
+const LIVE_TREND_PREF_STORAGE_KEY = "myasset:home:live-trend-pref";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
+const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
+const HOME_QUOTE_UPDATE_POLL_MS = 1500;
+const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 180000;
 
 type HomePortfolioSortKey = "portfolio" | "current" | "invested_principal" | "portfolio_profit" | "return";
 type HomeHoldingSortKey = "portfolio" | "asset" | "price" | "avg_cost" | "evaluated" | "cost_basis" | "profit" | "return" | "symbol";
@@ -152,6 +159,7 @@ const holdings = ref<HoldingPerformanceOut[]>([]);
 const liabilities = ref<LiabilityTableRowOut[]>([]);
 const portfolios = ref<PortfolioTableRowOut[]>([]);
 const releaseNoteItems = ref<ReleaseNoteItem[]>([]);
+const me = ref<AuthMeOut | null>(null);
 const liveDashboardExpanded = ref(false);
 const homePortfoliosExpanded = ref(false);
 const homeHoldingsExpanded = ref(false);
@@ -163,6 +171,27 @@ const liveDashboardTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "HOLDINGS">("G
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const liveKpiTarget = ref<"SUMMARY" | "PORTFOLIOS">("SUMMARY");
 const liveMaskAmounts = ref(false);
+const homeTrendMode = ref<"SUMMARY" | "PORTFOLIO_RETURN">("SUMMARY");
+const liveTrendVisibility = reactive({
+  gross: true,
+  liabilities: true,
+  net: true,
+});
+const homeTrendPortfolioKey = ref("ALL");
+const homePortfolioTrendPoints = ref<Array<{ label: string; gross: number; liabilities: number; net: number }>>([]);
+const homeTrendPortfolioLines = ref<Array<{ key: string; label: string; points: Array<{ snapshot_date: string; value: number }> }>>([]);
+const homeTrendLoading = ref(false);
+const homeTrendError = ref("");
+const quoteUpdateJobId = ref("");
+const quoteUpdateStatus = ref<"IDLE" | "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED">("IDLE");
+const quoteUpdatePolling = ref(false);
+const quoteUpdateProcessed = ref(0);
+const quoteUpdateTotal = ref(0);
+const quoteUpdateLastProcessed = ref(-1);
+const quoteUpdateLastResultStatus = ref<"COMPLETED" | "FAILED" | "">("");
+const quoteUpdateLastFinishedAt = ref("");
+const quoteUpdateLastSummary = ref("");
+const homeActionToast = ref<{ kind: "INFO" | "SUCCESS" | "ERROR"; message: string } | null>(null);
 const livePortfolioKey = ref("ALL");
 const homePortfolioKey = ref("ALL");
 const homePortfolioRows = ref<PortfolioStatusRow[]>([]);
@@ -172,6 +201,8 @@ const homeHoldingSearchTerm = ref("");
 const homeLiabilitySearchTerm = ref("");
 let homeHoldingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let homeLiabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let homeActionToastTimer: ReturnType<typeof setTimeout> | null = null;
+let quoteUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
 const homePortfolioTable = reactive({
   page: 1,
   pageSize: 10,
@@ -203,6 +234,7 @@ const homeLiabilityTable = reactive({
 
 const liveDashboardRef = ref<HTMLElement | null>(null);
 const { displayCurrency, ensureInitialized } = useDisplayCurrency();
+const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
@@ -217,6 +249,19 @@ const principalReturnPct = computed(() => toNumber(summary.value?.principal_retu
 const principalProfitTotal = computed(() => toNumber(summary.value?.principal_profit_total ?? grossAssetsTotal.value - investedPrincipalTotal.value));
 const netAssetsProfitTotal = computed(() => toNumber(summary.value?.net_assets_profit_total ?? netAssetsTotal.value - principalMinusDebtTotal.value));
 const asOf = computed(() => formatDateTime(summary.value?.as_of));
+const quoteUpdateProgressText = computed(() => {
+  const total = Number(quoteUpdateTotal.value || 0);
+  const processed = Number(quoteUpdateProcessed.value || 0);
+  if (total <= 0) return "0/0";
+  return `${processed}/${total}`;
+});
+
+const quoteUpdateLastResultLabel = computed(() => {
+  if (!quoteUpdateLastFinishedAt.value) return "";
+  const status = quoteUpdateLastResultStatus.value || "COMPLETED";
+  const summary = quoteUpdateLastSummary.value || "-";
+  return `Last run: ${quoteUpdateLastFinishedAt.value} · ${status} · ${summary}`;
+});
 
 const livePortfolioId = computed<number | undefined>(() => {
   if (livePortfolioKey.value === "ALL") return undefined;
@@ -237,6 +282,12 @@ const liveKpiPortfolioRows = computed(() => {
   return portfolios.value.filter((item) => Number(item.id) === parsed);
 });
 
+const homeTrendPortfolioId = computed<number | undefined>(() => {
+  if (homeTrendPortfolioKey.value === "ALL") return undefined;
+  const parsed = Number(homeTrendPortfolioKey.value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+});
+
 const homePortfolioId = computed<number | undefined>(() => {
   if (homePortfolioKey.value === "ALL") return undefined;
   const parsed = Number(homePortfolioKey.value);
@@ -246,6 +297,11 @@ const homePortfolioId = computed<number | undefined>(() => {
 const homePortfolioOptions = computed<PortfolioOption[]>(() =>
   portfolios.value.map((item) => ({ key: String(item.id), label: item.name })),
 );
+
+const homeTrendPortfolioOptions = computed<PortfolioOption[]>(() => [
+  { key: "ALL", label: "All portfolios" },
+  ...homePortfolioOptions.value,
+]);
 
 const portfolioReturnById = computed(() => {
   const map = new Map<number, number>();
@@ -362,7 +418,9 @@ const liveDashboardData = useDashboardDataAdapter({
 const donutItems = computed<DashboardAllocationVm[]>(() => liveDashboardData.donutItems.value);
 const donutTotal = computed(() => liveDashboardData.donutTotal.value);
 const liveTreemapItems = computed<DashboardAllocationVm[]>(() => liveDashboardData.treemapItems.value);
-const trendPoints = computed(() => liveDashboardData.trendPoints.value);
+const trendPoints = computed(() =>
+  homeTrendMode.value === "SUMMARY" ? liveDashboardData.trendPoints.value : homePortfolioTrendPoints.value,
+);
 const kpiGrossReturnPct = computed(() => liveDashboardData.kpiGrossReturn.value);
 const kpiNetReturnPct = computed(() => liveDashboardData.kpiNetReturn.value);
 const kpiGrossProfitTotal = computed(() => liveDashboardData.kpiGrossProfit.value);
@@ -371,8 +429,14 @@ const dashboardDonutLoading = computed(() => loading.value || liveDashboardData.
 const dashboardDonutError = computed(() => liveDashboardData.donutError.value || errorMessage.value);
 const dashboardTreemapLoading = computed(() => loading.value || liveDashboardData.treemapLoading.value);
 const dashboardTreemapError = computed(() => liveDashboardData.treemapError.value || errorMessage.value);
-const dashboardTrendLoading = computed(() => loading.value || liveDashboardData.trendLoading.value);
-const dashboardTrendError = computed(() => liveDashboardData.trendError.value || errorMessage.value);
+const dashboardTrendLoading = computed(() =>
+  loading.value || (homeTrendMode.value === "SUMMARY" ? liveDashboardData.trendLoading.value : homeTrendLoading.value),
+);
+const dashboardTrendError = computed(() =>
+  homeTrendMode.value === "SUMMARY"
+    ? liveDashboardData.trendError.value || errorMessage.value
+    : homeTrendError.value || errorMessage.value,
+);
 
 const topHoldings = computed(() =>
   [...holdings.value]
@@ -408,15 +472,163 @@ function mapReleaseNotes(notes: ReleaseNoteOut[]): ReleaseNoteItem[] {
   }));
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof AxiosError) {
+    const detail = error.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) return detail.map((item) => String(item?.msg ?? item)).join(", ");
+    return error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return "Unknown error";
+}
+
+function showHomeActionToast(kind: "INFO" | "SUCCESS" | "ERROR", message: string): void {
+  homeActionToast.value = { kind, message };
+  if (homeActionToastTimer) {
+    clearTimeout(homeActionToastTimer);
+  }
+  homeActionToastTimer = setTimeout(() => {
+    homeActionToast.value = null;
+    homeActionToastTimer = null;
+  }, 5000);
+}
+
+function saveQuoteUpdateMeta(): void {
+  if (typeof window === "undefined") return;
+  const payload = {
+    status: quoteUpdateLastResultStatus.value,
+    finishedAt: quoteUpdateLastFinishedAt.value,
+    summary: quoteUpdateLastSummary.value,
+  };
+  window.localStorage.setItem(HOME_QUOTE_UPDATE_META_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadQuoteUpdateMeta(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(HOME_QUOTE_UPDATE_META_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as Partial<{ status: string; finishedAt: string; summary: string }>;
+    if (parsed.status === "COMPLETED" || parsed.status === "FAILED") {
+      quoteUpdateLastResultStatus.value = parsed.status;
+    }
+    if (typeof parsed.finishedAt === "string") {
+      quoteUpdateLastFinishedAt.value = parsed.finishedAt;
+    }
+    if (typeof parsed.summary === "string") {
+      quoteUpdateLastSummary.value = parsed.summary;
+    }
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
+function clearQuoteUpdatePolling(): void {
+  if (quoteUpdatePollTimer) {
+    clearTimeout(quoteUpdatePollTimer);
+    quoteUpdatePollTimer = null;
+  }
+  quoteUpdatePolling.value = false;
+}
+
+async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
+  try {
+    const result = await getQuoteUpdateJobStatus(jobId);
+    const normalizedStatus = String(result.status || "").toUpperCase();
+    quoteUpdateStatus.value = normalizedStatus === "FAILED" ? "FAILED" : normalizedStatus === "COMPLETED" ? "COMPLETED" : "RUNNING";
+    quoteUpdateProcessed.value = Number(result.processed_assets || 0);
+    quoteUpdateTotal.value = Number(result.total_assets || 0);
+
+    if (quoteUpdateProcessed.value !== quoteUpdateLastProcessed.value) {
+      quoteUpdateLastProcessed.value = quoteUpdateProcessed.value;
+      showHomeActionToast("INFO", `Quote update running... ${quoteUpdateProgressText.value}`);
+    }
+
+    if (normalizedStatus === "COMPLETED") {
+      clearQuoteUpdatePolling();
+      quoteUpdateStatus.value = "COMPLETED";
+      quoteUpdateLastResultStatus.value = "COMPLETED";
+      quoteUpdateLastFinishedAt.value = formatDateTime(result.finished_at || new Date().toISOString());
+      quoteUpdateLastSummary.value = `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`;
+      saveQuoteUpdateMeta();
+      showHomeActionToast("SUCCESS", "Quote update completed. Refreshing Home data...");
+      await loadHomeData();
+      return;
+    }
+
+    if (normalizedStatus === "FAILED") {
+      clearQuoteUpdatePolling();
+      quoteUpdateStatus.value = "FAILED";
+      const lastError = Array.isArray(result.errors) && result.errors.length > 0 ? String(result.errors[result.errors.length - 1]) : "";
+      quoteUpdateLastResultStatus.value = "FAILED";
+      quoteUpdateLastFinishedAt.value = formatDateTime(result.finished_at || new Date().toISOString());
+      quoteUpdateLastSummary.value = lastError || "Quote update job failed";
+      saveQuoteUpdateMeta();
+      showHomeActionToast("ERROR", lastError || "Quote update job failed.");
+      return;
+    }
+
+    if (Date.now() - startedAtMs > HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS) {
+      clearQuoteUpdatePolling();
+      quoteUpdateStatus.value = "FAILED";
+      quoteUpdateLastResultStatus.value = "FAILED";
+      quoteUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
+      quoteUpdateLastSummary.value = "Polling timed out";
+      saveQuoteUpdateMeta();
+      showHomeActionToast("ERROR", "Quote update polling timed out.");
+      return;
+    }
+
+    quoteUpdatePollTimer = setTimeout(() => {
+      void pollHomeQuoteUpdateJob(jobId, startedAtMs);
+    }, HOME_QUOTE_UPDATE_POLL_MS);
+  } catch (error) {
+    clearQuoteUpdatePolling();
+    quoteUpdateStatus.value = "FAILED";
+    quoteUpdateLastResultStatus.value = "FAILED";
+    quoteUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
+    quoteUpdateLastSummary.value = getErrorMessage(error);
+    saveQuoteUpdateMeta();
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
+async function runHomeUpdateQuotesNow(): Promise<void> {
+  if (!canManageQuoteUpdates.value || quoteUpdatePolling.value || loading.value) {
+    return;
+  }
+  quoteUpdateStatus.value = "QUEUED";
+  quoteUpdateProcessed.value = 0;
+  quoteUpdateTotal.value = 0;
+  quoteUpdateLastProcessed.value = -1;
+
+  try {
+    const job = await updateQuotesNow();
+    quoteUpdateJobId.value = job.job_id;
+    quoteUpdateTotal.value = Number(job.total_assets || 0);
+    quoteUpdatePolling.value = true;
+    quoteUpdateStatus.value = "RUNNING";
+    showHomeActionToast("INFO", `Quote update started (${quoteUpdateProgressText.value})`);
+    void pollHomeQuoteUpdateJob(job.job_id, Date.now());
+  } catch (error) {
+    clearQuoteUpdatePolling();
+    quoteUpdateStatus.value = "FAILED";
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
 async function loadHomeData() {
   loading.value = true;
   errorMessage.value = "";
   try {
+    const mePromise = getMe().catch(() => null);
     const [
       summaryOut,
       holdingsOut,
       liabilitiesOut,
       portfoliosOut,
+      meOut,
     ] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
       getHoldingsPerformance({ display_currency: displayCurrency.value }),
@@ -438,12 +650,20 @@ async function loadHomeData() {
         include_hidden: false,
         include_excluded: false,
       }),
+      mePromise,
     ]);
 
     summary.value = summaryOut;
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
+    me.value = meOut;
+    if (
+      homeTrendPortfolioKey.value !== "ALL" &&
+      !portfoliosOut.items.some((item) => String(item.id) === homeTrendPortfolioKey.value)
+    ) {
+      homeTrendPortfolioKey.value = "ALL";
+    }
     await liveDashboardData.refreshAllDashboard();
     if (livePortfolioKey.value !== "ALL" && !portfoliosOut.items.some((item) => String(item.id) === livePortfolioKey.value)) {
       livePortfolioKey.value = "ALL";
@@ -467,11 +687,48 @@ async function loadHomeData() {
     if (homeLiabilitiesExpanded.value) {
       void loadHomeLiabilityTable();
     }
+    if (homeTrendMode.value === "PORTFOLIO_RETURN") {
+      void loadHomePortfolioTrend();
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to load dashboard data: ${message}`;
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadHomePortfolioTrend(): Promise<void> {
+  homeTrendLoading.value = true;
+  homeTrendError.value = "";
+  try {
+    const out = await getNetworthSeries({
+      display_currency: displayCurrency.value,
+      mode: "PORTFOLIO_RETURN",
+      portfolio_id: homeTrendPortfolioId.value,
+      bucket: "DAY",
+      limit: 90,
+    });
+    homePortfolioTrendPoints.value = out.points.map((point) => ({
+      label: point.snapshot_date,
+      gross: toNumber(point.gross_assets_total),
+      liabilities: toNumber(point.liabilities_total),
+      net: toNumber(point.net_assets_total),
+    }));
+    homeTrendPortfolioLines.value = (out.portfolio_lines || []).map((line) => ({
+      key: line.key,
+      label: line.label,
+      points: (line.points || []).map((point) => ({
+        snapshot_date: point.snapshot_date,
+        value: toNumber(point.value),
+      })),
+    }));
+  } catch (error) {
+    homePortfolioTrendPoints.value = [];
+    homeTrendPortfolioLines.value = [];
+    homeTrendError.value = error instanceof Error ? error.message : "Failed to load portfolio trend";
+  } finally {
+    homeTrendLoading.value = false;
   }
 }
 
@@ -853,6 +1110,28 @@ onMounted(async () => {
     } else if (saved === "0" || saved === "false") {
       liveMaskAmounts.value = false;
     }
+    const savedTrendPref = window.localStorage.getItem(LIVE_TREND_PREF_STORAGE_KEY);
+    if (savedTrendPref) {
+      try {
+        const parsed = JSON.parse(savedTrendPref) as Partial<{
+          gross: boolean;
+          liabilities: boolean;
+          net: boolean;
+          mode: "SUMMARY" | "PORTFOLIO_RETURN";
+          portfolioKey: string;
+        }>;
+        if (typeof parsed.gross === "boolean") liveTrendVisibility.gross = parsed.gross;
+        if (typeof parsed.liabilities === "boolean") liveTrendVisibility.liabilities = parsed.liabilities;
+        if (typeof parsed.net === "boolean") liveTrendVisibility.net = parsed.net;
+        if (parsed.mode === "SUMMARY" || parsed.mode === "PORTFOLIO_RETURN") homeTrendMode.value = parsed.mode;
+        if (typeof parsed.portfolioKey === "string" && parsed.portfolioKey.length > 0) {
+          homeTrendPortfolioKey.value = parsed.portfolioKey;
+        }
+      } catch {
+        // ignore malformed storage values
+      }
+    }
+    loadQuoteUpdateMeta();
     loadHomeTableSectionState();
   }
   const pageSize = getHomeTablePageSize();
@@ -861,6 +1140,14 @@ onMounted(async () => {
   homeLiabilityTable.pageSize = pageSize;
   await ensureInitialized();
   await loadHomeData();
+});
+
+onBeforeUnmount(() => {
+  clearQuoteUpdatePolling();
+  if (homeActionToastTimer) {
+    clearTimeout(homeActionToastTimer);
+    homeActionToastTimer = null;
+  }
 });
 
 watch(
@@ -887,6 +1174,36 @@ watch(
   (next) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(LIVE_MASK_STORAGE_KEY, next ? "1" : "0");
+  },
+);
+
+watch(
+  () =>
+    [
+      liveTrendVisibility.gross,
+      liveTrendVisibility.liabilities,
+      liveTrendVisibility.net,
+      homeTrendMode.value,
+      homeTrendPortfolioKey.value,
+    ] as const,
+  ([gross, liabilities, net, mode, portfolioKey]) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      LIVE_TREND_PREF_STORAGE_KEY,
+      JSON.stringify({ gross, liabilities, net, mode, portfolioKey }),
+    );
+  },
+);
+
+watch(
+  () => [homeTrendMode.value, homeTrendPortfolioKey.value] as const,
+  ([mode], [prevMode]) => {
+    if (!summary.value) return;
+    if (mode === "PORTFOLIO_RETURN") {
+      void loadHomePortfolioTrend();
+    } else if (prevMode === "PORTFOLIO_RETURN") {
+      homeTrendError.value = "";
+    }
   },
 );
 
@@ -1048,6 +1365,20 @@ watch(
       </button>
     </article>
 
+    <article
+      v-if="homeActionToast"
+      class="rounded-2xl border p-3 text-sm shadow-sm"
+      :class="
+        homeActionToast.kind === 'ERROR'
+          ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200'
+          : homeActionToast.kind === 'SUCCESS'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+            : 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-200'
+      "
+    >
+      {{ homeActionToast.message }}
+    </article>
+
     <DashboardPanelContainer
       title="Live Dashboard Panel"
       description="Default is collapsed. Expand to preview dashboard widgets and export image."
@@ -1123,6 +1454,32 @@ watch(
             <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Actions</span>
             <div class="flex w-full flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end">
               <button
+                v-if="canManageQuoteUpdates"
+                type="button"
+                class="min-w-[10rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+                :disabled="quoteUpdatePolling || loading"
+                @click="runHomeUpdateQuotesNow"
+              >
+                {{ quoteUpdatePolling ? `Update Quotes Running... ${quoteUpdateProgressText}` : "Update Quotes Now" }}
+              </button>
+              <span
+                v-if="canManageQuoteUpdates && (quoteUpdatePolling || quoteUpdateStatus === 'COMPLETED' || quoteUpdateStatus === 'FAILED')"
+                class="rounded-full px-2 py-1 text-[11px] font-semibold"
+                :class="
+                  quoteUpdatePolling
+                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+                    : quoteUpdateStatus === 'COMPLETED'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                      : 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'
+                "
+              >
+                {{
+                  quoteUpdatePolling
+                    ? `${quoteUpdateStatus} ${quoteUpdateProgressText}`
+                    : quoteUpdateStatus
+                }}
+              </span>
+              <button
                 type="button"
                 class="min-w-[8rem] grow rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                 @click="printLiveDashboard"
@@ -1137,6 +1494,12 @@ watch(
               >
                 {{ exportingImage ? "Exporting..." : "Export PNG" }}
               </button>
+              <p
+                v-if="canManageQuoteUpdates && quoteUpdateLastResultLabel"
+                class="w-full text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
+              >
+                {{ quoteUpdateLastResultLabel }}
+              </p>
             </div>
           </div>
         </div>
@@ -1206,6 +1569,18 @@ watch(
             :mask-amounts="liveMaskAmounts"
             :loading="dashboardTrendLoading"
             :error="dashboardTrendError"
+            :show-gross="liveTrendVisibility.gross"
+            :show-liabilities="liveTrendVisibility.liabilities"
+            :show-net="liveTrendVisibility.net"
+            :mode="homeTrendMode"
+            :portfolio-lines="homeTrendPortfolioLines"
+            :portfolio-options="homeTrendPortfolioOptions"
+            :portfolio-key="homeTrendPortfolioKey"
+            @update:show-gross="liveTrendVisibility.gross = $event"
+            @update:show-liabilities="liveTrendVisibility.liabilities = $event"
+            @update:show-net="liveTrendVisibility.net = $event"
+            @update:mode="homeTrendMode = $event"
+            @update:portfolio-key="homeTrendPortfolioKey = $event"
           />
         </div>
       </div>

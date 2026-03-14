@@ -56,11 +56,24 @@ export type AnalyticsNetworthSeriesPointOut = {
   source: string;
 };
 
+export type AnalyticsNetworthSeriesLinePointOut = {
+  snapshot_date: string;
+  value: string | number;
+};
+
+export type AnalyticsNetworthSeriesLineOut = {
+  key: string;
+  label: string;
+  points: AnalyticsNetworthSeriesLinePointOut[];
+};
+
 export type AnalyticsNetworthSeriesOut = {
   scope_type: string;
   scope_id: number;
   display_currency: string;
+  mode: "SUMMARY" | "PORTFOLIO_RETURN";
   points: AnalyticsNetworthSeriesPointOut[];
+  portfolio_lines: AnalyticsNetworthSeriesLineOut[];
 };
 
 export type AnalyticsSnapshotCollectOut = {
@@ -98,6 +111,8 @@ export type NetworthSeriesQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
   display_currency?: "KRW" | "USD";
+  mode?: "SUMMARY" | "PORTFOLIO_RETURN";
+  portfolio_id?: number;
   bucket?: "DAY" | "WEEK" | "MONTH";
   limit?: number;
 };

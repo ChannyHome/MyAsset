@@ -52,11 +52,24 @@ class AnalyticsNetworthSeriesPointOut(BaseModel):
     source: str
 
 
+class AnalyticsNetworthSeriesLinePointOut(BaseModel):
+    snapshot_date: str
+    value: Decimal
+
+
+class AnalyticsNetworthSeriesLineOut(BaseModel):
+    key: str
+    label: str
+    points: list[AnalyticsNetworthSeriesLinePointOut]
+
+
 class AnalyticsNetworthSeriesOut(BaseModel):
     scope_type: str
     scope_id: int
     display_currency: str
+    mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = "SUMMARY"
     points: list[AnalyticsNetworthSeriesPointOut]
+    portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
 
 
 class AnalyticsSnapshotCollectOut(BaseModel):

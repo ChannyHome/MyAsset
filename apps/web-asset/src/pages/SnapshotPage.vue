@@ -100,6 +100,7 @@ type TrendLine = { key: string; label: string; values: Array<{ snapshotId: numbe
 
 const AMOUNT_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
 const SNAPSHOT_SECTION_STATE_STORAGE_KEY = "myasset:snapshot:section-expanded";
+const SNAPSHOT_ACTION_META_STORAGE_KEY = "myasset:snapshot:last-action-meta";
 
 type Html2CanvasFn = (
   element: HTMLElement,
@@ -440,9 +441,11 @@ async function exportSnapshotDashboardImage(): Promise<void> {
     link.href = canvas.toDataURL("image/png");
     link.download = `myasset-snapshot-dashboard-${new Date().toISOString().replace(/[:.]/g, "-")}.png`;
     link.click();
+    markLastAction("SUCCESS", "Export Dashboard PNG");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     errorMessage.value = `Failed to export image: ${message}. Try Print as fallback.`;
+    markLastAction("ERROR", `Export Dashboard PNG failed: ${message}`);
   } finally {
     exportingDashboardImage.value = false;
   }
@@ -473,6 +476,9 @@ const appliedCsvPreview = ref<SnapshotCsvPreviewOut | null>(null);
 const loading = ref(false);
 const errorMessage = ref("");
 const toastMessage = ref("");
+const lastActionStatus = ref<"SUCCESS" | "ERROR" | "">("");
+const lastActionAt = ref("");
+const lastActionSummary = ref("");
 const captureLoading = ref(false);
 const dashboardExpanded = ref(false);
 const trendExpanded = ref(false);
@@ -657,6 +663,12 @@ const appliedLabel = computed(() => {
   return `Applied: CSV Preview (${appliedCsvPreview.value?.file_name || "-"})`;
 });
 
+const lastActionLabel = computed(() => {
+  if (!lastActionAt.value || !lastActionSummary.value) return "";
+  const status = lastActionStatus.value || "SUCCESS";
+  return `Last action: ${lastActionAt.value} · ${status} · ${lastActionSummary.value}`;
+});
+
 const summaryCurrency = computed<DisplayCurrency>(() => (displayCurrency.value === "USD" ? "USD" : "KRW"));
 const kpiGrossProfit = computed(() => (summaryVm.value ? summaryVm.value.gross - summaryVm.value.invested : 0));
 const kpiNetProfit = computed(() => (summaryVm.value ? summaryVm.value.net - summaryVm.value.debtAdjusted : 0));
@@ -835,6 +847,43 @@ function saveSectionStateToStorage(): void {
     liabilities: liabilitiesExpanded.value,
   };
   window.localStorage.setItem(SNAPSHOT_SECTION_STATE_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadLastActionFromStorage(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(SNAPSHOT_ACTION_META_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as Partial<{ status: string; at: string; summary: string }>;
+    if (parsed.status === "SUCCESS" || parsed.status === "ERROR") {
+      lastActionStatus.value = parsed.status;
+    }
+    if (typeof parsed.at === "string") {
+      lastActionAt.value = parsed.at;
+    }
+    if (typeof parsed.summary === "string") {
+      lastActionSummary.value = parsed.summary;
+    }
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
+function saveLastActionToStorage(): void {
+  if (typeof window === "undefined") return;
+  const payload = {
+    status: lastActionStatus.value,
+    at: lastActionAt.value,
+    summary: lastActionSummary.value,
+  };
+  window.localStorage.setItem(SNAPSHOT_ACTION_META_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function markLastAction(status: "SUCCESS" | "ERROR", summary: string): void {
+  lastActionStatus.value = status;
+  lastActionAt.value = formatDateTime(new Date().toISOString());
+  lastActionSummary.value = summary;
+  saveLastActionToStorage();
 }
 
 function mapSummaryFromLive(row: AnalyticsSummaryV2Out): SummaryVm {
@@ -1348,9 +1397,12 @@ async function takeSnapshotNow(): Promise<void> {
     appliedCsvPreview.value = null;
     snapshotSummary.value = created;
     toastMessage.value = `Snapshot #${created.id} captured.`;
+    markLastAction("SUCCESS", `Take Snapshot #${created.id}`);
     await reloadAll({ preserveToast: true });
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "Failed to capture snapshot";
+    const message = error instanceof Error ? error.message : "Failed to capture snapshot";
+    errorMessage.value = message;
+    markLastAction("ERROR", `Take Snapshot failed: ${message}`);
   } finally {
     captureLoading.value = false;
   }
@@ -1401,6 +1453,7 @@ async function applySelectedSnapshot(): Promise<void> {
   appliedCsvPreview.value = null;
   closeLoadModal();
   toastMessage.value = `Applied Snapshot #${selectedId}.`;
+  markLastAction("SUCCESS", `Apply Snapshot #${selectedId}`);
   await reloadAll();
 }
 
@@ -1428,6 +1481,7 @@ async function applyCsvPreviewNow(): Promise<void> {
   appliedCsvPreview.value = csvPreviewData.value;
   appliedSnapshotId.value = null;
   toastMessage.value = `Applied CSV Preview (${csvPreviewData.value.file_name || "file"}).`;
+  markLastAction("SUCCESS", `Apply CSV Preview (${csvPreviewData.value.file_name || "file"})`);
   closeLoadModal();
   await reloadAll();
 }
@@ -1438,13 +1492,21 @@ async function backToLive(): Promise<void> {
   appliedSnapshotId.value = null;
   appliedCsvPreview.value = null;
   toastMessage.value = "Switched to Live data.";
+  markLastAction("SUCCESS", "Back to Live");
   await reloadAll();
 }
 
 async function exportAppliedSnapshotCsv(): Promise<void> {
   if (sourceType.value !== "SNAPSHOT" || !appliedSnapshotId.value) return;
-  const blob = await exportSnapshotCsv(appliedSnapshotId.value);
-  downloadBlob(blob, `snapshot_${appliedSnapshotId.value}.csv`);
+  try {
+    const blob = await exportSnapshotCsv(appliedSnapshotId.value);
+    downloadBlob(blob, `snapshot_${appliedSnapshotId.value}.csv`);
+    markLastAction("SUCCESS", `Export CSV snapshot_${appliedSnapshotId.value}.csv`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to export CSV";
+    errorMessage.value = message;
+    markLastAction("ERROR", `Export CSV failed: ${message}`);
+  }
 }
 
 function toggleModalChecked(id: number, checked: boolean): void {
@@ -1499,14 +1561,18 @@ async function confirmDeleteSnapshots(): Promise<void> {
       appliedSnapshotId.value = null;
       appliedCsvPreview.value = null;
       toastMessage.value = `Deleted ${out.deleted} snapshot(s). Applied snapshot was removed, switched to Live data.`;
+      markLastAction("SUCCESS", `Delete ${out.deleted} snapshot(s) + switched to Live`);
     } else {
       toastMessage.value = `Deleted ${out.deleted} snapshot(s).`;
+      markLastAction("SUCCESS", `Delete ${out.deleted} snapshot(s)`);
     }
     closeDeleteConfirm();
     await loadModalList();
     await reloadAll({ preserveToast: true });
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : "Failed to delete snapshots";
+    const message = error instanceof Error ? error.message : "Failed to delete snapshots";
+    errorMessage.value = message;
+    markLastAction("ERROR", `Delete snapshots failed: ${message}`);
   } finally {
     modalDeleting.value = false;
   }
@@ -1618,6 +1684,7 @@ function toggleTrendSnapshot(id: number, checked: boolean): void {
 onMounted(async () => {
   loadMaskFromStorage();
   loadSectionStateFromStorage();
+  loadLastActionFromStorage();
   await ensureInitialized();
   await reloadAll();
 });
@@ -1742,6 +1809,17 @@ watch(
       </div>
       <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">{{ appliedLabel }}</p>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">as_of: {{ asOfText }}</p>
+      <p
+        v-if="lastActionLabel"
+        class="mt-1 text-xs"
+        :class="
+          lastActionStatus === 'ERROR'
+            ? 'text-rose-600 dark:text-rose-300'
+            : 'text-slate-500 dark:text-slate-400'
+        "
+      >
+        {{ lastActionLabel }}
+      </p>
       <p v-if="toastMessage" class="mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
         {{ toastMessage }}
       </p>

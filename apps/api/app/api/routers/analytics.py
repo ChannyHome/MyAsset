@@ -16,10 +16,12 @@ from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
-from app.models.valuation_snapshot import ValuationSnapshot
+from app.models.valuation_snapshot import ValuationSnapshot, ValuationSnapshotPortfolioRow
 from app.schemas.analytics import (
     AnalyticsAllocationItemOut,
     AnalyticsAllocationOut,
+    AnalyticsNetworthSeriesLineOut,
+    AnalyticsNetworthSeriesLinePointOut,
     AnalyticsNetworthSeriesOut,
     AnalyticsNetworthSeriesPointOut,
     AnalyticsSnapshotCollectOut,
@@ -414,6 +416,8 @@ def get_networth_series(
     scope_type: str | None = None,
     scope_id: int | None = None,
     display_currency: str = "KRW",
+    mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = Query(default="SUMMARY"),
+    portfolio_id: int | None = Query(default=None, ge=1),
     bucket: SeriesBucket = Query(default="DAY"),
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
@@ -427,6 +431,9 @@ def get_networth_series(
     )
     target_currency = (display_currency or "KRW").upper()
     normalized_bucket = (bucket or "DAY").upper()
+    normalized_mode = (mode or "SUMMARY").upper()
+    if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN"}:
+        raise HTTPException(status_code=400, detail="mode must be SUMMARY | PORTFOLIO_RETURN")
 
     stmt = (
         select(ValuationSnapshot)
@@ -439,6 +446,8 @@ def get_networth_series(
         .limit(max(limit * 4, limit))
     )
     snapshots = list(reversed(list(db.scalars(stmt).all())))
+
+    portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
 
     if snapshots:
         if normalized_bucket == "DAY":
@@ -467,6 +476,62 @@ def get_networth_series(
             )
             for idx, row in enumerate(selected)
         ]
+
+        if normalized_mode == "PORTFOLIO_RETURN":
+            selected_ids = [row.id for row in selected]
+            label_by_snapshot_id = {row.id: labels[idx] for idx, row in enumerate(selected)}
+            if selected_ids:
+                lines_stmt = select(ValuationSnapshotPortfolioRow).where(
+                    ValuationSnapshotPortfolioRow.valuation_snapshot_id.in_(selected_ids)
+                )
+                if portfolio_id is not None:
+                    lines_stmt = lines_stmt.where(ValuationSnapshotPortfolioRow.portfolio_id == portfolio_id)
+                line_rows = list(db.scalars(lines_stmt).all())
+
+                line_value_by_key: dict[str, dict[str, Decimal]] = defaultdict(dict)
+                line_label_by_key: dict[str, str] = {}
+                for row in line_rows:
+                    line_key = f"portfolio:{row.portfolio_id if row.portfolio_id is not None else 'none'}"
+                    line_label_by_key[line_key] = row.portfolio_name
+                    snapshot_label = label_by_snapshot_id.get(row.valuation_snapshot_id)
+                    if snapshot_label is None:
+                        continue
+                    line_value_by_key[line_key][snapshot_label] = (
+                        Decimal(row.return_pct) if row.return_pct is not None else Decimal("0")
+                    )
+
+                portfolio_lines = [
+                    AnalyticsNetworthSeriesLineOut(
+                        key=line_key,
+                        label=line_label_by_key[line_key],
+                        points=[
+                            AnalyticsNetworthSeriesLinePointOut(
+                                snapshot_date=label,
+                                value=value_map[label],
+                            )
+                            for label in labels
+                            if label in value_map
+                        ],
+                    )
+                    for line_key, value_map in line_value_by_key.items()
+                ]
+                if portfolio_lines:
+                    latest_label = labels[-1]
+                    latest_map = {
+                        line.key: next(
+                            (
+                                point.value
+                                for point in reversed(line.points)
+                                if point.snapshot_date == latest_label
+                            ),
+                            Decimal("0"),
+                        )
+                        for line in portfolio_lines
+                    }
+                    portfolio_lines.sort(
+                        key=lambda line: latest_map.get(line.key, Decimal("0")),
+                        reverse=True,
+                    )
     else:
         try:
             values = calculate_summary_values(
@@ -499,7 +564,9 @@ def get_networth_series(
         scope_type=normalized_scope_type,
         scope_id=normalized_scope_id,
         display_currency=target_currency,
+        mode=normalized_mode,  # type: ignore[arg-type]
         points=points,
+        portfolio_lines=portfolio_lines,
     )
 
 
