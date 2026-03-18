@@ -266,6 +266,7 @@ export type SnapshotLiabilityTableQuery = {
 
 export type SnapshotSeriesQuery = {
   mode?: SnapshotMode;
+  portfolio_metric?: "RETURN" | "PROFIT" | "CURRENT" | "CURRENT_NET";
   snapshot_ids?: string;
   portfolio_id?: number;
   holding_ids?: string;

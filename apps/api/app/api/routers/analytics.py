@@ -377,6 +377,7 @@ def get_allocation(
     raw_items = _top_n_items(raw_items, top_n=top_n, others_label=others_label)
 
     total = sum(bucket_totals.values(), Decimal("0"))
+    display_total = total
 
     ratio_denominator = total
     ratio_numerator_transform = lambda value: value  # noqa: E731
@@ -388,6 +389,19 @@ def get_allocation(
         else:
             ratio_denominator = sum((abs(value) for value in bucket_totals.values()), Decimal("0"))
             ratio_numerator_transform = abs
+    elif normalized_target == "HOLDINGS":
+        # HOLDINGS can contain negative rows (e.g. auto-cash offsets).
+        # For composition charts, use positive-value basis so visible slices and total stay consistent.
+        positive_total = sum((value for value in bucket_totals.values() if value > 0), Decimal("0"))
+        if positive_total > 0:
+            ratio_denominator = positive_total
+            ratio_numerator_transform = lambda value: value if value > 0 else Decimal("0")  # noqa: E731
+            display_total = positive_total
+        else:
+            abs_total = sum((abs(value) for value in bucket_totals.values()), Decimal("0"))
+            ratio_denominator = abs_total
+            ratio_numerator_transform = abs
+            display_total = abs_total
 
     items = [
         AnalyticsAllocationItemOut(
@@ -405,7 +419,7 @@ def get_allocation(
         scope_type=normalized_scope_type,
         scope_id=normalized_scope_id,
         display_currency=target_currency,
-        total=total,
+        total=display_total,
         items=items,
         as_of=as_of or datetime.now(UTC).replace(tzinfo=None),
     )
@@ -417,6 +431,7 @@ def get_networth_series(
     scope_id: int | None = None,
     display_currency: str = "KRW",
     mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = Query(default="SUMMARY"),
+    portfolio_metric: Literal["RETURN", "PROFIT", "CURRENT", "CURRENT_NET"] = Query(default="RETURN"),
     portfolio_id: int | None = Query(default=None, ge=1),
     bucket: SeriesBucket = Query(default="DAY"),
     limit: int = Query(default=90, ge=1, le=365),
@@ -432,8 +447,11 @@ def get_networth_series(
     target_currency = (display_currency or "KRW").upper()
     normalized_bucket = (bucket or "DAY").upper()
     normalized_mode = (mode or "SUMMARY").upper()
+    normalized_portfolio_metric = (portfolio_metric or "RETURN").upper()
     if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN"}:
         raise HTTPException(status_code=400, detail="mode must be SUMMARY | PORTFOLIO_RETURN")
+    if normalized_portfolio_metric not in {"RETURN", "PROFIT", "CURRENT", "CURRENT_NET"}:
+        raise HTTPException(status_code=400, detail="portfolio_metric must be RETURN | PROFIT | CURRENT | CURRENT_NET")
 
     stmt = (
         select(ValuationSnapshot)
@@ -496,9 +514,16 @@ def get_networth_series(
                     snapshot_label = label_by_snapshot_id.get(row.valuation_snapshot_id)
                     if snapshot_label is None:
                         continue
-                    line_value_by_key[line_key][snapshot_label] = (
-                        Decimal(row.return_pct) if row.return_pct is not None else Decimal("0")
-                    )
+                    if normalized_portfolio_metric == "PROFIT":
+                        line_value_by_key[line_key][snapshot_label] = Decimal(row.portfolio_profit_total)
+                    elif normalized_portfolio_metric == "CURRENT":
+                        line_value_by_key[line_key][snapshot_label] = Decimal(row.gross_assets_total)
+                    elif normalized_portfolio_metric == "CURRENT_NET":
+                        line_value_by_key[line_key][snapshot_label] = Decimal(row.net_assets_total)
+                    else:
+                        line_value_by_key[line_key][snapshot_label] = (
+                            Decimal(row.return_pct) if row.return_pct is not None else Decimal("0")
+                        )
 
                 portfolio_lines = [
                     AnalyticsNetworthSeriesLineOut(

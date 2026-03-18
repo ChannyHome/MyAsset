@@ -48,7 +48,8 @@ import { formatDateTimeSeoul } from "../utils/datetime";
 type DisplayCurrency = "KRW" | "USD";
 type SourceType = "LIVE" | "SNAPSHOT" | "CSV_PREVIEW";
 type KpiMode = "SUMMARY" | "PORTFOLIOS";
-type TrendMode = "SUMMARY" | "PORTFOLIO_RETURN";
+type TrendMode = "SUMMARY" | "PORTFOLIO";
+type TrendPortfolioMetric = "CURRENT_VALUE" | "CURRENT_NET" | "PROFIT" | "RETURN";
 
 type SummaryVm = DashboardSummaryVm;
 
@@ -99,6 +100,7 @@ type TrendPoint = { snapshotId: number; label: string; gross: number; liabilitie
 type TrendLine = { key: string; label: string; values: Array<{ snapshotId: number; value: number }> };
 
 const AMOUNT_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
+const SNAPSHOT_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:snapshot:portfolio-net-basis";
 const SNAPSHOT_SECTION_STATE_STORAGE_KEY = "myasset:snapshot:section-expanded";
 const SNAPSHOT_ACTION_META_STORAGE_KEY = "myasset:snapshot:last-action-meta";
 
@@ -490,6 +492,7 @@ const exportingDashboardImage = ref(false);
 const snapshotDashboardRef = ref<HTMLElement | null>(null);
 
 const kpiMode = ref<KpiMode>("SUMMARY");
+const portfolioNetBasis = ref(false);
 const dashboardTarget = ref<DashboardTarget>("GROSS");
 const donutStart = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const holdingsPortfolioKey = ref("ALL");
@@ -536,6 +539,7 @@ const tablePortfolioId = computed<number | undefined>(() => {
 });
 
 const trendMode = ref<TrendMode>("SUMMARY");
+const trendPortfolioMetric = ref<TrendPortfolioMetric>("RETURN");
 const trendSettingsOpen = ref(false);
 const trendVisibility = reactive({ gross: true, liabilities: true, net: true });
 const trendSnapshotIds = ref<number[]>([]);
@@ -819,6 +823,21 @@ function loadMaskFromStorage(): void {
 function saveMaskToStorage(): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(AMOUNT_MASK_STORAGE_KEY, amountMaskEnabled.value ? "1" : "0");
+}
+
+function loadPortfolioNetBasisFromStorage(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(SNAPSHOT_PORTFOLIO_NET_BASIS_STORAGE_KEY);
+  if (raw === "1" || raw === "true") {
+    portfolioNetBasis.value = true;
+  } else if (raw === "0" || raw === "false") {
+    portfolioNetBasis.value = false;
+  }
+}
+
+function savePortfolioNetBasisToStorage(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SNAPSHOT_PORTFOLIO_NET_BASIS_STORAGE_KEY, portfolioNetBasis.value ? "1" : "0");
 }
 
 function loadSectionStateFromStorage(): void {
@@ -1293,7 +1312,7 @@ async function loadTrend(): Promise<void> {
   trendError.value = "";
   try {
     if (sourceType.value === "LIVE") {
-      if (trendMode.value === "PORTFOLIO_RETURN") {
+      if (trendMode.value === "PORTFOLIO") {
         trendPoints.value = [];
         trendPortfolioLines.value = [];
         trendHoldingLines.value = [];
@@ -1330,13 +1349,21 @@ async function loadTrend(): Promise<void> {
     }
     const selectedIds = trendSnapshotIds.value.length ? trendSnapshotIds.value : snapshotCatalog.value.map((item) => item.id);
     const out = await getSnapshotSeries({
-      mode: trendMode.value,
+      mode: trendMode.value === "PORTFOLIO" ? "PORTFOLIO_RETURN" : "SUMMARY",
+      portfolio_metric:
+        trendMode.value === "PORTFOLIO"
+          ? trendPortfolioMetric.value === "CURRENT_VALUE"
+            ? "CURRENT"
+            : trendPortfolioMetric.value === "CURRENT_NET"
+              ? "CURRENT_NET"
+              : trendPortfolioMetric.value
+          : undefined,
       snapshot_ids: toCsvIds(selectedIds),
       portfolio_id:
-        trendMode.value === "PORTFOLIO_RETURN" && trendPortfolioKey.value !== "ALL"
+        trendMode.value === "PORTFOLIO" && trendPortfolioKey.value !== "ALL"
           ? Number(trendPortfolioKey.value)
           : undefined,
-      holding_ids: trendMode.value === "PORTFOLIO_RETURN" ? toCsvIds(trendHoldingIds.value) : undefined,
+      holding_ids: trendMode.value === "PORTFOLIO" ? toCsvIds(trendHoldingIds.value) : undefined,
       display_currency: displayCurrency.value,
     });
     trendPoints.value = out.points.map((item) => ({
@@ -1670,7 +1697,11 @@ function pointX(snapshotId: number): number {
 function inspectPoint(lineLabel: string, snapshotId: number, value: number): void {
   const point = trendPoints.value.find((item) => item.snapshotId === snapshotId);
   trendInspect.value = `${lineLabel} · ${point?.label || "-"} · ${
-    trendMode.value === "SUMMARY" ? formatCurrency(value, summaryCurrency.value) : formatPercent(value)
+    trendMode.value === "SUMMARY"
+      ? formatCurrency(value, summaryCurrency.value)
+      : trendPortfolioMetric.value === "RETURN"
+        ? formatPercent(value)
+        : formatCurrency(value, summaryCurrency.value)
   }`;
 }
 
@@ -1683,6 +1714,7 @@ function toggleTrendSnapshot(id: number, checked: boolean): void {
 
 onMounted(async () => {
   loadMaskFromStorage();
+  loadPortfolioNetBasisFromStorage();
   loadSectionStateFromStorage();
   loadLastActionFromStorage();
   await ensureInitialized();
@@ -1692,6 +1724,10 @@ onMounted(async () => {
 watch(
   () => amountMaskEnabled.value,
   () => saveMaskToStorage(),
+);
+watch(
+  () => portfolioNetBasis.value,
+  () => savePortfolioNetBasisToStorage(),
 );
 watch(
   () => [dashboardExpanded.value, trendExpanded.value, portfoliosExpanded.value, holdingsExpanded.value, liabilitiesExpanded.value],
@@ -1723,7 +1759,15 @@ watch(
   () => void loadLiabilityTable(),
 );
 watch(
-  () => [trendMode.value, trendPortfolioKey.value, trendHoldingIds.value.join(","), trendSnapshotIds.value.join(","), sourceType.value],
+  () =>
+    [
+      trendMode.value,
+      trendPortfolioMetric.value,
+      trendPortfolioKey.value,
+      trendHoldingIds.value.join(","),
+      trendSnapshotIds.value.join(","),
+      sourceType.value,
+    ],
   () => void loadTrend(),
 );
 watch(
@@ -1831,7 +1875,7 @@ watch(
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Snapshot Trend</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Summary or portfolio return series over selected snapshots.</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Summary or portfolio series over selected snapshots.</p>
           <p v-if="sourceType === 'LIVE'" class="mt-1 text-xs text-amber-600 dark:text-amber-300">
             Live mode uses valuation snapshot history. Snapshot filter is applied only when a snapshot/CSV preview is loaded.
           </p>
@@ -1845,7 +1889,13 @@ watch(
             {{ trendExpanded ? "Collapse" : "Expand" }}
           </button>
           <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendMode === 'SUMMARY' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendMode = 'SUMMARY'">Summary</button>
-          <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendMode === 'PORTFOLIO_RETURN' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendMode = 'PORTFOLIO_RETURN'">Portfolio Return</button>
+          <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendMode === 'PORTFOLIO' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendMode = 'PORTFOLIO'">Portfolio</button>
+          <div v-if="trendMode === 'PORTFOLIO'" class="flex flex-wrap items-center gap-2">
+            <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendPortfolioMetric === 'CURRENT_VALUE' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendPortfolioMetric = 'CURRENT_VALUE'">Current Value</button>
+            <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendPortfolioMetric === 'CURRENT_NET' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendPortfolioMetric = 'CURRENT_NET'">Current Net</button>
+            <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendPortfolioMetric === 'PROFIT' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendPortfolioMetric = 'PROFIT'">Profit</button>
+            <button type="button" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" :class="trendPortfolioMetric === 'RETURN' ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'" @click="trendPortfolioMetric = 'RETURN'">Return</button>
+          </div>
           <button type="button" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" @click="trendSettingsOpen = !trendSettingsOpen">{{ trendSettingsOpen ? "Hide Settings" : "Settings" }}</button>
         </div>
       </div>
@@ -1879,7 +1929,13 @@ watch(
           </p>
           <p>
             <span class="font-semibold text-slate-700 dark:text-slate-200">Y-axis:</span>
-            {{ trendMode === "SUMMARY" ? `Amount (${summaryCurrency})` : "Return (%)" }}
+            {{
+              trendMode === "SUMMARY"
+                ? `Amount (${summaryCurrency})`
+                : trendPortfolioMetric === "RETURN"
+                  ? "Return (%)"
+                  : `Amount (${summaryCurrency})`
+            }}
           </p>
         </div>
         <div v-if="trendLoading" class="text-sm text-slate-500 dark:text-slate-400">Loading trend...</div>
@@ -2132,6 +2188,14 @@ watch(
                   {{ item.label }}
                 </option>
               </select>
+              <label class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 sm:text-xs dark:border-slate-700 dark:text-slate-200">
+                <input
+                  v-model="portfolioNetBasis"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                />
+                Net
+              </label>
             </div>
 
             <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Actions</span>
@@ -2178,8 +2242,9 @@ watch(
           :currency="summaryCurrency"
           :portfolios="kpiPortfolioCardRows"
           :mask-amounts="amountMaskEnabled"
+          :use-net-basis="portfolioNetBasis"
           title="KPI Portfolios"
-          subtitle="Portfolio-level KPI for the applied source"
+          :subtitle="`Portfolio-level KPI for the applied source | ${portfolioNetBasis ? 'Net basis' : 'Gross basis'}`"
         />
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <AllocationDonutCard

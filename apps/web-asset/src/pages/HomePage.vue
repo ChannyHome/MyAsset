@@ -41,6 +41,7 @@ import { formatDateTimeSeoul } from "../utils/datetime";
 
 const LIVE_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
 const LIVE_TREND_PREF_STORAGE_KEY = "myasset:home:live-trend-pref";
+const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
@@ -170,8 +171,10 @@ const exportingImage = ref(false);
 const liveDashboardTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "HOLDINGS">("GROSS");
 const liveDonutStartPosition = ref<"TOP" | "RIGHT" | "LEFT">("TOP");
 const liveKpiTarget = ref<"SUMMARY" | "PORTFOLIOS">("SUMMARY");
+const livePortfolioNetBasis = ref(false);
 const liveMaskAmounts = ref(false);
-const homeTrendMode = ref<"SUMMARY" | "PORTFOLIO_RETURN">("SUMMARY");
+const homeTrendMode = ref<"SUMMARY" | "PORTFOLIO">("SUMMARY");
+const homeTrendPortfolioMetric = ref<"CURRENT_VALUE" | "CURRENT_NET" | "RETURN" | "PROFIT">("RETURN");
 const liveTrendVisibility = reactive({
   gross: true,
   liabilities: true,
@@ -687,7 +690,7 @@ async function loadHomeData() {
     if (homeLiabilitiesExpanded.value) {
       void loadHomeLiabilityTable();
     }
-    if (homeTrendMode.value === "PORTFOLIO_RETURN") {
+    if (homeTrendMode.value === "PORTFOLIO") {
       void loadHomePortfolioTrend();
     }
   } catch (error) {
@@ -705,6 +708,12 @@ async function loadHomePortfolioTrend(): Promise<void> {
     const out = await getNetworthSeries({
       display_currency: displayCurrency.value,
       mode: "PORTFOLIO_RETURN",
+      portfolio_metric:
+        homeTrendPortfolioMetric.value === "CURRENT_VALUE"
+          ? "CURRENT"
+          : homeTrendPortfolioMetric.value === "CURRENT_NET"
+            ? "CURRENT_NET"
+            : homeTrendPortfolioMetric.value,
       portfolio_id: homeTrendPortfolioId.value,
       bucket: "DAY",
       limit: 90,
@@ -1110,6 +1119,12 @@ onMounted(async () => {
     } else if (saved === "0" || saved === "false") {
       liveMaskAmounts.value = false;
     }
+    const savedPortfolioBasis = window.localStorage.getItem(LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY);
+    if (savedPortfolioBasis === "1" || savedPortfolioBasis === "true") {
+      livePortfolioNetBasis.value = true;
+    } else if (savedPortfolioBasis === "0" || savedPortfolioBasis === "false") {
+      livePortfolioNetBasis.value = false;
+    }
     const savedTrendPref = window.localStorage.getItem(LIVE_TREND_PREF_STORAGE_KEY);
     if (savedTrendPref) {
       try {
@@ -1117,13 +1132,26 @@ onMounted(async () => {
           gross: boolean;
           liabilities: boolean;
           net: boolean;
-          mode: "SUMMARY" | "PORTFOLIO_RETURN";
+          mode: "SUMMARY" | "PORTFOLIO" | "PORTFOLIO_RETURN";
+          portfolioMetric: "CURRENT_VALUE" | "CURRENT_NET" | "RETURN" | "PROFIT";
           portfolioKey: string;
         }>;
         if (typeof parsed.gross === "boolean") liveTrendVisibility.gross = parsed.gross;
         if (typeof parsed.liabilities === "boolean") liveTrendVisibility.liabilities = parsed.liabilities;
         if (typeof parsed.net === "boolean") liveTrendVisibility.net = parsed.net;
-        if (parsed.mode === "SUMMARY" || parsed.mode === "PORTFOLIO_RETURN") homeTrendMode.value = parsed.mode;
+        if (parsed.mode === "SUMMARY" || parsed.mode === "PORTFOLIO") {
+          homeTrendMode.value = parsed.mode;
+        } else if (parsed.mode === "PORTFOLIO_RETURN") {
+          homeTrendMode.value = "PORTFOLIO";
+        }
+        if (
+          parsed.portfolioMetric === "RETURN" ||
+          parsed.portfolioMetric === "PROFIT" ||
+          parsed.portfolioMetric === "CURRENT_VALUE" ||
+          parsed.portfolioMetric === "CURRENT_NET"
+        ) {
+          homeTrendPortfolioMetric.value = parsed.portfolioMetric;
+        }
         if (typeof parsed.portfolioKey === "string" && parsed.portfolioKey.length > 0) {
           homeTrendPortfolioKey.value = parsed.portfolioKey;
         }
@@ -1178,30 +1206,39 @@ watch(
 );
 
 watch(
+  () => livePortfolioNetBasis.value,
+  (next) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY, next ? "1" : "0");
+  },
+);
+
+watch(
   () =>
     [
       liveTrendVisibility.gross,
       liveTrendVisibility.liabilities,
       liveTrendVisibility.net,
       homeTrendMode.value,
+      homeTrendPortfolioMetric.value,
       homeTrendPortfolioKey.value,
     ] as const,
-  ([gross, liabilities, net, mode, portfolioKey]) => {
+  ([gross, liabilities, net, mode, portfolioMetric, portfolioKey]) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(
       LIVE_TREND_PREF_STORAGE_KEY,
-      JSON.stringify({ gross, liabilities, net, mode, portfolioKey }),
+      JSON.stringify({ gross, liabilities, net, mode, portfolioMetric, portfolioKey }),
     );
   },
 );
 
 watch(
-  () => [homeTrendMode.value, homeTrendPortfolioKey.value] as const,
+  () => [homeTrendMode.value, homeTrendPortfolioMetric.value, homeTrendPortfolioKey.value] as const,
   ([mode], [prevMode]) => {
     if (!summary.value) return;
-    if (mode === "PORTFOLIO_RETURN") {
+    if (mode === "PORTFOLIO") {
       void loadHomePortfolioTrend();
-    } else if (prevMode === "PORTFOLIO_RETURN") {
+    } else if (prevMode === "PORTFOLIO") {
       homeTrendError.value = "";
     }
   },
@@ -1449,6 +1486,14 @@ watch(
                   {{ item.name }}
                 </option>
               </select>
+              <label class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 sm:text-xs dark:border-slate-700 dark:text-slate-200">
+                <input
+                  v-model="livePortfolioNetBasis"
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                />
+                Net
+              </label>
             </div>
 
             <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Actions</span>
@@ -1527,10 +1572,11 @@ watch(
           <KpiPortfolioSummaryCard
             v-else
             title="KPI Portfolios"
-            subtitle="Per portfolio | Included in print/snapshot"
+            :subtitle="`Per portfolio | ${livePortfolioNetBasis ? 'Net basis' : 'Gross basis'} | Included in print/snapshot`"
             :currency="summaryDisplayCurrency"
             :portfolios="liveKpiPortfolioRows"
             :mask-amounts="liveMaskAmounts"
+            :use-net-basis="livePortfolioNetBasis"
           />
         </div>
 
@@ -1573,6 +1619,7 @@ watch(
             :show-liabilities="liveTrendVisibility.liabilities"
             :show-net="liveTrendVisibility.net"
             :mode="homeTrendMode"
+            :portfolio-metric="homeTrendPortfolioMetric"
             :portfolio-lines="homeTrendPortfolioLines"
             :portfolio-options="homeTrendPortfolioOptions"
             :portfolio-key="homeTrendPortfolioKey"
@@ -1580,6 +1627,7 @@ watch(
             @update:show-liabilities="liveTrendVisibility.liabilities = $event"
             @update:show-net="liveTrendVisibility.net = $event"
             @update:mode="homeTrendMode = $event"
+            @update:portfolio-metric="homeTrendPortfolioMetric = $event"
             @update:portfolio-key="homeTrendPortfolioKey = $event"
           />
         </div>

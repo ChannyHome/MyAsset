@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from decimal import Decimal
 from io import StringIO
+from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy import func, or_, select
@@ -353,6 +354,7 @@ def get_snapshot_allocation(
         sorted_items = [*pinned, ("others", others_label, others_metrics)] if others_metrics["value"] != 0 else pinned
 
     total = sum((metrics["value"] for _, _, metrics in sorted_items), Decimal("0"))
+    display_total = total
     ratio_denominator = total
     ratio_transform = lambda value: value  # noqa: E731
     if normalized_target == "NET":
@@ -363,6 +365,19 @@ def get_snapshot_allocation(
         else:
             ratio_denominator = sum((abs(metrics["value"]) for _, _, metrics in sorted_items), Decimal("0"))
             ratio_transform = abs
+    elif normalized_target == "HOLDINGS":
+        # HOLDINGS can include negative rows (e.g. auto cash offsets).
+        # Keep composition charts based on visible positive slices.
+        positive_total = sum((metrics["value"] for _, _, metrics in sorted_items if metrics["value"] > 0), Decimal("0"))
+        if positive_total > 0:
+            ratio_denominator = positive_total
+            ratio_transform = lambda value: value if value > 0 else Decimal("0")  # noqa: E731
+            display_total = positive_total
+        else:
+            abs_total = sum((abs(metrics["value"]) for _, _, metrics in sorted_items), Decimal("0"))
+            ratio_denominator = abs_total
+            ratio_transform = abs
+            display_total = abs_total
 
     def _resolve_return_pct(metrics: dict[str, Decimal]) -> Decimal | None:
         if normalized_target == "LIABILITIES":
@@ -394,7 +409,7 @@ def get_snapshot_allocation(
         target=normalized_target,  # type: ignore[arg-type]
         group_by=normalized_group_by,  # type: ignore[arg-type]
         display_currency=target_currency,
-        total=total,
+        total=display_total,
         items=items,
         as_of=snapshot.as_of,
     )
@@ -608,6 +623,7 @@ def get_snapshot_liabilities_table(
 @router.get("/series", response_model=SnapshotSeriesOut)
 def get_snapshot_series(
     mode: SnapshotSeriesMode = Query(default=SnapshotSeriesMode.SUMMARY),
+    portfolio_metric: Literal["RETURN", "PROFIT", "CURRENT", "CURRENT_NET"] = Query(default="RETURN"),
     snapshot_ids: str | None = Query(default=None),
     portfolio_id: int | None = Query(default=None),
     holding_ids: str | None = Query(default=None),
@@ -615,6 +631,10 @@ def get_snapshot_series(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> SnapshotSeriesOut:
+    normalized_metric = (portfolio_metric or "RETURN").upper()
+    if normalized_metric not in {"RETURN", "PROFIT", "CURRENT", "CURRENT_NET"}:
+        raise HTTPException(status_code=400, detail="portfolio_metric must be RETURN | PROFIT | CURRENT | CURRENT_NET")
+
     requested_ids = parse_id_csv(snapshot_ids)
     allowed_ids = filter_snapshot_ids_for_user(db, current_user.id, requested_ids) if requested_ids else []
     if allowed_ids:
@@ -682,9 +702,25 @@ def get_snapshot_series(
         line_points: list[SnapshotSeriesLinePointOut] = []
         for snapshot_id_value in snapshot_id_list:
             row = rows_by_snapshot.get(snapshot_id_value)
-            if row is None or row.return_pct is None:
+            if row is None:
                 continue
-            line_points.append(SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=row.return_pct))
+            if normalized_metric == "CURRENT":
+                current_value = row.gross_assets_usd if target_currency == "USD" else row.gross_assets_krw
+                line_points.append(
+                    SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=current_value)
+                )
+            elif normalized_metric == "CURRENT_NET":
+                current_net_value = row.net_assets_usd if target_currency == "USD" else row.net_assets_krw
+                line_points.append(
+                    SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=current_net_value)
+                )
+            elif normalized_metric == "PROFIT":
+                profit_value = row.portfolio_profit_usd if target_currency == "USD" else row.portfolio_profit_krw
+                line_points.append(
+                    SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=profit_value)
+                )
+            elif row.return_pct is not None:
+                line_points.append(SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=row.return_pct))
         if line_points:
             portfolio_lines.append(SnapshotSeriesLineOut(key=key, label=label, points=line_points))
     portfolio_lines.sort(key=lambda line: line.label.lower())
@@ -711,9 +747,26 @@ def get_snapshot_series(
             line_points: list[SnapshotSeriesLinePointOut] = []
             for snapshot_id_value in snapshot_id_list:
                 row = rows_by_snapshot.get(snapshot_id_value)
-                if row is None or row.return_pct is None:
+                if row is None:
                     continue
-                line_points.append(SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=row.return_pct))
+                if normalized_metric == "CURRENT":
+                    current_value = row.evaluated_usd if target_currency == "USD" else row.evaluated_krw
+                    line_points.append(
+                        SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=current_value)
+                    )
+                elif normalized_metric == "CURRENT_NET":
+                    # Holdings do not have liability component. Use evaluated amount as net-equivalent value.
+                    current_net_value = row.evaluated_usd if target_currency == "USD" else row.evaluated_krw
+                    line_points.append(
+                        SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=current_net_value)
+                    )
+                elif normalized_metric == "PROFIT":
+                    profit_value = row.profit_usd if target_currency == "USD" else row.profit_krw
+                    line_points.append(
+                        SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=profit_value)
+                    )
+                elif row.return_pct is not None:
+                    line_points.append(SnapshotSeriesLinePointOut(snapshot_id=snapshot_id_value, value=row.return_pct))
             if line_points:
                 holding_lines.append(SnapshotSeriesLineOut(key=key, label=label, points=line_points))
         holding_lines.sort(key=lambda line: line.label.lower())

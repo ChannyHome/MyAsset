@@ -112,6 +112,7 @@ export type NetworthSeriesQuery = {
   scope_id?: number;
   display_currency?: "KRW" | "USD";
   mode?: "SUMMARY" | "PORTFOLIO_RETURN";
+  portfolio_metric?: "RETURN" | "PROFIT" | "CURRENT" | "CURRENT_NET";
   portfolio_id?: number;
   bucket?: "DAY" | "WEEK" | "MONTH";
   limit?: number;

@@ -12,11 +12,13 @@ const props = withDefaults(
     maskAmounts?: boolean;
     title?: string;
     subtitle?: string;
+    useNetBasis?: boolean;
   }>(),
   {
     maskAmounts: false,
     title: "KPI Portfolios",
     subtitle: "",
+    useNetBasis: false,
   },
 );
 
@@ -62,6 +64,47 @@ function netContribution(row: PortfolioTableRowOut): number {
   return toNumber(row.cumulative_deposit_amount) - toNumber(row.cumulative_withdrawal_amount);
 }
 
+function currentValue(row: PortfolioTableRowOut): number {
+  if (props.useNetBasis) {
+    return toNumber(row.net_assets_total);
+  }
+  return toNumber(row.gross_assets_total);
+}
+
+function principalValue(row: PortfolioTableRowOut): number {
+  if (props.useNetBasis) {
+    return toNumber(row.debt_adjusted_principal_total ?? row.principal_minus_debt_total);
+  }
+  return netContribution(row);
+}
+
+function profitValue(row: PortfolioTableRowOut): number {
+  if (props.useNetBasis) {
+    const explicit = row.net_assets_profit_total;
+    if (explicit != null) return toNumber(explicit);
+    return currentValue(row) - principalValue(row);
+  }
+  return toNumber(row.portfolio_profit_total ?? row.total_pnl_amount);
+}
+
+function returnValue(row: PortfolioTableRowOut): number {
+  if (props.useNetBasis) {
+    const explicit = row.net_assets_return_pct;
+    if (explicit != null) return toNumber(explicit);
+    const base = principalValue(row);
+    if (base > 0) {
+      return ((currentValue(row) - base) / base) * 100;
+    }
+    return 0;
+  }
+  return toNumber(row.total_return_pct ?? null);
+}
+
+const currentColumnLabel = computed(() => (props.useNetBasis ? "Current (Net)" : "Current Value"));
+const principalColumnLabel = computed(() => (props.useNetBasis ? "Debt-Adjusted Principal" : "Principal"));
+const profitColumnLabel = computed(() => (props.useNetBasis ? "Net Profit" : "Profit"));
+const returnColumnLabel = computed(() => (props.useNetBasis ? "Net Return" : "Return"));
+
 type SortKey = "portfolio" | "current" | "principal" | "profit" | "return";
 type SortOrder = "asc" | "desc";
 
@@ -91,15 +134,15 @@ const rows = computed(() => {
       return Number(a.id) - Number(b.id);
     }
     if (sortBy.value === "current") {
-      return toNumber(a.gross_assets_total) - toNumber(b.gross_assets_total);
+      return currentValue(a) - currentValue(b);
     }
     if (sortBy.value === "principal") {
-      return netContribution(a) - netContribution(b);
+      return principalValue(a) - principalValue(b);
     }
     if (sortBy.value === "profit") {
-      return toNumber(a.portfolio_profit_total ?? a.total_pnl_amount) - toNumber(b.portfolio_profit_total ?? b.total_pnl_amount);
+      return profitValue(a) - profitValue(b);
     }
-    return toNumber(a.total_return_pct ?? null) - toNumber(b.total_return_pct ?? null);
+    return returnValue(a) - returnValue(b);
   });
   if (sortOrder.value === "desc") {
     base.reverse();
@@ -155,7 +198,7 @@ onMounted(() => {
                 class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
                 @click="toggleSort('current')"
               >
-                Current Value
+                {{ currentColumnLabel }}
                 <span class="text-[11px] opacity-80">{{ sortIndicator("current") }}</span>
               </button>
             </th>
@@ -165,7 +208,7 @@ onMounted(() => {
                 class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
                 @click="toggleSort('principal')"
               >
-                Principal
+                {{ principalColumnLabel }}
                 <span class="text-[11px] opacity-80">{{ sortIndicator("principal") }}</span>
               </button>
             </th>
@@ -175,7 +218,7 @@ onMounted(() => {
                 class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
                 @click="toggleSort('profit')"
               >
-                Profit
+                {{ profitColumnLabel }}
                 <span class="text-[11px] opacity-80">{{ sortIndicator("profit") }}</span>
               </button>
             </th>
@@ -185,7 +228,7 @@ onMounted(() => {
                 class="inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100"
                 @click="toggleSort('return')"
               >
-                Return
+                {{ returnColumnLabel }}
                 <span class="text-[11px] opacity-80">{{ sortIndicator("return") }}</span>
               </button>
             </th>
@@ -207,24 +250,24 @@ onMounted(() => {
             </td>
             <td class="px-3 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">
               <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
-                {{ formatCurrency(toNumber(row.gross_assets_total), row.base_currency || currency) }}
+                {{ formatCurrency(currentValue(row), row.base_currency || currency) }}
               </span>
             </td>
             <td class="px-3 py-2 text-right text-slate-700 dark:text-slate-300">
               <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
-                {{ formatCurrency(netContribution(row), row.base_currency || currency) }}
+                {{ formatCurrency(principalValue(row), row.base_currency || currency) }}
               </span>
             </td>
             <td
               class="px-3 py-2 text-right font-semibold"
-              :class="signedClass(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount))"
+              :class="signedClass(profitValue(row))"
             >
               <span :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
-                {{ formatSignedCurrency(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount), row.base_currency || currency) }}
+                {{ formatSignedCurrency(profitValue(row), row.base_currency || currency) }}
               </span>
             </td>
-            <td class="px-3 py-2 text-right font-semibold" :class="signedClass(toNumber(row.total_return_pct ?? 0))">
-              {{ formatPercent(toNumber(row.total_return_pct ?? null)) }}
+            <td class="px-3 py-2 text-right font-semibold" :class="signedClass(returnValue(row))">
+              {{ formatPercent(returnValue(row)) }}
             </td>
           </tr>
         </tbody>

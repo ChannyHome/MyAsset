@@ -24,7 +24,8 @@ type PortfolioOption = {
   label: string;
 };
 
-type TrendMode = "SUMMARY" | "PORTFOLIO_RETURN";
+type TrendMode = "SUMMARY" | "PORTFOLIO";
+type PortfolioMetric = "CURRENT_VALUE" | "CURRENT_NET" | "PROFIT" | "RETURN";
 
 const props = withDefaults(
   defineProps<{
@@ -40,6 +41,7 @@ const props = withDefaults(
     showNet?: boolean;
     showVisibilityControls?: boolean;
     mode?: TrendMode;
+    portfolioMetric?: PortfolioMetric;
     showModeToggle?: boolean;
     portfolioLines?: NetworthSeriesLine[];
     portfolioOptions?: PortfolioOption[];
@@ -57,6 +59,7 @@ const props = withDefaults(
     showNet: true,
     showVisibilityControls: true,
     mode: "SUMMARY",
+    portfolioMetric: "RETURN",
     showModeToggle: true,
     portfolioLines: () => [],
     portfolioOptions: () => [],
@@ -70,6 +73,7 @@ const emit = defineEmits<{
   (e: "update:showLiabilities", value: boolean): void;
   (e: "update:showNet", value: boolean): void;
   (e: "update:mode", value: TrendMode): void;
+  (e: "update:portfolioMetric", value: PortfolioMetric): void;
   (e: "update:portfolioKey", value: string): void;
 }>();
 
@@ -105,6 +109,11 @@ const modeModel = computed({
   set: (value: TrendMode) => emit("update:mode", value),
 });
 
+const portfolioMetricModel = computed({
+  get: () => props.portfolioMetric,
+  set: (value: PortfolioMetric) => emit("update:portfolioMetric", value),
+});
+
 const portfolioKeyModel = computed({
   get: () => props.portfolioKey,
   set: (value: string) => emit("update:portfolioKey", value),
@@ -124,7 +133,7 @@ const portfolioPalette = [
 ];
 
 const renderLines = computed<RenderLine[]>(() => {
-  if (props.mode === "PORTFOLIO_RETURN") {
+  if (props.mode === "PORTFOLIO") {
     const labels = props.points.map((item) => item.label);
     return props.portfolioLines.map((line, index) => {
       const valueByLabel = new Map<string, number>();
@@ -261,10 +270,11 @@ function pointX(index: number): number {
 }
 
 function formatAxisValue(value: number): string {
-  if (props.maskAmounts && props.mode === "SUMMARY") {
+  const isAmountAxis = props.mode === "SUMMARY" || (props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN");
+  if (props.maskAmounts && isAmountAxis) {
     return "•••";
   }
-  if (props.mode === "PORTFOLIO_RETURN") {
+  if (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") {
     return `${value.toFixed(1)}%`;
   }
   if ((props.currency || "KRW").toUpperCase() === "KRW") {
@@ -316,7 +326,9 @@ function formatXAxisLabel(label: string): string {
 
 function inspectPoint(lineLabel: string, pointLabel: string, value: number): void {
   inspectText.value = `${lineLabel} · ${pointLabel || "-"} · ${
-    props.mode === "PORTFOLIO_RETURN" ? formatPercent(value) : formatCurrency(value, props.currency)
+    props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN"
+      ? formatPercent(value)
+      : formatCurrency(value, props.currency)
   }`;
 }
 </script>
@@ -350,16 +362,66 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
         type="button"
         class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
         :class="
-          modeModel === 'PORTFOLIO_RETURN'
+          modeModel === 'PORTFOLIO'
             ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
             : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
         "
-        @click="modeModel = 'PORTFOLIO_RETURN'"
+        @click="modeModel = 'PORTFOLIO'"
       >
-        Portfolio Return
+        Portfolio
       </button>
+      <div v-if="modeModel === 'PORTFOLIO'" class="flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            portfolioMetricModel === 'CURRENT_VALUE'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="portfolioMetricModel = 'CURRENT_VALUE'"
+        >
+          Current Value
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            portfolioMetricModel === 'CURRENT_NET'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="portfolioMetricModel = 'CURRENT_NET'"
+        >
+          Current Net
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            portfolioMetricModel === 'PROFIT'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="portfolioMetricModel = 'PROFIT'"
+        >
+          Profit
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            portfolioMetricModel === 'RETURN'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="portfolioMetricModel = 'RETURN'"
+        >
+          Return
+        </button>
+      </div>
       <select
-        v-if="modeModel === 'PORTFOLIO_RETURN' && showPortfolioSelector"
+        v-if="modeModel === 'PORTFOLIO' && showPortfolioSelector"
         v-model="portfolioKeyModel"
         class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
       >
@@ -416,7 +478,17 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
         </p>
         <p>
           <span class="font-semibold text-slate-700 dark:text-slate-200">Y-axis:</span>
-          {{ modeModel === "SUMMARY" ? `Amount (${currency})` : "Return (%)" }}
+          {{
+            modeModel === "SUMMARY"
+              ? `Amount (${currency})`
+              : portfolioMetricModel === "RETURN"
+                ? "Return (%)"
+                : portfolioMetricModel === "CURRENT_VALUE"
+                  ? `Current Value (${currency})`
+                  : portfolioMetricModel === "CURRENT_NET"
+                    ? `Current Net (${currency})`
+                    : `Profit (${currency})`
+          }}
         </p>
       </div>
 

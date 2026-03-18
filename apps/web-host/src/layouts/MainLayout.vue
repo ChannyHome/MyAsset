@@ -21,6 +21,7 @@ import {
 } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 
+import { getLatestUsdKrwFxRate } from "../api/quotes";
 import GlobalDisplayCurrencyToggle from "../components/GlobalDisplayCurrencyToggle.vue";
 import GuestDemoPage from "../pages/GuestDemoPage.vue";
 import { useAuthStore } from "../stores/auth";
@@ -89,7 +90,11 @@ const visibleMenuItems = computed(() =>
 );
 const seoulNowText = ref("");
 const seoulNowClockText = ref("");
+const fxTopLineText = ref("USD/KRW - · as_of -");
+const isDesktop = ref(true);
 let seoulClockTimer: ReturnType<typeof setInterval> | null = null;
+let fxRefreshTimer: ReturnType<typeof setInterval> | null = null;
+let viewportResizeHandler: (() => void) | null = null;
 
 function updateSeoulNow(): void {
   seoulNowText.value = new Intl.DateTimeFormat("ko-KR", {
@@ -111,8 +116,59 @@ function updateSeoulNow(): void {
   }).format(new Date());
 }
 
+function formatFxRate(value: string | number): string {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  if (!isDesktop.value) {
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(num);
+  }
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num);
+}
+
+function formatAsOfSeoul(value: string | null | undefined): string {
+  if (!value) return "-";
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return "-";
+  if (!isDesktop.value) {
+    const parts = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(dt);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+    return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
+  }
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(dt);
+}
+
+async function refreshFxTopLine(): Promise<void> {
+  try {
+    const fx = await getLatestUsdKrwFxRate();
+    fxTopLineText.value = `USD/KRW ${formatFxRate(fx.rate)} · as_of ${formatAsOfSeoul(fx.as_of)}`;
+  } catch {
+    fxTopLineText.value = "USD/KRW - · as_of -";
+  }
+}
+
 function isDesktopViewport() {
   return window.matchMedia("(min-width: 768px)").matches;
+}
+
+function updateViewportMode(): void {
+  if (typeof window === "undefined") return;
+  isDesktop.value = isDesktopViewport();
 }
 
 function toggleSidebar() {
@@ -156,8 +212,21 @@ function goSettings() {
 }
 
 onMounted(() => {
+  updateViewportMode();
+  viewportResizeHandler = () => {
+    const prev = isDesktop.value;
+    updateViewportMode();
+    if (prev !== isDesktop.value) {
+      void refreshFxTopLine();
+    }
+  };
+  window.addEventListener("resize", viewportResizeHandler);
   updateSeoulNow();
   seoulClockTimer = setInterval(updateSeoulNow, 1000);
+  void refreshFxTopLine();
+  fxRefreshTimer = setInterval(() => {
+    void refreshFxTopLine();
+  }, 60_000);
   void displayCurrencyStore.initialize();
 });
 
@@ -165,6 +234,14 @@ onBeforeUnmount(() => {
   if (seoulClockTimer) {
     clearInterval(seoulClockTimer);
     seoulClockTimer = null;
+  }
+  if (fxRefreshTimer) {
+    clearInterval(fxRefreshTimer);
+    fxRefreshTimer = null;
+  }
+  if (viewportResizeHandler) {
+    window.removeEventListener("resize", viewportResizeHandler);
+    viewportResizeHandler = null;
   }
 });
 </script>
@@ -184,9 +261,17 @@ onBeforeUnmount(() => {
           >
             <Menu class="h-5 w-5" />
           </button>
-          <span class="text-[11px] font-medium whitespace-nowrap text-slate-500 dark:text-slate-400">
-            Seoul {{ seoulNowClockText }}
-          </span>
+          <div class="flex min-w-0 flex-col leading-tight">
+            <span
+              class="max-w-[40vw] truncate text-[10px] font-medium whitespace-nowrap text-slate-500 dark:text-slate-400 md:max-w-[50vw]"
+              :title="fxTopLineText"
+            >
+              {{ fxTopLineText }}
+            </span>
+            <span class="text-[11px] font-medium whitespace-nowrap text-slate-500 dark:text-slate-400">
+              Seoul {{ seoulNowClockText }}
+            </span>
+          </div>
         </div>
         <div class="min-w-0 flex-1 text-center md:pointer-events-none md:absolute md:inset-x-12">
           <p class="truncate text-xl font-bold leading-tight md:text-lg">{{ pageTitle }}</p>
