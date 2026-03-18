@@ -573,7 +573,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     portfolios: {},
     maskAmounts: { type: Boolean, default: false },
     title: { default: "KPI Portfolios" },
-    subtitle: { default: "" }
+    subtitle: { default: "" },
+    useNetBasis: { type: Boolean, default: false }
   },
   setup(__props) {
     const props = __props;
@@ -612,6 +613,42 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
       return toNumber(row.cumulative_deposit_amount) - toNumber(row.cumulative_withdrawal_amount);
     }
+    function currentValue(row) {
+      if (props.useNetBasis) {
+        return toNumber(row.net_assets_total);
+      }
+      return toNumber(row.gross_assets_total);
+    }
+    function principalValue(row) {
+      if (props.useNetBasis) {
+        return toNumber(row.debt_adjusted_principal_total ?? row.principal_minus_debt_total);
+      }
+      return netContribution(row);
+    }
+    function profitValue(row) {
+      if (props.useNetBasis) {
+        const explicit = row.net_assets_profit_total;
+        if (explicit != null) return toNumber(explicit);
+        return currentValue(row) - principalValue(row);
+      }
+      return toNumber(row.portfolio_profit_total ?? row.total_pnl_amount);
+    }
+    function returnValue(row) {
+      if (props.useNetBasis) {
+        const explicit = row.net_assets_return_pct;
+        if (explicit != null) return toNumber(explicit);
+        const base = principalValue(row);
+        if (base > 0) {
+          return (currentValue(row) - base) / base * 100;
+        }
+        return 0;
+      }
+      return toNumber(row.total_return_pct ?? null);
+    }
+    const currentColumnLabel = computed(() => props.useNetBasis ? "Current (Net)" : "Current Value");
+    const principalColumnLabel = computed(() => props.useNetBasis ? "Debt-Adjusted Principal" : "Principal");
+    const profitColumnLabel = computed(() => props.useNetBasis ? "Net Profit" : "Profit");
+    const returnColumnLabel = computed(() => props.useNetBasis ? "Net Return" : "Return");
     const sortBy = ref("current");
     const sortOrder = ref("desc");
     function toggleSort(key) {
@@ -635,15 +672,15 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           return Number(a.id) - Number(b.id);
         }
         if (sortBy.value === "current") {
-          return toNumber(a.gross_assets_total) - toNumber(b.gross_assets_total);
+          return currentValue(a) - currentValue(b);
         }
         if (sortBy.value === "principal") {
-          return netContribution(a) - netContribution(b);
+          return principalValue(a) - principalValue(b);
         }
         if (sortBy.value === "profit") {
-          return toNumber(a.portfolio_profit_total ?? a.total_pnl_amount) - toNumber(b.portfolio_profit_total ?? b.total_pnl_amount);
+          return profitValue(a) - profitValue(b);
         }
-        return toNumber(a.total_return_pct ?? null) - toNumber(b.total_return_pct ?? null);
+        return returnValue(a) - returnValue(b);
       });
       if (sortOrder.value === "desc") {
         base.reverse();
@@ -684,7 +721,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
                     onClick: _cache[1] || (_cache[1] = ($event) => toggleSort("current"))
                   }, [
-                    _cache[6] || (_cache[6] = _createTextVNode(" Current Value ", -1)),
+                    _createTextVNode(_toDisplayString(currentColumnLabel.value) + " ", 1),
                     _createElementVNode("span", _hoisted_13, _toDisplayString(sortIndicator("current")), 1)
                   ])
                 ]),
@@ -694,7 +731,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
                     onClick: _cache[2] || (_cache[2] = ($event) => toggleSort("principal"))
                   }, [
-                    _cache[7] || (_cache[7] = _createTextVNode(" Principal ", -1)),
+                    _createTextVNode(_toDisplayString(principalColumnLabel.value) + " ", 1),
                     _createElementVNode("span", _hoisted_15, _toDisplayString(sortIndicator("principal")), 1)
                   ])
                 ]),
@@ -704,7 +741,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
                     onClick: _cache[3] || (_cache[3] = ($event) => toggleSort("profit"))
                   }, [
-                    _cache[8] || (_cache[8] = _createTextVNode(" Profit ", -1)),
+                    _createTextVNode(_toDisplayString(profitColumnLabel.value) + " ", 1),
                     _createElementVNode("span", _hoisted_17, _toDisplayString(sortIndicator("profit")), 1)
                   ])
                 ]),
@@ -714,7 +751,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     class: "inline-flex items-center gap-1 font-semibold text-inherit hover:text-slate-900 dark:hover:text-slate-100",
                     onClick: _cache[4] || (_cache[4] = ($event) => toggleSort("return"))
                   }, [
-                    _cache[9] || (_cache[9] = _createTextVNode(" Return ", -1)),
+                    _createTextVNode(_toDisplayString(returnColumnLabel.value) + " ", 1),
                     _createElementVNode("span", _hoisted_19, _toDisplayString(sortIndicator("return")), 1)
                   ])
                 ])
@@ -739,23 +776,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   _createElementVNode("td", _hoisted_23, [
                     _createElementVNode("span", {
                       style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
-                    }, _toDisplayString(formatCurrency(toNumber(row.gross_assets_total), row.base_currency || __props.currency)), 5)
+                    }, _toDisplayString(formatCurrency(currentValue(row), row.base_currency || __props.currency)), 5)
                   ]),
                   _createElementVNode("td", _hoisted_24, [
                     _createElementVNode("span", {
                       style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
-                    }, _toDisplayString(formatCurrency(netContribution(row), row.base_currency || __props.currency)), 5)
+                    }, _toDisplayString(formatCurrency(principalValue(row), row.base_currency || __props.currency)), 5)
                   ]),
                   _createElementVNode("td", {
-                    class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedClass(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount))])
+                    class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedClass(profitValue(row))])
                   }, [
                     _createElementVNode("span", {
                       style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
-                    }, _toDisplayString(formatSignedCurrency(toNumber(row.portfolio_profit_total ?? row.total_pnl_amount), row.base_currency || __props.currency)), 5)
+                    }, _toDisplayString(formatSignedCurrency(profitValue(row), row.base_currency || __props.currency)), 5)
                   ], 2),
                   _createElementVNode("td", {
-                    class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedClass(toNumber(row.total_return_pct ?? 0))])
-                  }, _toDisplayString(formatPercent(toNumber(row.total_return_pct ?? null))), 3)
+                    class: _normalizeClass(["px-3 py-2 text-right font-semibold", signedClass(returnValue(row))])
+                  }, _toDisplayString(formatPercent(returnValue(row))), 3)
                 ]);
               }), 128))
             ])

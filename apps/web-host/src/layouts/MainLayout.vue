@@ -90,7 +90,7 @@ const visibleMenuItems = computed(() =>
 );
 const seoulNowText = ref("");
 const seoulNowClockText = ref("");
-const fxTopLineText = ref("USD/KRW - · as_of -");
+const fxTopLineText = ref("USD/KRW - (-)");
 const isDesktop = ref(true);
 let seoulClockTimer: ReturnType<typeof setInterval> | null = null;
 let fxRefreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -119,46 +119,31 @@ function updateSeoulNow(): void {
 function formatFxRate(value: string | number): string {
   const num = Number(value);
   if (!Number.isFinite(num)) return "-";
-  if (!isDesktop.value) {
-    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(num);
-  }
-  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(num);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(num);
 }
 
 function formatAsOfSeoul(value: string | null | undefined): string {
   if (!value) return "-";
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return "-";
-  if (!isDesktop.value) {
-    const parts = new Intl.DateTimeFormat("ko-KR", {
-      timeZone: "Asia/Seoul",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).formatToParts(dt);
-    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-    return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
-  }
-  return new Intl.DateTimeFormat("ko-KR", {
+  const parts = new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
-    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     hour12: false,
-  }).format(dt);
+  }).formatToParts(dt);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("month")}-${get("day")} ${get("hour")}:${get("minute")}`;
 }
 
 async function refreshFxTopLine(): Promise<void> {
   try {
     const fx = await getLatestUsdKrwFxRate();
-    fxTopLineText.value = `USD/KRW ${formatFxRate(fx.rate)} · as_of ${formatAsOfSeoul(fx.as_of)}`;
+    fxTopLineText.value = `USD/KRW ${formatFxRate(fx.rate)} (${formatAsOfSeoul(fx.as_of)})`;
   } catch {
-    fxTopLineText.value = "USD/KRW - · as_of -";
+    fxTopLineText.value = "USD/KRW - (-)";
   }
 }
 
