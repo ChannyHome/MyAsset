@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { a as getNetworthSeries, b as getAllocation, g as getSummary } from './ui-CcTyauVO.js';
-import { a as getHoldingsTable, g as getHoldingsPerformance } from './holdings-CZxu3Df1.js';
+import { a as getHoldingsTable, g as getHoldingsPerformance } from './holdings-D-iv7-uK.js';
 import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-r6VxmkS0.js';
 import { h as http, f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
 import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DME2THZa.js';
@@ -70,11 +70,11 @@ const _hoisted_7 = ["disabled"];
 const _hoisted_8 = { class: "mt-3 text-sm text-slate-600 dark:text-slate-300" };
 const _hoisted_9 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
 const _hoisted_10 = {
-  key: 0,
+  key: 1,
   class: "mt-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200"
 };
 const _hoisted_11 = {
-  key: 1,
+  key: 2,
   class: "mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200"
 };
 const _hoisted_12 = { class: "order-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -178,21 +178,22 @@ const _hoisted_67 = { class: "mt-2 text-sm text-slate-600 dark:text-slate-300" }
 const _hoisted_68 = { class: "mt-4 flex justify-end gap-2" };
 const _hoisted_69 = ["disabled"];
 const _hoisted_70 = ["disabled"];
-const _hoisted_71 = { class: "rounded-2xl border border-slate-200 p-3 dark:border-slate-700" };
-const _hoisted_72 = { class: "flex flex-wrap items-center gap-3 text-sm" };
-const _hoisted_73 = { class: "inline-flex items-center gap-2" };
-const _hoisted_74 = { class: "inline-flex items-center gap-2" };
+const _hoisted_71 = { class: "rounded-2xl border border-slate-200 p-2.5 sm:p-3 dark:border-slate-700" };
+const _hoisted_72 = { class: "grid gap-2 sm:gap-3 text-sm md:grid-cols-[auto_1fr] md:items-center" };
+const _hoisted_73 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
+const _hoisted_74 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
 const _hoisted_75 = ["onClick"];
-const _hoisted_76 = { class: "inline-flex items-center gap-2" };
+const _hoisted_76 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
 const _hoisted_77 = ["onClick"];
-const _hoisted_78 = { class: "inline-flex items-center gap-2" };
+const _hoisted_78 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
 const _hoisted_79 = ["value"];
-const _hoisted_80 = { class: "ml-auto flex flex-wrap items-center gap-2" };
+const _hoisted_80 = { class: "flex w-full flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end" };
 const _hoisted_81 = ["disabled"];
 const _hoisted_82 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
 const {computed,nextTick,onMounted,reactive,ref,watch} = await importShared('vue');
 const AMOUNT_MASK_STORAGE_KEY = "myasset:home:live-mask-amounts";
 const SNAPSHOT_SECTION_STATE_STORAGE_KEY = "myasset:snapshot:section-expanded";
+const SNAPSHOT_ACTION_META_STORAGE_KEY = "myasset:snapshot:last-action-meta";
 const chartWidth = 860;
 const chartHeight = 260;
 const chartPadding = 28;
@@ -476,9 +477,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         link.href = canvas.toDataURL("image/png");
         link.download = `myasset-snapshot-dashboard-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.png`;
         link.click();
+        markLastAction("SUCCESS", "Export Dashboard PNG");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         errorMessage.value = `Failed to export image: ${message}. Try Print as fallback.`;
+        markLastAction("ERROR", `Export Dashboard PNG failed: ${message}`);
       } finally {
         exportingDashboardImage.value = false;
       }
@@ -505,6 +508,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const loading = ref(false);
     const errorMessage = ref("");
     const toastMessage = ref("");
+    const lastActionStatus = ref("");
+    const lastActionAt = ref("");
+    const lastActionSummary = ref("");
     const captureLoading = ref(false);
     const dashboardExpanded = ref(false);
     const trendExpanded = ref(false);
@@ -674,6 +680,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
       return `Applied: CSV Preview (${appliedCsvPreview.value?.file_name || "-"})`;
     });
+    const lastActionLabel = computed(() => {
+      if (!lastActionAt.value || !lastActionSummary.value) return "";
+      const status = lastActionStatus.value || "SUCCESS";
+      return `Last action: ${lastActionAt.value} · ${status} · ${lastActionSummary.value}`;
+    });
     const summaryCurrency = computed(() => displayCurrency.value === "USD" ? "USD" : "KRW");
     const kpiGrossProfit = computed(() => summaryVm.value ? summaryVm.value.gross - summaryVm.value.invested : 0);
     const kpiNetProfit = computed(() => summaryVm.value ? summaryVm.value.net - summaryVm.value.debtAdjusted : 0);
@@ -830,6 +841,39 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         liabilities: liabilitiesExpanded.value
       };
       window.localStorage.setItem(SNAPSHOT_SECTION_STATE_STORAGE_KEY, JSON.stringify(payload));
+    }
+    function loadLastActionFromStorage() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(SNAPSHOT_ACTION_META_STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.status === "SUCCESS" || parsed.status === "ERROR") {
+          lastActionStatus.value = parsed.status;
+        }
+        if (typeof parsed.at === "string") {
+          lastActionAt.value = parsed.at;
+        }
+        if (typeof parsed.summary === "string") {
+          lastActionSummary.value = parsed.summary;
+        }
+      } catch {
+      }
+    }
+    function saveLastActionToStorage() {
+      if (typeof window === "undefined") return;
+      const payload = {
+        status: lastActionStatus.value,
+        at: lastActionAt.value,
+        summary: lastActionSummary.value
+      };
+      window.localStorage.setItem(SNAPSHOT_ACTION_META_STORAGE_KEY, JSON.stringify(payload));
+    }
+    function markLastAction(status, summary) {
+      lastActionStatus.value = status;
+      lastActionAt.value = formatDateTime((/* @__PURE__ */ new Date()).toISOString());
+      lastActionSummary.value = summary;
+      saveLastActionToStorage();
     }
     function mapSummaryFromLive(row) {
       return {
@@ -1316,9 +1360,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         appliedCsvPreview.value = null;
         snapshotSummary.value = created;
         toastMessage.value = `Snapshot #${created.id} captured.`;
+        markLastAction("SUCCESS", `Take Snapshot #${created.id}`);
         await reloadAll({ preserveToast: true });
       } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : "Failed to capture snapshot";
+        const message = error instanceof Error ? error.message : "Failed to capture snapshot";
+        errorMessage.value = message;
+        markLastAction("ERROR", `Take Snapshot failed: ${message}`);
       } finally {
         captureLoading.value = false;
       }
@@ -1365,6 +1412,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       appliedCsvPreview.value = null;
       closeLoadModal();
       toastMessage.value = `Applied Snapshot #${selectedId}.`;
+      markLastAction("SUCCESS", `Apply Snapshot #${selectedId}`);
       await reloadAll();
     }
     async function onCsvFileInput(event) {
@@ -1390,6 +1438,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       appliedCsvPreview.value = csvPreviewData.value;
       appliedSnapshotId.value = null;
       toastMessage.value = `Applied CSV Preview (${csvPreviewData.value.file_name || "file"}).`;
+      markLastAction("SUCCESS", `Apply CSV Preview (${csvPreviewData.value.file_name || "file"})`);
       closeLoadModal();
       await reloadAll();
     }
@@ -1399,12 +1448,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       appliedSnapshotId.value = null;
       appliedCsvPreview.value = null;
       toastMessage.value = "Switched to Live data.";
+      markLastAction("SUCCESS", "Back to Live");
       await reloadAll();
     }
     async function exportAppliedSnapshotCsv() {
       if (sourceType.value !== "SNAPSHOT" || !appliedSnapshotId.value) return;
-      const blob = await exportSnapshotCsv(appliedSnapshotId.value);
-      downloadBlob(blob, `snapshot_${appliedSnapshotId.value}.csv`);
+      try {
+        const blob = await exportSnapshotCsv(appliedSnapshotId.value);
+        downloadBlob(blob, `snapshot_${appliedSnapshotId.value}.csv`);
+        markLastAction("SUCCESS", `Export CSV snapshot_${appliedSnapshotId.value}.csv`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to export CSV";
+        errorMessage.value = message;
+        markLastAction("ERROR", `Export CSV failed: ${message}`);
+      }
     }
     function toggleModalChecked(id, checked) {
       const set = new Set(modalCheckedIds.value);
@@ -1452,14 +1509,18 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           appliedSnapshotId.value = null;
           appliedCsvPreview.value = null;
           toastMessage.value = `Deleted ${out.deleted} snapshot(s). Applied snapshot was removed, switched to Live data.`;
+          markLastAction("SUCCESS", `Delete ${out.deleted} snapshot(s) + switched to Live`);
         } else {
           toastMessage.value = `Deleted ${out.deleted} snapshot(s).`;
+          markLastAction("SUCCESS", `Delete ${out.deleted} snapshot(s)`);
         }
         closeDeleteConfirm();
         await loadModalList();
         await reloadAll({ preserveToast: true });
       } catch (error) {
-        errorMessage.value = error instanceof Error ? error.message : "Failed to delete snapshots";
+        const message = error instanceof Error ? error.message : "Failed to delete snapshots";
+        errorMessage.value = message;
+        markLastAction("ERROR", `Delete snapshots failed: ${message}`);
       } finally {
         modalDeleting.value = false;
       }
@@ -1548,6 +1609,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     onMounted(async () => {
       loadMaskFromStorage();
       loadSectionStateFromStorage();
+      loadLastActionFromStorage();
       await ensureInitialized();
       await reloadAll();
     });
@@ -1597,7 +1659,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     );
     return (_ctx, _cache) => {
       return _openBlock(), _createElementBlock("main", _hoisted_1, [
-        _cache[70] || (_cache[70] = _createStaticVNode('<header class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-300">Snapshot</p><h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Snapshot Workspace</h1><p class="mt-1 text-sm text-slate-500 dark:text-slate-400"> Preview-only analysis mode. Live Home/Report/Dashboard data is not modified. </p></div></div></header>', 1)),
+        _cache[71] || (_cache[71] = _createStaticVNode('<header class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-300">Snapshot</p><h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Snapshot Workspace</h1><p class="mt-1 text-sm text-slate-500 dark:text-slate-400"> Preview-only analysis mode. Live Home/Report/Dashboard data is not modified. </p></div></div></header>', 1)),
         _createElementVNode("article", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
             _cache[43] || (_cache[43] = _createElementVNode("div", null, [
@@ -1645,6 +1707,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           ]),
           _createElementVNode("p", _hoisted_8, _toDisplayString(appliedLabel.value), 1),
           _createElementVNode("p", _hoisted_9, "as_of: " + _toDisplayString(asOfText.value), 1),
+          lastActionLabel.value ? (_openBlock(), _createElementBlock("p", {
+            key: 0,
+            class: _normalizeClass([
+              "mt-1 text-xs",
+              lastActionStatus.value === "ERROR" ? "text-rose-600 dark:text-rose-300" : "text-slate-500 dark:text-slate-400"
+            ])
+          }, _toDisplayString(lastActionLabel.value), 3)) : _createCommentVNode("", true),
           toastMessage.value ? (_openBlock(), _createElementBlock("p", _hoisted_10, _toDisplayString(toastMessage.value), 1)) : _createCommentVNode("", true),
           errorMessage.value ? (_openBlock(), _createElementBlock("p", _hoisted_11, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true)
         ]),
@@ -2027,48 +2096,48 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           controls: _withCtx(() => [
             _createElementVNode("div", _hoisted_71, [
               _createElementVNode("div", _hoisted_72, [
+                _cache[66] || (_cache[66] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
                 _createElementVNode("div", _hoisted_73, [
-                  _cache[65] || (_cache[65] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
                   _createElementVNode("button", {
                     type: "button",
-                    class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold", kpiMode.value === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", kpiMode.value === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
                     onClick: _cache[34] || (_cache[34] = ($event) => kpiMode.value = "SUMMARY")
                   }, " Summary ", 2),
                   _createElementVNode("button", {
                     type: "button",
-                    class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold", kpiMode.value === "PORTFOLIOS" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", kpiMode.value === "PORTFOLIOS" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
                     onClick: _cache[35] || (_cache[35] = ($event) => kpiMode.value = "PORTFOLIOS")
                   }, " Portfolios ", 2)
                 ]),
+                _cache[67] || (_cache[67] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
                 _createElementVNode("div", _hoisted_74, [
-                  _cache[66] || (_cache[66] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "HOLDINGS"], (target) => {
                     return _createElementVNode("button", {
                       key: target,
                       type: "button",
-                      class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold", dashboardTarget.value === target ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                      class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", dashboardTarget.value === target ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
                       onClick: ($event) => dashboardTarget.value = target
                     }, _toDisplayString(target), 11, _hoisted_75);
                   }), 64))
                 ]),
+                _cache[68] || (_cache[68] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
                 _createElementVNode("div", _hoisted_76, [
-                  _cache[67] || (_cache[67] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
                   (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (start) => {
                     return _createElementVNode("button", {
                       key: start,
                       type: "button",
-                      class: _normalizeClass(["rounded-lg border px-3 py-1.5 text-xs font-semibold", donutStart.value === start ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                      class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", donutStart.value === start ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
                       onClick: ($event) => donutStart.value = start
                     }, _toDisplayString(start), 11, _hoisted_77);
                   }), 64))
                 ]),
+                _cache[69] || (_cache[69] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
                 _createElementVNode("div", _hoisted_78, [
-                  _cache[69] || (_cache[69] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
                   _withDirectives(_createElementVNode("select", {
                     "onUpdate:modelValue": _cache[36] || (_cache[36] = ($event) => holdingsPortfolioKey.value = $event),
-                    class: "rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    class: "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   }, [
-                    _cache[68] || (_cache[68] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                    _cache[65] || (_cache[65] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolioOptions.value, (item) => {
                       return _openBlock(), _createElementBlock("option", {
                         key: `holdings-${item.key}`,
@@ -2079,15 +2148,16 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     [_vModelSelect, holdingsPortfolioKey.value]
                   ])
                 ]),
+                _cache[70] || (_cache[70] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
                 _createElementVNode("div", _hoisted_80, [
                   _createElementVNode("button", {
                     type: "button",
-                    class: "rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                    class: "min-w-[8rem] grow rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                     onClick: printSnapshotDashboard
                   }, " Print "),
                   _createElementVNode("button", {
                     type: "button",
-                    class: "rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
+                    class: "min-w-[8rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
                     disabled: exportingDashboardImage.value || loading.value || !dashboardExpanded.value,
                     onClick: exportSnapshotDashboardImage
                   }, _toDisplayString(exportingDashboardImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_81)

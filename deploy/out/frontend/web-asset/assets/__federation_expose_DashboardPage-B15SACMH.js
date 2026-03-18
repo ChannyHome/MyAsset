@@ -1,9 +1,9 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { g as getSummary, b as getAllocation, a as getNetworthSeries, c as collectSnapshots } from './ui-CcTyauVO.js';
-import { g as getHoldingsPerformance } from './holdings-CZxu3Df1.js';
+import { g as getHoldingsPerformance } from './holdings-D-iv7-uK.js';
 import { b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
 import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3, c as _sfc_main$4 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DME2THZa.js';
-import { _ as _sfc_main$5 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-a69ZjeEA.js';
+import { _ as _sfc_main$5 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CPJmljY9.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
 import { f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
 

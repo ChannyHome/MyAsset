@@ -1,5 +1,9 @@
 import { h as http } from './datetime-D3NoeBy6.js';
 
+async function getHoldings(params = {}) {
+  const { data } = await http.get("/holdings", { params });
+  return data;
+}
 async function getHoldingsTable(params = {}) {
   const { data } = await http.get("/holdings/table", { params });
   return data;
@@ -26,4 +30,4 @@ async function deleteHolding(holdingId) {
   await http.delete(`/holdings/${holdingId}`);
 }
 
-export { getHoldingsTable as a, createHolding as c, deleteHolding as d, getHoldingsPerformance as g, rebaselineHolding as r, updateHolding as u };
+export { getHoldingsTable as a, getHoldings as b, createHolding as c, deleteHolding as d, getHoldingsPerformance as g, rebaselineHolding as r, updateHolding as u };

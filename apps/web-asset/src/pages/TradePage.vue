@@ -3,8 +3,14 @@ import { AxiosError } from "axios";
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
 import { getAssets, type AssetOut } from "../api/assets";
-import { getLiabilities, type LiabilityOut } from "../api/liabilities";
-import { getPortfolios, type PortfolioOut } from "../api/portfolios";
+import {
+  getLiabilities,
+  rebaselineLiability,
+  type LiabilityOut,
+  updateLiability,
+} from "../api/liabilities";
+import { getHoldings, rebaselineHolding, type HoldingOut } from "../api/holdings";
+import { getPortfolios, rebaselinePortfolio, type PortfolioOut } from "../api/portfolios";
 import {
   createTrade,
   getTrades,
@@ -18,7 +24,7 @@ import {
   type TransactionStatus,
   type TransactionType,
 } from "../api/trades";
-import { formatDateTimeSeoul, seoulDateToUtcNaiveIso } from "../utils/datetime";
+import { formatDateTimeSeoul, seoulDateToUtcNaiveIso, toDateTimeLocalSeoul } from "../utils/datetime";
 
 const loading = ref(false);
 const saving = ref(false);
@@ -36,16 +42,28 @@ const sortOrder = ref<"asc" | "desc">("desc");
 const quickGroup = ref<"ALL" | "LOAN" | "CASHFLOW" | "BUYSELL">("ALL");
 const transferCollapsed = ref(false);
 const entryCollapsed = ref(false);
+const setActionsCollapsed = ref(false);
+const setActionTab = ref<"PORTFOLIO" | "HOLDING" | "LIABILITY" | "CASH">("PORTFOLIO");
 const journalCollapsed = ref(false);
 const TRADE_COLLAPSE_STORAGE_KEY = "myasset:trade:collapse-state";
+const TRADE_SET_ACTION_LOGS_STORAGE_KEY = "myasset:trade:set-action-logs";
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
 let journalSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const journalAutoSearchPending = ref(false);
 const suspendJournalAutoSearch = ref(false);
+const setActionSaving = ref(false);
+type SetActionKey = "PORTFOLIO" | "HOLDING" | "LIABILITY" | "CASH";
+const setActionLogs = reactive<Record<SetActionKey, string[]>>({
+  PORTFOLIO: [],
+  HOLDING: [],
+  LIABILITY: [],
+  CASH: [],
+});
 
 const portfolios = ref<PortfolioOut[]>([]);
 const assets = ref<AssetOut[]>([]);
 const liabilities = ref<LiabilityOut[]>([]);
+const holdings = ref<HoldingOut[]>([]);
 const tradeTypes: TransactionType[] = [
   "BUY",
   "SELL",
@@ -107,6 +125,47 @@ const transferForm = reactive({
   auto_apply_portfolio_cashflow: true,
 });
 
+const setPortfolioForm = reactive({
+  portfolio_id: "",
+  effective_at: "",
+  rebaseline_all_history: false,
+  cumulative_deposit_amount: "",
+  cumulative_withdrawal_amount: "",
+  reason: "",
+});
+
+const setHoldingForm = reactive({
+  portfolio_id: "",
+  holding_id: "",
+  effective_at: "",
+  rebaseline_all_history: false,
+  quantity: "",
+  avg_cost: "",
+  avg_cost_currency: "KRW",
+  cost_basis_total: "",
+  cost_basis_currency: "KRW",
+  reason: "",
+});
+
+const setLiabilityForm = reactive({
+  portfolio_id: "",
+  liability_id: "",
+  effective_at: "",
+  rebaseline_all_history: false,
+  outstanding_balance: "",
+  interest_rate: "",
+  reason: "",
+});
+
+const setCashForm = reactive({
+  portfolio_id: "",
+  currency: "KRW",
+  target_balance: "",
+  effective_at: "",
+  memo: "",
+  auto_fill_apply: false,
+});
+
 const filters = reactive({
   q: "",
   portfolio_id: "",
@@ -125,6 +184,55 @@ const isLoanTxn = computed(
   () => form.txn_type === "LOAN_BORROW" || form.txn_type === "LOAN_REPAY" || form.txn_type === "LOAN_INTEREST",
 );
 const canSelectAsset = computed(() => isBuySell.value || form.txn_type === "DIVIDEND");
+const portfolioById = computed(() => new Map(portfolios.value.map((item) => [item.id, item])));
+const assetById = computed(() => new Map(assets.value.map((item) => [item.id, item])));
+const holdingsWithMeta = computed(() =>
+  holdings.value
+    .filter((item) => item.portfolio_id !== null)
+    .map((item) => {
+      const portfolio = item.portfolio_id === null ? undefined : portfolioById.value.get(item.portfolio_id);
+      const asset = assetById.value.get(item.asset_id);
+      const assetSymbol = (asset?.symbol || "").toUpperCase();
+      const assetName = asset?.name || `#${item.asset_id}`;
+      const isAutoCash = assetSymbol.startsWith("CASH_") || assetName.toUpperCase().includes("AUTO CASH BALANCE");
+      return {
+        ...item,
+        portfolio_name: portfolio?.name || `#${item.portfolio_id}`,
+        asset_name: assetName,
+        asset_symbol: asset?.symbol || null,
+        asset_currency: (asset?.currency || item.avg_price_currency || "KRW").toUpperCase(),
+        is_auto_cash: isAutoCash,
+      };
+    }),
+);
+const filteredSetHoldings = computed(() => {
+  const selectedPortfolioId = toOptionalNumber(setHoldingForm.portfolio_id);
+  if (selectedPortfolioId === undefined) return holdingsWithMeta.value;
+  return holdingsWithMeta.value.filter((item) => item.portfolio_id === selectedPortfolioId);
+});
+const selectedSetHolding = computed(() => {
+  const holdingId = toOptionalNumber(setHoldingForm.holding_id);
+  if (holdingId === undefined) return undefined;
+  return holdingsWithMeta.value.find((item) => item.id === holdingId);
+});
+const filteredSetLiabilities = computed(() => {
+  const selectedPortfolioId = toOptionalNumber(setLiabilityForm.portfolio_id);
+  if (selectedPortfolioId === undefined) return liabilities.value;
+  return liabilities.value.filter((item) => item.portfolio_id === selectedPortfolioId);
+});
+const autoCashBalanceByPortfolioCurrency = computed(() => {
+  const out = new Map<string, number>();
+  for (const item of holdingsWithMeta.value) {
+    if (item.portfolio_id === null || !item.is_auto_cash) continue;
+    const currency = (item.avg_price_currency || item.asset_currency || "KRW").toUpperCase();
+    const key = `${item.portfolio_id}:${currency}`;
+    const amount = item.invested_amount == null
+      ? toFiniteNumber(item.quantity) * toFiniteNumber(item.avg_price)
+      : toFiniteNumber(item.invested_amount);
+    out.set(key, (out.get(key) || 0) + amount);
+  }
+  return out;
+});
 const amountLabel = computed(() => (isBalanceSet.value ? "Target Balance" : "Amount"));
 const amountHint = computed(() =>
   isBalanceSet.value
@@ -165,6 +273,17 @@ function formatNumber(value: string | number | null | undefined, digits = 2): st
   return numeric.toLocaleString("ko-KR", { maximumFractionDigits: digits });
 }
 
+function toFiniteNumber(value: string | number | null | undefined): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function toNumericInputString(value: number): string {
+  if (!Number.isFinite(value)) return "0";
+  if (Number.isInteger(value)) return String(value);
+  return String(Number(value.toFixed(8)));
+}
+
 function toggleSort(next: TradeSortBy) {
   if (sortBy.value === next) {
     sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
@@ -189,6 +308,8 @@ function restoreCollapseState() {
     const parsed = JSON.parse(raw) as {
       transferCollapsed?: unknown;
       entryCollapsed?: unknown;
+      setActionsCollapsed?: unknown;
+      setActionTab?: unknown;
       journalCollapsed?: unknown;
     };
     if (typeof parsed.transferCollapsed === "boolean") {
@@ -196,6 +317,17 @@ function restoreCollapseState() {
     }
     if (typeof parsed.entryCollapsed === "boolean") {
       entryCollapsed.value = parsed.entryCollapsed;
+    }
+    if (typeof parsed.setActionsCollapsed === "boolean") {
+      setActionsCollapsed.value = parsed.setActionsCollapsed;
+    }
+    if (
+      parsed.setActionTab === "PORTFOLIO"
+      || parsed.setActionTab === "HOLDING"
+      || parsed.setActionTab === "LIABILITY"
+      || parsed.setActionTab === "CASH"
+    ) {
+      setActionTab.value = parsed.setActionTab;
     }
     if (typeof parsed.journalCollapsed === "boolean") {
       journalCollapsed.value = parsed.journalCollapsed;
@@ -205,7 +337,25 @@ function restoreCollapseState() {
   }
 }
 
-watch([transferCollapsed, entryCollapsed, journalCollapsed], ([transfer, entry, journal]) => {
+function restoreSetActionLogs() {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(TRADE_SET_ACTION_LOGS_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Partial<Record<SetActionKey, unknown>>;
+    const keys: SetActionKey[] = ["PORTFOLIO", "HOLDING", "LIABILITY", "CASH"];
+    for (const key of keys) {
+      const value = parsed[key];
+      if (!Array.isArray(value)) continue;
+      const logs = value.filter((line): line is string => typeof line === "string").slice(0, 2);
+      setActionLogs[key].splice(0, setActionLogs[key].length, ...logs);
+    }
+  } catch {
+    // ignore malformed or unavailable localStorage
+  }
+}
+
+watch([transferCollapsed, entryCollapsed, setActionsCollapsed, setActionTab, journalCollapsed], ([transfer, entry, setCollapsed, tab, journal]) => {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(
@@ -213,6 +363,8 @@ watch([transferCollapsed, entryCollapsed, journalCollapsed], ([transfer, entry, 
       JSON.stringify({
         transferCollapsed: transfer,
         entryCollapsed: entry,
+        setActionsCollapsed: setCollapsed,
+        setActionTab: tab,
         journalCollapsed: journal,
       }),
     );
@@ -220,6 +372,36 @@ watch([transferCollapsed, entryCollapsed, journalCollapsed], ([transfer, entry, 
     // ignore storage write failure (private mode, quota, etc.)
   }
 });
+
+watch(
+  () => ({
+    PORTFOLIO: [...setActionLogs.PORTFOLIO],
+    HOLDING: [...setActionLogs.HOLDING],
+    LIABILITY: [...setActionLogs.LIABILITY],
+    CASH: [...setActionLogs.CASH],
+  }),
+  (next) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(TRADE_SET_ACTION_LOGS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // ignore storage write failure
+    }
+  },
+  { deep: false },
+);
+
+function nowDateTimeLocalInput(): string {
+  return toDateTimeLocalSeoul(new Date());
+}
+
+function parseEffectiveAt(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error("effective_at is required");
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) throw new Error("effective_at is invalid");
+  return parsed.toISOString();
+}
 
 function resetForm() {
   editingId.value = null;
@@ -238,6 +420,58 @@ function resetForm() {
   form.auto_apply_portfolio_cashflow = false;
 }
 
+function resetSetPortfolioForm(): void {
+  const first = portfolios.value[0];
+  setPortfolioForm.portfolio_id = first ? String(first.id) : "";
+  setPortfolioForm.effective_at = nowDateTimeLocalInput();
+  setPortfolioForm.rebaseline_all_history = false;
+  setPortfolioForm.cumulative_deposit_amount = first ? String(first.cumulative_deposit_amount) : "0";
+  setPortfolioForm.cumulative_withdrawal_amount = first ? String(first.cumulative_withdrawal_amount) : "0";
+  setPortfolioForm.reason = "";
+}
+
+function resetSetHoldingForm(): void {
+  const firstPortfolio = portfolios.value[0];
+  setHoldingForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
+  setHoldingForm.holding_id = "";
+  setHoldingForm.effective_at = nowDateTimeLocalInput();
+  setHoldingForm.rebaseline_all_history = false;
+  setHoldingForm.quantity = "";
+  setHoldingForm.avg_cost = "";
+  setHoldingForm.avg_cost_currency = "KRW";
+  setHoldingForm.cost_basis_total = "";
+  setHoldingForm.cost_basis_currency = "KRW";
+  setHoldingForm.reason = "";
+}
+
+function resetSetLiabilityForm(): void {
+  const firstPortfolio = portfolios.value[0];
+  setLiabilityForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
+  setLiabilityForm.liability_id = "";
+  setLiabilityForm.effective_at = nowDateTimeLocalInput();
+  setLiabilityForm.rebaseline_all_history = false;
+  setLiabilityForm.outstanding_balance = "";
+  setLiabilityForm.interest_rate = "";
+  setLiabilityForm.reason = "";
+}
+
+function resetSetCashForm(): void {
+  const firstPortfolio = portfolios.value[0];
+  setCashForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
+  setCashForm.currency = (firstPortfolio?.base_currency || "KRW").toUpperCase();
+  setCashForm.target_balance = "";
+  setCashForm.effective_at = nowDateTimeLocalInput();
+  setCashForm.memo = "";
+  setCashForm.auto_fill_apply = false;
+}
+
+function resetSetForms(): void {
+  resetSetPortfolioForm();
+  resetSetHoldingForm();
+  resetSetLiabilityForm();
+  resetSetCashForm();
+}
+
 function resetTransferForm() {
   const fromId = portfolios.value[0]?.id;
   const toId = portfolios.value.find((item) => item.id !== fromId)?.id;
@@ -249,6 +483,19 @@ function resetTransferForm() {
   transferForm.memo = "";
   transferForm.auto_apply_cash_holding = true;
   transferForm.auto_apply_portfolio_cashflow = true;
+}
+
+async function loadReferenceData(): Promise<void> {
+  const [portfolioData, assetData, liabilityData, holdingData] = await Promise.all([
+    getPortfolios(),
+    getAssets(),
+    getLiabilities({ include_hidden: true, include_excluded: true }),
+    getHoldings({ include_hidden: true, include_excluded_portfolios: true }),
+  ]);
+  portfolios.value = portfolioData;
+  assets.value = assetData;
+  liabilities.value = liabilityData;
+  holdings.value = holdingData;
 }
 
 function getPortfolioName(portfolioId: number | undefined): string {
@@ -272,6 +519,279 @@ function applyEdit(row: TradeRowOut) {
   form.source_type = row.source_type;
   form.auto_apply_cash_holding = row.auto_apply_cash_holding;
   form.auto_apply_portfolio_cashflow = row.auto_apply_portfolio_cashflow;
+}
+
+function formatBaselineInfo(ids: number[]): string {
+  return ids.length ? ids.join(",") : "-";
+}
+
+function parseNonNegativeNumber(raw: string, fieldName: string): number {
+  const parsed = toOptionalNumber(raw);
+  if (parsed === undefined) throw new Error(`${fieldName} is required.`);
+  if (parsed < 0) throw new Error(`${fieldName} must be >= 0.`);
+  return parsed;
+}
+
+function appendSetActionLog(action: SetActionKey, status: "OK" | "ERROR", message: string): void {
+  const stamp = formatDateTimeSeoul(new Date().toISOString());
+  setActionLogs[action].unshift(`${stamp} [${status}] ${message}`);
+  if (setActionLogs[action].length > 2) setActionLogs[action].length = 2;
+}
+
+function clearSetActionLogs(action: SetActionKey): void {
+  setActionLogs[action].splice(0, setActionLogs[action].length);
+}
+
+async function fillSetCashTargetFromCurrent(): Promise<void> {
+  const portfolioId = toOptionalNumber(setCashForm.portfolio_id);
+  if (!portfolioId) {
+    const message = "Portfolio를 먼저 선택해주세요.";
+    errorMessage.value = message;
+    appendSetActionLog("CASH", "ERROR", message);
+    return;
+  }
+  const currency = setCashForm.currency.trim().toUpperCase();
+  if (currency.length !== 3) {
+    const message = "Currency는 3자리 코드여야 합니다.";
+    errorMessage.value = message;
+    appendSetActionLog("CASH", "ERROR", message);
+    return;
+  }
+  const key = `${portfolioId}:${currency}`;
+  const current = autoCashBalanceByPortfolioCurrency.value.get(key);
+  if (current === undefined) {
+    const message = "선택한 포트폴리오/통화의 Auto Cash Balance를 찾지 못했습니다.";
+    errorMessage.value = message;
+    appendSetActionLog("CASH", "ERROR", message);
+    return;
+  }
+  setCashForm.target_balance = toNumericInputString(current);
+  errorMessage.value = "";
+  const message = `현재 잔액 자동 채움: ${formatNumber(current)} ${currency}`;
+  successMessage.value = message;
+  appendSetActionLog("CASH", "OK", message);
+  if (setCashForm.auto_fill_apply) {
+    await submitCashSet();
+  }
+}
+
+async function submitPortfolioSet(): Promise<void> {
+  const portfolioId = toOptionalNumber(setPortfolioForm.portfolio_id);
+  if (!portfolioId) {
+    const message = "Portfolio is required for Portfolio Net Contribution Set.";
+    errorMessage.value = message;
+    appendSetActionLog("PORTFOLIO", "ERROR", message);
+    return;
+  }
+  let startedAt = 0;
+  try {
+    const deposit = parseNonNegativeNumber(setPortfolioForm.cumulative_deposit_amount, "Cumulative deposit");
+    const withdraw = parseNonNegativeNumber(setPortfolioForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
+    const effectiveAt = parseEffectiveAt(setPortfolioForm.effective_at);
+    const allHistory = !!setPortfolioForm.rebaseline_all_history;
+    const confirmMessage = allHistory
+      ? "Apply Portfolio Net Contribution Set? (전체 과거 DEPOSIT/WITHDRAW 거래를 VOID 후 기준점 재생성)"
+      : "Apply Portfolio Net Contribution Set? (기준시각 이전 DEPOSIT/WITHDRAW 거래를 VOID 후 기준점 재생성)";
+    if (!window.confirm(confirmMessage)) return;
+
+    startedAt = performance.now();
+    setActionSaving.value = true;
+    errorMessage.value = "";
+    successMessage.value = "";
+    const out = await rebaselinePortfolio(portfolioId, {
+      effective_at: effectiveAt,
+      rebaseline_all_history: allHistory,
+      cumulative_deposit_amount: deposit,
+      cumulative_withdrawal_amount: withdraw,
+      reason: setPortfolioForm.reason.trim() || null,
+    });
+    await loadReferenceData();
+    await loadTrades();
+    const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const message = `Portfolio Net Contribution Set applied. voided=${out.voided_transactions}, baseline=${formatBaselineInfo(out.baseline_transaction_ids)}. (${elapsedMs}ms)`;
+    successMessage.value = message;
+    appendSetActionLog("PORTFOLIO", "OK", message);
+  } catch (error) {
+    const baseMessage = parseApiError(error);
+    const elapsedMs = startedAt > 0 ? Math.max(0, Math.round(performance.now() - startedAt)) : null;
+    const message = elapsedMs === null ? baseMessage : `${baseMessage} (${elapsedMs}ms)`;
+    errorMessage.value = message;
+    appendSetActionLog("PORTFOLIO", "ERROR", message);
+  } finally {
+    setActionSaving.value = false;
+  }
+}
+
+async function submitHoldingSet(): Promise<void> {
+  const holdingId = toOptionalNumber(setHoldingForm.holding_id);
+  if (!holdingId) {
+    const message = "Holding is required for Holding Position Set.";
+    errorMessage.value = message;
+    appendSetActionLog("HOLDING", "ERROR", message);
+    return;
+  }
+  const selectedHolding = selectedSetHolding.value;
+  if (!selectedHolding) {
+    const message = "Selected holding not found.";
+    errorMessage.value = message;
+    appendSetActionLog("HOLDING", "ERROR", message);
+    return;
+  }
+  if (selectedHolding.is_auto_cash) {
+    const message = "Auto Cash Balance는 Holding Position Set 대상이 아닙니다. BALANCE_SET/DEPOSIT/WITHDRAW/ADJUSTMENT를 사용하세요.";
+    errorMessage.value = message;
+    appendSetActionLog("HOLDING", "ERROR", message);
+    return;
+  }
+
+  let startedAt = 0;
+  try {
+    const quantity = parseNonNegativeNumber(setHoldingForm.quantity, "Quantity");
+    const avgCost = parseNonNegativeNumber(setHoldingForm.avg_cost, "Avg cost");
+    const avgCostCurrency = setHoldingForm.avg_cost_currency.trim().toUpperCase();
+    if (avgCostCurrency.length !== 3) throw new Error("Avg cost currency must be 3 letters.");
+    const costBasisRaw = toOptionalNumber(setHoldingForm.cost_basis_total);
+    if (costBasisRaw !== undefined && costBasisRaw < 0) throw new Error("Cost basis must be >= 0.");
+    const costBasisCurrency = setHoldingForm.cost_basis_currency.trim().toUpperCase();
+    if (costBasisRaw !== undefined && costBasisCurrency.length !== 3) {
+      throw new Error("Cost basis currency must be 3 letters.");
+    }
+    const effectiveAt = parseEffectiveAt(setHoldingForm.effective_at);
+    const allHistory = !!setHoldingForm.rebaseline_all_history;
+    const confirmMessage = allHistory
+      ? "Apply Holding Position Set? (전체 과거 BUY/SELL 거래를 VOID 후 기준점 재생성)"
+      : "Apply Holding Position Set? (기준시각 이전 BUY/SELL 거래를 VOID 후 기준점 재생성)";
+    if (!window.confirm(confirmMessage)) return;
+
+    startedAt = performance.now();
+    setActionSaving.value = true;
+    errorMessage.value = "";
+    successMessage.value = "";
+    const out = await rebaselineHolding(holdingId, {
+      effective_at: effectiveAt,
+      rebaseline_all_history: allHistory,
+      quantity,
+      avg_price: avgCost,
+      avg_price_currency: avgCostCurrency,
+      invested_amount: costBasisRaw ?? null,
+      invested_amount_currency: costBasisRaw === undefined ? null : costBasisCurrency,
+      reason: setHoldingForm.reason.trim() || null,
+    });
+    await loadReferenceData();
+    await loadTrades();
+    const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const message = `Holding Position Set applied. voided=${out.voided_transactions}, baseline=${formatBaselineInfo(out.baseline_transaction_ids)}. (${elapsedMs}ms)`;
+    successMessage.value = message;
+    appendSetActionLog("HOLDING", "OK", message);
+  } catch (error) {
+    const baseMessage = parseApiError(error);
+    const elapsedMs = startedAt > 0 ? Math.max(0, Math.round(performance.now() - startedAt)) : null;
+    const message = elapsedMs === null ? baseMessage : `${baseMessage} (${elapsedMs}ms)`;
+    errorMessage.value = message;
+    appendSetActionLog("HOLDING", "ERROR", message);
+  } finally {
+    setActionSaving.value = false;
+  }
+}
+
+async function submitLiabilitySet(): Promise<void> {
+  const liabilityId = toOptionalNumber(setLiabilityForm.liability_id);
+  if (!liabilityId) {
+    const message = "Liability is required for Liability Balance Set.";
+    errorMessage.value = message;
+    appendSetActionLog("LIABILITY", "ERROR", message);
+    return;
+  }
+
+  let startedAt = 0;
+  try {
+    const balance = parseNonNegativeNumber(setLiabilityForm.outstanding_balance, "Outstanding balance");
+    const interestRateRaw = toOptionalNumber(setLiabilityForm.interest_rate);
+    if (interestRateRaw !== undefined && interestRateRaw < 0) throw new Error("Interest rate must be >= 0.");
+    const effectiveAt = parseEffectiveAt(setLiabilityForm.effective_at);
+    const allHistory = !!setLiabilityForm.rebaseline_all_history;
+    const confirmMessage = allHistory
+      ? "Apply Liability Balance Set? (전체 과거 LOAN_BORROW/LOAN_REPAY 거래를 VOID 후 기준점 재생성)"
+      : "Apply Liability Balance Set? (기준시각 이전 LOAN_BORROW/LOAN_REPAY 거래를 VOID 후 기준점 재생성)";
+    if (!window.confirm(confirmMessage)) return;
+
+    startedAt = performance.now();
+    setActionSaving.value = true;
+    errorMessage.value = "";
+    successMessage.value = "";
+    const out = await rebaselineLiability(liabilityId, {
+      effective_at: effectiveAt,
+      rebaseline_all_history: allHistory,
+      outstanding_balance: balance,
+      reason: setLiabilityForm.reason.trim() || null,
+    });
+    if (interestRateRaw !== undefined) {
+      await updateLiability(liabilityId, { interest_rate: interestRateRaw });
+    }
+    await loadReferenceData();
+    await loadTrades();
+    const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const message = `Liability Balance Set applied. voided=${out.voided_transactions}, baseline=${formatBaselineInfo(out.baseline_transaction_ids)}. (${elapsedMs}ms)`;
+    successMessage.value = message;
+    appendSetActionLog("LIABILITY", "OK", message);
+  } catch (error) {
+    const baseMessage = parseApiError(error);
+    const elapsedMs = startedAt > 0 ? Math.max(0, Math.round(performance.now() - startedAt)) : null;
+    const message = elapsedMs === null ? baseMessage : `${baseMessage} (${elapsedMs}ms)`;
+    errorMessage.value = message;
+    appendSetActionLog("LIABILITY", "ERROR", message);
+  } finally {
+    setActionSaving.value = false;
+  }
+}
+
+async function submitCashSet(): Promise<void> {
+  const portfolioId = toOptionalNumber(setCashForm.portfolio_id);
+  if (!portfolioId) {
+    const message = "Portfolio is required for Auto Cash Balance Set.";
+    errorMessage.value = message;
+    appendSetActionLog("CASH", "ERROR", message);
+    return;
+  }
+
+  let startedAt = 0;
+  try {
+    const targetBalance = parseNonNegativeNumber(setCashForm.target_balance, "Target balance");
+    const currency = setCashForm.currency.trim().toUpperCase();
+    if (currency.length !== 3) throw new Error("Currency must be 3 letters.");
+    const executedAt = parseEffectiveAt(setCashForm.effective_at);
+    if (!window.confirm("Apply Auto Cash Balance Set? (선택 포트폴리오/통화의 현금 잔액을 입력값으로 맞춥니다.)")) return;
+
+    startedAt = performance.now();
+    setActionSaving.value = true;
+    errorMessage.value = "";
+    successMessage.value = "";
+    const out = await createTrade({
+      portfolio_id: portfolioId,
+      txn_type: "BALANCE_SET",
+      amount: targetBalance,
+      currency,
+      executed_at: executedAt,
+      memo: setCashForm.memo.trim() || null,
+      source_type: "MANUAL",
+      auto_apply_cash_holding: true,
+      auto_apply_portfolio_cashflow: false,
+    });
+    await loadReferenceData();
+    await loadTrades();
+    const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
+    const message = `Auto Cash Balance Set applied. trade_id=${out.id}, amount=${formatNumber(out.amount)} ${out.currency}. (${elapsedMs}ms)`;
+    successMessage.value = message;
+    appendSetActionLog("CASH", "OK", message);
+  } catch (error) {
+    const baseMessage = parseApiError(error);
+    const elapsedMs = startedAt > 0 ? Math.max(0, Math.round(performance.now() - startedAt)) : null;
+    const message = elapsedMs === null ? baseMessage : `${baseMessage} (${elapsedMs}ms)`;
+    errorMessage.value = message;
+    appendSetActionLog("CASH", "ERROR", message);
+  } finally {
+    setActionSaving.value = false;
+  }
 }
 
 function buildPayload(): TradeCreateIn {
@@ -640,6 +1160,86 @@ watch(
   },
 );
 
+watch(
+  () => setPortfolioForm.portfolio_id,
+  (next) => {
+    const portfolioId = toOptionalNumber(next);
+    if (portfolioId === undefined) return;
+    const row = portfolioById.value.get(portfolioId);
+    if (!row) return;
+    setPortfolioForm.cumulative_deposit_amount = String(row.cumulative_deposit_amount);
+    setPortfolioForm.cumulative_withdrawal_amount = String(row.cumulative_withdrawal_amount);
+  },
+);
+
+watch(
+  () => setHoldingForm.portfolio_id,
+  () => {
+    const selectedHoldingId = toOptionalNumber(setHoldingForm.holding_id);
+    if (selectedHoldingId === undefined) return;
+    const stillValid = filteredSetHoldings.value.some((item) => item.id === selectedHoldingId);
+    if (!stillValid) {
+      setHoldingForm.holding_id = "";
+    }
+  },
+);
+
+watch(
+  () => setHoldingForm.holding_id,
+  (next) => {
+    const holdingId = toOptionalNumber(next);
+    if (holdingId === undefined) return;
+    const row = holdingsWithMeta.value.find((item) => item.id === holdingId);
+    if (!row) return;
+    if (row.portfolio_id !== null) {
+      setHoldingForm.portfolio_id = String(row.portfolio_id);
+    }
+    setHoldingForm.quantity = String(row.quantity);
+    setHoldingForm.avg_cost = String(row.avg_price);
+    setHoldingForm.avg_cost_currency = (row.avg_price_currency || "KRW").toUpperCase();
+    setHoldingForm.cost_basis_total = row.invested_amount == null ? "" : String(row.invested_amount);
+    setHoldingForm.cost_basis_currency = (row.invested_amount_currency || row.avg_price_currency || "KRW").toUpperCase();
+  },
+);
+
+watch(
+  () => setLiabilityForm.portfolio_id,
+  () => {
+    const selectedLiabilityId = toOptionalNumber(setLiabilityForm.liability_id);
+    if (selectedLiabilityId === undefined) return;
+    const stillValid = filteredSetLiabilities.value.some((item) => item.id === selectedLiabilityId);
+    if (!stillValid) {
+      setLiabilityForm.liability_id = "";
+    }
+  },
+);
+
+watch(
+  () => setLiabilityForm.liability_id,
+  (next) => {
+    const liabilityId = toOptionalNumber(next);
+    if (liabilityId === undefined) return;
+    const row = liabilities.value.find((item) => item.id === liabilityId);
+    if (!row) return;
+    if (row.portfolio_id !== null) {
+      setLiabilityForm.portfolio_id = String(row.portfolio_id);
+    }
+    setLiabilityForm.outstanding_balance = String(row.outstanding_balance);
+    setLiabilityForm.interest_rate = row.interest_rate == null ? "" : String(row.interest_rate);
+  },
+);
+
+watch(
+  () => setCashForm.portfolio_id,
+  (next) => {
+    const portfolioId = toOptionalNumber(next);
+    if (portfolioId === undefined) return;
+    const row = portfolioById.value.get(portfolioId);
+    if (!row) return;
+    setCashForm.currency = (row.base_currency || "KRW").toUpperCase();
+  },
+);
+
 watch([page, pageSize], () => void loadTrades());
 watch(
   [
@@ -672,16 +1272,11 @@ watch(
 
 onMounted(async () => {
   restoreCollapseState();
-  const [portfolioData, assetData, liabilityData] = await Promise.all([
-    getPortfolios(),
-    getAssets(),
-    getLiabilities({ include_hidden: true, include_excluded: true }),
-  ]);
-  portfolios.value = portfolioData;
-  assets.value = assetData;
-  liabilities.value = liabilityData;
+  restoreSetActionLogs();
+  await loadReferenceData();
   resetForm();
   resetTransferForm();
+  resetSetForms();
   await loadTrades();
   journalAutoSearchPending.value = false;
 });
@@ -927,6 +1522,316 @@ onBeforeUnmount(() => {
                 <li v-for="line in rebuildHintLines" :key="line">{{ line }}</li>
               </ul>
             </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">Set Actions</p>
+          <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Rebaseline-Based Set Actions</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Agent 편집을 Trade에서 빠르게 실행합니다. 실행 시 기준 거래를 재생성합니다.</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          :aria-expanded="!setActionsCollapsed"
+          @click="setActionsCollapsed = !setActionsCollapsed"
+        >
+          {{ setActionsCollapsed ? "Expand" : "Collapse" }}
+        </button>
+      </div>
+
+      <div v-if="!setActionsCollapsed" class="mt-3 space-y-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'PORTFOLIO' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'PORTFOLIO'"
+          >
+            Portfolio Net Contribution Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'HOLDING' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'HOLDING'"
+          >
+            Holding Position Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'LIABILITY' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'LIABILITY'"
+          >
+            Liability Balance Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'CASH' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'CASH'"
+          >
+            Auto Cash Balance Set
+          </button>
+        </div>
+
+        <div v-if="setActionTab === 'PORTFOLIO'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
+              <select v-model="setPortfolioForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="p in portfolios" :key="`set-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setPortfolioForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Deposit
+              <input v-model="setPortfolioForm.cumulative_deposit_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Withdrawal
+              <input v-model="setPortfolioForm.cumulative_withdrawal_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setPortfolioForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setPortfolioForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitPortfolioSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Portfolio Net Contribution Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('PORTFOLIO')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.PORTFOLIO.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.PORTFOLIO" :key="`set-log-portfolio-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else-if="setActionTab === 'HOLDING'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
+              <select v-model="setHoldingForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">All</option>
+                <option v-for="p in portfolios" :key="`set-h-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Holding
+              <select v-model="setHoldingForm.holding_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="h in filteredSetHoldings" :key="`set-h-${h.id}`" :value="String(h.id)">
+                  #{{ h.id }} {{ h.portfolio_name }} / {{ h.asset_name }}{{ h.asset_symbol ? ` (${h.asset_symbol})` : "" }}
+                </option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setHoldingForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Quantity
+              <input v-model="setHoldingForm.quantity" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost
+              <input v-model="setHoldingForm.avg_cost" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost Currency
+              <input v-model="setHoldingForm.avg_cost_currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis (optional)
+              <input v-model="setHoldingForm.cost_basis_total" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis Currency
+              <input v-model="setHoldingForm.cost_basis_currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <p
+            v-if="selectedSetHolding?.is_auto_cash"
+            class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+          >
+            Auto Cash Balance는 ledger-derived입니다. Trade의 BALANCE_SET/DEPOSIT/WITHDRAW/ADJUSTMENT를 사용하세요.
+          </p>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setHoldingForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setHoldingForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving || !!selectedSetHolding?.is_auto_cash"
+              @click="submitHoldingSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Holding Position Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('HOLDING')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.HOLDING.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.HOLDING" :key="`set-log-holding-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else-if="setActionTab === 'LIABILITY'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
+              <select v-model="setLiabilityForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">All</option>
+                <option v-for="p in portfolios" :key="`set-l-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Liability
+              <select v-model="setLiabilityForm.liability_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="l in filteredSetLiabilities" :key="`set-l-${l.id}`" :value="String(l.id)">
+                  #{{ l.id }} {{ l.name }} ({{ l.currency }})
+                </option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setLiabilityForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Outstanding Balance
+              <input v-model="setLiabilityForm.outstanding_balance" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Interest Rate (optional)
+              <input v-model="setLiabilityForm.interest_rate" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setLiabilityForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setLiabilityForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitLiabilitySet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Liability Balance Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('LIABILITY')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.LIABILITY.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.LIABILITY" :key="`set-log-liability-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
+              <select v-model="setCashForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="p in portfolios" :key="`set-c-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Currency
+              <input v-model="setCashForm.currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Target Balance
+              <div class="mt-1 flex items-center gap-2">
+                <input v-model="setCashForm.target_balance" class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+                <button
+                  type="button"
+                  class="whitespace-nowrap rounded-lg border border-slate-300 px-2 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  @click="fillSetCashTargetFromCurrent"
+                >
+                  Use Current
+                </button>
+              </div>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setCashForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Memo (optional)
+            <input v-model="setCashForm.memo" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setCashForm.auto_fill_apply" type="checkbox" class="h-4 w-4" />
+            <span>Auto Fill + Apply (Use Current 클릭 시 바로 실행)</span>
+          </label>
+          <p class="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs text-cyan-800 dark:border-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+            기존 BALANCE_SET 거래를 생성하여 현금 잔액을 목표값으로 맞춥니다. (Manual Trade Entry의 BALANCE_SET은 그대로 유지)
+          </p>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitCashSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Auto Cash Balance Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('CASH')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.CASH.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.CASH" :key="`set-log-cash-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
           </div>
         </div>
       </div>
