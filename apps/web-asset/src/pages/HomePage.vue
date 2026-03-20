@@ -44,12 +44,21 @@ const LIVE_TREND_PREF_STORAGE_KEY = "myasset:home:live-trend-pref";
 const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
+const HOME_CARD_ORDER_STORAGE_KEY = "myasset:home:card-order";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
 const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 180000;
 
 type HomePortfolioSortKey = "portfolio" | "current" | "invested_principal" | "portfolio_profit" | "return";
 type HomeHoldingSortKey = "portfolio" | "asset" | "price" | "avg_cost" | "evaluated" | "cost_basis" | "profit" | "return" | "symbol";
 type HomeLiabilitySortKey = "portfolio" | "liability" | "balance" | "type";
+type HomeCardKey =
+  | "LIVE_DASHBOARD"
+  | "PORTFOLIOS_TABLE"
+  | "HOLDINGS_TABLE"
+  | "LIABILITIES_TABLE"
+  | "REPORT_PANEL"
+  | "QUICK_INSIGHT"
+  | "RELEASE_NOTES";
 
 type Html2CanvasFn = (
   element: HTMLElement,
@@ -234,6 +243,17 @@ const homeLiabilityTable = reactive({
   q: "",
   loading: false,
 });
+const DEFAULT_HOME_CARD_ORDER: HomeCardKey[] = [
+  "LIVE_DASHBOARD",
+  "PORTFOLIOS_TABLE",
+  "HOLDINGS_TABLE",
+  "LIABILITIES_TABLE",
+  "REPORT_PANEL",
+  "QUICK_INSIGHT",
+  "RELEASE_NOTES",
+];
+const homeCardOrder = ref<HomeCardKey[]>([...DEFAULT_HOME_CARD_ORDER]);
+const homeCardDraggingKey = ref<HomeCardKey | null>(null);
 
 const liveDashboardRef = ref<HTMLElement | null>(null);
 const { displayCurrency, ensureInitialized } = useDisplayCurrency();
@@ -834,6 +854,84 @@ function saveHomeTableSectionState(): void {
   window.localStorage.setItem(HOME_TABLE_SECTION_STORAGE_KEY, JSON.stringify(payload));
 }
 
+function normalizeHomeCardOrder(value: unknown): HomeCardKey[] {
+  if (!Array.isArray(value)) return [...DEFAULT_HOME_CARD_ORDER];
+  const next: HomeCardKey[] = [];
+  for (const item of value) {
+    if (
+      (item === "LIVE_DASHBOARD"
+        || item === "PORTFOLIOS_TABLE"
+        || item === "HOLDINGS_TABLE"
+        || item === "LIABILITIES_TABLE"
+        || item === "REPORT_PANEL"
+        || item === "QUICK_INSIGHT"
+        || item === "RELEASE_NOTES")
+      && !next.includes(item)
+    ) {
+      next.push(item);
+    }
+  }
+  for (const key of DEFAULT_HOME_CARD_ORDER) {
+    if (!next.includes(key)) next.push(key);
+  }
+  return next;
+}
+
+function restoreHomeCardOrder(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(HOME_CARD_ORDER_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    homeCardOrder.value = normalizeHomeCardOrder(JSON.parse(raw));
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
+function getHomeCardOrder(key: HomeCardKey): number {
+  const index = homeCardOrder.value.indexOf(key);
+  return index >= 0 ? index : DEFAULT_HOME_CARD_ORDER.indexOf(key);
+}
+
+function onHomeCardDragStart(key: HomeCardKey, event: DragEvent): void {
+  homeCardDraggingKey.value = key;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", key);
+  }
+}
+
+function onHomeCardDragOver(event: DragEvent): void {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+}
+
+function onHomeCardDrop(targetKey: HomeCardKey, event: DragEvent): void {
+  event.preventDefault();
+  const sourceKey = (homeCardDraggingKey.value || event.dataTransfer?.getData("text/plain")) as HomeCardKey | null;
+  if (!sourceKey || sourceKey === targetKey) {
+    homeCardDraggingKey.value = null;
+    return;
+  }
+  const next = [...homeCardOrder.value];
+  const fromIndex = next.indexOf(sourceKey);
+  const toIndex = next.indexOf(targetKey);
+  if (fromIndex < 0 || toIndex < 0) {
+    homeCardDraggingKey.value = null;
+    return;
+  }
+  next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, sourceKey);
+  homeCardOrder.value = normalizeHomeCardOrder(next);
+  homeCardDraggingKey.value = null;
+}
+
+function onHomeCardDragEnd(): void {
+  homeCardDraggingKey.value = null;
+}
+
 async function loadHomePortfolioTable(): Promise<void> {
   homePortfolioTable.loading = true;
   try {
@@ -1161,6 +1259,7 @@ onMounted(async () => {
     }
     loadQuoteUpdateMeta();
     loadHomeTableSectionState();
+    restoreHomeCardOrder();
   }
   const pageSize = getHomeTablePageSize();
   homePortfolioTable.pageSize = pageSize;
@@ -1258,6 +1357,15 @@ watch(
       void loadHomeLiabilityTable();
     }
   },
+);
+
+watch(
+  homeCardOrder,
+  (next) => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(HOME_CARD_ORDER_STORAGE_KEY, JSON.stringify(normalizeHomeCardOrder(next)));
+  },
+  { deep: true },
 );
 
 watch(
@@ -1416,14 +1524,25 @@ watch(
       {{ homeActionToast.message }}
     </article>
 
-    <DashboardPanelContainer
+    <div class="flex flex-col gap-4">
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'LIVE_DASHBOARD' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('LIVE_DASHBOARD') }"
+        @dragstart="onHomeCardDragStart('LIVE_DASHBOARD', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('LIVE_DASHBOARD', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <DashboardPanelContainer
       title="Live Dashboard Panel"
       description="Default is collapsed. Expand to preview dashboard widgets and export image."
       source-mode="LIVE"
       :expanded="liveDashboardExpanded"
       collapsed-message="Collapsed. Click Expand to preview and export."
       @toggle="toggleLiveDashboard"
-    >
+        >
       <template #controls>
         <div class="rounded-2xl border border-slate-200 p-2.5 sm:p-3 dark:border-slate-700">
           <div class="grid gap-2 sm:gap-3 text-sm md:grid-cols-[auto_1fr] md:items-center">
@@ -1632,9 +1751,20 @@ watch(
           />
         </div>
       </div>
-    </DashboardPanelContainer>
+        </DashboardPanelContainer>
+      </div>
 
-    <PortfolioStatusTableCard
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'PORTFOLIOS_TABLE' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('PORTFOLIOS_TABLE') }"
+        @dragstart="onHomeCardDragStart('PORTFOLIOS_TABLE', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('PORTFOLIOS_TABLE', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <PortfolioStatusTableCard
       title="Portfolios Table"
       subtitle="Portfolio / Current / Invested Principal / Profit / Return"
       :expanded="homePortfoliosExpanded"
@@ -1655,9 +1785,20 @@ watch(
       @set-page="homePortfolioTable.page = $event"
       @select-all="selectHomeAllPortfolios"
       @set-portfolio-key="homePortfolioKey = $event"
-    />
+        />
+      </div>
 
-    <HoldingsStatusTableCard
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'HOLDINGS_TABLE' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('HOLDINGS_TABLE') }"
+        @dragstart="onHomeCardDragStart('HOLDINGS_TABLE', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('HOLDINGS_TABLE', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <HoldingsStatusTableCard
       title="Holdings Table"
       subtitle="Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol"
       :expanded="homeHoldingsExpanded"
@@ -1675,9 +1816,20 @@ watch(
       @sort="toggleHomeHoldingSort"
       @set-page="homeHoldingTable.page = $event"
       @update:search-term="homeHoldingSearchTerm = $event"
-    />
+        />
+      </div>
 
-    <LiabilitiesStatusTableCard
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'LIABILITIES_TABLE' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('LIABILITIES_TABLE') }"
+        @dragstart="onHomeCardDragStart('LIABILITIES_TABLE', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('LIABILITIES_TABLE', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <LiabilitiesStatusTableCard
       title="Liabilities Table"
       subtitle="Portfolio / Liability / Balance / Type"
       :expanded="homeLiabilitiesExpanded"
@@ -1694,9 +1846,20 @@ watch(
       @sort="toggleHomeLiabilitySort"
       @set-page="homeLiabilityTable.page = $event"
       @update:search-term="homeLiabilitySearchTerm = $event"
-    />
+        />
+      </div>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'REPORT_PANEL' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('REPORT_PANEL') }"
+        @dragstart="onHomeCardDragStart('REPORT_PANEL', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('REPORT_PANEL', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Report Panel</h2>
@@ -1870,9 +2033,20 @@ watch(
       <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
         Collapsed. Click <span class="font-semibold">Expand</span> to preview report cards.
       </p>
-    </article>
+        </article>
+      </div>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'QUICK_INSIGHT' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('QUICK_INSIGHT') }"
+        @dragstart="onHomeCardDragStart('QUICK_INSIGHT', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('QUICK_INSIGHT', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Quick Insight</h2>
       <ul class="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
         <li class="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800">
@@ -1882,9 +2056,20 @@ watch(
           Best Profit assets: {{ topPnlAssets.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-" }}
         </li>
       </ul>
-    </article>
+        </article>
+      </div>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'RELEASE_NOTES' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('RELEASE_NOTES') }"
+        @dragstart="onHomeCardDragStart('RELEASE_NOTES', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('RELEASE_NOTES', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Release Notes</h2>
@@ -1922,7 +2107,9 @@ watch(
       <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
         Collapsed. Click <span class="font-semibold">Expand</span> to view release notes.
       </p>
-    </article>
+        </article>
+      </div>
+    </div>
   </section>
 </template>
 

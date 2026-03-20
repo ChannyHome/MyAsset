@@ -700,6 +700,20 @@ def normalize_trade_payload(
     normalized["auto_apply_portfolio_cashflow"] = bool(auto_apply_portfolio_cashflow)
 
     executed_at = normalized.get("executed_at")
+    if isinstance(executed_at, str):
+        raw = executed_at.strip()
+        if raw:
+            if raw.endswith("Z"):
+                raw = raw[:-1] + "+00:00"
+            try:
+                parsed = datetime.fromisoformat(raw)
+                executed_at = parsed.astimezone(UTC).replace(tzinfo=None) if parsed.tzinfo else parsed
+            except ValueError as exc:
+                raise TradeSyncError("executed_at is invalid datetime") from exc
+        else:
+            executed_at = None
+    elif isinstance(executed_at, datetime) and executed_at.tzinfo is not None:
+        executed_at = executed_at.astimezone(UTC).replace(tzinfo=None)
     if executed_at is None:
         executed_at = datetime.now(UTC).replace(tzinfo=None)
     normalized["executed_at"] = executed_at

@@ -206,7 +206,7 @@ def create_trade(
         normalized = normalize_trade_payload(
             db=db,
             owner_user_id=current_user.id,
-            payload=payload.model_dump(mode="json"),
+            payload=payload.model_dump(mode="python"),
             strict_fx=settings.fx_strict_mode,
         )
     except MissingFxRateError as exc:
@@ -298,7 +298,7 @@ def update_trade(
         "auto_apply_cash_holding": txn.auto_apply_cash_holding,
         "auto_apply_portfolio_cashflow": txn.auto_apply_portfolio_cashflow,
     }
-    updates = payload.model_dump(exclude_unset=True, mode="json")
+    updates = payload.model_dump(exclude_unset=True, mode="python")
     merged.update(updates)
 
     try:
