@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { AxiosError } from "axios";
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
@@ -46,12 +46,17 @@ const setActionsCollapsed = ref(false);
 const setActionTab = ref<"PORTFOLIO" | "HOLDING" | "LIABILITY" | "CASH">("PORTFOLIO");
 const journalCollapsed = ref(false);
 const TRADE_COLLAPSE_STORAGE_KEY = "myasset:trade:collapse-state";
+const TRADE_CARD_ORDER_STORAGE_KEY = "myasset:trade:card-order";
 const TRADE_SET_ACTION_LOGS_STORAGE_KEY = "myasset:trade:set-action-logs";
 const AUTO_SEARCH_DEBOUNCE_MS = 450;
 let journalSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const journalAutoSearchPending = ref(false);
 const suspendJournalAutoSearch = ref(false);
 const setActionSaving = ref(false);
+type TradeCardKey = "SET" | "TRANSFER" | "ENTRY";
+const DEFAULT_TRADE_CARD_ORDER: TradeCardKey[] = ["SET", "TRANSFER", "ENTRY"];
+const tradeCardOrder = ref<TradeCardKey[]>([...DEFAULT_TRADE_CARD_ORDER]);
+const tradeCardDraggingKey = ref<TradeCardKey | null>(null);
 type SetActionKey = "PORTFOLIO" | "HOLDING" | "LIABILITY" | "CASH";
 const setActionLogs = reactive<Record<SetActionKey, string[]>>({
   PORTFOLIO: [],
@@ -128,7 +133,8 @@ const transferForm = reactive({
 const setPortfolioForm = reactive({
   portfolio_id: "",
   effective_at: "",
-  rebaseline_all_history: false,
+  rebaseline_all_history: true,
+  auto_apply_cash_holding: false,
   cumulative_deposit_amount: "",
   cumulative_withdrawal_amount: "",
   reason: "",
@@ -138,7 +144,8 @@ const setHoldingForm = reactive({
   portfolio_id: "",
   holding_id: "",
   effective_at: "",
-  rebaseline_all_history: false,
+  rebaseline_all_history: true,
+  auto_apply_cash_holding: false,
   quantity: "",
   avg_cost: "",
   avg_cost_currency: "KRW",
@@ -151,7 +158,8 @@ const setLiabilityForm = reactive({
   portfolio_id: "",
   liability_id: "",
   effective_at: "",
-  rebaseline_all_history: false,
+  rebaseline_all_history: true,
+  auto_apply_cash_holding: false,
   outstanding_balance: "",
   interest_rate: "",
   reason: "",
@@ -163,7 +171,6 @@ const setCashForm = reactive({
   target_balance: "",
   effective_at: "",
   memo: "",
-  auto_fill_apply: false,
 });
 
 const filters = reactive({
@@ -207,8 +214,9 @@ const holdingsWithMeta = computed(() =>
 );
 const filteredSetHoldings = computed(() => {
   const selectedPortfolioId = toOptionalNumber(setHoldingForm.portfolio_id);
-  if (selectedPortfolioId === undefined) return holdingsWithMeta.value;
-  return holdingsWithMeta.value.filter((item) => item.portfolio_id === selectedPortfolioId);
+  const visible = holdingsWithMeta.value.filter((item) => !item.is_auto_cash);
+  if (selectedPortfolioId === undefined) return visible;
+  return visible.filter((item) => item.portfolio_id === selectedPortfolioId);
 });
 const selectedSetHolding = computed(() => {
   const holdingId = toOptionalNumber(setHoldingForm.holding_id);
@@ -219,6 +227,24 @@ const filteredSetLiabilities = computed(() => {
   const selectedPortfolioId = toOptionalNumber(setLiabilityForm.portfolio_id);
   if (selectedPortfolioId === undefined) return liabilities.value;
   return liabilities.value.filter((item) => item.portfolio_id === selectedPortfolioId);
+});
+const supportedCurrencies = computed(() => {
+  const values = new Set<string>(["KRW", "USD"]);
+  for (const row of portfolios.value) {
+    if (row.base_currency) values.add(String(row.base_currency).toUpperCase());
+  }
+  for (const row of assets.value) {
+    if (row.currency) values.add(String(row.currency).toUpperCase());
+  }
+  for (const row of liabilities.value) {
+    if (row.currency) values.add(String(row.currency).toUpperCase());
+  }
+  for (const row of holdings.value) {
+    if (row.avg_price_currency) values.add(String(row.avg_price_currency).toUpperCase());
+    if (row.invested_amount_currency) values.add(String(row.invested_amount_currency).toUpperCase());
+  }
+  const ordered = [...values].filter((item) => item !== "KRW" && item !== "USD").sort();
+  return ["KRW", "USD", ...ordered];
 });
 const autoCashBalanceByPortfolioCurrency = computed(() => {
   const out = new Map<string, number>();
@@ -355,6 +381,79 @@ function restoreSetActionLogs() {
   }
 }
 
+function normalizeTradeCardOrder(value: unknown): TradeCardKey[] {
+  if (!Array.isArray(value)) return [...DEFAULT_TRADE_CARD_ORDER];
+  const allowed = new Set<TradeCardKey>(DEFAULT_TRADE_CARD_ORDER);
+  const next: TradeCardKey[] = [];
+  for (const item of value) {
+    if ((item === "SET" || item === "TRANSFER" || item === "ENTRY") && !next.includes(item)) {
+      next.push(item);
+    }
+  }
+  for (const key of DEFAULT_TRADE_CARD_ORDER) {
+    if (allowed.has(key) && !next.includes(key)) {
+      next.push(key);
+    }
+  }
+  return next;
+}
+
+function restoreTradeCardOrder() {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(TRADE_CARD_ORDER_STORAGE_KEY);
+    if (!raw) return;
+    tradeCardOrder.value = normalizeTradeCardOrder(JSON.parse(raw));
+  } catch {
+    // ignore malformed or unavailable localStorage
+  }
+}
+
+function getTradeCardOrder(key: TradeCardKey): number {
+  const index = tradeCardOrder.value.indexOf(key);
+  return index === -1 ? DEFAULT_TRADE_CARD_ORDER.indexOf(key) : index;
+}
+
+function onTradeCardDragStart(key: TradeCardKey, event: DragEvent) {
+  tradeCardDraggingKey.value = key;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", key);
+  }
+}
+
+function onTradeCardDragOver(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "move";
+  }
+}
+
+function onTradeCardDrop(targetKey: TradeCardKey, event: DragEvent) {
+  event.preventDefault();
+  const sourceKey = (tradeCardDraggingKey.value
+    || event.dataTransfer?.getData("text/plain")) as TradeCardKey | null;
+  if (!sourceKey || sourceKey === targetKey) {
+    tradeCardDraggingKey.value = null;
+    return;
+  }
+  const current = [...tradeCardOrder.value];
+  const fromIndex = current.indexOf(sourceKey);
+  const toIndex = current.indexOf(targetKey);
+  if (fromIndex === -1 || toIndex === -1) {
+    tradeCardDraggingKey.value = null;
+    return;
+  }
+  current.splice(fromIndex, 1);
+  current.splice(toIndex, 0, sourceKey);
+  tradeCardOrder.value = normalizeTradeCardOrder(current);
+  tradeCardDraggingKey.value = null;
+}
+
+function onTradeCardDragEnd() {
+  tradeCardDraggingKey.value = null;
+}
+
 watch([transferCollapsed, entryCollapsed, setActionsCollapsed, setActionTab, journalCollapsed], ([transfer, entry, setCollapsed, tab, journal]) => {
   if (typeof window === "undefined") return;
   try {
@@ -391,6 +490,19 @@ watch(
   { deep: false },
 );
 
+watch(
+  tradeCardOrder,
+  (next) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(TRADE_CARD_ORDER_STORAGE_KEY, JSON.stringify(normalizeTradeCardOrder(next)));
+    } catch {
+      // ignore storage write failure
+    }
+  },
+  { deep: true },
+);
+
 function nowDateTimeLocalInput(): string {
   return toDateTimeLocalSeoul(new Date());
 }
@@ -424,7 +536,8 @@ function resetSetPortfolioForm(): void {
   const first = portfolios.value[0];
   setPortfolioForm.portfolio_id = first ? String(first.id) : "";
   setPortfolioForm.effective_at = nowDateTimeLocalInput();
-  setPortfolioForm.rebaseline_all_history = false;
+  setPortfolioForm.rebaseline_all_history = true;
+  setPortfolioForm.auto_apply_cash_holding = false;
   setPortfolioForm.cumulative_deposit_amount = first ? String(first.cumulative_deposit_amount) : "0";
   setPortfolioForm.cumulative_withdrawal_amount = first ? String(first.cumulative_withdrawal_amount) : "0";
   setPortfolioForm.reason = "";
@@ -435,7 +548,8 @@ function resetSetHoldingForm(): void {
   setHoldingForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
   setHoldingForm.holding_id = "";
   setHoldingForm.effective_at = nowDateTimeLocalInput();
-  setHoldingForm.rebaseline_all_history = false;
+  setHoldingForm.rebaseline_all_history = true;
+  setHoldingForm.auto_apply_cash_holding = false;
   setHoldingForm.quantity = "";
   setHoldingForm.avg_cost = "";
   setHoldingForm.avg_cost_currency = "KRW";
@@ -449,7 +563,8 @@ function resetSetLiabilityForm(): void {
   setLiabilityForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
   setLiabilityForm.liability_id = "";
   setLiabilityForm.effective_at = nowDateTimeLocalInput();
-  setLiabilityForm.rebaseline_all_history = false;
+  setLiabilityForm.rebaseline_all_history = true;
+  setLiabilityForm.auto_apply_cash_holding = false;
   setLiabilityForm.outstanding_balance = "";
   setLiabilityForm.interest_rate = "";
   setLiabilityForm.reason = "";
@@ -459,10 +574,9 @@ function resetSetCashForm(): void {
   const firstPortfolio = portfolios.value[0];
   setCashForm.portfolio_id = firstPortfolio ? String(firstPortfolio.id) : "";
   setCashForm.currency = (firstPortfolio?.base_currency || "KRW").toUpperCase();
-  setCashForm.target_balance = "";
+  setCashForm.target_balance = "0";
   setCashForm.effective_at = nowDateTimeLocalInput();
   setCashForm.memo = "";
-  setCashForm.auto_fill_apply = false;
 }
 
 function resetSetForms(): void {
@@ -542,37 +656,25 @@ function clearSetActionLogs(action: SetActionKey): void {
   setActionLogs[action].splice(0, setActionLogs[action].length);
 }
 
-async function fillSetCashTargetFromCurrent(): Promise<void> {
+function getSetCashCurrentBalance(portfolioId: number, currency: string): number {
+  const key = `${portfolioId}:${currency.trim().toUpperCase()}`;
+  const current = autoCashBalanceByPortfolioCurrency.value.get(key);
+  return current === undefined ? 0 : current;
+}
+
+function syncSetCashTargetFromCurrent(): void {
   const portfolioId = toOptionalNumber(setCashForm.portfolio_id);
   if (!portfolioId) {
-    const message = "Portfolio를 먼저 선택해주세요.";
-    errorMessage.value = message;
-    appendSetActionLog("CASH", "ERROR", message);
+    setCashForm.target_balance = "0";
     return;
   }
   const currency = setCashForm.currency.trim().toUpperCase();
   if (currency.length !== 3) {
-    const message = "Currency는 3자리 코드여야 합니다.";
-    errorMessage.value = message;
-    appendSetActionLog("CASH", "ERROR", message);
+    setCashForm.target_balance = "0";
     return;
   }
-  const key = `${portfolioId}:${currency}`;
-  const current = autoCashBalanceByPortfolioCurrency.value.get(key);
-  if (current === undefined) {
-    const message = "선택한 포트폴리오/통화의 Auto Cash Balance를 찾지 못했습니다.";
-    errorMessage.value = message;
-    appendSetActionLog("CASH", "ERROR", message);
-    return;
-  }
+  const current = getSetCashCurrentBalance(portfolioId, currency);
   setCashForm.target_balance = toNumericInputString(current);
-  errorMessage.value = "";
-  const message = `현재 잔액 자동 채움: ${formatNumber(current)} ${currency}`;
-  successMessage.value = message;
-  appendSetActionLog("CASH", "OK", message);
-  if (setCashForm.auto_fill_apply) {
-    await submitCashSet();
-  }
 }
 
 async function submitPortfolioSet(): Promise<void> {
@@ -601,6 +703,7 @@ async function submitPortfolioSet(): Promise<void> {
     const out = await rebaselinePortfolio(portfolioId, {
       effective_at: effectiveAt,
       rebaseline_all_history: allHistory,
+      auto_apply_cash_holding: !!setPortfolioForm.auto_apply_cash_holding,
       cumulative_deposit_amount: deposit,
       cumulative_withdrawal_amount: withdraw,
       reason: setPortfolioForm.reason.trim() || null,
@@ -670,6 +773,7 @@ async function submitHoldingSet(): Promise<void> {
     const out = await rebaselineHolding(holdingId, {
       effective_at: effectiveAt,
       rebaseline_all_history: allHistory,
+      auto_apply_cash_holding: !!setHoldingForm.auto_apply_cash_holding,
       quantity,
       avg_price: avgCost,
       avg_price_currency: avgCostCurrency,
@@ -722,6 +826,7 @@ async function submitLiabilitySet(): Promise<void> {
     const out = await rebaselineLiability(liabilityId, {
       effective_at: effectiveAt,
       rebaseline_all_history: allHistory,
+      auto_apply_cash_holding: !!setLiabilityForm.auto_apply_cash_holding,
       outstanding_balance: balance,
       reason: setLiabilityForm.reason.trim() || null,
     });
@@ -1233,10 +1338,31 @@ watch(
   () => setCashForm.portfolio_id,
   (next) => {
     const portfolioId = toOptionalNumber(next);
-    if (portfolioId === undefined) return;
+    if (portfolioId === undefined) {
+      setCashForm.target_balance = "0";
+      return;
+    }
     const row = portfolioById.value.get(portfolioId);
     if (!row) return;
-    setCashForm.currency = (row.base_currency || "KRW").toUpperCase();
+    const baseCurrency = (row.base_currency || "KRW").toUpperCase();
+    if (supportedCurrencies.value.includes(baseCurrency)) {
+      setCashForm.currency = baseCurrency;
+    } else {
+      setCashForm.currency = supportedCurrencies.value[0] ?? "KRW";
+    }
+    syncSetCashTargetFromCurrent();
+  },
+);
+
+watch(
+  () => setCashForm.currency,
+  (next) => {
+    const normalized = next.trim().toUpperCase();
+    if (normalized !== next) {
+      setCashForm.currency = normalized;
+      return;
+    }
+    syncSetCashTargetFromCurrent();
   },
 );
 
@@ -1272,6 +1398,7 @@ watch(
 
 onMounted(async () => {
   restoreCollapseState();
+  restoreTradeCardOrder();
   restoreSetActionLogs();
   await loadReferenceData();
   resetForm();
@@ -1293,8 +1420,348 @@ onBeforeUnmount(() => {
       <h1 class="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Manual Trade Ledger</h1>
     </header>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-start justify-between gap-3">
+    <div class="flex flex-col gap-4">
+    <article
+      class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      :class="tradeCardDraggingKey === 'SET' ? 'opacity-75 ring-2 ring-violet-400/40' : ''"
+      :style="{ order: getTradeCardOrder('SET') }"
+      @dragover="onTradeCardDragOver"
+      @drop="onTradeCardDrop('SET', $event)"
+    >
+      <div
+        class="flex cursor-move items-start justify-between gap-3"
+        draggable="true"
+        @dragstart="onTradeCardDragStart('SET', $event)"
+        @dragend="onTradeCardDragEnd"
+      >
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">Set Actions</p>
+          <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Rebaseline-Based Set Actions</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Agent 편집을 Trade에서 빠르게 실행합니다. 실행 시 기준 거래를 재생성합니다.</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          :aria-expanded="!setActionsCollapsed"
+          @click="setActionsCollapsed = !setActionsCollapsed"
+        >
+          {{ setActionsCollapsed ? "Expand" : "Collapse" }}
+        </button>
+      </div>
+
+      <div v-if="!setActionsCollapsed" class="mt-3 space-y-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'PORTFOLIO' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'PORTFOLIO'"
+          >
+            Portfolio Net Contribution Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'HOLDING' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'HOLDING'"
+          >
+            Holding Position Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'LIABILITY' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'LIABILITY'"
+          >
+            Liability Balance Set
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+            :class="setActionTab === 'CASH' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+            @click="setActionTab = 'CASH'"
+          >
+            Auto Cash Balance Set
+          </button>
+        </div>
+
+        <div v-if="setActionTab === 'PORTFOLIO'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
+              <select v-model="setPortfolioForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="p in portfolios" :key="`set-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setPortfolioForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Deposit
+              <input v-model="setPortfolioForm.cumulative_deposit_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Withdrawal
+              <input v-model="setPortfolioForm.cumulative_withdrawal_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setPortfolioForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setPortfolioForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setPortfolioForm.auto_apply_cash_holding" type="checkbox" class="h-4 w-4" />
+            <span>Auto apply to cash holding (optional)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitPortfolioSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Portfolio Net Contribution Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('PORTFOLIO')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.PORTFOLIO.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.PORTFOLIO" :key="`set-log-portfolio-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else-if="setActionTab === 'HOLDING'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
+              <select v-model="setHoldingForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">All</option>
+                <option v-for="p in portfolios" :key="`set-h-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Holding
+              <select v-model="setHoldingForm.holding_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="h in filteredSetHoldings" :key="`set-h-${h.id}`" :value="String(h.id)">
+                  #{{ h.id }} {{ h.portfolio_name }} / {{ h.asset_name }}{{ h.asset_symbol ? ` (${h.asset_symbol})` : "" }}
+                </option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setHoldingForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Quantity
+              <input v-model="setHoldingForm.quantity" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost
+              <input v-model="setHoldingForm.avg_cost" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost Currency
+              <select v-model="setHoldingForm.avg_cost_currency" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950">
+                <option v-for="currency in supportedCurrencies" :key="`set-h-avg-${currency}`" :value="currency">{{ currency }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis (optional)
+              <input v-model="setHoldingForm.cost_basis_total" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis Currency
+              <select v-model="setHoldingForm.cost_basis_currency" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950">
+                <option v-for="currency in supportedCurrencies" :key="`set-h-cost-${currency}`" :value="currency">{{ currency }}</option>
+              </select>
+            </label>
+          </div>
+          <p
+            v-if="selectedSetHolding?.is_auto_cash"
+            class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+          >
+            Auto Cash Balance는 ledger-derived입니다. Trade의 BALANCE_SET/DEPOSIT/WITHDRAW/ADJUSTMENT를 사용하세요.
+          </p>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setHoldingForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setHoldingForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setHoldingForm.auto_apply_cash_holding" type="checkbox" class="h-4 w-4" />
+            <span>Auto apply to cash holding (optional)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving || !!selectedSetHolding?.is_auto_cash"
+              @click="submitHoldingSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Holding Position Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('HOLDING')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.HOLDING.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.HOLDING" :key="`set-log-holding-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else-if="setActionTab === 'LIABILITY'" class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
+              <select v-model="setLiabilityForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">All</option>
+                <option v-for="p in portfolios" :key="`set-l-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Liability
+              <select v-model="setLiabilityForm.liability_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="l in filteredSetLiabilities" :key="`set-l-${l.id}`" :value="String(l.id)">
+                  #{{ l.id }} {{ l.name }} ({{ l.currency }})
+                </option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setLiabilityForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Outstanding Balance
+              <input v-model="setLiabilityForm.outstanding_balance" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Interest Rate (optional)
+              <input v-model="setLiabilityForm.interest_rate" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
+            <input v-model="setLiabilityForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setLiabilityForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
+            <span>Rebaseline all history (기준시각 무시)</span>
+          </label>
+          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
+            <input v-model="setLiabilityForm.auto_apply_cash_holding" type="checkbox" class="h-4 w-4" />
+            <span>Auto apply to cash holding (optional)</span>
+          </label>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitLiabilitySet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Liability Balance Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('LIABILITY')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.LIABILITY.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.LIABILITY" :key="`set-log-liability-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+
+        <div v-else class="space-y-3">
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
+              <select v-model="setCashForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
+                <option value="">Select</option>
+                <option v-for="p in portfolios" :key="`set-c-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Currency
+              <select v-model="setCashForm.currency" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950">
+                <option v-for="currency in supportedCurrencies" :key="`set-c-currency-${currency}`" :value="currency">{{ currency }}</option>
+              </select>
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Target Balance
+              <input v-model="setCashForm.target_balance" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
+              <input v-model="setCashForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+            </label>
+          </div>
+          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Memo (optional)
+            <input v-model="setCashForm.memo" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
+          </label>
+          <p class="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs text-cyan-800 dark:border-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
+            Manual Trade Entry의 BALANCE_SET과 동일 로직입니다. Portfolio/Currency 선택 시 현재 Auto Cash Balance가 Target Balance에 기본 채움됩니다.
+          </p>
+          <div>
+            <button
+              type="button"
+              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
+              :disabled="setActionSaving"
+              @click="submitCashSet"
+            >
+              {{ setActionSaving ? "Applying..." : "Apply Auto Cash Balance Set" }}
+            </button>
+          </div>
+          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
+              <button
+                type="button"
+                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearSetActionLogs('CASH')"
+              >
+                Clear
+              </button>
+            </div>
+            <ul v-if="setActionLogs.CASH.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
+              <li v-for="line in setActionLogs.CASH" :key="`set-log-cash-${line}`">{{ line }}</li>
+            </ul>
+            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+
+
+    <article
+      class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      :class="tradeCardDraggingKey === 'TRANSFER' ? 'opacity-75 ring-2 ring-violet-400/40' : ''"
+      :style="{ order: getTradeCardOrder('TRANSFER') }"
+      @dragover="onTradeCardDragOver"
+      @drop="onTradeCardDrop('TRANSFER', $event)"
+    >
+      <div
+        class="flex cursor-move items-start justify-between gap-3"
+        draggable="true"
+        @dragstart="onTradeCardDragStart('TRANSFER', $event)"
+        @dragend="onTradeCardDragEnd"
+      >
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.08em] text-cyan-700 dark:text-cyan-300">Transfer</p>
           <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Portfolio To Portfolio Transfer</h2>
@@ -1399,8 +1866,19 @@ onBeforeUnmount(() => {
       </div>
     </article>
 
-    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-start justify-between gap-3">
+    <article
+      class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      :class="tradeCardDraggingKey === 'ENTRY' ? 'opacity-75 ring-2 ring-violet-400/40' : ''"
+      :style="{ order: getTradeCardOrder('ENTRY') }"
+      @dragover="onTradeCardDragOver"
+      @drop="onTradeCardDrop('ENTRY', $event)"
+    >
+      <div
+        class="flex cursor-move items-start justify-between gap-3"
+        draggable="true"
+        @dragstart="onTradeCardDragStart('ENTRY', $event)"
+        @dragend="onTradeCardDragEnd"
+      >
         <div>
           <p class="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700 dark:text-emerald-300">Entry</p>
           <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Manual Trade Entry</h2>
@@ -1526,316 +2004,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </article>
-
-    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-violet-700 dark:text-violet-300">Set Actions</p>
-          <h2 class="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">Rebaseline-Based Set Actions</h2>
-          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Agent 편집을 Trade에서 빠르게 실행합니다. 실행 시 기준 거래를 재생성합니다.</p>
-        </div>
-        <button
-          type="button"
-          class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          :aria-expanded="!setActionsCollapsed"
-          @click="setActionsCollapsed = !setActionsCollapsed"
-        >
-          {{ setActionsCollapsed ? "Expand" : "Collapse" }}
-        </button>
-      </div>
-
-      <div v-if="!setActionsCollapsed" class="mt-3 space-y-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
-            :class="setActionTab === 'PORTFOLIO' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-            @click="setActionTab = 'PORTFOLIO'"
-          >
-            Portfolio Net Contribution Set
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
-            :class="setActionTab === 'HOLDING' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-            @click="setActionTab = 'HOLDING'"
-          >
-            Holding Position Set
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
-            :class="setActionTab === 'LIABILITY' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-            @click="setActionTab = 'LIABILITY'"
-          >
-            Liability Balance Set
-          </button>
-          <button
-            type="button"
-            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
-            :class="setActionTab === 'CASH' ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-300' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-            @click="setActionTab = 'CASH'"
-          >
-            Auto Cash Balance Set
-          </button>
-        </div>
-
-        <div v-if="setActionTab === 'PORTFOLIO'" class="space-y-3">
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
-              <select v-model="setPortfolioForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">Select</option>
-                <option v-for="p in portfolios" :key="`set-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
-              <input v-model="setPortfolioForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Deposit
-              <input v-model="setPortfolioForm.cumulative_deposit_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cumulative Withdrawal
-              <input v-model="setPortfolioForm.cumulative_withdrawal_amount" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-          </div>
-          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
-            <input v-model="setPortfolioForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-          </label>
-          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-            <input v-model="setPortfolioForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
-            <span>Rebaseline all history (기준시각 무시)</span>
-          </label>
-          <div>
-            <button
-              type="button"
-              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
-              :disabled="setActionSaving"
-              @click="submitPortfolioSet"
-            >
-              {{ setActionSaving ? "Applying..." : "Apply Portfolio Net Contribution Set" }}
-            </button>
-          </div>
-          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
-            <div class="flex items-center justify-between gap-2">
-              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
-              <button
-                type="button"
-                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="clearSetActionLogs('PORTFOLIO')"
-              >
-                Clear
-              </button>
-            </div>
-            <ul v-if="setActionLogs.PORTFOLIO.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
-              <li v-for="line in setActionLogs.PORTFOLIO" :key="`set-log-portfolio-${line}`">{{ line }}</li>
-            </ul>
-            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
-          </div>
-        </div>
-
-        <div v-else-if="setActionTab === 'HOLDING'" class="space-y-3">
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
-              <select v-model="setHoldingForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">All</option>
-                <option v-for="p in portfolios" :key="`set-h-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Holding
-              <select v-model="setHoldingForm.holding_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">Select</option>
-                <option v-for="h in filteredSetHoldings" :key="`set-h-${h.id}`" :value="String(h.id)">
-                  #{{ h.id }} {{ h.portfolio_name }} / {{ h.asset_name }}{{ h.asset_symbol ? ` (${h.asset_symbol})` : "" }}
-                </option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
-              <input v-model="setHoldingForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Quantity
-              <input v-model="setHoldingForm.quantity" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost
-              <input v-model="setHoldingForm.avg_cost" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Avg Cost Currency
-              <input v-model="setHoldingForm.avg_cost_currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis (optional)
-              <input v-model="setHoldingForm.cost_basis_total" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Cost Basis Currency
-              <input v-model="setHoldingForm.cost_basis_currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-          </div>
-          <p
-            v-if="selectedSetHolding?.is_auto_cash"
-            class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
-          >
-            Auto Cash Balance는 ledger-derived입니다. Trade의 BALANCE_SET/DEPOSIT/WITHDRAW/ADJUSTMENT를 사용하세요.
-          </p>
-          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
-            <input v-model="setHoldingForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-          </label>
-          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-            <input v-model="setHoldingForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
-            <span>Rebaseline all history (기준시각 무시)</span>
-          </label>
-          <div>
-            <button
-              type="button"
-              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
-              :disabled="setActionSaving || !!selectedSetHolding?.is_auto_cash"
-              @click="submitHoldingSet"
-            >
-              {{ setActionSaving ? "Applying..." : "Apply Holding Position Set" }}
-            </button>
-          </div>
-          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
-            <div class="flex items-center justify-between gap-2">
-              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
-              <button
-                type="button"
-                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="clearSetActionLogs('HOLDING')"
-              >
-                Clear
-              </button>
-            </div>
-            <ul v-if="setActionLogs.HOLDING.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
-              <li v-for="line in setActionLogs.HOLDING" :key="`set-log-holding-${line}`">{{ line }}</li>
-            </ul>
-            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
-          </div>
-        </div>
-
-        <div v-else-if="setActionTab === 'LIABILITY'" class="space-y-3">
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio (filter)
-              <select v-model="setLiabilityForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">All</option>
-                <option v-for="p in portfolios" :key="`set-l-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Liability
-              <select v-model="setLiabilityForm.liability_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">Select</option>
-                <option v-for="l in filteredSetLiabilities" :key="`set-l-${l.id}`" :value="String(l.id)">
-                  #{{ l.id }} {{ l.name }} ({{ l.currency }})
-                </option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
-              <input v-model="setLiabilityForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Outstanding Balance
-              <input v-model="setLiabilityForm.outstanding_balance" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Interest Rate (optional)
-              <input v-model="setLiabilityForm.interest_rate" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-          </div>
-          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Reason (optional)
-            <input v-model="setLiabilityForm.reason" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-          </label>
-          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-            <input v-model="setLiabilityForm.rebaseline_all_history" type="checkbox" class="h-4 w-4" />
-            <span>Rebaseline all history (기준시각 무시)</span>
-          </label>
-          <div>
-            <button
-              type="button"
-              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
-              :disabled="setActionSaving"
-              @click="submitLiabilitySet"
-            >
-              {{ setActionSaving ? "Applying..." : "Apply Liability Balance Set" }}
-            </button>
-          </div>
-          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
-            <div class="flex items-center justify-between gap-2">
-              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
-              <button
-                type="button"
-                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="clearSetActionLogs('LIABILITY')"
-              >
-                Clear
-              </button>
-            </div>
-            <ul v-if="setActionLogs.LIABILITY.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
-              <li v-for="line in setActionLogs.LIABILITY" :key="`set-log-liability-${line}`">{{ line }}</li>
-            </ul>
-            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
-          </div>
-        </div>
-
-        <div v-else class="space-y-3">
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Portfolio
-              <select v-model="setCashForm.portfolio_id" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950">
-                <option value="">Select</option>
-                <option v-for="p in portfolios" :key="`set-c-pf-${p.id}`" :value="String(p.id)">#{{ p.id }} {{ p.name }}</option>
-              </select>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Currency
-              <input v-model="setCashForm.currency" maxlength="3" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Target Balance
-              <div class="mt-1 flex items-center gap-2">
-                <input v-model="setCashForm.target_balance" class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-                <button
-                  type="button"
-                  class="whitespace-nowrap rounded-lg border border-slate-300 px-2 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                  @click="fillSetCashTargetFromCurrent"
-                >
-                  Use Current
-                </button>
-              </div>
-            </label>
-            <label class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Effective At (KST)
-              <input v-model="setCashForm.effective_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-            </label>
-          </div>
-          <label class="block text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Memo (optional)
-            <input v-model="setCashForm.memo" class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950" />
-          </label>
-          <label class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">
-            <input v-model="setCashForm.auto_fill_apply" type="checkbox" class="h-4 w-4" />
-            <span>Auto Fill + Apply (Use Current 클릭 시 바로 실행)</span>
-          </label>
-          <p class="rounded-lg border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs text-cyan-800 dark:border-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300">
-            기존 BALANCE_SET 거래를 생성하여 현금 잔액을 목표값으로 맞춥니다. (Manual Trade Entry의 BALANCE_SET은 그대로 유지)
-          </p>
-          <div>
-            <button
-              type="button"
-              class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60"
-              :disabled="setActionSaving"
-              @click="submitCashSet"
-            >
-              {{ setActionSaving ? "Applying..." : "Apply Auto Cash Balance Set" }}
-            </button>
-          </div>
-          <div class="rounded-lg border border-slate-300 bg-slate-50/70 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-950/50">
-            <div class="flex items-center justify-between gap-2">
-              <p class="font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-slate-300">Recent Logs</p>
-              <button
-                type="button"
-                class="rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="clearSetActionLogs('CASH')"
-              >
-                Clear
-              </button>
-            </div>
-            <ul v-if="setActionLogs.CASH.length" class="mt-1 space-y-1 text-slate-700 dark:text-slate-200">
-              <li v-for="line in setActionLogs.CASH" :key="`set-log-cash-${line}`">{{ line }}</li>
-            </ul>
-            <p v-else class="mt-1 text-slate-500 dark:text-slate-400">No executions yet.</p>
-          </div>
-        </div>
-      </div>
-    </article>
+    </div>
 
     <article v-if="errorMessage" class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">{{ errorMessage }}</article>
     <article v-if="successMessage" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">{{ successMessage }}</article>
@@ -2079,3 +2248,5 @@ onBeforeUnmount(() => {
     </article>
   </section>
 </template>
+
+
