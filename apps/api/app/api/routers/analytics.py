@@ -24,11 +24,13 @@ from app.schemas.analytics import (
     AnalyticsNetworthSeriesLinePointOut,
     AnalyticsNetworthSeriesOut,
     AnalyticsNetworthSeriesPointOut,
+    AnalyticsQuickInsightOut,
     AnalyticsSnapshotCollectOut,
     AnalyticsSummaryV2Out,
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.analytics_summary import calculate_summary_values
+from app.services.quick_insight import get_quick_insight
 from app.services.user_seed import SeedUser
 from app.services.valuation_snapshots import collect_valuation_snapshots_batch
 
@@ -215,6 +217,37 @@ def get_summary(
         principal_return_pct=values.principal_return_pct,
         as_of=values.as_of,
     )
+
+
+@router.get("/quick-insight", response_model=AnalyticsQuickInsightOut)
+def get_quick_insight_view(
+    scope_type: str | None = None,
+    scope_id: int | None = None,
+    display_currency: str = "KRW",
+    period: Literal["1D", "7D", "30D"] = Query(default="1D"),
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> AnalyticsQuickInsightOut:
+    normalized_scope_type, normalized_scope_id, scope_user_ids = _resolve_scope_user_ids(
+        db=db,
+        current_user=current_user,
+        scope_type=scope_type,
+        scope_id=scope_id,
+    )
+    try:
+        return get_quick_insight(
+            db=db,
+            scope_type=normalized_scope_type,
+            scope_id=normalized_scope_id,
+            scope_user_ids=scope_user_ids,
+            display_currency=display_currency,
+            period=period,
+        )
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
 
 
 @router.get("/allocation", response_model=AnalyticsAllocationOut)

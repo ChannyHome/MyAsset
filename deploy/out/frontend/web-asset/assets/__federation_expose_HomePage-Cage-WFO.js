@@ -24,98 +24,99 @@ const _hoisted_7 = {
   key: 0,
   class: "rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
 };
-const _hoisted_8 = { class: "rounded-2xl border border-slate-200 p-2.5 sm:p-3 dark:border-slate-700" };
-const _hoisted_9 = { class: "grid gap-2 sm:gap-3 text-sm md:grid-cols-[auto_1fr] md:items-center" };
-const _hoisted_10 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
+const _hoisted_8 = { class: "flex flex-col gap-4" };
+const _hoisted_9 = { class: "rounded-2xl border border-slate-200 p-2.5 sm:p-3 dark:border-slate-700" };
+const _hoisted_10 = { class: "grid gap-2 sm:gap-3 text-sm md:grid-cols-[auto_1fr] md:items-center" };
 const _hoisted_11 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
-const _hoisted_12 = ["onClick"];
-const _hoisted_13 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
-const _hoisted_14 = ["onClick"];
-const _hoisted_15 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
-const _hoisted_16 = ["value"];
-const _hoisted_17 = { class: "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 sm:text-xs dark:border-slate-700 dark:text-slate-200" };
-const _hoisted_18 = { class: "flex w-full flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end" };
-const _hoisted_19 = ["disabled"];
+const _hoisted_12 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
+const _hoisted_13 = ["onClick"];
+const _hoisted_14 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
+const _hoisted_15 = ["onClick"];
+const _hoisted_16 = { class: "flex flex-wrap items-center gap-1.5 sm:gap-2" };
+const _hoisted_17 = ["value"];
+const _hoisted_18 = { class: "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-700 sm:text-xs dark:border-slate-700 dark:text-slate-200" };
+const _hoisted_19 = { class: "flex w-full flex-wrap items-center gap-1.5 sm:gap-2 sm:justify-end" };
 const _hoisted_20 = ["disabled"];
-const _hoisted_21 = {
+const _hoisted_21 = ["disabled"];
+const _hoisted_22 = {
   key: 2,
   class: "w-full text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
 };
-const _hoisted_22 = { class: "xl:col-span-2" };
 const _hoisted_23 = { class: "xl:col-span-2" };
-const _hoisted_24 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_25 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_26 = {
+const _hoisted_24 = { class: "xl:col-span-2" };
+const _hoisted_25 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_26 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_27 = {
   key: 0,
   class: "mt-4 space-y-4"
 };
-const _hoisted_27 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_28 = {
+const _hoisted_28 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_29 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_29 = {
+const _hoisted_30 = {
   key: 1,
   class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
 };
-const _hoisted_30 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_31 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_32 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_33 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_34 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
-const _hoisted_35 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
-const _hoisted_36 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_37 = {
-  key: 0,
-  class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
-};
+const _hoisted_31 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_32 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_33 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_34 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_35 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_36 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
+const _hoisted_37 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_38 = {
-  key: 1,
-  class: "space-y-2"
-};
-const _hoisted_39 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_40 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_41 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_42 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_43 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_44 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_45 = {
+const _hoisted_39 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_46 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_47 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_48 = { class: "text-xs text-slate-500" };
-const _hoisted_49 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_50 = {
+const _hoisted_40 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_41 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_42 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_43 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_44 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_45 = {
+  key: 0,
+  class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_46 = {
+  key: 1,
+  class: "space-y-2"
+};
+const _hoisted_47 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_48 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_49 = { class: "text-xs text-slate-500" };
+const _hoisted_50 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_51 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_51 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_52 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
-const _hoisted_53 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_52 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_53 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
 const _hoisted_54 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_55 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_56 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_57 = {
+const _hoisted_55 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_56 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_57 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_58 = {
   key: 0,
   class: "mt-4"
 };
-const _hoisted_58 = {
+const _hoisted_59 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_59 = {
+const _hoisted_60 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_60 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_61 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_62 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_63 = {
+const _hoisted_61 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_62 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_63 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_64 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
@@ -125,6 +126,7 @@ const LIVE_TREND_PREF_STORAGE_KEY = "myasset:home:live-trend-pref";
 const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
+const HOME_CARD_ORDER_STORAGE_KEY = "myasset:home:card-order";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
 const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 18e4;
 const _sfc_main = /* @__PURE__ */ _defineComponent({
@@ -276,6 +278,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       q: "",
       loading: false
     });
+    const DEFAULT_HOME_CARD_ORDER = [
+      "LIVE_DASHBOARD",
+      "PORTFOLIOS_TABLE",
+      "HOLDINGS_TABLE",
+      "LIABILITIES_TABLE",
+      "REPORT_PANEL",
+      "QUICK_INSIGHT",
+      "RELEASE_NOTES"
+    ];
+    const homeCardOrder = ref([...DEFAULT_HOME_CARD_ORDER]);
+    const homeCardDraggingKey = ref(null);
     const liveDashboardRef = ref(null);
     const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
@@ -804,6 +817,67 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       };
       window.localStorage.setItem(HOME_TABLE_SECTION_STORAGE_KEY, JSON.stringify(payload));
     }
+    function normalizeHomeCardOrder(value) {
+      if (!Array.isArray(value)) return [...DEFAULT_HOME_CARD_ORDER];
+      const next = [];
+      for (const item of value) {
+        if ((item === "LIVE_DASHBOARD" || item === "PORTFOLIOS_TABLE" || item === "HOLDINGS_TABLE" || item === "LIABILITIES_TABLE" || item === "REPORT_PANEL" || item === "QUICK_INSIGHT" || item === "RELEASE_NOTES") && !next.includes(item)) {
+          next.push(item);
+        }
+      }
+      for (const key of DEFAULT_HOME_CARD_ORDER) {
+        if (!next.includes(key)) next.push(key);
+      }
+      return next;
+    }
+    function restoreHomeCardOrder() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(HOME_CARD_ORDER_STORAGE_KEY);
+      if (!raw) return;
+      try {
+        homeCardOrder.value = normalizeHomeCardOrder(JSON.parse(raw));
+      } catch {
+      }
+    }
+    function getHomeCardOrder(key) {
+      const index = homeCardOrder.value.indexOf(key);
+      return index >= 0 ? index : DEFAULT_HOME_CARD_ORDER.indexOf(key);
+    }
+    function onHomeCardDragStart(key, event) {
+      homeCardDraggingKey.value = key;
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", key);
+      }
+    }
+    function onHomeCardDragOver(event) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+    }
+    function onHomeCardDrop(targetKey, event) {
+      event.preventDefault();
+      const sourceKey = homeCardDraggingKey.value || event.dataTransfer?.getData("text/plain");
+      if (!sourceKey || sourceKey === targetKey) {
+        homeCardDraggingKey.value = null;
+        return;
+      }
+      const next = [...homeCardOrder.value];
+      const fromIndex = next.indexOf(sourceKey);
+      const toIndex = next.indexOf(targetKey);
+      if (fromIndex < 0 || toIndex < 0) {
+        homeCardDraggingKey.value = null;
+        return;
+      }
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, sourceKey);
+      homeCardOrder.value = normalizeHomeCardOrder(next);
+      homeCardDraggingKey.value = null;
+    }
+    function onHomeCardDragEnd() {
+      homeCardDraggingKey.value = null;
+    }
     async function loadHomePortfolioTable() {
       homePortfolioTable.loading = true;
       try {
@@ -1091,6 +1165,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         }
         loadQuoteUpdateMeta();
         loadHomeTableSectionState();
+        restoreHomeCardOrder();
       }
       const pageSize = getHomeTablePageSize();
       homePortfolioTable.pageSize = pageSize;
@@ -1181,6 +1256,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
     );
     watch(
+      homeCardOrder,
+      (next) => {
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem(HOME_CARD_ORDER_STORAGE_KEY, JSON.stringify(normalizeHomeCardOrder(next)));
+      },
+      { deep: true }
+    );
+    watch(
       () => homePortfolioKey.value,
       () => {
         homePortfolioTable.page = 1;
@@ -1268,7 +1351,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[20] || (_cache[20] = _createElementVNode("div", null, [
+            _cache[34] || (_cache[34] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300" }, "Home"),
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Live Dashboard"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " This page now uses real API data from summary, holdings performance, and liabilities. ")
@@ -1307,432 +1390,504 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             homeActionToast.value.kind === "ERROR" ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200" : homeActionToast.value.kind === "SUCCESS" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" : "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-200"
           ])
         }, _toDisplayString(homeActionToast.value.message), 3)) : _createCommentVNode("", true),
-        _createVNode(_sfc_main$1, {
-          title: "Live Dashboard Panel",
-          description: "Default is collapsed. Expand to preview dashboard widgets and export image.",
-          "source-mode": "LIVE",
-          expanded: liveDashboardExpanded.value,
-          "collapsed-message": "Collapsed. Click Expand to preview and export.",
-          onToggle: toggleLiveDashboard
-        }, {
-          controls: _withCtx(() => [
-            _createElementVNode("div", _hoisted_8, [
-              _createElementVNode("div", _hoisted_9, [
-                _cache[23] || (_cache[23] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
-                _createElementVNode("div", _hoisted_10, [
-                  _createElementVNode("button", {
-                    type: "button",
-                    class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveKpiTarget.value === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                    onClick: _cache[1] || (_cache[1] = ($event) => liveKpiTarget.value = "SUMMARY")
-                  }, " Summary ", 2),
-                  _createElementVNode("button", {
-                    type: "button",
-                    class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveKpiTarget.value === "PORTFOLIOS" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                    onClick: _cache[2] || (_cache[2] = ($event) => liveKpiTarget.value = "PORTFOLIOS")
-                  }, " Portfolios ", 2)
-                ]),
-                _cache[24] || (_cache[24] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
-                _createElementVNode("div", _hoisted_11, [
-                  (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "HOLDINGS"], (target) => {
-                    return _createElementVNode("button", {
-                      key: `home-target-${target}`,
-                      type: "button",
-                      class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveDashboardTarget.value === target ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                      onClick: ($event) => liveDashboardTarget.value = target
-                    }, _toDisplayString(target), 11, _hoisted_12);
-                  }), 64))
-                ]),
-                _cache[25] || (_cache[25] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
-                _createElementVNode("div", _hoisted_13, [
-                  (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
-                    return _createElementVNode("button", {
-                      key: `home-donut-start-${pos}`,
-                      type: "button",
-                      class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveDonutStartPosition.value === pos ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
-                      onClick: ($event) => liveDonutStartPosition.value = pos
-                    }, _toDisplayString(pos), 11, _hoisted_14);
-                  }), 64))
-                ]),
-                _cache[26] || (_cache[26] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
-                _createElementVNode("div", _hoisted_15, [
-                  _withDirectives(_createElementVNode("select", {
-                    "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => livePortfolioKey.value = $event),
-                    class: "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                  }, [
-                    _cache[21] || (_cache[21] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
-                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
-                      return _openBlock(), _createElementBlock("option", {
-                        key: `home-live-portfolio-${item.id}`,
-                        value: String(item.id)
-                      }, _toDisplayString(item.name), 9, _hoisted_16);
-                    }), 128))
-                  ], 512), [
-                    [_vModelSelect, livePortfolioKey.value]
-                  ]),
-                  _createElementVNode("label", _hoisted_17, [
-                    _withDirectives(_createElementVNode("input", {
-                      "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => livePortfolioNetBasis.value = $event),
-                      type: "checkbox",
-                      class: "h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
-                    }, null, 512), [
-                      [_vModelCheckbox, livePortfolioNetBasis.value]
+        _createElementVNode("div", _hoisted_8, [
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "LIVE_DASHBOARD" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("LIVE_DASHBOARD") }),
+            onDragstart: _cache[11] || (_cache[11] = ($event) => onHomeCardDragStart("LIVE_DASHBOARD", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[12] || (_cache[12] = ($event) => onHomeCardDrop("LIVE_DASHBOARD", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createVNode(_sfc_main$1, {
+              title: "Live Dashboard Panel",
+              description: "Default is collapsed. Expand to preview dashboard widgets and export image.",
+              "source-mode": "LIVE",
+              expanded: liveDashboardExpanded.value,
+              "collapsed-message": "Collapsed. Click Expand to preview and export.",
+              onToggle: toggleLiveDashboard
+            }, {
+              controls: _withCtx(() => [
+                _createElementVNode("div", _hoisted_9, [
+                  _createElementVNode("div", _hoisted_10, [
+                    _cache[37] || (_cache[37] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
+                    _createElementVNode("div", _hoisted_11, [
+                      _createElementVNode("button", {
+                        type: "button",
+                        class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveKpiTarget.value === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                        onClick: _cache[1] || (_cache[1] = ($event) => liveKpiTarget.value = "SUMMARY")
+                      }, " Summary ", 2),
+                      _createElementVNode("button", {
+                        type: "button",
+                        class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveKpiTarget.value === "PORTFOLIOS" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                        onClick: _cache[2] || (_cache[2] = ($event) => liveKpiTarget.value = "PORTFOLIOS")
+                      }, " Portfolios ", 2)
                     ]),
-                    _cache[22] || (_cache[22] = _createTextVNode(" Net ", -1))
-                  ])
-                ]),
-                _cache[27] || (_cache[27] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
-                _createElementVNode("div", _hoisted_18, [
-                  canManageQuoteUpdates.value ? (_openBlock(), _createElementBlock("button", {
-                    key: 0,
-                    type: "button",
-                    class: "min-w-[10rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
-                    disabled: quoteUpdatePolling.value || loading.value,
-                    onClick: runHomeUpdateQuotesNow
-                  }, _toDisplayString(quoteUpdatePolling.value ? `Update Quotes Running... ${quoteUpdateProgressText.value}` : "Update Quotes Now"), 9, _hoisted_19)) : _createCommentVNode("", true),
-                  canManageQuoteUpdates.value && (quoteUpdatePolling.value || quoteUpdateStatus.value === "COMPLETED" || quoteUpdateStatus.value === "FAILED") ? (_openBlock(), _createElementBlock("span", {
-                    key: 1,
-                    class: _normalizeClass([
-                      "rounded-full px-2 py-1 text-[11px] font-semibold",
-                      quoteUpdatePolling.value ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : quoteUpdateStatus.value === "COMPLETED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200"
+                    _cache[38] || (_cache[38] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
+                    _createElementVNode("div", _hoisted_12, [
+                      (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "HOLDINGS"], (target) => {
+                        return _createElementVNode("button", {
+                          key: `home-target-${target}`,
+                          type: "button",
+                          class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveDashboardTarget.value === target ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                          onClick: ($event) => liveDashboardTarget.value = target
+                        }, _toDisplayString(target), 11, _hoisted_13);
+                      }), 64))
+                    ]),
+                    _cache[39] || (_cache[39] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
+                    _createElementVNode("div", _hoisted_14, [
+                      (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
+                        return _createElementVNode("button", {
+                          key: `home-donut-start-${pos}`,
+                          type: "button",
+                          class: _normalizeClass(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs", liveDonutStartPosition.value === pos ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                          onClick: ($event) => liveDonutStartPosition.value = pos
+                        }, _toDisplayString(pos), 11, _hoisted_15);
+                      }), 64))
+                    ]),
+                    _cache[40] || (_cache[40] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
+                    _createElementVNode("div", _hoisted_16, [
+                      _withDirectives(_createElementVNode("select", {
+                        "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => livePortfolioKey.value = $event),
+                        class: "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      }, [
+                        _cache[35] || (_cache[35] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                        (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
+                          return _openBlock(), _createElementBlock("option", {
+                            key: `home-live-portfolio-${item.id}`,
+                            value: String(item.id)
+                          }, _toDisplayString(item.name), 9, _hoisted_17);
+                        }), 128))
+                      ], 512), [
+                        [_vModelSelect, livePortfolioKey.value]
+                      ]),
+                      _createElementVNode("label", _hoisted_18, [
+                        _withDirectives(_createElementVNode("input", {
+                          "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => livePortfolioNetBasis.value = $event),
+                          type: "checkbox",
+                          class: "h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+                        }, null, 512), [
+                          [_vModelCheckbox, livePortfolioNetBasis.value]
+                        ]),
+                        _cache[36] || (_cache[36] = _createTextVNode(" Net ", -1))
+                      ])
+                    ]),
+                    _cache[41] || (_cache[41] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
+                    _createElementVNode("div", _hoisted_19, [
+                      canManageQuoteUpdates.value ? (_openBlock(), _createElementBlock("button", {
+                        key: 0,
+                        type: "button",
+                        class: "min-w-[10rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
+                        disabled: quoteUpdatePolling.value || loading.value,
+                        onClick: runHomeUpdateQuotesNow
+                      }, _toDisplayString(quoteUpdatePolling.value ? `Update Quotes Running... ${quoteUpdateProgressText.value}` : "Update Quotes Now"), 9, _hoisted_20)) : _createCommentVNode("", true),
+                      canManageQuoteUpdates.value && (quoteUpdatePolling.value || quoteUpdateStatus.value === "COMPLETED" || quoteUpdateStatus.value === "FAILED") ? (_openBlock(), _createElementBlock("span", {
+                        key: 1,
+                        class: _normalizeClass([
+                          "rounded-full px-2 py-1 text-[11px] font-semibold",
+                          quoteUpdatePolling.value ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : quoteUpdateStatus.value === "COMPLETED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200" : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200"
+                        ])
+                      }, _toDisplayString(quoteUpdatePolling.value ? `${quoteUpdateStatus.value} ${quoteUpdateProgressText.value}` : quoteUpdateStatus.value), 3)) : _createCommentVNode("", true),
+                      _createElementVNode("button", {
+                        type: "button",
+                        class: "min-w-[8rem] grow rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                        onClick: printLiveDashboard
+                      }, " Print "),
+                      _createElementVNode("button", {
+                        type: "button",
+                        class: "min-w-[8rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
+                        disabled: exportingImage.value || loading.value || !liveDashboardExpanded.value,
+                        onClick: exportLiveDashboardImage
+                      }, _toDisplayString(exportingImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_21),
+                      canManageQuoteUpdates.value && quoteUpdateLastResultLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_22, _toDisplayString(quoteUpdateLastResultLabel.value), 1)) : _createCommentVNode("", true)
                     ])
-                  }, _toDisplayString(quoteUpdatePolling.value ? `${quoteUpdateStatus.value} ${quoteUpdateProgressText.value}` : quoteUpdateStatus.value), 3)) : _createCommentVNode("", true),
-                  _createElementVNode("button", {
-                    type: "button",
-                    class: "min-w-[8rem] grow rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-                    onClick: printLiveDashboard
-                  }, " Print "),
-                  _createElementVNode("button", {
-                    type: "button",
-                    class: "min-w-[8rem] grow rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60 sm:grow-0 sm:px-3 sm:py-1.5 sm:text-xs dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20",
-                    disabled: exportingImage.value || loading.value || !liveDashboardExpanded.value,
-                    onClick: exportLiveDashboardImage
-                  }, _toDisplayString(exportingImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_20),
-                  canManageQuoteUpdates.value && quoteUpdateLastResultLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_21, _toDisplayString(quoteUpdateLastResultLabel.value), 1)) : _createCommentVNode("", true)
+                  ])
                 ])
-              ])
-            ])
-          ]),
-          default: _withCtx(() => [
-            _createElementVNode("div", {
-              ref_key: "liveDashboardRef",
-              ref: liveDashboardRef,
-              class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
-            }, [
-              _createElementVNode("div", _hoisted_22, [
-                liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$2, {
-                  key: 0,
-                  title: "KPI Summary",
-                  subtitle: "Included in print/snapshot",
-                  currency: summaryDisplayCurrency.value,
+              ]),
+              default: _withCtx(() => [
+                _createElementVNode("div", {
+                  ref_key: "liveDashboardRef",
+                  ref: liveDashboardRef,
+                  class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
+                }, [
+                  _createElementVNode("div", _hoisted_23, [
+                    liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$2, {
+                      key: 0,
+                      title: "KPI Summary",
+                      subtitle: "Included in print/snapshot",
+                      currency: summaryDisplayCurrency.value,
+                      "gross-assets-total": grossAssetsTotal.value,
+                      "liabilities-total": liabilitiesTotal.value,
+                      "net-assets-total": netAssetsTotal.value,
+                      "invested-principal-total": investedPrincipalTotal.value,
+                      "principal-minus-debt-total": principalMinusDebtTotal.value,
+                      "gross-return-pct": kpiGrossReturnPct.value,
+                      "net-return-pct": kpiNetReturnPct.value,
+                      "gross-profit-total": kpiGrossProfitTotal.value,
+                      "net-profit-total": kpiNetProfitTotal.value,
+                      "as-of": asOf.value,
+                      "mask-amounts": liveMaskAmounts.value
+                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$3, {
+                      key: 1,
+                      title: "KPI Portfolios",
+                      subtitle: `Per portfolio | ${livePortfolioNetBasis.value ? "Net basis" : "Gross basis"} | Included in print/snapshot`,
+                      currency: summaryDisplayCurrency.value,
+                      portfolios: liveKpiPortfolioRows.value,
+                      "mask-amounts": liveMaskAmounts.value,
+                      "use-net-basis": livePortfolioNetBasis.value
+                    }, null, 8, ["subtitle", "currency", "portfolios", "mask-amounts", "use-net-basis"]))
+                  ]),
+                  _createVNode(_sfc_main$4, {
+                    title: `Allocation | ${liveDashboardTarget.value}`,
+                    subtitle: `Top N + Others (${livePortfolioKey.value === "ALL" ? "all portfolios" : "filtered portfolio"})`,
+                    currency: summaryDisplayCurrency.value,
+                    total: donutTotal.value,
+                    items: donutItems.value,
+                    "start-position": liveDonutStartPosition.value,
+                    "mask-amounts": liveMaskAmounts.value,
+                    loading: dashboardDonutLoading.value,
+                    error: dashboardDonutError.value
+                  }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position", "mask-amounts", "loading", "error"]),
+                  _createVNode(_sfc_main$5, {
+                    title: `Treemap | ${liveDashboardTarget.value}`,
+                    subtitle: liveDashboardTarget.value === "HOLDINGS" ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey.value === "ALL" ? "" : `| ${livePortfolioLabel.value}`}` : `Target=${liveDashboardTarget.value} | group_by=PORTFOLIO | color=return`,
+                    currency: summaryDisplayCurrency.value,
+                    items: liveTreemapItems.value,
+                    "mask-amounts": liveMaskAmounts.value,
+                    loading: dashboardTreemapLoading.value,
+                    error: dashboardTreemapError.value
+                  }, null, 8, ["title", "subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
+                  _createElementVNode("div", _hoisted_24, [
+                    _createVNode(_sfc_main$6, {
+                      title: "Networth Trend",
+                      subtitle: "valuation_snapshots | bucket=DAY",
+                      currency: summaryDisplayCurrency.value,
+                      points: trendPoints.value,
+                      "mask-amounts": liveMaskAmounts.value,
+                      loading: dashboardTrendLoading.value,
+                      error: dashboardTrendError.value,
+                      "show-gross": liveTrendVisibility.gross,
+                      "show-liabilities": liveTrendVisibility.liabilities,
+                      "show-net": liveTrendVisibility.net,
+                      mode: homeTrendMode.value,
+                      "portfolio-metric": homeTrendPortfolioMetric.value,
+                      "portfolio-lines": homeTrendPortfolioLines.value,
+                      "portfolio-options": homeTrendPortfolioOptions.value,
+                      "portfolio-key": homeTrendPortfolioKey.value,
+                      "onUpdate:showGross": _cache[5] || (_cache[5] = ($event) => liveTrendVisibility.gross = $event),
+                      "onUpdate:showLiabilities": _cache[6] || (_cache[6] = ($event) => liveTrendVisibility.liabilities = $event),
+                      "onUpdate:showNet": _cache[7] || (_cache[7] = ($event) => liveTrendVisibility.net = $event),
+                      "onUpdate:mode": _cache[8] || (_cache[8] = ($event) => homeTrendMode.value = $event),
+                      "onUpdate:portfolioMetric": _cache[9] || (_cache[9] = ($event) => homeTrendPortfolioMetric.value = $event),
+                      "onUpdate:portfolioKey": _cache[10] || (_cache[10] = ($event) => homeTrendPortfolioKey.value = $event)
+                    }, null, 8, ["currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "portfolio-lines", "portfolio-options", "portfolio-key"])
+                  ])
+                ], 512)
+              ]),
+              _: 1
+            }, 8, ["expanded"])
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "PORTFOLIOS_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("PORTFOLIOS_TABLE") }),
+            onDragstart: _cache[16] || (_cache[16] = ($event) => onHomeCardDragStart("PORTFOLIOS_TABLE", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[17] || (_cache[17] = ($event) => onHomeCardDrop("PORTFOLIOS_TABLE", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createVNode(_sfc_main$7, {
+              title: "Portfolios Table",
+              subtitle: "Portfolio / Current / Invested Principal / Profit / Return",
+              expanded: homePortfoliosExpanded.value,
+              loading: homePortfolioTable.loading,
+              rows: homePortfolioRows.value,
+              total: homePortfolioTable.total,
+              page: homePortfolioTable.page,
+              "page-size": homePortfolioTable.pageSize,
+              "sort-by": homePortfolioTable.sortBy,
+              "sort-order": homePortfolioTable.sortOrder,
+              currency: summaryDisplayCurrency.value,
+              "mask-amounts": liveMaskAmounts.value,
+              "show-filter": true,
+              "portfolio-key": homePortfolioKey.value,
+              "portfolio-options": homePortfolioOptions.value,
+              onToggle: _cache[13] || (_cache[13] = ($event) => homePortfoliosExpanded.value = !homePortfoliosExpanded.value),
+              onSort: toggleHomePortfolioSort,
+              onSetPage: _cache[14] || (_cache[14] = ($event) => homePortfolioTable.page = $event),
+              onSelectAll: selectHomeAllPortfolios,
+              onSetPortfolioKey: _cache[15] || (_cache[15] = ($event) => homePortfolioKey.value = $event)
+            }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "currency", "mask-amounts", "portfolio-key", "portfolio-options"])
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "HOLDINGS_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("HOLDINGS_TABLE") }),
+            onDragstart: _cache[21] || (_cache[21] = ($event) => onHomeCardDragStart("HOLDINGS_TABLE", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[22] || (_cache[22] = ($event) => onHomeCardDrop("HOLDINGS_TABLE", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createVNode(_sfc_main$8, {
+              title: "Holdings Table",
+              subtitle: "Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol",
+              expanded: homeHoldingsExpanded.value,
+              loading: homeHoldingTable.loading,
+              rows: homeHoldingRows.value,
+              total: homeHoldingTable.total,
+              page: homeHoldingTable.page,
+              "page-size": homeHoldingTable.pageSize,
+              "sort-by": homeHoldingTable.sortBy,
+              "sort-order": homeHoldingTable.sortOrder,
+              "search-term": homeHoldingSearchTerm.value,
+              "mask-amounts": liveMaskAmounts.value,
+              "display-currency": summaryDisplayCurrency.value,
+              onToggle: _cache[18] || (_cache[18] = ($event) => homeHoldingsExpanded.value = !homeHoldingsExpanded.value),
+              onSort: toggleHomeHoldingSort,
+              onSetPage: _cache[19] || (_cache[19] = ($event) => homeHoldingTable.page = $event),
+              "onUpdate:searchTerm": _cache[20] || (_cache[20] = ($event) => homeHoldingSearchTerm.value = $event)
+            }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts", "display-currency"])
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "LIABILITIES_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("LIABILITIES_TABLE") }),
+            onDragstart: _cache[26] || (_cache[26] = ($event) => onHomeCardDragStart("LIABILITIES_TABLE", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[27] || (_cache[27] = ($event) => onHomeCardDrop("LIABILITIES_TABLE", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createVNode(_sfc_main$9, {
+              title: "Liabilities Table",
+              subtitle: "Portfolio / Liability / Balance / Type",
+              expanded: homeLiabilitiesExpanded.value,
+              loading: homeLiabilityTable.loading,
+              rows: homeLiabilityRows.value,
+              total: homeLiabilityTable.total,
+              page: homeLiabilityTable.page,
+              "page-size": homeLiabilityTable.pageSize,
+              "sort-by": homeLiabilityTable.sortBy,
+              "sort-order": homeLiabilityTable.sortOrder,
+              "search-term": homeLiabilitySearchTerm.value,
+              "mask-amounts": liveMaskAmounts.value,
+              onToggle: _cache[23] || (_cache[23] = ($event) => homeLiabilitiesExpanded.value = !homeLiabilitiesExpanded.value),
+              onSort: toggleHomeLiabilitySort,
+              onSetPage: _cache[24] || (_cache[24] = ($event) => homeLiabilityTable.page = $event),
+              "onUpdate:searchTerm": _cache[25] || (_cache[25] = ($event) => homeLiabilitySearchTerm.value = $event)
+            }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts"])
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "REPORT_PANEL" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("REPORT_PANEL") }),
+            onDragstart: _cache[28] || (_cache[28] = ($event) => onHomeCardDragStart("REPORT_PANEL", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[29] || (_cache[29] = ($event) => onHomeCardDrop("REPORT_PANEL", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createElementVNode("article", _hoisted_25, [
+              _createElementVNode("div", _hoisted_26, [
+                _cache[42] || (_cache[42] = _createElementVNode("div", null, [
+                  _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
+                  _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
+                ], -1)),
+                _createElementVNode("button", {
+                  type: "button",
+                  class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                  onClick: toggleReportPanel
+                }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
+              ]),
+              reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
+                _createVNode(_sfc_main$a, {
+                  "display-currency": summaryDisplayCurrency.value,
                   "gross-assets-total": grossAssetsTotal.value,
                   "liabilities-total": liabilitiesTotal.value,
                   "net-assets-total": netAssetsTotal.value,
                   "invested-principal-total": investedPrincipalTotal.value,
                   "principal-minus-debt-total": principalMinusDebtTotal.value,
-                  "gross-return-pct": kpiGrossReturnPct.value,
-                  "net-return-pct": kpiNetReturnPct.value,
-                  "gross-profit-total": kpiGrossProfitTotal.value,
-                  "net-profit-total": kpiNetProfitTotal.value,
-                  "as-of": asOf.value,
+                  "principal-return-pct": principalReturnPct.value,
+                  "net-assets-return-pct": netAssetsReturnPct.value,
+                  "principal-profit-total": principalProfitTotal.value,
+                  "net-assets-profit-total": netAssetsProfitTotal.value,
+                  portfolios: portfolios.value,
+                  liabilities: liabilities.value,
                   "mask-amounts": liveMaskAmounts.value
-                }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$3, {
-                  key: 1,
-                  title: "KPI Portfolios",
-                  subtitle: `Per portfolio | ${livePortfolioNetBasis.value ? "Net basis" : "Gross basis"} | Included in print/snapshot`,
-                  currency: summaryDisplayCurrency.value,
-                  portfolios: liveKpiPortfolioRows.value,
-                  "mask-amounts": liveMaskAmounts.value,
-                  "use-net-basis": livePortfolioNetBasis.value
-                }, null, 8, ["subtitle", "currency", "portfolios", "mask-amounts", "use-net-basis"]))
-              ]),
-              _createVNode(_sfc_main$4, {
-                title: `Allocation | ${liveDashboardTarget.value}`,
-                subtitle: `Top N + Others (${livePortfolioKey.value === "ALL" ? "all portfolios" : "filtered portfolio"})`,
-                currency: summaryDisplayCurrency.value,
-                total: donutTotal.value,
-                items: donutItems.value,
-                "start-position": liveDonutStartPosition.value,
-                "mask-amounts": liveMaskAmounts.value,
-                loading: dashboardDonutLoading.value,
-                error: dashboardDonutError.value
-              }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position", "mask-amounts", "loading", "error"]),
-              _createVNode(_sfc_main$5, {
-                title: `Treemap | ${liveDashboardTarget.value}`,
-                subtitle: liveDashboardTarget.value === "HOLDINGS" ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey.value === "ALL" ? "" : `| ${livePortfolioLabel.value}`}` : `Target=${liveDashboardTarget.value} | group_by=PORTFOLIO | color=return`,
-                currency: summaryDisplayCurrency.value,
-                items: liveTreemapItems.value,
-                "mask-amounts": liveMaskAmounts.value,
-                loading: dashboardTreemapLoading.value,
-                error: dashboardTreemapError.value
-              }, null, 8, ["title", "subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
-              _createElementVNode("div", _hoisted_23, [
-                _createVNode(_sfc_main$6, {
-                  title: "Networth Trend",
-                  subtitle: "valuation_snapshots | bucket=DAY",
-                  currency: summaryDisplayCurrency.value,
-                  points: trendPoints.value,
-                  "mask-amounts": liveMaskAmounts.value,
-                  loading: dashboardTrendLoading.value,
-                  error: dashboardTrendError.value,
-                  "show-gross": liveTrendVisibility.gross,
-                  "show-liabilities": liveTrendVisibility.liabilities,
-                  "show-net": liveTrendVisibility.net,
-                  mode: homeTrendMode.value,
-                  "portfolio-metric": homeTrendPortfolioMetric.value,
-                  "portfolio-lines": homeTrendPortfolioLines.value,
-                  "portfolio-options": homeTrendPortfolioOptions.value,
-                  "portfolio-key": homeTrendPortfolioKey.value,
-                  "onUpdate:showGross": _cache[5] || (_cache[5] = ($event) => liveTrendVisibility.gross = $event),
-                  "onUpdate:showLiabilities": _cache[6] || (_cache[6] = ($event) => liveTrendVisibility.liabilities = $event),
-                  "onUpdate:showNet": _cache[7] || (_cache[7] = ($event) => liveTrendVisibility.net = $event),
-                  "onUpdate:mode": _cache[8] || (_cache[8] = ($event) => homeTrendMode.value = $event),
-                  "onUpdate:portfolioMetric": _cache[9] || (_cache[9] = ($event) => homeTrendPortfolioMetric.value = $event),
-                  "onUpdate:portfolioKey": _cache[10] || (_cache[10] = ($event) => homeTrendPortfolioKey.value = $event)
-                }, null, 8, ["currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "portfolio-lines", "portfolio-options", "portfolio-key"])
-              ])
-            ], 512)
-          ]),
-          _: 1
-        }, 8, ["expanded"]),
-        _createVNode(_sfc_main$7, {
-          title: "Portfolios Table",
-          subtitle: "Portfolio / Current / Invested Principal / Profit / Return",
-          expanded: homePortfoliosExpanded.value,
-          loading: homePortfolioTable.loading,
-          rows: homePortfolioRows.value,
-          total: homePortfolioTable.total,
-          page: homePortfolioTable.page,
-          "page-size": homePortfolioTable.pageSize,
-          "sort-by": homePortfolioTable.sortBy,
-          "sort-order": homePortfolioTable.sortOrder,
-          currency: summaryDisplayCurrency.value,
-          "mask-amounts": liveMaskAmounts.value,
-          "show-filter": true,
-          "portfolio-key": homePortfolioKey.value,
-          "portfolio-options": homePortfolioOptions.value,
-          onToggle: _cache[11] || (_cache[11] = ($event) => homePortfoliosExpanded.value = !homePortfoliosExpanded.value),
-          onSort: toggleHomePortfolioSort,
-          onSetPage: _cache[12] || (_cache[12] = ($event) => homePortfolioTable.page = $event),
-          onSelectAll: selectHomeAllPortfolios,
-          onSetPortfolioKey: _cache[13] || (_cache[13] = ($event) => homePortfolioKey.value = $event)
-        }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "currency", "mask-amounts", "portfolio-key", "portfolio-options"]),
-        _createVNode(_sfc_main$8, {
-          title: "Holdings Table",
-          subtitle: "Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol",
-          expanded: homeHoldingsExpanded.value,
-          loading: homeHoldingTable.loading,
-          rows: homeHoldingRows.value,
-          total: homeHoldingTable.total,
-          page: homeHoldingTable.page,
-          "page-size": homeHoldingTable.pageSize,
-          "sort-by": homeHoldingTable.sortBy,
-          "sort-order": homeHoldingTable.sortOrder,
-          "search-term": homeHoldingSearchTerm.value,
-          "mask-amounts": liveMaskAmounts.value,
-          "display-currency": summaryDisplayCurrency.value,
-          onToggle: _cache[14] || (_cache[14] = ($event) => homeHoldingsExpanded.value = !homeHoldingsExpanded.value),
-          onSort: toggleHomeHoldingSort,
-          onSetPage: _cache[15] || (_cache[15] = ($event) => homeHoldingTable.page = $event),
-          "onUpdate:searchTerm": _cache[16] || (_cache[16] = ($event) => homeHoldingSearchTerm.value = $event)
-        }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts", "display-currency"]),
-        _createVNode(_sfc_main$9, {
-          title: "Liabilities Table",
-          subtitle: "Portfolio / Liability / Balance / Type",
-          expanded: homeLiabilitiesExpanded.value,
-          loading: homeLiabilityTable.loading,
-          rows: homeLiabilityRows.value,
-          total: homeLiabilityTable.total,
-          page: homeLiabilityTable.page,
-          "page-size": homeLiabilityTable.pageSize,
-          "sort-by": homeLiabilityTable.sortBy,
-          "sort-order": homeLiabilityTable.sortOrder,
-          "search-term": homeLiabilitySearchTerm.value,
-          "mask-amounts": liveMaskAmounts.value,
-          onToggle: _cache[17] || (_cache[17] = ($event) => homeLiabilitiesExpanded.value = !homeLiabilitiesExpanded.value),
-          onSort: toggleHomeLiabilitySort,
-          onSetPage: _cache[18] || (_cache[18] = ($event) => homeLiabilityTable.page = $event),
-          "onUpdate:searchTerm": _cache[19] || (_cache[19] = ($event) => homeLiabilitySearchTerm.value = $event)
-        }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts"]),
-        _createElementVNode("article", _hoisted_24, [
-          _createElementVNode("div", _hoisted_25, [
-            _cache[28] || (_cache[28] = _createElementVNode("div", null, [
-              _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
-              _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
-            ], -1)),
-            _createElementVNode("button", {
-              type: "button",
-              class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-              onClick: toggleReportPanel
-            }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
-          ]),
-          reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_26, [
-            _createVNode(_sfc_main$a, {
-              "display-currency": summaryDisplayCurrency.value,
-              "gross-assets-total": grossAssetsTotal.value,
-              "liabilities-total": liabilitiesTotal.value,
-              "net-assets-total": netAssetsTotal.value,
-              "invested-principal-total": investedPrincipalTotal.value,
-              "principal-minus-debt-total": principalMinusDebtTotal.value,
-              "principal-return-pct": principalReturnPct.value,
-              "net-assets-return-pct": netAssetsReturnPct.value,
-              "principal-profit-total": principalProfitTotal.value,
-              "net-assets-profit-total": netAssetsProfitTotal.value,
-              portfolios: portfolios.value,
-              liabilities: liabilities.value,
-              "mask-amounts": liveMaskAmounts.value
-            }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
-            _createElementVNode("article", _hoisted_27, [
-              _cache[33] || (_cache[33] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
-                _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
-                _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
-              ], -1)),
-              topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_28, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_29, [
-                (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topPortfolios.value, (item) => {
-                  return _openBlock(), _createElementBlock("li", {
-                    key: item.id,
-                    class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
-                  }, [
-                    _createElementVNode("div", _hoisted_30, [
-                      _createElementVNode("p", _hoisted_31, [
-                        _createTextVNode(_toDisplayString(item.name) + " ", 1),
-                        _createElementVNode("span", _hoisted_32, _toDisplayString(item.type), 1)
-                      ]),
-                      _createElementVNode("p", {
-                        class: _normalizeClass(["text-xs font-semibold", item.total_return_pct == null ? "text-slate-500" : toNumber(item.total_return_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
-                      }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
-                    ]),
-                    _createElementVNode("div", _hoisted_33, [
-                      _cache[29] || (_cache[29] = _createTextVNode(" Gross ", -1)),
-                      _createElementVNode("span", {
-                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[30] || (_cache[30] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
-                      _createElementVNode("span", {
-                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatCurrency(
-                        toNumber(item.debt_adjusted_principal_total ?? item.principal_minus_debt_total),
-                        item.base_currency || summaryDisplayCurrency.value
-                      )), 5)
-                    ]),
-                    _createElementVNode("div", _hoisted_34, [
-                      _cache[31] || (_cache[31] = _createTextVNode(" Net ", -1)),
-                      _createElementVNode("span", {
-                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                      _cache[32] || (_cache[32] = _createTextVNode(" · Portfolio Profit ", -1)),
-                      _createElementVNode("span", {
-                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                      }, _toDisplayString(formatSignedCurrency(
-                        toNumber(item.portfolio_profit_total ?? item.total_pnl_amount),
-                        item.base_currency || summaryDisplayCurrency.value
-                      )), 5)
-                    ])
-                  ]);
-                }), 128))
-              ]))
-            ]),
-            _createElementVNode("div", _hoisted_35, [
-              _createElementVNode("article", _hoisted_36, [
-                _cache[35] || (_cache[35] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
-                  _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
-                  _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
-                ], -1)),
-                topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_37, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_38, [
-                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topHoldings.value, (item) => {
-                    return _openBlock(), _createElementBlock("li", {
-                      key: item.holding_id,
-                      class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
-                    }, [
-                      _createElementVNode("div", _hoisted_39, [
-                        _createElementVNode("p", _hoisted_40, [
-                          _createTextVNode(_toDisplayString(item.asset_name) + " ", 1),
-                          _createElementVNode("span", _hoisted_41, _toDisplayString(item.asset_symbol || "-"), 1)
+                }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
+                _createElementVNode("article", _hoisted_28, [
+                  _cache[47] || (_cache[47] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                    _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
+                    _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
+                  ], -1)),
+                  topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_29, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_30, [
+                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topPortfolios.value, (item) => {
+                      return _openBlock(), _createElementBlock("li", {
+                        key: item.id,
+                        class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                      }, [
+                        _createElementVNode("div", _hoisted_31, [
+                          _createElementVNode("p", _hoisted_32, [
+                            _createTextVNode(_toDisplayString(item.name) + " ", 1),
+                            _createElementVNode("span", _hoisted_33, _toDisplayString(item.type), 1)
+                          ]),
+                          _createElementVNode("p", {
+                            class: _normalizeClass(["text-xs font-semibold", item.total_return_pct == null ? "text-slate-500" : toNumber(item.total_return_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
+                          }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                         ]),
-                        _createElementVNode("p", {
-                          class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
-                        }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
-                      ]),
-                      _createElementVNode("div", _hoisted_42, [
-                        _createElementVNode("span", {
-                          style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                        }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
-                        _cache[34] || (_cache[34] = _createTextVNode(" / ", -1)),
-                        _createElementVNode("span", {
-                          style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                        }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
-                      ])
-                    ]);
-                  }), 128))
-                ]))
-              ]),
-              _createElementVNode("article", _hoisted_43, [
-                _cache[36] || (_cache[36] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
-                  _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
-                  _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
-                ], -1)),
-                topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_44, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_45, [
-                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topLiabilities.value, (item) => {
-                    return _openBlock(), _createElementBlock("li", {
-                      key: item.id,
-                      class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
-                    }, [
-                      _createElementVNode("div", _hoisted_46, [
-                        _createElementVNode("p", _hoisted_47, _toDisplayString(item.name), 1),
-                        _createElementVNode("p", _hoisted_48, _toDisplayString(item.liability_type), 1)
-                      ]),
-                      _createElementVNode("div", _hoisted_49, [
-                        _createElementVNode("span", {
-                          style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
-                        }, _toDisplayString(formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency.value)), 5)
-                      ])
-                    ]);
-                  }), 128))
-                ]))
+                        _createElementVNode("div", _hoisted_34, [
+                          _cache[43] || (_cache[43] = _createTextVNode(" Gross ", -1)),
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
+                          _cache[44] || (_cache[44] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatCurrency(
+                            toNumber(item.debt_adjusted_principal_total ?? item.principal_minus_debt_total),
+                            item.base_currency || summaryDisplayCurrency.value
+                          )), 5)
+                        ]),
+                        _createElementVNode("div", _hoisted_35, [
+                          _cache[45] || (_cache[45] = _createTextVNode(" Net ", -1)),
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
+                          _cache[46] || (_cache[46] = _createTextVNode(" · Portfolio Profit ", -1)),
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatSignedCurrency(
+                            toNumber(item.portfolio_profit_total ?? item.total_pnl_amount),
+                            item.base_currency || summaryDisplayCurrency.value
+                          )), 5)
+                        ])
+                      ]);
+                    }), 128))
+                  ]))
+                ]),
+                _createElementVNode("div", _hoisted_36, [
+                  _createElementVNode("article", _hoisted_37, [
+                    _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                      _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
+                      _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
+                    ], -1)),
+                    topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_38, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_39, [
+                      (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topHoldings.value, (item) => {
+                        return _openBlock(), _createElementBlock("li", {
+                          key: item.holding_id,
+                          class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                        }, [
+                          _createElementVNode("div", _hoisted_40, [
+                            _createElementVNode("p", _hoisted_41, [
+                              _createTextVNode(_toDisplayString(item.asset_name) + " ", 1),
+                              _createElementVNode("span", _hoisted_42, _toDisplayString(item.asset_symbol || "-"), 1)
+                            ]),
+                            _createElementVNode("p", {
+                              class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
+                            }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
+                          ]),
+                          _createElementVNode("div", _hoisted_43, [
+                            _createElementVNode("span", {
+                              style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                            }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
+                            _cache[48] || (_cache[48] = _createTextVNode(" / ", -1)),
+                            _createElementVNode("span", {
+                              style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                            }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
+                          ])
+                        ]);
+                      }), 128))
+                    ]))
+                  ]),
+                  _createElementVNode("article", _hoisted_44, [
+                    _cache[50] || (_cache[50] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                      _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
+                      _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
+                    ], -1)),
+                    topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_45, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_46, [
+                      (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topLiabilities.value, (item) => {
+                        return _openBlock(), _createElementBlock("li", {
+                          key: item.id,
+                          class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+                        }, [
+                          _createElementVNode("div", _hoisted_47, [
+                            _createElementVNode("p", _hoisted_48, _toDisplayString(item.name), 1),
+                            _createElementVNode("p", _hoisted_49, _toDisplayString(item.liability_type), 1)
+                          ]),
+                          _createElementVNode("div", _hoisted_50, [
+                            _createElementVNode("span", {
+                              style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                            }, _toDisplayString(formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency.value)), 5)
+                          ])
+                        ]);
+                      }), 128))
+                    ]))
+                  ])
+                ])
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[51] || (_cache[51] = [
+                _createTextVNode(" Collapsed. Click ", -1),
+                _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
+                _createTextVNode(" to preview report cards. ", -1)
+              ])]))
+            ])
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "QUICK_INSIGHT" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("QUICK_INSIGHT") }),
+            onDragstart: _cache[30] || (_cache[30] = ($event) => onHomeCardDragStart("QUICK_INSIGHT", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createElementVNode("article", _hoisted_52, [
+              _cache[52] || (_cache[52] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
+              _createElementVNode("ul", _hoisted_53, [
+                _createElementVNode("li", _hoisted_54, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
+                _createElementVNode("li", _hoisted_55, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
               ])
             ])
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_50, [..._cache[37] || (_cache[37] = [
-            _createTextVNode(" Collapsed. Click ", -1),
-            _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
-            _createTextVNode(" to preview report cards. ", -1)
-          ])]))
-        ]),
-        _createElementVNode("article", _hoisted_51, [
-          _cache[38] || (_cache[38] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
-          _createElementVNode("ul", _hoisted_52, [
-            _createElementVNode("li", _hoisted_53, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
-            _createElementVNode("li", _hoisted_54, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
-          ])
-        ]),
-        _createElementVNode("article", _hoisted_55, [
-          _createElementVNode("div", _hoisted_56, [
-            _cache[39] || (_cache[39] = _createElementVNode("div", null, [
-              _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
-              _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
-            ], -1)),
-            _createElementVNode("button", {
-              type: "button",
-              class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
-              onClick: toggleReleaseNotesPanel
-            }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
-          ]),
-          releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_57, [
-            releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_58, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_59, [
-              (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
-                return _openBlock(), _createElementBlock("li", {
-                  key: note.id,
-                  class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
-                }, [
-                  _createElementVNode("p", _hoisted_60, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                  _createElementVNode("p", _hoisted_61, _toDisplayString(note.title), 1),
-                  _createElementVNode("p", _hoisted_62, _toDisplayString(note.summary), 1)
-                ]);
-              }), 128))
-            ]))
-          ])) : (_openBlock(), _createElementBlock("p", _hoisted_63, [..._cache[40] || (_cache[40] = [
-            _createTextVNode(" Collapsed. Click ", -1),
-            _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
-            _createTextVNode(" to view release notes. ", -1)
-          ])]))
+          ], 38),
+          _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "RELEASE_NOTES" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("RELEASE_NOTES") }),
+            onDragstart: _cache[32] || (_cache[32] = ($event) => onHomeCardDragStart("RELEASE_NOTES", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[33] || (_cache[33] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createElementVNode("article", _hoisted_56, [
+              _createElementVNode("div", _hoisted_57, [
+                _cache[53] || (_cache[53] = _createElementVNode("div", null, [
+                  _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
+                  _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
+                ], -1)),
+                _createElementVNode("button", {
+                  type: "button",
+                  class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                  onClick: toggleReleaseNotesPanel
+                }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
+              ]),
+              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_58, [
+                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_59, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_60, [
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
+                    return _openBlock(), _createElementBlock("li", {
+                      key: note.id,
+                      class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                    }, [
+                      _createElementVNode("p", _hoisted_61, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                      _createElementVNode("p", _hoisted_62, _toDisplayString(note.title), 1),
+                      _createElementVNode("p", _hoisted_63, _toDisplayString(note.summary), 1)
+                    ]);
+                  }), 128))
+                ]))
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_64, [..._cache[54] || (_cache[54] = [
+                _createTextVNode(" Collapsed. Click ", -1),
+                _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
+                _createTextVNode(" to view release notes. ", -1)
+              ])]))
+            ])
+          ], 38)
         ])
       ]);
     };
