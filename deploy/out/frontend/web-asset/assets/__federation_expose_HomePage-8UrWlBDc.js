@@ -4,7 +4,7 @@ import { g as getSummary, a as getNetworthSeries, b as getAllocation } from './u
 import { _ as _sfc_main$a } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-8Ho99rjW.js';
 import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4, c as _sfc_main$5 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DcBqJiKv.js';
 import { _ as _sfc_main$6 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
-import { u as useDashboardDataAdapter, _ as _sfc_main$1, a as _sfc_main$7, b as _sfc_main$8, c as _sfc_main$9, d as _sfc_main$b } from './useDashboardDataAdapter-Br3fxh2J.js';
+import { u as useDashboardDataAdapter, _ as _sfc_main$1, a as _sfc_main$7, b as _sfc_main$8, c as _sfc_main$9, d as _sfc_main$b } from './useDashboardDataAdapter-BP--kjoU.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
 import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
 import { u as updateQuotesNow, g as getMe, a as getReleaseNotes, b as getQuoteUpdateJobStatus } from './quotes-OIhGiauY.js';
