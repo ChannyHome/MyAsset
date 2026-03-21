@@ -33,6 +33,7 @@ import AllocationTreemapCard from "../components/AllocationTreemapCard.vue";
 import DashboardPanelContainer from "../components/DashboardPanelContainer.vue";
 import KpiPortfolioSummaryCard from "../components/KpiPortfolioSummaryCard.vue";
 import KpiSummaryCard from "../components/KpiSummaryCard.vue";
+import QuickInsightPanel from "../components/QuickInsightPanel.vue";
 import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue";
 import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
 import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
@@ -1871,7 +1872,25 @@ watch(
         {{ errorMessage }}
       </p>
     </article>
-    <article class="order-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <QuickInsightPanel
+      class="order-2"
+      title="Quick Insight"
+      :description="
+        sourceType === 'LIVE'
+          ? 'Live vs baseline valuation snapshot delta analysis'
+          : sourceType === 'SNAPSHOT'
+            ? 'Applied snapshot vs prior snapshot delta analysis'
+            : 'CSV preview vs prior snapshot delta analysis'
+      "
+      :source-mode="sourceType"
+      :snapshot-id="appliedSnapshotId"
+      :preview-payload="appliedCsvPreview"
+      :display-currency="summaryCurrency"
+      :amount-mask="amountMaskEnabled"
+      storage-key-prefix="myasset:snapshot:quick-insight"
+    />
+
+    <article class="order-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Snapshot Trend</h2>
@@ -2077,7 +2096,7 @@ watch(
       </div>
     </div>
     <HoldingsStatusTableCard
-      class="order-4"
+      class="order-5"
       title="Holdings Table"
       subtitle="Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol"
       :expanded="holdingsExpanded"
@@ -2098,7 +2117,7 @@ watch(
     />
 
     <LiabilitiesStatusTableCard
-      class="order-5"
+      class="order-6"
       title="Liabilities Table"
       subtitle="Portfolio / Liability / Balance / Type"
       :expanded="liabilitiesExpanded"
@@ -2118,7 +2137,7 @@ watch(
     />
 
     <DashboardPanelContainer
-      class="order-2"
+      class="order-3"
       title="Snapshot Dashboard Panel"
       description="KPI, Donut, Treemap from the applied snapshot dataset."
       source-mode="SNAPSHOT"
@@ -2276,7 +2295,7 @@ watch(
     </DashboardPanelContainer>
 
     <PortfolioStatusTableCard
-      class="order-3"
+      class="order-4"
       title="Portfolios Table"
       subtitle="Portfolio / Current / Invested Principal / Profit / Return"
       :expanded="portfoliosExpanded"

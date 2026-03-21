@@ -97,6 +97,7 @@ export type AnalyticsQuickInsightDeltaItemOut = {
   baseline_value?: string | number | null;
   status?: "NEW" | "REMOVED" | null;
   asset_class?: string | null;
+  display_class?: string | null;
 };
 
 export type AnalyticsQuickInsightDriverGroupOut = {
@@ -120,6 +121,7 @@ export type AnalyticsQuickInsightWarningItemOut = {
   portfolio_name?: string | null;
   symbol?: string | null;
   asset_class?: string | null;
+  display_class?: string | null;
   quote_source?: string | null;
   quote_as_of?: string | null;
 };

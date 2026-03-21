@@ -91,6 +91,7 @@ class AnalyticsQuickInsightDeltaItemOut(BaseModel):
     baseline_value: Decimal | None = None
     status: Literal["NEW", "REMOVED"] | None = None
     asset_class: str | None = None
+    display_class: str | None = None
 
 
 class AnalyticsQuickInsightDriverGroupOut(BaseModel):
@@ -114,6 +115,7 @@ class AnalyticsQuickInsightWarningItemOut(BaseModel):
     portfolio_name: str | None = None
     symbol: str | None = None
     asset_class: str | None = None
+    display_class: str | None = None
     quote_source: str | None = None
     quote_as_of: datetime | None = None
 

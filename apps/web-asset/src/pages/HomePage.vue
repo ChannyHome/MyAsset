@@ -5,10 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import {
   getAllocation,
   getNetworthSeries,
-  getQuickInsight,
   getSummary,
-  type AnalyticsQuickInsightOut,
-  type QuickInsightPeriod,
   type AnalyticsSummaryV2Out,
 } from "../api/analytics";
 import KpiBreakdownCards from "../components/KpiBreakdownCards.vue";
@@ -21,6 +18,7 @@ import DashboardPanelContainer from "../components/DashboardPanelContainer.vue";
 import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue";
 import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
 import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
+import QuickInsightPanel from "../components/QuickInsightPanel.vue";
 import type {
   HoldingStatusRow,
   LiabilityStatusRow,
@@ -48,8 +46,6 @@ const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
 const HOME_CARD_ORDER_STORAGE_KEY = "myasset:home:card-order";
-const HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY = "myasset:home:quick-insight-period";
-const HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY = "myasset:home:quick-insight-net-drivers";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
 const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 180000;
 
@@ -131,13 +127,6 @@ function formatPercent(value: number | null | undefined): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
-function formatPercentPoint(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value)) {
-    return "-";
-  }
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%p`;
-}
-
 function formatDateTime(value: string | null | undefined): string {
   return formatDateTimeSeoul(value);
 }
@@ -187,7 +176,6 @@ const homePortfoliosExpanded = ref(false);
 const homeHoldingsExpanded = ref(false);
 const homeLiabilitiesExpanded = ref(false);
 const reportPanelExpanded = ref(false);
-const quickInsightExpanded = ref(true);
 const releaseNotesExpanded = ref(false);
 const exportingImage = ref(false);
 const liveDashboardTarget = ref<"GROSS" | "LIABILITIES" | "NET" | "HOLDINGS">("GROSS");
@@ -267,19 +255,15 @@ const DEFAULT_HOME_CARD_ORDER: HomeCardKey[] = [
 ];
 const homeCardOrder = ref<HomeCardKey[]>([...DEFAULT_HOME_CARD_ORDER]);
 const homeCardDraggingKey = ref<HomeCardKey | null>(null);
-const quickInsight = ref<AnalyticsQuickInsightOut | null>(null);
-const quickInsightLoading = ref(false);
-const quickInsightError = ref("");
-const quickInsightPeriod = ref<QuickInsightPeriod>("1D");
-const quickInsightShowNetDrivers = ref(false);
-const quickInsightManualQuotesExpanded = ref(false);
-const quickInsightMissingQuotesExpanded = ref(false);
 
 const liveDashboardRef = ref<HTMLElement | null>(null);
 const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
+const quickInsightDisplayCurrency = computed<"KRW" | "USD">(() =>
+  summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
+);
 const grossAssetsTotal = computed(() => toNumber(summary.value?.gross_assets_total));
 const netAssetsTotal = computed(() => toNumber(summary.value?.net_assets_total));
 const liabilitiesTotal = computed(() => toNumber(summary.value?.liabilities_total));
@@ -499,83 +483,6 @@ const topLiabilities = computed(() =>
     .slice(0, 6),
 );
 
-function insightSeverityClass(severity: "positive" | "negative" | "neutral" | undefined): string {
-  if (severity === "positive") return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300";
-  if (severity === "negative") return "border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-300";
-  return "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300";
-}
-
-function insightDeltaClass(value: number | null | undefined): string {
-  if (value == null || !Number.isFinite(value) || value === 0) {
-    return "text-slate-500 dark:text-slate-300";
-  }
-  return value > 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-500 dark:text-rose-300";
-}
-
-function insightStatusBadgeClass(status: string | null | undefined): string {
-  if (status === "NEW") return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300";
-  if (status === "REMOVED") return "bg-amber-500/10 text-amber-600 dark:text-amber-300";
-  return "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
-}
-
-function loadQuickInsightPeriod(): void {
-  if (typeof window === "undefined") return;
-  const raw = window.localStorage.getItem(HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY);
-  if (raw === "1D" || raw === "7D" || raw === "30D") {
-    quickInsightPeriod.value = raw;
-  }
-}
-
-function loadQuickInsightDriverMode(): void {
-  if (typeof window === "undefined") return;
-  const raw = window.localStorage.getItem(HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY);
-  if (raw === "1" || raw === "true") {
-    quickInsightShowNetDrivers.value = true;
-  } else if (raw === "0" || raw === "false") {
-    quickInsightShowNetDrivers.value = false;
-  }
-}
-
-const quickInsightDriverCardTitle = computed(() =>
-  quickInsightShowNetDrivers.value ? "Top Net Drivers" : "Top Gross Drivers",
-);
-
-const quickInsightDriverPositiveLabel = computed(() =>
-  quickInsightShowNetDrivers.value ? "Top Boosters" : "Top Gainers",
-);
-
-const quickInsightDriverNegativeLabel = computed(() =>
-  quickInsightShowNetDrivers.value ? "Top Drags" : "Top Losers",
-);
-
-const quickInsightDriverPositiveItems = computed(() =>
-  quickInsightShowNetDrivers.value
-    ? (quickInsight.value?.net_drivers.top_gainers ?? [])
-    : (quickInsight.value?.gross_drivers.top_gainers ?? []),
-);
-
-const quickInsightDriverNegativeItems = computed(() =>
-  quickInsightShowNetDrivers.value
-    ? (quickInsight.value?.net_drivers.top_losers ?? [])
-    : (quickInsight.value?.gross_drivers.top_losers ?? []),
-);
-
-async function loadQuickInsight(): Promise<void> {
-  quickInsightLoading.value = true;
-  quickInsightError.value = "";
-  try {
-    quickInsight.value = await getQuickInsight({
-      display_currency: displayCurrency.value,
-      period: quickInsightPeriod.value,
-    });
-  } catch (error) {
-    quickInsight.value = null;
-    quickInsightError.value = getErrorMessage(error);
-  } finally {
-    quickInsightLoading.value = false;
-  }
-}
-
 function mapReleaseNotes(notes: ReleaseNoteOut[]): ReleaseNoteItem[] {
   return notes.map((note) => ({
     id: String(note.id),
@@ -791,7 +698,6 @@ async function loadHomeData() {
     } catch {
       releaseNoteItems.value = [];
     }
-    await loadQuickInsight();
     if (homePortfoliosExpanded.value) {
       void loadHomePortfolioTable();
     }
@@ -928,13 +834,12 @@ function loadHomeTableSectionState(): void {
   try {
     const parsed = JSON.parse(raw) as Partial<
       Record<
-        "live_dashboard" | "report_panel" | "quick_insight" | "release_notes" | "portfolios" | "holdings" | "liabilities",
+        "live_dashboard" | "report_panel" | "release_notes" | "portfolios" | "holdings" | "liabilities",
         boolean
       >
     >;
     if (typeof parsed.live_dashboard === "boolean") liveDashboardExpanded.value = parsed.live_dashboard;
     if (typeof parsed.report_panel === "boolean") reportPanelExpanded.value = parsed.report_panel;
-    if (typeof parsed.quick_insight === "boolean") quickInsightExpanded.value = parsed.quick_insight;
     if (typeof parsed.release_notes === "boolean") releaseNotesExpanded.value = parsed.release_notes;
     if (typeof parsed.portfolios === "boolean") homePortfoliosExpanded.value = parsed.portfolios;
     if (typeof parsed.holdings === "boolean") homeHoldingsExpanded.value = parsed.holdings;
@@ -949,7 +854,6 @@ function saveHomeTableSectionState(): void {
   const payload = {
     live_dashboard: liveDashboardExpanded.value,
     report_panel: reportPanelExpanded.value,
-    quick_insight: quickInsightExpanded.value,
     release_notes: releaseNotesExpanded.value,
     portfolios: homePortfoliosExpanded.value,
     holdings: homeHoldingsExpanded.value,
@@ -1104,10 +1008,6 @@ function toggleLiveDashboard() {
 
 function toggleReportPanel() {
   reportPanelExpanded.value = !reportPanelExpanded.value;
-}
-
-function toggleQuickInsightPanel() {
-  quickInsightExpanded.value = !quickInsightExpanded.value;
 }
 
 function toggleReleaseNotesPanel() {
@@ -1368,8 +1268,6 @@ onMounted(async () => {
     loadQuoteUpdateMeta();
     loadHomeTableSectionState();
     restoreHomeCardOrder();
-    loadQuickInsightPeriod();
-    loadQuickInsightDriverMode();
   }
   const pageSize = getHomeTablePageSize();
   homePortfolioTable.pageSize = pageSize;
@@ -1393,26 +1291,6 @@ watch(
     if (summary.value && prev && next !== prev) {
       void loadHomeData();
     }
-  },
-);
-
-watch(
-  () => quickInsightPeriod.value,
-  (next) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY, next);
-    }
-    if (summary.value) {
-      void loadQuickInsight();
-    }
-  },
-);
-
-watch(
-  () => quickInsightShowNetDrivers.value,
-  (next) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY, next ? "1" : "0");
   },
 );
 
@@ -1477,7 +1355,6 @@ watch(
   () => [
     liveDashboardExpanded.value,
     reportPanelExpanded.value,
-    quickInsightExpanded.value,
     releaseNotesExpanded.value,
     homePortfoliosExpanded.value,
     homeHoldingsExpanded.value,
@@ -1487,7 +1364,6 @@ watch(
     [
       _nextLiveDashboard,
       _nextReportPanel,
-      _nextQuickInsight,
       _nextReleaseNotes,
       nextPortfolios,
       nextHoldings,
@@ -1496,7 +1372,6 @@ watch(
     [
       _prevLiveDashboard,
       _prevReportPanel,
-      _prevQuickInsight,
       _prevReleaseNotes,
       prevPortfolios,
       prevHoldings,
@@ -2203,352 +2078,14 @@ watch(
         @drop="onHomeCardDrop('QUICK_INSIGHT', $event)"
         @dragend="onHomeCardDragEnd"
       >
-        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Quick Insight</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Live vs baseline valuation snapshot delta analysis
-              </p>
-            </div>
-            <div class="flex flex-wrap items-center justify-end gap-2">
-              <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
-                <button
-                  v-for="period in ['1D', '7D', '30D']"
-                  :key="period"
-                  type="button"
-                  class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                  :class="quickInsightPeriod === period
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'"
-                  @click="quickInsightPeriod = period as QuickInsightPeriod"
-                >
-                  {{ period }}
-                </button>
-              </div>
-              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                <input
-                  v-model="quickInsightShowNetDrivers"
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
-                />
-                Net
-              </label>
-              <button
-                type="button"
-                class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                @click="toggleQuickInsightPanel"
-              >
-                {{ quickInsightExpanded ? "Collapse" : "Expand" }}
-              </button>
-            </div>
-          </div>
-
-          <div v-if="quickInsightExpanded">
-            <div v-if="quickInsightLoading" class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-              Loading snapshot delta insight...
-            </div>
-            <div v-else-if="quickInsightError" class="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500 dark:text-rose-300">
-              {{ quickInsightError }}
-            </div>
-            <div v-else-if="quickInsight" class="mt-4 space-y-4">
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-              <span>Current as_of: {{ formatDateTime(quickInsight.current_as_of) }}</span>
-              <span>Baseline: {{ quickInsight.baseline_snapshot_date || `No ${quickInsight.period} snapshot baseline` }}</span>
-            </div>
-
-            <div class="rounded-2xl border px-4 py-4" :class="insightSeverityClass(quickInsight.summary_alert.severity)">
-              <p class="text-sm font-semibold">{{ quickInsight.summary_alert.comment }}</p>
-              <div class="mt-3 grid gap-3 md:grid-cols-3">
-                <div class="rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30">
-                  <p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Gross</p>
-                  <p class="mt-1 text-sm font-semibold" :class="insightDeltaClass(toNumber(quickInsight.summary_alert.gross_delta))">
-                    <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                      {{ formatSignedCurrency(toNumber(quickInsight.summary_alert.gross_delta), summaryDisplayCurrency) }}
-                    </span>
-                  </p>
-                </div>
-                <div class="rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30">
-                  <p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Net</p>
-                  <p class="mt-1 text-sm font-semibold" :class="insightDeltaClass(toNumber(quickInsight.summary_alert.net_delta))">
-                    <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                      {{ formatSignedCurrency(toNumber(quickInsight.summary_alert.net_delta), summaryDisplayCurrency) }}
-                    </span>
-                  </p>
-                </div>
-                <div class="rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30">
-                  <p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Liabilities</p>
-                  <p class="mt-1 text-sm font-semibold" :class="insightDeltaClass(toNumber(quickInsight.summary_alert.liabilities_delta) * -1)">
-                    <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                      {{ formatSignedCurrency(toNumber(quickInsight.summary_alert.liabilities_delta), summaryDisplayCurrency) }}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid gap-4">
-              <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ quickInsightDriverCardTitle }}</h3>
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">{{ quickInsightDriverPositiveLabel }}</p>
-                    <ul v-if="quickInsightDriverPositiveItems.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsightDriverPositiveItems" :key="`insight-positive-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <div class="text-right">
-                            <p class="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
-                              <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                                {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                              </span>
-                            </p>
-                            <span v-if="item.status" class="mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">
-                              {{ item.status }}
-                            </span>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                      {{ quickInsightShowNetDrivers ? "No boosters." : "No gainers." }}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300">{{ quickInsightDriverNegativeLabel }}</p>
-                    <ul v-if="quickInsightDriverNegativeItems.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsightDriverNegativeItems" :key="`insight-negative-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <div class="text-right">
-                            <p class="text-sm font-semibold text-rose-500 dark:text-rose-300">
-                              <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                                {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                              </span>
-                            </p>
-                            <span v-if="item.status" class="mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">
-                              {{ item.status }}
-                            </span>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                      {{ quickInsightShowNetDrivers ? "No drags." : "No losers." }}
-                    </p>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <div class="grid gap-4 xl:grid-cols-2">
-              <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Profit Delta Movers</h3>
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">Top 3</p>
-                    <ul v-if="quickInsight.profit_movers.top_gainers.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.profit_movers.top_gainers" :key="`profit-gain-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <p class="text-right text-sm font-semibold text-emerald-600 dark:text-emerald-300">
-                            <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                              {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                            </span>
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No movers yet.</p>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300">Bottom 3</p>
-                    <ul v-if="quickInsight.profit_movers.top_losers.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.profit_movers.top_losers" :key="`profit-loss-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <p class="text-right text-sm font-semibold text-rose-500 dark:text-rose-300">
-                            <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                              {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                            </span>
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No movers yet.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Return Delta Movers</h3>
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">Top 3</p>
-                    <ul v-if="quickInsight.return_movers.top_gainers.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.return_movers.top_gainers" :key="`return-gain-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <p class="text-right text-sm font-semibold text-emerald-600 dark:text-emerald-300">
-                            {{ formatPercentPoint(toNumber(item.delta_return_pct)) }}
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No movers yet.</p>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300">Bottom 3</p>
-                    <ul v-if="quickInsight.return_movers.top_losers.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.return_movers.top_losers" :key="`return-loss-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                            <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
-                          </div>
-                          <p class="text-right text-sm font-semibold text-rose-500 dark:text-rose-300">
-                            {{ formatPercentPoint(toNumber(item.delta_return_pct)) }}
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No movers yet.</p>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <div class="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-              <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Portfolio Changes</h3>
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Current Value Delta</p>
-                    <ul v-if="quickInsight.portfolio_changes.top_current_value_changes.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.portfolio_changes.top_current_value_changes" :key="`portfolio-current-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                          <p class="text-right text-sm font-semibold" :class="insightDeltaClass(toNumber(item.delta_amount))">
-                            <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                              {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                            </span>
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No portfolio deltas.</p>
-                  </div>
-                  <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Current Net Delta</p>
-                    <ul v-if="quickInsight.portfolio_changes.top_net_value_changes.length" class="mt-2 space-y-2">
-                      <li v-for="item in quickInsight.portfolio_changes.top_net_value_changes" :key="`portfolio-net-${item.key}`" class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                        <div class="flex items-start justify-between gap-2">
-                          <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                          <p class="text-right text-sm font-semibold" :class="insightDeltaClass(toNumber(item.delta_amount))">
-                            <span :style="liveMaskAmounts ? { filter: 'blur(6px)' } : undefined">
-                              {{ formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency) }}
-                            </span>
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
-                    <p v-else class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">No portfolio deltas.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-                <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Warnings</h3>
-                <ul class="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                  <li class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                    Snapshot baseline: {{ quickInsight.warnings.missing_snapshot ? 'Missing' : 'OK' }}
-                  </li>
-                  <li class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                    Stale quotes: {{ quickInsight.warnings.stale_quote_count }}
-                  </li>
-                  <li class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                    <div class="flex items-center justify-between gap-3">
-                      <span>Manual quotes: {{ quickInsight.warnings.manual_quote_count }}</span>
-                      <button
-                        v-if="quickInsight.warnings.manual_quote_count > 0"
-                        type="button"
-                        class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
-                        @click="quickInsightManualQuotesExpanded = !quickInsightManualQuotesExpanded"
-                      >
-                        {{ quickInsightManualQuotesExpanded ? "Collapse" : "Expand" }}
-                      </button>
-                    </div>
-                    <ul v-if="quickInsightManualQuotesExpanded && quickInsight.warnings.manual_quotes.length" class="mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700">
-                      <li
-                        v-for="item in quickInsight.warnings.manual_quotes"
-                        :key="`manual-quote-${item.key}`"
-                        class="rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
-                      >
-                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                        <p class="mt-0.5 text-slate-500 dark:text-slate-400">
-                          {{ item.portfolio_name || "-" }}
-                          <span v-if="item.asset_class">· {{ item.asset_class }}</span>
-                        </p>
-                        <p class="mt-0.5 text-slate-500 dark:text-slate-400">
-                          Source: {{ item.quote_source || "MANUAL" }}
-                          <span v-if="item.quote_as_of">· {{ formatDateTime(item.quote_as_of) }}</span>
-                        </p>
-                      </li>
-                    </ul>
-                  </li>
-                  <li class="rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
-                    <div class="flex items-center justify-between gap-3">
-                      <span>Missing quotes: {{ quickInsight.warnings.missing_quote_count }}</span>
-                      <button
-                        v-if="quickInsight.warnings.missing_quote_count > 0"
-                        type="button"
-                        class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
-                        @click="quickInsightMissingQuotesExpanded = !quickInsightMissingQuotesExpanded"
-                      >
-                        {{ quickInsightMissingQuotesExpanded ? "Collapse" : "Expand" }}
-                      </button>
-                    </div>
-                    <ul v-if="quickInsightMissingQuotesExpanded && quickInsight.warnings.missing_quotes.length" class="mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700">
-                      <li
-                        v-for="item in quickInsight.warnings.missing_quotes"
-                        :key="`missing-quote-${item.key}`"
-                        class="rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
-                      >
-                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ item.label }}</p>
-                        <p class="mt-0.5 text-slate-500 dark:text-slate-400">
-                          {{ item.portfolio_name || "-" }}
-                          <span v-if="item.asset_class">· {{ item.asset_class }}</span>
-                        </p>
-                        <p class="mt-0.5 text-slate-500 dark:text-slate-400">
-                          No current quote available
-                        </p>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </section>
-            </div>
-            </div>
-          </div>
-          <p v-else class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-            Collapsed. Click <span class="font-semibold">Expand</span> to view snapshot delta insight.
-          </p>
-        </article>
+        <QuickInsightPanel
+          title="Quick Insight"
+          description="Live vs baseline valuation snapshot delta analysis"
+          source-mode="LIVE"
+          :display-currency="quickInsightDisplayCurrency"
+          :amount-mask="liveMaskAmounts"
+          storage-key-prefix="myasset:home:quick-insight"
+        />
       </div>
 
       <div

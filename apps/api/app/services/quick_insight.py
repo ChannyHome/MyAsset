@@ -14,6 +14,12 @@ from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
+from app.models.snapshot import (
+    SnapshotHoldingRow,
+    SnapshotLiabilityRow,
+    SnapshotPortfolioRow,
+    SnapshotSet,
+)
 from app.models.valuation_snapshot import (
     ValuationSnapshot,
     ValuationSnapshotHoldingRow,
@@ -30,6 +36,7 @@ from app.schemas.analytics import (
     AnalyticsQuickInsightWarningItemOut,
     AnalyticsQuickInsightWarningsOut,
 )
+from app.schemas.snapshot import SnapshotCsvPreviewOut
 from app.services.analytics_summary import calculate_summary_values
 from app.services.app_settings import get_fx_stale_minutes
 from app.services.currency import FxCache, convert_amount
@@ -79,6 +86,14 @@ class PortfolioMetric:
     portfolio_type: str | None
     current_value: Decimal
     current_net: Decimal
+
+
+@dataclass
+class SummaryMetric:
+    gross_assets_total: Decimal
+    liabilities_total: Decimal
+    net_assets_total: Decimal
+    as_of: datetime
 
 
 def _holding_effective_cost_basis(holding: Holding) -> tuple[Decimal, str]:
@@ -168,6 +183,50 @@ def _status_for_pair(current_exists: bool, baseline_exists: bool) -> str | None:
     return None
 
 
+def _resolve_display_class(
+    *,
+    asset_class: str | None,
+    symbol: str | None,
+    label: str | None,
+    entity_type: Literal["HOLDING", "LIABILITY", "PORTFOLIO"] | None = None,
+) -> str | None:
+    if entity_type == "LIABILITY":
+        return "LIABILITY"
+    symbol_text = (symbol or "").upper().strip()
+    label_text = (label or "").upper().strip()
+    asset_class_text = (asset_class or "").upper().strip() or None
+    if symbol_text.startswith("CASH_AUTO_") or "AUTO CASH BALANCE" in label_text:
+        return "CASH"
+    return asset_class_text
+
+
+def _display_reason(display_class: str | None) -> str:
+    normalized = (display_class or "").upper()
+    if normalized == "REAL_ESTATE":
+        return "Real Estate revaluation"
+    if normalized in {"CASH", "DEPOSIT_SAVING"}:
+        return "cash movement"
+    if normalized == "LIABILITY":
+        return "liability change"
+    if normalized == "CRYPTO":
+        return "crypto price move"
+    if normalized == "STOCK":
+        return "equity price move"
+    if normalized == "BOND":
+        return "bond valuation move"
+    return "valuation move"
+
+
+def _material_change_threshold(baseline_gross: Decimal) -> Decimal:
+    gross_threshold = abs(Decimal(baseline_gross)) * Decimal("0.0025")
+    return max(Decimal("1"), gross_threshold)
+
+
+def _format_decimal_text(value: Decimal) -> str:
+    quantized = Decimal(value).quantize(Decimal("1"))
+    return format(int(quantized), ",")
+
+
 def _make_delta_item(
     *,
     entity_type: Literal["HOLDING", "LIABILITY", "PORTFOLIO"],
@@ -180,6 +239,7 @@ def _make_delta_item(
     baseline_value: Decimal | None = None,
     status: str | None = None,
     asset_class: str | None = None,
+    display_class: str | None = None,
 ) -> AnalyticsQuickInsightDeltaItemOut:
     return AnalyticsQuickInsightDeltaItemOut(
         entity_type=entity_type,
@@ -192,6 +252,7 @@ def _make_delta_item(
         baseline_value=baseline_value,
         status=status,
         asset_class=asset_class,
+        display_class=display_class,
     )
 
 
@@ -251,33 +312,61 @@ def _build_summary_comment(
     gross_delta: Decimal,
     net_delta: Decimal,
     liabilities_delta: Decimal,
+    baseline_gross: Decimal | None,
     gross_loser: AnalyticsQuickInsightDeltaItemOut | None,
     gross_gainer: AnalyticsQuickInsightDeltaItemOut | None,
     net_drag: AnalyticsQuickInsightDeltaItemOut | None,
     net_boost: AnalyticsQuickInsightDeltaItemOut | None,
 ) -> tuple[str, Literal["positive", "negative", "neutral"]]:
-    tiny = Decimal("0.005")
-    if abs(gross_delta) <= tiny and abs(net_delta) <= tiny and abs(liabilities_delta) <= tiny:
+    threshold = _material_change_threshold(baseline_gross or Decimal("0"))
+    if abs(gross_delta) < threshold and abs(net_delta) < threshold and abs(liabilities_delta) < threshold:
         return f"No material change over {period}.", "neutral"
 
     if net_delta < 0:
-        if liabilities_delta > 0 and net_drag is not None:
-            return f"Alert: Net {period} down, mainly due to increased liabilities in {net_drag.label}.", "negative"
+        if liabilities_delta > 0 and net_drag is not None and net_drag.entity_type == "LIABILITY":
+            return (
+                f"Alert: Net {period} down by {_format_decimal_text(liabilities_delta)},"
+                f" mainly due to increased liabilities in {net_drag.label}.",
+                "negative",
+            )
         if gross_loser is not None:
-            return f"Alert: Gross {period} down, mainly driven by {gross_loser.label}.", "negative"
+            driver_reason = _display_reason(gross_loser.display_class)
+            return (
+                f"Alert: Gross {period} down by {_format_decimal_text(abs(gross_delta))},"
+                f" mainly driven by {gross_loser.label} ({driver_reason}).",
+                "negative",
+            )
         return f"Alert: Net {period} moved lower versus baseline.", "negative"
 
     if net_delta > 0:
         if gross_gainer is not None:
-            return f"Comment: Net {period} improved, led by {gross_gainer.label}.", "positive"
+            driver_reason = _display_reason(gross_gainer.display_class)
+            return (
+                f"Comment: Net {period} up by {_format_decimal_text(net_delta)},"
+                f" led by {gross_gainer.label} ({driver_reason}).",
+                "positive",
+            )
         if net_boost is not None:
-            return f"Comment: Net {period} improved, helped by {net_boost.label}.", "positive"
+            driver_reason = _display_reason(net_boost.display_class)
+            return (
+                f"Comment: Net {period} up by {_format_decimal_text(net_delta)},"
+                f" helped by {net_boost.label} ({driver_reason}).",
+                "positive",
+            )
         return f"Comment: Net {period} moved higher versus baseline.", "positive"
 
     if gross_delta < 0 and gross_loser is not None:
-        return f"Alert: Gross {period} is lower, mainly due to {gross_loser.label}.", "negative"
+        driver_reason = _display_reason(gross_loser.display_class)
+        return (
+            f"Alert: Gross {period} is lower, mainly due to {gross_loser.label} ({driver_reason}).",
+            "negative",
+        )
     if gross_delta > 0 and gross_gainer is not None:
-        return f"Comment: Gross {period} is higher, led by {gross_gainer.label}.", "positive"
+        driver_reason = _display_reason(gross_gainer.display_class)
+        return (
+            f"Comment: Gross {period} is higher, led by {gross_gainer.label} ({driver_reason}).",
+            "positive",
+        )
     return f"No net change over {period}, but components moved internally.", "neutral"
 
 
@@ -300,6 +389,7 @@ def _make_warning_item(
     portfolio_name: str | None,
     symbol: str | None,
     asset_class: str | None,
+    display_class: str | None,
     quote_source: str | None,
     quote_as_of: datetime | None,
 ) -> AnalyticsQuickInsightWarningItemOut:
@@ -309,6 +399,7 @@ def _make_warning_item(
         portfolio_name=portfolio_name,
         symbol=symbol,
         asset_class=asset_class,
+        display_class=display_class,
         quote_source=quote_source,
         quote_as_of=quote_as_of,
     )
@@ -390,7 +481,13 @@ def _load_current_holding_metrics(
             quote_source=quote.source if quote is not None else None,
             quote_as_of=quote.as_of if quote is not None else None,
         )
-        if asset.asset_class.upper() == "CASH":
+        display_class = _resolve_display_class(
+            asset_class=asset.asset_class,
+            symbol=asset.symbol,
+            label=label,
+            entity_type="HOLDING",
+        )
+        if display_class == "CASH":
             continue
         if quote is None:
             missing_quote_count += 1
@@ -401,6 +498,7 @@ def _load_current_holding_metrics(
                     portfolio_name=portfolio_name,
                     symbol=asset.symbol,
                     asset_class=asset.asset_class,
+                    display_class=display_class,
                     quote_source=None,
                     quote_as_of=None,
                 )
@@ -417,6 +515,7 @@ def _load_current_holding_metrics(
                     portfolio_name=portfolio_name,
                     symbol=asset.symbol,
                     asset_class=asset.asset_class,
+                    display_class=display_class,
                     quote_source=quote.source,
                     quote_as_of=quote.as_of,
                 )
@@ -686,56 +785,342 @@ def _load_baseline_portfolio_metrics(
     return metrics
 
 
-def get_quick_insight(
-    db: Session,
-    *,
-    scope_type: str,
-    scope_id: int,
-    scope_user_ids: list[int],
-    display_currency: str,
-    period: str | None,
-) -> AnalyticsQuickInsightOut:
-    normalized_currency = _normalize_display_currency(display_currency)
-    normalized_period = _normalize_period(period)
-    cache: FxCache = {}
-    current_summary = calculate_summary_values(
-        db=db,
-        scope_user_ids=scope_user_ids,
-        include_hidden=False,
-        include_excluded_portfolios=False,
-        include_excluded_liabilities=False,
-        display_currency=normalized_currency,
-        fx_strict_mode=settings.fx_strict_mode,
-    )
-    current_holdings, stale_quote_count, manual_quote_count, missing_quote_count, manual_quote_items, missing_quote_items = _load_current_holding_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    current_liabilities = _load_current_liability_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    current_portfolios = _load_current_portfolio_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
+def _value_for_currency(krw_value: Decimal, usd_value: Decimal, display_currency: str) -> Decimal:
+    return Decimal(usd_value if display_currency == "USD" else krw_value)
+
+
+def _summary_from_snapshot_set(snapshot: SnapshotSet, display_currency: str) -> SummaryMetric:
+    return SummaryMetric(
+        gross_assets_total=_value_for_currency(snapshot.gross_assets_krw, snapshot.gross_assets_usd, display_currency),
+        liabilities_total=_value_for_currency(snapshot.liabilities_krw, snapshot.liabilities_usd, display_currency),
+        net_assets_total=_value_for_currency(snapshot.net_assets_krw, snapshot.net_assets_usd, display_currency),
+        as_of=snapshot.as_of,
     )
 
-    baseline_date = datetime.now(UTC).date() - timedelta(days=_PERIOD_DAYS[normalized_period])
-    baseline_snapshot = _find_baseline_snapshot(
-        db,
-        scope_type=scope_type,
-        scope_id=scope_id,
-        target_currency=normalized_currency,
-        baseline_date=baseline_date,
+
+def _summary_from_snapshot_preview(preview: SnapshotCsvPreviewOut, display_currency: str) -> SummaryMetric:
+    summary = preview.summary
+    return SummaryMetric(
+        gross_assets_total=Decimal(summary.gross_assets_usd if display_currency == "USD" else summary.gross_assets_krw),
+        liabilities_total=Decimal(summary.liabilities_usd if display_currency == "USD" else summary.liabilities_krw),
+        net_assets_total=Decimal(summary.net_assets_usd if display_currency == "USD" else summary.net_assets_krw),
+        as_of=summary.as_of,
     )
-    has_baseline = baseline_snapshot is not None
-    if not has_baseline:
+
+
+def _find_snapshot_set_baseline(
+    db: Session,
+    *,
+    owner_user_id: int,
+    reference_as_of: datetime,
+    period: QuickInsightPeriod,
+) -> SnapshotSet | None:
+    baseline_as_of = reference_as_of - timedelta(days=_PERIOD_DAYS[period])
+    stmt = (
+        select(SnapshotSet)
+        .where(
+            SnapshotSet.owner_user_id == owner_user_id,
+            SnapshotSet.as_of <= baseline_as_of,
+        )
+        .order_by(SnapshotSet.as_of.desc(), SnapshotSet.id.desc())
+        .limit(1)
+    )
+    return db.scalar(stmt)
+
+
+def _load_snapshot_holding_metrics(
+    db: Session,
+    *,
+    snapshot: SnapshotSet,
+    display_currency: str,
+    reference_as_of: datetime | None = None,
+) -> tuple[
+    dict[str, HoldingMetric],
+    int,
+    int,
+    int,
+    list[AnalyticsQuickInsightWarningItemOut],
+    list[AnalyticsQuickInsightWarningItemOut],
+]:
+    rows = db.scalars(select(SnapshotHoldingRow).where(SnapshotHoldingRow.snapshot_id == snapshot.id)).all()
+    stale_minutes, _stale_source = get_fx_stale_minutes(db)
+    stale_reference = reference_as_of or snapshot.as_of
+    stale_cutoff = stale_reference - timedelta(minutes=stale_minutes)
+    metrics: dict[str, HoldingMetric] = {}
+    stale_quote_count = 0
+    manual_quote_count = 0
+    missing_quote_count = 0
+    manual_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+    missing_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+
+    for row in rows:
+        key = _holding_key(row.portfolio_id, row.asset_id, row.asset_name)
+        label = f"{row.asset_name} ({row.symbol})" if row.symbol else row.asset_name
+        evaluated = _value_for_currency(row.evaluated_krw, row.evaluated_usd, display_currency)
+        cost_basis = _value_for_currency(row.cost_basis_krw, row.cost_basis_usd, display_currency)
+        profit = _value_for_currency(row.profit_krw, row.profit_usd, display_currency)
+        display_class = _resolve_display_class(
+            asset_class=row.asset_class,
+            symbol=row.symbol,
+            label=label,
+            entity_type="HOLDING",
+        )
+        metrics[key] = HoldingMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            asset_id=row.asset_id,
+            asset_name=label,
+            symbol=row.symbol,
+            asset_class=row.asset_class,
+            evaluated=evaluated,
+            cost_basis=cost_basis,
+            profit=profit,
+            return_pct=Decimal(row.return_pct) if row.return_pct is not None else None,
+            quote_source=row.quote_source,
+            quote_as_of=row.quote_as_of,
+        )
+        if display_class == "CASH":
+            continue
+        if not row.quote_source:
+            missing_quote_count += 1
+            missing_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=None,
+                    quote_as_of=None,
+                )
+            )
+            continue
+        if row.quote_as_of is not None and row.quote_as_of < stale_cutoff:
+            stale_quote_count += 1
+        if (row.quote_source or "").upper() == "MANUAL":
+            manual_quote_count += 1
+            manual_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=row.quote_source,
+                    quote_as_of=row.quote_as_of,
+                )
+            )
+
+    return (
+        metrics,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    )
+
+
+def _load_snapshot_liability_metrics(
+    db: Session,
+    *,
+    snapshot: SnapshotSet,
+    display_currency: str,
+) -> dict[str, LiabilityMetric]:
+    rows = db.scalars(select(SnapshotLiabilityRow).where(SnapshotLiabilityRow.snapshot_id == snapshot.id)).all()
+    metrics: dict[str, LiabilityMetric] = {}
+    for row in rows:
+        balance = _value_for_currency(row.balance_krw, row.balance_usd, display_currency)
+        key = _liability_key(row.portfolio_id, row.liability_id, row.liability_name)
+        metrics[key] = LiabilityMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            liability_id=row.liability_id,
+            liability_name=row.liability_name,
+            liability_type=row.liability_type,
+            balance=balance,
+        )
+    return metrics
+
+
+def _load_snapshot_portfolio_metrics(
+    db: Session,
+    *,
+    snapshot: SnapshotSet,
+    display_currency: str,
+) -> dict[str, PortfolioMetric]:
+    rows = db.scalars(select(SnapshotPortfolioRow).where(SnapshotPortfolioRow.snapshot_id == snapshot.id)).all()
+    metrics: dict[str, PortfolioMetric] = {}
+    for row in rows:
+        current_value = _value_for_currency(row.gross_assets_krw, row.gross_assets_usd, display_currency)
+        current_net = _value_for_currency(row.net_assets_krw, row.net_assets_usd, display_currency)
+        key = _portfolio_key(row.portfolio_id, row.portfolio_name)
+        metrics[key] = PortfolioMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            portfolio_type=row.portfolio_type,
+            current_value=current_value,
+            current_net=current_net,
+        )
+    return metrics
+
+
+def _load_preview_holding_metrics(
+    db: Session,
+    *,
+    preview: SnapshotCsvPreviewOut,
+    display_currency: str,
+) -> tuple[
+    dict[str, HoldingMetric],
+    int,
+    int,
+    int,
+    list[AnalyticsQuickInsightWarningItemOut],
+    list[AnalyticsQuickInsightWarningItemOut],
+]:
+    stale_minutes, _stale_source = get_fx_stale_minutes(db)
+    stale_cutoff = preview.summary.as_of - timedelta(minutes=stale_minutes)
+    metrics: dict[str, HoldingMetric] = {}
+    stale_quote_count = 0
+    manual_quote_count = 0
+    missing_quote_count = 0
+    manual_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+    missing_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+
+    for row in preview.holding_rows:
+        key = _holding_key(row.portfolio_id, row.asset_id, row.asset_name)
+        label = f"{row.asset_name} ({row.symbol})" if row.symbol else row.asset_name
+        display_class = _resolve_display_class(
+            asset_class=row.asset_class,
+            symbol=row.symbol,
+            label=label,
+            entity_type="HOLDING",
+        )
+        metrics[key] = HoldingMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            asset_id=row.asset_id,
+            asset_name=label,
+            symbol=row.symbol,
+            asset_class=row.asset_class,
+            evaluated=Decimal(row.evaluated),
+            cost_basis=Decimal(row.cost_basis),
+            profit=Decimal(row.profit),
+            return_pct=Decimal(row.return_pct) if row.return_pct is not None else None,
+            quote_source=row.quote_source,
+            quote_as_of=row.quote_as_of,
+        )
+        if display_class == "CASH":
+            continue
+        if not row.quote_source:
+            missing_quote_count += 1
+            missing_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=None,
+                    quote_as_of=None,
+                )
+            )
+            continue
+        if row.quote_as_of is not None and row.quote_as_of < stale_cutoff:
+            stale_quote_count += 1
+        if (row.quote_source or "").upper() == "MANUAL":
+            manual_quote_count += 1
+            manual_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=row.quote_source,
+                    quote_as_of=row.quote_as_of,
+                )
+            )
+
+    return (
+        metrics,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    )
+
+
+def _load_preview_liability_metrics(
+    preview: SnapshotCsvPreviewOut,
+    *,
+    display_currency: str,
+) -> dict[str, LiabilityMetric]:
+    metrics: dict[str, LiabilityMetric] = {}
+    for row in preview.liability_rows:
+        key = _liability_key(row.portfolio_id, row.liability_id, row.liability_name)
+        metrics[key] = LiabilityMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            liability_id=row.liability_id,
+            liability_name=row.liability_name,
+            liability_type=row.liability_type,
+            balance=Decimal(row.balance),
+        )
+    return metrics
+
+
+def _load_preview_portfolio_metrics(
+    preview: SnapshotCsvPreviewOut,
+    *,
+    display_currency: str,
+) -> dict[str, PortfolioMetric]:
+    metrics: dict[str, PortfolioMetric] = {}
+    for row in preview.portfolio_rows:
+        key = _portfolio_key(row.portfolio_id, row.portfolio_name)
+        metrics[key] = PortfolioMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            portfolio_type=row.portfolio_type,
+            current_value=Decimal(row.current),
+            current_net=Decimal(row.net_assets),
+        )
+    return metrics
+
+
+def _build_quick_insight_response(
+    *,
+    current_summary: SummaryMetric,
+    baseline_label: str | None,
+    has_baseline: bool,
+    normalized_period: QuickInsightPeriod,
+    current_holdings: dict[str, HoldingMetric],
+    current_liabilities: dict[str, LiabilityMetric],
+    current_portfolios: dict[str, PortfolioMetric],
+    baseline_holdings: dict[str, HoldingMetric] | None,
+    baseline_liabilities: dict[str, LiabilityMetric] | None,
+    baseline_portfolios: dict[str, PortfolioMetric] | None,
+    baseline_gross: Decimal | None,
+    baseline_liabilities_total: Decimal | None,
+    baseline_net: Decimal | None,
+    stale_quote_count: int,
+    manual_quote_count: int,
+    missing_quote_count: int,
+    manual_quote_items: list[AnalyticsQuickInsightWarningItemOut],
+    missing_quote_items: list[AnalyticsQuickInsightWarningItemOut],
+) -> AnalyticsQuickInsightOut:
+    if not has_baseline or baseline_holdings is None or baseline_liabilities is None or baseline_portfolios is None or baseline_gross is None or baseline_liabilities_total is None or baseline_net is None:
         return AnalyticsQuickInsightOut(
             period=normalized_period,
             baseline_snapshot_date=None,
@@ -766,46 +1151,6 @@ def get_quick_insight(
             ),
         )
 
-    baseline_holdings = _load_baseline_holding_metrics(
-        db,
-        snapshot=baseline_snapshot,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    baseline_liabilities = _load_baseline_liability_metrics(
-        db,
-        snapshot=baseline_snapshot,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    baseline_portfolios = _load_baseline_portfolio_metrics(
-        db,
-        snapshot=baseline_snapshot,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    baseline_gross = _convert_snapshot_amount(
-        db,
-        amount=Decimal(baseline_snapshot.assets_total),
-        from_currency=baseline_snapshot.display_currency,
-        to_currency=normalized_currency,
-        cache=cache,
-    )
-    baseline_liabilities_total = _convert_snapshot_amount(
-        db,
-        amount=Decimal(baseline_snapshot.liabilities_total),
-        from_currency=baseline_snapshot.display_currency,
-        to_currency=normalized_currency,
-        cache=cache,
-    )
-    baseline_net = _convert_snapshot_amount(
-        db,
-        amount=Decimal(baseline_snapshot.net_worth_total),
-        from_currency=baseline_snapshot.display_currency,
-        to_currency=normalized_currency,
-        cache=cache,
-    )
-
     gross_driver_items: list[AnalyticsQuickInsightDeltaItemOut] = []
     net_driver_items: list[AnalyticsQuickInsightDeltaItemOut] = []
     profit_delta_items: list[AnalyticsQuickInsightDeltaItemOut] = []
@@ -829,6 +1174,12 @@ def get_quick_insight(
         current_return = current.return_pct if current is not None else None
         baseline_return = baseline.return_pct if baseline is not None else None
         asset_class = current.asset_class if current is not None else baseline.asset_class
+        display_class = _resolve_display_class(
+            asset_class=asset_class,
+            symbol=current.symbol if current is not None else baseline.symbol,
+            label=label,
+            entity_type="HOLDING",
+        )
         gross_driver_items.append(
             _make_delta_item(
                 entity_type="HOLDING",
@@ -840,6 +1191,7 @@ def get_quick_insight(
                 baseline_value=baseline_evaluated,
                 status=status,
                 asset_class=asset_class,
+                display_class=display_class,
             )
         )
         net_driver_items.append(
@@ -853,6 +1205,7 @@ def get_quick_insight(
                 baseline_value=baseline_evaluated,
                 status=status,
                 asset_class=asset_class,
+                display_class=display_class,
             )
         )
         profit_delta_items.append(
@@ -866,6 +1219,7 @@ def get_quick_insight(
                 baseline_value=baseline_profit,
                 status=status,
                 asset_class=asset_class,
+                display_class=display_class,
             )
         )
         return_delta = None
@@ -882,6 +1236,7 @@ def get_quick_insight(
                 baseline_value=baseline_evaluated,
                 status=status,
                 asset_class=asset_class,
+                display_class=display_class,
             )
         )
 
@@ -907,6 +1262,7 @@ def get_quick_insight(
                 baseline_value=baseline_balance,
                 status=status,
                 asset_class="LIABILITY",
+                display_class="LIABILITY",
             )
         )
 
@@ -964,6 +1320,7 @@ def get_quick_insight(
         gross_delta=gross_delta,
         net_delta=net_delta,
         liabilities_delta=liabilities_delta,
+        baseline_gross=baseline_gross,
         gross_loser=gross_losers[0] if gross_losers else None,
         gross_gainer=gross_gainers[0] if gross_gainers else None,
         net_drag=net_losers[0] if net_losers else None,
@@ -972,7 +1329,7 @@ def get_quick_insight(
 
     return AnalyticsQuickInsightOut(
         period=normalized_period,
-        baseline_snapshot_date=baseline_snapshot.snapshot_date.isoformat(),
+        baseline_snapshot_date=baseline_label,
         current_as_of=current_summary.as_of,
         has_baseline=True,
         summary_alert=AnalyticsQuickInsightSummaryAlertOut(
@@ -982,22 +1339,10 @@ def get_quick_insight(
             severity=severity,
             comment=summary_comment,
         ),
-        gross_drivers=AnalyticsQuickInsightDriverGroupOut(
-            top_gainers=gross_gainers,
-            top_losers=gross_losers,
-        ),
-        net_drivers=AnalyticsQuickInsightDriverGroupOut(
-            top_gainers=net_gainers,
-            top_losers=net_losers,
-        ),
-        profit_movers=AnalyticsQuickInsightRankedGroupOut(
-            top_gainers=profit_gainers,
-            top_losers=profit_losers,
-        ),
-        return_movers=AnalyticsQuickInsightRankedGroupOut(
-            top_gainers=return_gainers,
-            top_losers=return_losers,
-        ),
+        gross_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=gross_gainers, top_losers=gross_losers),
+        net_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=net_gainers, top_losers=net_losers),
+        profit_movers=AnalyticsQuickInsightRankedGroupOut(top_gainers=profit_gainers, top_losers=profit_losers),
+        return_movers=AnalyticsQuickInsightRankedGroupOut(top_gainers=return_gainers, top_losers=return_losers),
         portfolio_changes=AnalyticsQuickInsightPortfolioChangesOut(
             top_current_value_changes=_top_n_by_abs(portfolio_current_value_items, 3),
             top_net_value_changes=_top_n_by_abs(portfolio_net_value_items, 3),
@@ -1010,4 +1355,294 @@ def get_quick_insight(
             manual_quotes=manual_quote_items,
             missing_quotes=missing_quote_items,
         ),
+    )
+
+
+def get_quick_insight(
+    db: Session,
+    *,
+    scope_type: str,
+    scope_id: int,
+    scope_user_ids: list[int],
+    display_currency: str,
+    period: str | None,
+) -> AnalyticsQuickInsightOut:
+    normalized_currency = _normalize_display_currency(display_currency)
+    normalized_period = _normalize_period(period)
+    cache: FxCache = {}
+    current_summary = calculate_summary_values(
+        db=db,
+        scope_user_ids=scope_user_ids,
+        include_hidden=False,
+        include_excluded_portfolios=False,
+        include_excluded_liabilities=False,
+        display_currency=normalized_currency,
+        fx_strict_mode=settings.fx_strict_mode,
+    )
+    current_holdings, stale_quote_count, manual_quote_count, missing_quote_count, manual_quote_items, missing_quote_items = _load_current_holding_metrics(
+        db,
+        scope_user_ids=scope_user_ids,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    current_liabilities = _load_current_liability_metrics(
+        db,
+        scope_user_ids=scope_user_ids,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    current_portfolios = _load_current_portfolio_metrics(
+        db,
+        scope_user_ids=scope_user_ids,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+
+    baseline_date = datetime.now(UTC).date() - timedelta(days=_PERIOD_DAYS[normalized_period])
+    baseline_snapshot = _find_baseline_snapshot(
+        db,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        target_currency=normalized_currency,
+        baseline_date=baseline_date,
+    )
+    has_baseline = baseline_snapshot is not None
+    baseline_holdings = None
+    baseline_liabilities = None
+    baseline_portfolios = None
+    baseline_gross = None
+    baseline_liabilities_total = None
+    baseline_net = None
+    baseline_label = None
+    if baseline_snapshot is not None:
+        baseline_holdings = _load_baseline_holding_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_liabilities = _load_baseline_liability_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_portfolios = _load_baseline_portfolio_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_gross = _convert_snapshot_amount(
+            db,
+            amount=Decimal(baseline_snapshot.assets_total),
+            from_currency=baseline_snapshot.display_currency,
+            to_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_liabilities_total = _convert_snapshot_amount(
+            db,
+            amount=Decimal(baseline_snapshot.liabilities_total),
+            from_currency=baseline_snapshot.display_currency,
+            to_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_net = _convert_snapshot_amount(
+            db,
+            amount=Decimal(baseline_snapshot.net_worth_total),
+            from_currency=baseline_snapshot.display_currency,
+            to_currency=normalized_currency,
+            cache=cache,
+        )
+        baseline_label = baseline_snapshot.snapshot_date.isoformat()
+
+    return _build_quick_insight_response(
+        current_summary=SummaryMetric(
+            gross_assets_total=current_summary.gross_assets_total,
+            liabilities_total=current_summary.liabilities_total,
+            net_assets_total=current_summary.net_assets_total,
+            as_of=current_summary.as_of,
+        ),
+        baseline_label=baseline_label,
+        has_baseline=has_baseline,
+        normalized_period=normalized_period,
+        current_holdings=current_holdings,
+        current_liabilities=current_liabilities,
+        current_portfolios=current_portfolios,
+        baseline_holdings=baseline_holdings,
+        baseline_liabilities=baseline_liabilities,
+        baseline_portfolios=baseline_portfolios,
+        baseline_gross=baseline_gross,
+        baseline_liabilities_total=baseline_liabilities_total,
+        baseline_net=baseline_net,
+        stale_quote_count=stale_quote_count,
+        manual_quote_count=manual_quote_count,
+        missing_quote_count=missing_quote_count,
+        manual_quote_items=manual_quote_items,
+        missing_quote_items=missing_quote_items,
+    )
+
+
+def get_snapshot_quick_insight(
+    db: Session,
+    *,
+    snapshot: SnapshotSet,
+    display_currency: str,
+    period: str | None,
+) -> AnalyticsQuickInsightOut:
+    normalized_currency = _normalize_display_currency(display_currency)
+    normalized_period = _normalize_period(period)
+    current_summary = _summary_from_snapshot_set(snapshot, normalized_currency)
+    (
+        current_holdings,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    ) = _load_snapshot_holding_metrics(
+        db,
+        snapshot=snapshot,
+        display_currency=normalized_currency,
+    )
+    current_liabilities = _load_snapshot_liability_metrics(
+        db,
+        snapshot=snapshot,
+        display_currency=normalized_currency,
+    )
+    current_portfolios = _load_snapshot_portfolio_metrics(
+        db,
+        snapshot=snapshot,
+        display_currency=normalized_currency,
+    )
+    baseline_snapshot = _find_snapshot_set_baseline(
+        db,
+        owner_user_id=snapshot.owner_user_id,
+        reference_as_of=snapshot.as_of,
+        period=normalized_period,
+    )
+    has_baseline = baseline_snapshot is not None
+    baseline_holdings = None
+    baseline_liabilities = None
+    baseline_portfolios = None
+    baseline_summary = None
+    baseline_label = None
+    if baseline_snapshot is not None:
+        baseline_summary = _summary_from_snapshot_set(baseline_snapshot, normalized_currency)
+        baseline_holdings, _, _, _, _, _ = _load_snapshot_holding_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+            reference_as_of=baseline_snapshot.as_of,
+        )
+        baseline_liabilities = _load_snapshot_liability_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+        )
+        baseline_portfolios = _load_snapshot_portfolio_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+        )
+        baseline_label = baseline_snapshot.as_of.isoformat()
+
+    return _build_quick_insight_response(
+        current_summary=current_summary,
+        baseline_label=baseline_label,
+        has_baseline=has_baseline,
+        normalized_period=normalized_period,
+        current_holdings=current_holdings,
+        current_liabilities=current_liabilities,
+        current_portfolios=current_portfolios,
+        baseline_holdings=baseline_holdings,
+        baseline_liabilities=baseline_liabilities,
+        baseline_portfolios=baseline_portfolios,
+        baseline_gross=baseline_summary.gross_assets_total if baseline_summary is not None else None,
+        baseline_liabilities_total=baseline_summary.liabilities_total if baseline_summary is not None else None,
+        baseline_net=baseline_summary.net_assets_total if baseline_summary is not None else None,
+        stale_quote_count=stale_quote_count,
+        manual_quote_count=manual_quote_count,
+        missing_quote_count=missing_quote_count,
+        manual_quote_items=manual_quote_items,
+        missing_quote_items=missing_quote_items,
+    )
+
+
+def get_preview_quick_insight(
+    db: Session,
+    *,
+    owner_user_id: int,
+    preview: SnapshotCsvPreviewOut,
+    display_currency: str,
+    period: str | None,
+) -> AnalyticsQuickInsightOut:
+    normalized_currency = _normalize_display_currency(display_currency)
+    normalized_period = _normalize_period(period)
+    current_summary = _summary_from_snapshot_preview(preview, normalized_currency)
+    (
+        current_holdings,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    ) = _load_preview_holding_metrics(
+        db,
+        preview=preview,
+        display_currency=normalized_currency,
+    )
+    current_liabilities = _load_preview_liability_metrics(preview, display_currency=normalized_currency)
+    current_portfolios = _load_preview_portfolio_metrics(preview, display_currency=normalized_currency)
+    baseline_snapshot = _find_snapshot_set_baseline(
+        db,
+        owner_user_id=owner_user_id,
+        reference_as_of=preview.summary.as_of,
+        period=normalized_period,
+    )
+    has_baseline = baseline_snapshot is not None
+    baseline_holdings = None
+    baseline_liabilities = None
+    baseline_portfolios = None
+    baseline_summary = None
+    baseline_label = None
+    if baseline_snapshot is not None:
+        baseline_summary = _summary_from_snapshot_set(baseline_snapshot, normalized_currency)
+        baseline_holdings, _, _, _, _, _ = _load_snapshot_holding_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+            reference_as_of=baseline_snapshot.as_of,
+        )
+        baseline_liabilities = _load_snapshot_liability_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+        )
+        baseline_portfolios = _load_snapshot_portfolio_metrics(
+            db,
+            snapshot=baseline_snapshot,
+            display_currency=normalized_currency,
+        )
+        baseline_label = baseline_snapshot.as_of.isoformat()
+
+    return _build_quick_insight_response(
+        current_summary=current_summary,
+        baseline_label=baseline_label,
+        has_baseline=has_baseline,
+        normalized_period=normalized_period,
+        current_holdings=current_holdings,
+        current_liabilities=current_liabilities,
+        current_portfolios=current_portfolios,
+        baseline_holdings=baseline_holdings,
+        baseline_liabilities=baseline_liabilities,
+        baseline_portfolios=baseline_portfolios,
+        baseline_gross=baseline_summary.gross_assets_total if baseline_summary is not None else None,
+        baseline_liabilities_total=baseline_summary.liabilities_total if baseline_summary is not None else None,
+        baseline_net=baseline_summary.net_assets_total if baseline_summary is not None else None,
+        stale_quote_count=stale_quote_count,
+        manual_quote_count=manual_quote_count,
+        missing_quote_count=missing_quote_count,
+        manual_quote_items=manual_quote_items,
+        missing_quote_items=missing_quote_items,
     )

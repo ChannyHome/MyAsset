@@ -1,9 +1,9 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { a as getNetworthSeries, b as getAllocation, g as getSummary } from './ui-CcTyauVO.js';
+import { b as getNetworthSeries, c as getAllocation, a as getSummary } from './ui-CKbD_XIS.js';
 import { a as getHoldingsTable, g as getHoldingsPerformance } from './holdings-D-iv7-uK.js';
 import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-r6VxmkS0.js';
 import { h as http, f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
-import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-BOuaY8lX.js';
+import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-CyIQwDdL.js';
 import { u as useDashboardDataAdapter, b as _sfc_main$1, c as _sfc_main$2, _ as _sfc_main$3, a as _sfc_main$8 } from './useDashboardDataAdapter-BDktnABs.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
 

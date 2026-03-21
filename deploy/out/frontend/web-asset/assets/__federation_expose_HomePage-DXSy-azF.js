@@ -1,8 +1,8 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { f as formatDateTimeSeoul, A as AxiosError } from './datetime-D3NoeBy6.js';
-import { g as getSummary, a as getNetworthSeries, b as getAllocation } from './ui-CcTyauVO.js';
-import { _ as _sfc_main$a } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-Dg7ojstE.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4, c as _sfc_main$5 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-BOuaY8lX.js';
+import { g as getQuickInsight, a as getSummary, b as getNetworthSeries, c as getAllocation } from './ui-CKbD_XIS.js';
+import { _ as _sfc_main$a } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-DtSEYlww.js';
+import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4, c as _sfc_main$5 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-CyIQwDdL.js';
 import { _ as _sfc_main$6 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
 import { u as useDashboardDataAdapter, _ as _sfc_main$1, a as _sfc_main$7, b as _sfc_main$8, c as _sfc_main$9 } from './useDashboardDataAdapter-BDktnABs.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
@@ -96,27 +96,190 @@ const _hoisted_51 = {
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
 const _hoisted_52 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_53 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
-const _hoisted_54 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_55 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_56 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_57 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_58 = {
-  key: 0,
-  class: "mt-4"
-};
+const _hoisted_53 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_54 = { class: "flex flex-wrap items-center justify-end gap-2" };
+const _hoisted_55 = { class: "inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800" };
+const _hoisted_56 = ["onClick"];
+const _hoisted_57 = { class: "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" };
+const _hoisted_58 = { key: 0 };
 const _hoisted_59 = {
   key: 0,
-  class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+  class: "mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
 const _hoisted_60 = {
   key: 1,
+  class: "mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500 dark:text-rose-300"
+};
+const _hoisted_61 = {
+  key: 2,
+  class: "mt-4 space-y-4"
+};
+const _hoisted_62 = { class: "flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_63 = { class: "text-sm font-semibold" };
+const _hoisted_64 = { class: "mt-3 grid gap-3 md:grid-cols-3" };
+const _hoisted_65 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
+const _hoisted_66 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
+const _hoisted_67 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
+const _hoisted_68 = { class: "grid gap-4" };
+const _hoisted_69 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_70 = { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_71 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_72 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" };
+const _hoisted_73 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_74 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_75 = { class: "min-w-0" };
+const _hoisted_76 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_77 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_78 = { class: "text-right" };
+const _hoisted_79 = { class: "text-sm font-semibold text-emerald-600 dark:text-emerald-300" };
+const _hoisted_80 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_81 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" };
+const _hoisted_82 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_83 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_84 = { class: "min-w-0" };
+const _hoisted_85 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_86 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_87 = { class: "text-right" };
+const _hoisted_88 = { class: "text-sm font-semibold text-rose-500 dark:text-rose-300" };
+const _hoisted_89 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_90 = { class: "grid gap-4 xl:grid-cols-2" };
+const _hoisted_91 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_92 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_93 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_94 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_95 = { class: "min-w-0" };
+const _hoisted_96 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_97 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_98 = { class: "text-right text-sm font-semibold text-emerald-600 dark:text-emerald-300" };
+const _hoisted_99 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_100 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_101 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_102 = { class: "min-w-0" };
+const _hoisted_103 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_104 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_105 = { class: "text-right text-sm font-semibold text-rose-500 dark:text-rose-300" };
+const _hoisted_106 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_107 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_108 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_109 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_110 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_111 = { class: "min-w-0" };
+const _hoisted_112 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_113 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_114 = { class: "text-right text-sm font-semibold text-emerald-600 dark:text-emerald-300" };
+const _hoisted_115 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_116 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_117 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_118 = { class: "min-w-0" };
+const _hoisted_119 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_120 = { class: "truncate text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_121 = { class: "text-right text-sm font-semibold text-rose-500 dark:text-rose-300" };
+const _hoisted_122 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_123 = { class: "grid gap-4 xl:grid-cols-[1.3fr_0.7fr]" };
+const _hoisted_124 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_125 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_126 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_127 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_128 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_129 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_130 = {
+  key: 0,
+  class: "mt-2 space-y-2"
+};
+const _hoisted_131 = { class: "flex items-start justify-between gap-2" };
+const _hoisted_132 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_133 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_134 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_135 = { class: "mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200" };
+const _hoisted_136 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_137 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_138 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_139 = { class: "flex items-center justify-between gap-3" };
+const _hoisted_140 = {
+  key: 0,
+  class: "mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700"
+};
+const _hoisted_141 = { class: "font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_142 = { class: "mt-0.5 text-slate-500 dark:text-slate-400" };
+const _hoisted_143 = { key: 0 };
+const _hoisted_144 = { class: "mt-0.5 text-slate-500 dark:text-slate-400" };
+const _hoisted_145 = { key: 0 };
+const _hoisted_146 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_147 = { class: "flex items-center justify-between gap-3" };
+const _hoisted_148 = {
+  key: 0,
+  class: "mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700"
+};
+const _hoisted_149 = { class: "font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_150 = { class: "mt-0.5 text-slate-500 dark:text-slate-400" };
+const _hoisted_151 = { key: 0 };
+const _hoisted_152 = {
+  key: 1,
+  class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
+};
+const _hoisted_153 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_154 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_155 = {
+  key: 0,
+  class: "mt-4"
+};
+const _hoisted_156 = {
+  key: 0,
+  class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_157 = {
+  key: 1,
   class: "space-y-2"
 };
-const _hoisted_61 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_62 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_63 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_64 = {
+const _hoisted_158 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_159 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_160 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_161 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
@@ -127,6 +290,8 @@ const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
 const HOME_CARD_ORDER_STORAGE_KEY = "myasset:home:card-order";
+const HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY = "myasset:home:quick-insight-period";
+const HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY = "myasset:home:quick-insight-net-drivers";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
 const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 18e4;
 const _sfc_main = /* @__PURE__ */ _defineComponent({
@@ -167,6 +332,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         return "-";
       }
       return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+    }
+    function formatPercentPoint(value) {
+      if (value == null || !Number.isFinite(value)) {
+        return "-";
+      }
+      return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%p`;
     }
     function formatDateTime(value) {
       return formatDateTimeSeoul(value);
@@ -212,6 +383,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const homeHoldingsExpanded = ref(false);
     const homeLiabilitiesExpanded = ref(false);
     const reportPanelExpanded = ref(false);
+    const quickInsightExpanded = ref(true);
     const releaseNotesExpanded = ref(false);
     const exportingImage = ref(false);
     const liveDashboardTarget = ref("GROSS");
@@ -289,6 +461,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     ];
     const homeCardOrder = ref([...DEFAULT_HOME_CARD_ORDER]);
     const homeCardDraggingKey = ref(null);
+    const quickInsight = ref(null);
+    const quickInsightLoading = ref(false);
+    const quickInsightError = ref("");
+    const quickInsightPeriod = ref("1D");
+    const quickInsightShowNetDrivers = ref(false);
+    const quickInsightManualQuotesExpanded = ref(false);
+    const quickInsightMissingQuotesExpanded = ref(false);
     const liveDashboardRef = ref(null);
     const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
@@ -483,9 +662,68 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const topLiabilities = computed(
       () => [...liabilities.value].sort((a, b) => toNumber(b.outstanding_balance) - toNumber(a.outstanding_balance)).slice(0, 6)
     );
-    const topPnlAssets = computed(
-      () => [...holdings.value].filter((item) => item.pnl_pct != null).sort((a, b) => toNumber(b.pnl_pct) - toNumber(a.pnl_pct)).slice(0, 3)
+    function insightSeverityClass(severity) {
+      if (severity === "positive") return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300";
+      if (severity === "negative") return "border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-300";
+      return "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300";
+    }
+    function insightDeltaClass(value) {
+      if (value == null || !Number.isFinite(value) || value === 0) {
+        return "text-slate-500 dark:text-slate-300";
+      }
+      return value > 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-500 dark:text-rose-300";
+    }
+    function insightStatusBadgeClass(status) {
+      if (status === "NEW") return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300";
+      if (status === "REMOVED") return "bg-amber-500/10 text-amber-600 dark:text-amber-300";
+      return "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300";
+    }
+    function loadQuickInsightPeriod() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY);
+      if (raw === "1D" || raw === "7D" || raw === "30D") {
+        quickInsightPeriod.value = raw;
+      }
+    }
+    function loadQuickInsightDriverMode() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY);
+      if (raw === "1" || raw === "true") {
+        quickInsightShowNetDrivers.value = true;
+      } else if (raw === "0" || raw === "false") {
+        quickInsightShowNetDrivers.value = false;
+      }
+    }
+    const quickInsightDriverCardTitle = computed(
+      () => quickInsightShowNetDrivers.value ? "Top Net Drivers" : "Top Gross Drivers"
     );
+    const quickInsightDriverPositiveLabel = computed(
+      () => quickInsightShowNetDrivers.value ? "Top Boosters" : "Top Gainers"
+    );
+    const quickInsightDriverNegativeLabel = computed(
+      () => quickInsightShowNetDrivers.value ? "Top Drags" : "Top Losers"
+    );
+    const quickInsightDriverPositiveItems = computed(
+      () => quickInsightShowNetDrivers.value ? quickInsight.value?.net_drivers.top_gainers ?? [] : quickInsight.value?.gross_drivers.top_gainers ?? []
+    );
+    const quickInsightDriverNegativeItems = computed(
+      () => quickInsightShowNetDrivers.value ? quickInsight.value?.net_drivers.top_losers ?? [] : quickInsight.value?.gross_drivers.top_losers ?? []
+    );
+    async function loadQuickInsight() {
+      quickInsightLoading.value = true;
+      quickInsightError.value = "";
+      try {
+        quickInsight.value = await getQuickInsight({
+          display_currency: displayCurrency.value,
+          period: quickInsightPeriod.value
+        });
+      } catch (error) {
+        quickInsight.value = null;
+        quickInsightError.value = getErrorMessage(error);
+      } finally {
+        quickInsightLoading.value = false;
+      }
+    }
     function mapReleaseNotes(notes) {
       return notes.map((note) => ({
         id: String(note.id),
@@ -682,6 +920,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         } catch {
           releaseNoteItems.value = [];
         }
+        await loadQuickInsight();
         if (homePortfoliosExpanded.value) {
           void loadHomePortfolioTable();
         }
@@ -802,6 +1041,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (!raw) return;
       try {
         const parsed = JSON.parse(raw);
+        if (typeof parsed.live_dashboard === "boolean") liveDashboardExpanded.value = parsed.live_dashboard;
+        if (typeof parsed.report_panel === "boolean") reportPanelExpanded.value = parsed.report_panel;
+        if (typeof parsed.quick_insight === "boolean") quickInsightExpanded.value = parsed.quick_insight;
+        if (typeof parsed.release_notes === "boolean") releaseNotesExpanded.value = parsed.release_notes;
         if (typeof parsed.portfolios === "boolean") homePortfoliosExpanded.value = parsed.portfolios;
         if (typeof parsed.holdings === "boolean") homeHoldingsExpanded.value = parsed.holdings;
         if (typeof parsed.liabilities === "boolean") homeLiabilitiesExpanded.value = parsed.liabilities;
@@ -811,6 +1054,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function saveHomeTableSectionState() {
       if (typeof window === "undefined") return;
       const payload = {
+        live_dashboard: liveDashboardExpanded.value,
+        report_panel: reportPanelExpanded.value,
+        quick_insight: quickInsightExpanded.value,
+        release_notes: releaseNotesExpanded.value,
         portfolios: homePortfoliosExpanded.value,
         holdings: homeHoldingsExpanded.value,
         liabilities: homeLiabilitiesExpanded.value
@@ -942,6 +1189,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     }
     function toggleReportPanel() {
       reportPanelExpanded.value = !reportPanelExpanded.value;
+    }
+    function toggleQuickInsightPanel() {
+      quickInsightExpanded.value = !quickInsightExpanded.value;
     }
     function toggleReleaseNotesPanel() {
       releaseNotesExpanded.value = !releaseNotesExpanded.value;
@@ -1166,6 +1416,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         loadQuoteUpdateMeta();
         loadHomeTableSectionState();
         restoreHomeCardOrder();
+        loadQuickInsightPeriod();
+        loadQuickInsightDriverMode();
       }
       const pageSize = getHomeTablePageSize();
       homePortfolioTable.pageSize = pageSize;
@@ -1187,6 +1439,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         if (summary.value && prev && next !== prev) {
           void loadHomeData();
         }
+      }
+    );
+    watch(
+      () => quickInsightPeriod.value,
+      (next) => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(HOME_QUICK_INSIGHT_PERIOD_STORAGE_KEY, next);
+        }
+        if (summary.value) {
+          void loadQuickInsight();
+        }
+      }
+    );
+    watch(
+      () => quickInsightShowNetDrivers.value,
+      (next) => {
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem(HOME_QUICK_INSIGHT_NET_DRIVERS_STORAGE_KEY, next ? "1" : "0");
       }
     );
     watch(
@@ -1241,8 +1511,32 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
     );
     watch(
-      () => [homePortfoliosExpanded.value, homeHoldingsExpanded.value, homeLiabilitiesExpanded.value],
-      ([nextPortfolios, nextHoldings, nextLiabilities], [prevPortfolios, prevHoldings, prevLiabilities]) => {
+      () => [
+        liveDashboardExpanded.value,
+        reportPanelExpanded.value,
+        quickInsightExpanded.value,
+        releaseNotesExpanded.value,
+        homePortfoliosExpanded.value,
+        homeHoldingsExpanded.value,
+        homeLiabilitiesExpanded.value
+      ],
+      ([
+        _nextLiveDashboard,
+        _nextReportPanel,
+        _nextQuickInsight,
+        _nextReleaseNotes,
+        nextPortfolios,
+        nextHoldings,
+        nextLiabilities
+      ], [
+        _prevLiveDashboard,
+        _prevReportPanel,
+        _prevQuickInsight,
+        _prevReleaseNotes,
+        prevPortfolios,
+        prevHoldings,
+        prevLiabilities
+      ]) => {
         saveHomeTableSectionState();
         if (nextPortfolios && !prevPortfolios) {
           void loadHomePortfolioTable();
@@ -1351,7 +1645,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[34] || (_cache[34] = _createElementVNode("div", null, [
+            _cache[37] || (_cache[37] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300" }, "Home"),
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Live Dashboard"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " This page now uses real API data from summary, holdings performance, and liabilities. ")
@@ -1411,7 +1705,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               controls: _withCtx(() => [
                 _createElementVNode("div", _hoisted_9, [
                   _createElementVNode("div", _hoisted_10, [
-                    _cache[37] || (_cache[37] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
+                    _cache[40] || (_cache[40] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
                     _createElementVNode("div", _hoisted_11, [
                       _createElementVNode("button", {
                         type: "button",
@@ -1424,7 +1718,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onClick: _cache[2] || (_cache[2] = ($event) => liveKpiTarget.value = "PORTFOLIOS")
                       }, " Portfolios ", 2)
                     ]),
-                    _cache[38] || (_cache[38] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
+                    _cache[41] || (_cache[41] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
                     _createElementVNode("div", _hoisted_12, [
                       (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "HOLDINGS"], (target) => {
                         return _createElementVNode("button", {
@@ -1435,7 +1729,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, _toDisplayString(target), 11, _hoisted_13);
                       }), 64))
                     ]),
-                    _cache[39] || (_cache[39] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
+                    _cache[42] || (_cache[42] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
                     _createElementVNode("div", _hoisted_14, [
                       (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
                         return _createElementVNode("button", {
@@ -1446,13 +1740,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, _toDisplayString(pos), 11, _hoisted_15);
                       }), 64))
                     ]),
-                    _cache[40] || (_cache[40] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
+                    _cache[43] || (_cache[43] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
                     _createElementVNode("div", _hoisted_16, [
                       _withDirectives(_createElementVNode("select", {
                         "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => livePortfolioKey.value = $event),
                         class: "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                       }, [
-                        _cache[35] || (_cache[35] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                        _cache[38] || (_cache[38] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                         (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                           return _openBlock(), _createElementBlock("option", {
                             key: `home-live-portfolio-${item.id}`,
@@ -1470,10 +1764,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, null, 512), [
                           [_vModelCheckbox, livePortfolioNetBasis.value]
                         ]),
-                        _cache[36] || (_cache[36] = _createTextVNode(" Net ", -1))
+                        _cache[39] || (_cache[39] = _createTextVNode(" Net ", -1))
                       ])
                     ]),
-                    _cache[41] || (_cache[41] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
+                    _cache[44] || (_cache[44] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
                     _createElementVNode("div", _hoisted_19, [
                       canManageQuoteUpdates.value ? (_openBlock(), _createElementBlock("button", {
                         key: 0,
@@ -1688,7 +1982,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           }, [
             _createElementVNode("article", _hoisted_25, [
               _createElementVNode("div", _hoisted_26, [
-                _cache[42] || (_cache[42] = _createElementVNode("div", null, [
+                _cache[45] || (_cache[45] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
                 ], -1)),
@@ -1715,7 +2009,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   "mask-amounts": liveMaskAmounts.value
                 }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
                 _createElementVNode("article", _hoisted_28, [
-                  _cache[47] || (_cache[47] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                  _cache[50] || (_cache[50] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                     _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                     _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
                   ], -1)),
@@ -1735,11 +2029,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                         ]),
                         _createElementVNode("div", _hoisted_34, [
-                          _cache[43] || (_cache[43] = _createTextVNode(" Gross ", -1)),
+                          _cache[46] || (_cache[46] = _createTextVNode(" Gross ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                          _cache[44] || (_cache[44] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
+                          _cache[47] || (_cache[47] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(
@@ -1748,11 +2042,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           )), 5)
                         ]),
                         _createElementVNode("div", _hoisted_35, [
-                          _cache[45] || (_cache[45] = _createTextVNode(" Net ", -1)),
+                          _cache[48] || (_cache[48] = _createTextVNode(" Net ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                          _cache[46] || (_cache[46] = _createTextVNode(" · Portfolio Profit ", -1)),
+                          _cache[49] || (_cache[49] = _createTextVNode(" · Portfolio Profit ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatSignedCurrency(
@@ -1766,7 +2060,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]),
                 _createElementVNode("div", _hoisted_36, [
                   _createElementVNode("article", _hoisted_37, [
-                    _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                    _cache[52] || (_cache[52] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                     ], -1)),
@@ -1789,7 +2083,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
-                            _cache[48] || (_cache[48] = _createTextVNode(" / ", -1)),
+                            _cache[51] || (_cache[51] = _createTextVNode(" / ", -1)),
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
@@ -1799,7 +2093,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ]),
                   _createElementVNode("article", _hoisted_44, [
-                    _cache[50] || (_cache[50] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                    _cache[53] || (_cache[53] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                     ], -1)),
@@ -1823,7 +2117,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ])
                 ])
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[51] || (_cache[51] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[54] || (_cache[54] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to preview report cards. ", -1)
@@ -1834,31 +2128,382 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "QUICK_INSIGHT" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("QUICK_INSIGHT") }),
-            onDragstart: _cache[30] || (_cache[30] = ($event) => onHomeCardDragStart("QUICK_INSIGHT", $event)),
+            onDragstart: _cache[33] || (_cache[33] = ($event) => onHomeCardDragStart("QUICK_INSIGHT", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
+            onDrop: _cache[34] || (_cache[34] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
             onDragend: onHomeCardDragEnd
           }, [
             _createElementVNode("article", _hoisted_52, [
-              _cache[52] || (_cache[52] = _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight", -1)),
-              _createElementVNode("ul", _hoisted_53, [
-                _createElementVNode("li", _hoisted_54, " Scope: " + _toDisplayString(summary.value?.scope_type || "-") + " (users: " + _toDisplayString(summary.value?.user_count || 0) + ") ", 1),
-                _createElementVNode("li", _hoisted_55, " Best Profit assets: " + _toDisplayString(topPnlAssets.value.map((item) => item.asset_symbol || item.asset_name).join(", ") || "-"), 1)
-              ])
+              _createElementVNode("div", _hoisted_53, [
+                _cache[56] || (_cache[56] = _createElementVNode("div", null, [
+                  _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Quick Insight"),
+                  _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Live vs baseline valuation snapshot delta analysis ")
+                ], -1)),
+                _createElementVNode("div", _hoisted_54, [
+                  _createElementVNode("div", _hoisted_55, [
+                    (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["1D", "7D", "30D"], (period) => {
+                      return _createElementVNode("button", {
+                        key: period,
+                        type: "button",
+                        class: _normalizeClass(["rounded-lg px-3 py-1.5 text-xs font-semibold transition", quickInsightPeriod.value === period ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"]),
+                        onClick: ($event) => quickInsightPeriod.value = period
+                      }, _toDisplayString(period), 11, _hoisted_56);
+                    }), 64))
+                  ]),
+                  _createElementVNode("label", _hoisted_57, [
+                    _withDirectives(_createElementVNode("input", {
+                      "onUpdate:modelValue": _cache[30] || (_cache[30] = ($event) => quickInsightShowNetDrivers.value = $event),
+                      type: "checkbox",
+                      class: "h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
+                    }, null, 512), [
+                      [_vModelCheckbox, quickInsightShowNetDrivers.value]
+                    ]),
+                    _cache[55] || (_cache[55] = _createTextVNode(" Net ", -1))
+                  ]),
+                  _createElementVNode("button", {
+                    type: "button",
+                    class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                    onClick: toggleQuickInsightPanel
+                  }, _toDisplayString(quickInsightExpanded.value ? "Collapse" : "Expand"), 1)
+                ])
+              ]),
+              quickInsightExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_58, [
+                quickInsightLoading.value ? (_openBlock(), _createElementBlock("div", _hoisted_59, " Loading snapshot delta insight... ")) : quickInsightError.value ? (_openBlock(), _createElementBlock("div", _hoisted_60, _toDisplayString(quickInsightError.value), 1)) : quickInsight.value ? (_openBlock(), _createElementBlock("div", _hoisted_61, [
+                  _createElementVNode("div", _hoisted_62, [
+                    _createElementVNode("span", null, "Current as_of: " + _toDisplayString(formatDateTime(quickInsight.value.current_as_of)), 1),
+                    _createElementVNode("span", null, "Baseline: " + _toDisplayString(quickInsight.value.baseline_snapshot_date || `No ${quickInsight.value.period} snapshot baseline`), 1)
+                  ]),
+                  _createElementVNode("div", {
+                    class: _normalizeClass(["rounded-2xl border px-4 py-4", insightSeverityClass(quickInsight.value.summary_alert.severity)])
+                  }, [
+                    _createElementVNode("p", _hoisted_63, _toDisplayString(quickInsight.value.summary_alert.comment), 1),
+                    _createElementVNode("div", _hoisted_64, [
+                      _createElementVNode("div", _hoisted_65, [
+                        _cache[57] || (_cache[57] = _createElementVNode("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Gross", -1)),
+                        _createElementVNode("p", {
+                          class: _normalizeClass(["mt-1 text-sm font-semibold", insightDeltaClass(toNumber(quickInsight.value.summary_alert.gross_delta))])
+                        }, [
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatSignedCurrency(toNumber(quickInsight.value.summary_alert.gross_delta), summaryDisplayCurrency.value)), 5)
+                        ], 2)
+                      ]),
+                      _createElementVNode("div", _hoisted_66, [
+                        _cache[58] || (_cache[58] = _createElementVNode("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Net", -1)),
+                        _createElementVNode("p", {
+                          class: _normalizeClass(["mt-1 text-sm font-semibold", insightDeltaClass(toNumber(quickInsight.value.summary_alert.net_delta))])
+                        }, [
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatSignedCurrency(toNumber(quickInsight.value.summary_alert.net_delta), summaryDisplayCurrency.value)), 5)
+                        ], 2)
+                      ]),
+                      _createElementVNode("div", _hoisted_67, [
+                        _cache[59] || (_cache[59] = _createElementVNode("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Liabilities", -1)),
+                        _createElementVNode("p", {
+                          class: _normalizeClass(["mt-1 text-sm font-semibold", insightDeltaClass(toNumber(quickInsight.value.summary_alert.liabilities_delta) * -1)])
+                        }, [
+                          _createElementVNode("span", {
+                            style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                          }, _toDisplayString(formatSignedCurrency(toNumber(quickInsight.value.summary_alert.liabilities_delta), summaryDisplayCurrency.value)), 5)
+                        ], 2)
+                      ])
+                    ])
+                  ], 2),
+                  _createElementVNode("div", _hoisted_68, [
+                    _createElementVNode("section", _hoisted_69, [
+                      _createElementVNode("h3", _hoisted_70, _toDisplayString(quickInsightDriverCardTitle.value), 1),
+                      _createElementVNode("div", _hoisted_71, [
+                        _createElementVNode("div", null, [
+                          _createElementVNode("p", _hoisted_72, _toDisplayString(quickInsightDriverPositiveLabel.value), 1),
+                          quickInsightDriverPositiveItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_73, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsightDriverPositiveItems.value, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `insight-positive-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_74, [
+                                  _createElementVNode("div", _hoisted_75, [
+                                    _createElementVNode("p", _hoisted_76, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_77, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("div", _hoisted_78, [
+                                    _createElementVNode("p", _hoisted_79, [
+                                      _createElementVNode("span", {
+                                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                      }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                    ]),
+                                    item.status ? (_openBlock(), _createElementBlock("span", {
+                                      key: 0,
+                                      class: _normalizeClass(["mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
+                                    }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
+                                  ])
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_80, _toDisplayString(quickInsightShowNetDrivers.value ? "No boosters." : "No gainers."), 1))
+                        ]),
+                        _createElementVNode("div", null, [
+                          _createElementVNode("p", _hoisted_81, _toDisplayString(quickInsightDriverNegativeLabel.value), 1),
+                          quickInsightDriverNegativeItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_82, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsightDriverNegativeItems.value, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `insight-negative-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_83, [
+                                  _createElementVNode("div", _hoisted_84, [
+                                    _createElementVNode("p", _hoisted_85, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_86, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("div", _hoisted_87, [
+                                    _createElementVNode("p", _hoisted_88, [
+                                      _createElementVNode("span", {
+                                        style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                      }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                    ]),
+                                    item.status ? (_openBlock(), _createElementBlock("span", {
+                                      key: 0,
+                                      class: _normalizeClass(["mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
+                                    }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
+                                  ])
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_89, _toDisplayString(quickInsightShowNetDrivers.value ? "No drags." : "No losers."), 1))
+                        ])
+                      ])
+                    ])
+                  ]),
+                  _createElementVNode("div", _hoisted_90, [
+                    _createElementVNode("section", _hoisted_91, [
+                      _cache[62] || (_cache[62] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Profit Delta Movers", -1)),
+                      _createElementVNode("div", _hoisted_92, [
+                        _createElementVNode("div", null, [
+                          _cache[60] || (_cache[60] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" }, "Top 3", -1)),
+                          quickInsight.value.profit_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_93, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.profit_movers.top_gainers, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `profit-gain-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_94, [
+                                  _createElementVNode("div", _hoisted_95, [
+                                    _createElementVNode("p", _hoisted_96, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_97, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("p", _hoisted_98, [
+                                    _createElementVNode("span", {
+                                      style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                    }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                  ])
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_99, "No movers yet."))
+                        ]),
+                        _createElementVNode("div", null, [
+                          _cache[61] || (_cache[61] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" }, "Bottom 3", -1)),
+                          quickInsight.value.profit_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_100, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.profit_movers.top_losers, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `profit-loss-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_101, [
+                                  _createElementVNode("div", _hoisted_102, [
+                                    _createElementVNode("p", _hoisted_103, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_104, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("p", _hoisted_105, [
+                                    _createElementVNode("span", {
+                                      style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                    }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                  ])
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_106, "No movers yet."))
+                        ])
+                      ])
+                    ]),
+                    _createElementVNode("section", _hoisted_107, [
+                      _cache[65] || (_cache[65] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Return Delta Movers", -1)),
+                      _createElementVNode("div", _hoisted_108, [
+                        _createElementVNode("div", null, [
+                          _cache[63] || (_cache[63] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" }, "Top 3", -1)),
+                          quickInsight.value.return_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_109, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.return_movers.top_gainers, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `return-gain-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_110, [
+                                  _createElementVNode("div", _hoisted_111, [
+                                    _createElementVNode("p", _hoisted_112, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_113, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("p", _hoisted_114, _toDisplayString(formatPercentPoint(toNumber(item.delta_return_pct))), 1)
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_115, "No movers yet."))
+                        ]),
+                        _createElementVNode("div", null, [
+                          _cache[64] || (_cache[64] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" }, "Bottom 3", -1)),
+                          quickInsight.value.return_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_116, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.return_movers.top_losers, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `return-loss-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_117, [
+                                  _createElementVNode("div", _hoisted_118, [
+                                    _createElementVNode("p", _hoisted_119, _toDisplayString(item.label), 1),
+                                    _createElementVNode("p", _hoisted_120, _toDisplayString(item.portfolio_name || "-"), 1)
+                                  ]),
+                                  _createElementVNode("p", _hoisted_121, _toDisplayString(formatPercentPoint(toNumber(item.delta_return_pct))), 1)
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_122, "No movers yet."))
+                        ])
+                      ])
+                    ])
+                  ]),
+                  _createElementVNode("div", _hoisted_123, [
+                    _createElementVNode("section", _hoisted_124, [
+                      _cache[68] || (_cache[68] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Portfolio Changes", -1)),
+                      _createElementVNode("div", _hoisted_125, [
+                        _createElementVNode("div", null, [
+                          _cache[66] || (_cache[66] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Current Value Delta", -1)),
+                          quickInsight.value.portfolio_changes.top_current_value_changes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_126, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.portfolio_changes.top_current_value_changes, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `portfolio-current-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_127, [
+                                  _createElementVNode("p", _hoisted_128, _toDisplayString(item.label), 1),
+                                  _createElementVNode("p", {
+                                    class: _normalizeClass(["text-right text-sm font-semibold", insightDeltaClass(toNumber(item.delta_amount))])
+                                  }, [
+                                    _createElementVNode("span", {
+                                      style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                    }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                  ], 2)
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_129, "No portfolio deltas."))
+                        ]),
+                        _createElementVNode("div", null, [
+                          _cache[67] || (_cache[67] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Current Net Delta", -1)),
+                          quickInsight.value.portfolio_changes.top_net_value_changes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_130, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.portfolio_changes.top_net_value_changes, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `portfolio-net-${item.key}`,
+                                class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                              }, [
+                                _createElementVNode("div", _hoisted_131, [
+                                  _createElementVNode("p", _hoisted_132, _toDisplayString(item.label), 1),
+                                  _createElementVNode("p", {
+                                    class: _normalizeClass(["text-right text-sm font-semibold", insightDeltaClass(toNumber(item.delta_amount))])
+                                  }, [
+                                    _createElementVNode("span", {
+                                      style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
+                                    }, _toDisplayString(formatSignedCurrency(toNumber(item.delta_amount), summaryDisplayCurrency.value)), 5)
+                                  ], 2)
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : (_openBlock(), _createElementBlock("p", _hoisted_133, "No portfolio deltas."))
+                        ])
+                      ])
+                    ]),
+                    _createElementVNode("section", _hoisted_134, [
+                      _cache[70] || (_cache[70] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Warnings", -1)),
+                      _createElementVNode("ul", _hoisted_135, [
+                        _createElementVNode("li", _hoisted_136, " Snapshot baseline: " + _toDisplayString(quickInsight.value.warnings.missing_snapshot ? "Missing" : "OK"), 1),
+                        _createElementVNode("li", _hoisted_137, " Stale quotes: " + _toDisplayString(quickInsight.value.warnings.stale_quote_count), 1),
+                        _createElementVNode("li", _hoisted_138, [
+                          _createElementVNode("div", _hoisted_139, [
+                            _createElementVNode("span", null, "Manual quotes: " + _toDisplayString(quickInsight.value.warnings.manual_quote_count), 1),
+                            quickInsight.value.warnings.manual_quote_count > 0 ? (_openBlock(), _createElementBlock("button", {
+                              key: 0,
+                              type: "button",
+                              class: "rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700",
+                              onClick: _cache[31] || (_cache[31] = ($event) => quickInsightManualQuotesExpanded.value = !quickInsightManualQuotesExpanded.value)
+                            }, _toDisplayString(quickInsightManualQuotesExpanded.value ? "Collapse" : "Expand"), 1)) : _createCommentVNode("", true)
+                          ]),
+                          quickInsightManualQuotesExpanded.value && quickInsight.value.warnings.manual_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_140, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.warnings.manual_quotes, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `manual-quote-${item.key}`,
+                                class: "rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
+                              }, [
+                                _createElementVNode("p", _hoisted_141, _toDisplayString(item.label), 1),
+                                _createElementVNode("p", _hoisted_142, [
+                                  _createTextVNode(_toDisplayString(item.portfolio_name || "-") + " ", 1),
+                                  item.asset_class ? (_openBlock(), _createElementBlock("span", _hoisted_143, "· " + _toDisplayString(item.asset_class), 1)) : _createCommentVNode("", true)
+                                ]),
+                                _createElementVNode("p", _hoisted_144, [
+                                  _createTextVNode(" Source: " + _toDisplayString(item.quote_source || "MANUAL") + " ", 1),
+                                  item.quote_as_of ? (_openBlock(), _createElementBlock("span", _hoisted_145, "· " + _toDisplayString(formatDateTime(item.quote_as_of)), 1)) : _createCommentVNode("", true)
+                                ])
+                              ]);
+                            }), 128))
+                          ])) : _createCommentVNode("", true)
+                        ]),
+                        _createElementVNode("li", _hoisted_146, [
+                          _createElementVNode("div", _hoisted_147, [
+                            _createElementVNode("span", null, "Missing quotes: " + _toDisplayString(quickInsight.value.warnings.missing_quote_count), 1),
+                            quickInsight.value.warnings.missing_quote_count > 0 ? (_openBlock(), _createElementBlock("button", {
+                              key: 0,
+                              type: "button",
+                              class: "rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700",
+                              onClick: _cache[32] || (_cache[32] = ($event) => quickInsightMissingQuotesExpanded.value = !quickInsightMissingQuotesExpanded.value)
+                            }, _toDisplayString(quickInsightMissingQuotesExpanded.value ? "Collapse" : "Expand"), 1)) : _createCommentVNode("", true)
+                          ]),
+                          quickInsightMissingQuotesExpanded.value && quickInsight.value.warnings.missing_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_148, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.warnings.missing_quotes, (item) => {
+                              return _openBlock(), _createElementBlock("li", {
+                                key: `missing-quote-${item.key}`,
+                                class: "rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
+                              }, [
+                                _createElementVNode("p", _hoisted_149, _toDisplayString(item.label), 1),
+                                _createElementVNode("p", _hoisted_150, [
+                                  _createTextVNode(_toDisplayString(item.portfolio_name || "-") + " ", 1),
+                                  item.asset_class ? (_openBlock(), _createElementBlock("span", _hoisted_151, "· " + _toDisplayString(item.asset_class), 1)) : _createCommentVNode("", true)
+                                ]),
+                                _cache[69] || (_cache[69] = _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, " No current quote available ", -1))
+                              ]);
+                            }), 128))
+                          ])) : _createCommentVNode("", true)
+                        ])
+                      ])
+                    ])
+                  ])
+                ])) : _createCommentVNode("", true)
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_152, [..._cache[71] || (_cache[71] = [
+                _createTextVNode(" Collapsed. Click ", -1),
+                _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
+                _createTextVNode(" to view snapshot delta insight. ", -1)
+              ])]))
             ])
           ], 38),
           _createElementVNode("div", {
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "RELEASE_NOTES" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("RELEASE_NOTES") }),
-            onDragstart: _cache[32] || (_cache[32] = ($event) => onHomeCardDragStart("RELEASE_NOTES", $event)),
+            onDragstart: _cache[35] || (_cache[35] = ($event) => onHomeCardDragStart("RELEASE_NOTES", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[33] || (_cache[33] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
+            onDrop: _cache[36] || (_cache[36] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createElementVNode("article", _hoisted_56, [
-              _createElementVNode("div", _hoisted_57, [
-                _cache[53] || (_cache[53] = _createElementVNode("div", null, [
+            _createElementVNode("article", _hoisted_153, [
+              _createElementVNode("div", _hoisted_154, [
+                _cache[72] || (_cache[72] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
                 ], -1)),
@@ -1868,20 +2513,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   onClick: toggleReleaseNotesPanel
                 }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
-              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_58, [
-                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_59, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_60, [
+              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_155, [
+                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_156, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_157, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: note.id,
                       class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                     }, [
-                      _createElementVNode("p", _hoisted_61, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                      _createElementVNode("p", _hoisted_62, _toDisplayString(note.title), 1),
-                      _createElementVNode("p", _hoisted_63, _toDisplayString(note.summary), 1)
+                      _createElementVNode("p", _hoisted_158, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                      _createElementVNode("p", _hoisted_159, _toDisplayString(note.title), 1),
+                      _createElementVNode("p", _hoisted_160, _toDisplayString(note.summary), 1)
                     ]);
                   }), 128))
                 ]))
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_64, [..._cache[54] || (_cache[54] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_161, [..._cache[73] || (_cache[73] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to view release notes. ", -1)

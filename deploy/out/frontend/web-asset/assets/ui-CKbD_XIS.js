@@ -13,6 +13,10 @@ async function getNetworthSeries(params = {}) {
   const { data } = await http.get("/analytics/networth-series", { params });
   return data;
 }
+async function getQuickInsight(params = {}) {
+  const { data } = await http.get("/analytics/quick-insight", { params });
+  return data;
+}
 async function collectSnapshots(params = {}) {
   const { data } = await http.post("/analytics/snapshots/collect", null, { params });
   return data;
@@ -150,4 +154,4 @@ const useUiStore = defineStore("asset-ui", () => {
   };
 });
 
-export { getNetworthSeries as a, getAllocation as b, collectSnapshots as c, getSummary as g, useUiStore as u };
+export { getSummary as a, getNetworthSeries as b, getAllocation as c, collectSnapshots as d, getQuickInsight as g, useUiStore as u };

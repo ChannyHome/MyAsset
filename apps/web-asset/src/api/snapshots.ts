@@ -1,5 +1,6 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
+import type { AnalyticsQuickInsightOut, QuickInsightPeriod } from "./analytics";
 
 export type SnapshotSourceType = "MANUAL" | "CSV_PREVIEW";
 export type SnapshotMode = "SUMMARY" | "PORTFOLIO_RETURN";
@@ -273,6 +274,11 @@ export type SnapshotSeriesQuery = {
   display_currency?: SnapshotDisplayCurrency;
 };
 
+export type SnapshotQuickInsightQuery = {
+  display_currency?: SnapshotDisplayCurrency;
+  period?: QuickInsightPeriod;
+};
+
 export async function captureSnapshot(payload: { name?: string; note?: string } = {}): Promise<SnapshotSummaryOut> {
   const { data } = await http.post<SnapshotSummaryOut>("/snapshots/capture", payload);
   return data;
@@ -317,6 +323,22 @@ export async function getSnapshotLiabilitiesTable(
   params: SnapshotLiabilityTableQuery = {},
 ): Promise<SnapshotLiabilityTablePageOut> {
   const { data } = await http.get<SnapshotLiabilityTablePageOut>(`/snapshots/${snapshotId}/liabilities/table`, { params });
+  return data;
+}
+
+export async function getSnapshotQuickInsight(
+  snapshotId: number,
+  params: SnapshotQuickInsightQuery = {},
+): Promise<AnalyticsQuickInsightOut> {
+  const { data } = await http.get<AnalyticsQuickInsightOut>(`/snapshots/${snapshotId}/quick-insight`, { params });
+  return data;
+}
+
+export async function getSnapshotPreviewQuickInsight(
+  payload: SnapshotCsvPreviewOut,
+  params: SnapshotQuickInsightQuery = {},
+): Promise<AnalyticsQuickInsightOut> {
+  const { data } = await http.post<AnalyticsQuickInsightOut>("/snapshots/quick-insight/preview", payload, { params });
   return data;
 }
 

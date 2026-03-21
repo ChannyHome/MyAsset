@@ -20,6 +20,7 @@ from app.models.snapshot import (
     SnapshotSet,
 )
 from app.models.user import User
+from app.schemas.analytics import AnalyticsQuickInsightOut
 from app.schemas.asset import SortOrder
 from app.schemas.snapshot import (
     SnapshotAllocationItemOut,
@@ -61,6 +62,7 @@ from app.services.snapshots import (
     to_snapshot_liability_row_dict,
     to_snapshot_portfolio_row_dict,
 )
+from app.services.quick_insight import get_preview_quick_insight, get_snapshot_quick_insight
 
 router = APIRouter(prefix="/snapshots", tags=["snapshots"])
 
@@ -242,6 +244,40 @@ def get_snapshot_summary(
 ) -> SnapshotSummaryOut:
     snapshot = _get_user_snapshot(db, current_user.id, snapshot_id)
     return _summary_model(snapshot)
+
+
+@router.get("/{snapshot_id}/quick-insight", response_model=AnalyticsQuickInsightOut)
+def get_snapshot_quick_insight_view(
+    snapshot_id: int,
+    display_currency: str = Query(default="KRW"),
+    period: Literal["1D", "7D", "30D"] = Query(default="1D"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AnalyticsQuickInsightOut:
+    snapshot = _get_user_snapshot(db, current_user.id, snapshot_id)
+    return get_snapshot_quick_insight(
+        db=db,
+        snapshot=snapshot,
+        display_currency=display_currency,
+        period=period,
+    )
+
+
+@router.post("/quick-insight/preview", response_model=AnalyticsQuickInsightOut)
+def get_snapshot_preview_quick_insight_view(
+    payload: SnapshotCsvPreviewOut,
+    display_currency: str = Query(default="KRW"),
+    period: Literal["1D", "7D", "30D"] = Query(default="1D"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AnalyticsQuickInsightOut:
+    return get_preview_quick_insight(
+        db=db,
+        owner_user_id=current_user.id,
+        preview=payload,
+        display_currency=display_currency,
+        period=period,
+    )
 
 
 @router.get("/{snapshot_id}/allocation", response_model=SnapshotAllocationOut)
