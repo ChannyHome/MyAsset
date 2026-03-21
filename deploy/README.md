@@ -32,6 +32,69 @@ cd C:\nginx
 Open:
 - `http://127.0.0.1`
 
+### One-click local publish
+
+If you want a double-click flow on Windows, use:
+
+```powershell
+.\deploy-frontend-local.cmd
+```
+
+This runs:
+- frontend build
+- copy to `C:\nginx\html\myasset\...`
+- nginx config test
+- nginx reload (or first start if reload fails)
+
+Optional examples:
+
+```powershell
+.\deploy-frontend-local.cmd -NginxRoot "C:\nginx"
+.\deploy-frontend-local.cmd -InstallDependencies
+.\deploy-frontend-local.cmd -SkipBuild
+.\deploy-frontend-local.cmd -SkipReload
+```
+
+### One-click local publish + API restart
+
+If you want frontend publish and API restart together:
+
+```powershell
+.\publish-local-stack.cmd
+```
+
+This runs:
+- frontend build
+- copy to `C:\nginx\html\myasset\...`
+- nginx config test + reload
+- stop the current API launcher/port owner on `8000`
+- start `run-api.ps1` in a new PowerShell window
+
+If you want API restart only:
+
+```powershell
+.\restart-api.cmd
+```
+
+Optional examples:
+
+```powershell
+.\publish-local-stack.cmd -SkipFrontend
+.\publish-local-stack.cmd -SkipApiRestart
+.\publish-local-stack.cmd -NginxRoot "C:\nginx"
+.\publish-local-stack.cmd -ApiPort 8000
+```
+
+Notes:
+- existing `run-api.ps1` remains the base API launcher
+- this stack script does not replace it; it orchestrates it
+- the restart script first tries to close the tracked/identified `run-api.ps1` PowerShell window before falling back to port-owner cleanup
+
+Browser cache guidance after publish:
+- press `Ctrl+F5` if the screen still looks old
+- if remote modules still look mixed, close the tab and reopen `http://127.0.0.1`
+- if needed, clear site data for `127.0.0.1`
+
 ## 1) Build frontend artifacts on local machine (Windows)
 
 From repo root:
