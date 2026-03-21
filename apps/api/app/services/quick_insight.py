@@ -227,6 +227,13 @@ def _format_decimal_text(value: Decimal) -> str:
     return format(int(quantized), ",")
 
 
+def _format_signed_decimal_text(value: Decimal) -> str:
+    text = _format_decimal_text(value)
+    if Decimal(value) > 0:
+        return f"+{text}"
+    return text
+
+
 def _make_delta_item(
     *,
     entity_type: Literal["HOLDING", "LIABILITY", "PORTFOLIO"],
@@ -320,7 +327,12 @@ def _build_summary_comment(
 ) -> tuple[str, Literal["positive", "negative", "neutral"]]:
     threshold = _material_change_threshold(baseline_gross or Decimal("0"))
     if abs(gross_delta) < threshold and abs(net_delta) < threshold and abs(liabilities_delta) < threshold:
-        return f"No material change over {period}.", "neutral"
+        return (
+            f"Minor move over {period}. "
+            f"Gross {_format_signed_decimal_text(gross_delta)}, "
+            f"Net {_format_signed_decimal_text(net_delta)}.",
+            "neutral",
+        )
 
     if net_delta < 0:
         if liabilities_delta > 0 and net_drag is not None and net_drag.entity_type == "LIABILITY":

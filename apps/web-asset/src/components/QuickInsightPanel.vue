@@ -66,6 +66,7 @@ const period = ref<QuickInsightPeriod>(DEFAULT_UI_STATE.period);
 const showNetDrivers = ref(DEFAULT_UI_STATE.netDrivers);
 const manualQuotesExpanded = ref(DEFAULT_UI_STATE.manualExpanded);
 const missingQuotesExpanded = ref(DEFAULT_UI_STATE.missingExpanded);
+const thresholdInfoOpen = ref(false);
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -289,14 +290,39 @@ function renderReturn(value: string | number | null | undefined): string {
 function toggleExpanded(): void {
   panelExpanded.value = !panelExpanded.value;
 }
+
+function toggleThresholdInfo(): void {
+  thresholdInfoOpen.value = !thresholdInfoOpen.value;
+}
 </script>
 
 <template>
   <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="min-w-0">
-        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h2>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-expanded="thresholdInfoOpen"
+            aria-label="Quick Insight threshold info"
+            @click="toggleThresholdInfo"
+          >
+            i
+          </button>
+        </div>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ description }}</p>
+        <div
+          v-if="thresholdInfoOpen"
+          class="mt-3 max-w-2xl rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+        >
+          <p class="font-semibold text-slate-700 dark:text-slate-100">Minor move threshold</p>
+          <p class="mt-1 [overflow-wrap:anywhere]">
+            Changes below 0.25% of baseline gross are treated as a minor move.
+            Exact threshold = max(0.25% of baseline gross, 1 unit in the selected display currency).
+          </p>
+        </div>
       </div>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">

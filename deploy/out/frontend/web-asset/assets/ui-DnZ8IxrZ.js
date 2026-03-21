@@ -154,4 +154,4 @@ const useUiStore = defineStore("asset-ui", () => {
   };
 });
 
-export { getSummary as a, getNetworthSeries as b, getAllocation as c, collectSnapshots as d, getQuickInsight as g, useUiStore as u };
+export { getNetworthSeries as a, getAllocation as b, collectSnapshots as c, getQuickInsight as d, getSummary as g, useUiStore as u };

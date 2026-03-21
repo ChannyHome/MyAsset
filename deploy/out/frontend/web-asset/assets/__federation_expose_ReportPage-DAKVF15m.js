@@ -1,7 +1,7 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { a as getSummary, b as getNetworthSeries } from './ui-CKbD_XIS.js';
+import { g as getSummary, a as getNetworthSeries } from './ui-DnZ8IxrZ.js';
 import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-r6VxmkS0.js';
-import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-DtSEYlww.js';
+import { _ as _sfc_main$1 } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-8Ho99rjW.js';
 import { _ as _sfc_main$2 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
 import { f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';

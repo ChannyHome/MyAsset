@@ -1,64 +1,15 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { b as getNetworthSeries, c as getAllocation, a as getSummary } from './ui-CKbD_XIS.js';
+import { a as getNetworthSeries, b as getAllocation, g as getSummary } from './ui-DnZ8IxrZ.js';
 import { a as getHoldingsTable, g as getHoldingsPerformance } from './holdings-D-iv7-uK.js';
 import { a as getPortfoliosTable, g as getLiabilitiesTable } from './portfolios-r6VxmkS0.js';
-import { h as http, f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
-import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-CyIQwDdL.js';
-import { u as useDashboardDataAdapter, b as _sfc_main$1, c as _sfc_main$2, _ as _sfc_main$3, a as _sfc_main$8 } from './useDashboardDataAdapter-BDktnABs.js';
+import { u as useDashboardDataAdapter, d as _sfc_main$1, b as _sfc_main$2, c as _sfc_main$3, _ as _sfc_main$4, a as _sfc_main$9, g as getSnapshotPortfoliosTable, e as getSnapshotHoldingsTable, f as getSnapshotLiabilitiesTable, h as getSnapshotSeries, i as captureSnapshot, j as getSnapshots, p as previewSnapshotCsv, k as exportSnapshotCsv, l as deleteSnapshots, m as getSnapshotAllocation, n as getSnapshotSummary } from './useDashboardDataAdapter-Br3fxh2J.js';
+import { _ as _sfc_main$5, a as _sfc_main$6, b as _sfc_main$7, c as _sfc_main$8 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DcBqJiKv.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
-
-async function captureSnapshot(payload = {}) {
-  const { data } = await http.post("/snapshots/capture", payload);
-  return data;
-}
-async function getSnapshots(params = {}) {
-  const { data } = await http.get("/snapshots", { params });
-  return data;
-}
-async function getSnapshotSummary(snapshotId) {
-  const { data } = await http.get(`/snapshots/${snapshotId}/summary`);
-  return data;
-}
-async function getSnapshotAllocation(snapshotId, params = {}) {
-  const { data } = await http.get(`/snapshots/${snapshotId}/allocation`, { params });
-  return data;
-}
-async function getSnapshotPortfoliosTable(snapshotId, params = {}) {
-  const { data } = await http.get(`/snapshots/${snapshotId}/portfolios/table`, { params });
-  return data;
-}
-async function getSnapshotHoldingsTable(snapshotId, params = {}) {
-  const { data } = await http.get(`/snapshots/${snapshotId}/holdings/table`, { params });
-  return data;
-}
-async function getSnapshotLiabilitiesTable(snapshotId, params = {}) {
-  const { data } = await http.get(`/snapshots/${snapshotId}/liabilities/table`, { params });
-  return data;
-}
-async function getSnapshotSeries(params = {}) {
-  const { data } = await http.get("/snapshots/series", { params });
-  return data;
-}
-async function exportSnapshotCsv(snapshotId) {
-  const response = await http.get(`/snapshots/${snapshotId}/export.csv`, { responseType: "blob" });
-  return response.data;
-}
-async function previewSnapshotCsv(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  const { data } = await http.post("/snapshots/csv/preview", formData, {
-    headers: { "Content-Type": "multipart/form-data" }
-  });
-  return data;
-}
-async function deleteSnapshots(ids) {
-  const { data } = await http.post("/snapshots/delete", { ids });
-  return data;
-}
+import { f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
-const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,vModelCheckbox:_vModelCheckbox,withDirectives:_withDirectives,createTextVNode:_createTextVNode,renderList:_renderList,Fragment:_Fragment,vModelSelect:_vModelSelect,normalizeStyle:_normalizeStyle,vModelText:_vModelText,withModifiers:_withModifiers,createVNode:_createVNode,unref:_unref,createBlock:_createBlock,withCtx:_withCtx,createStaticVNode:_createStaticVNode} = await importShared('vue');
+const {createElementVNode:_createElementVNode,toDisplayString:_toDisplayString,normalizeClass:_normalizeClass,openBlock:_openBlock,createElementBlock:_createElementBlock,createCommentVNode:_createCommentVNode,createVNode:_createVNode,vModelCheckbox:_vModelCheckbox,withDirectives:_withDirectives,createTextVNode:_createTextVNode,renderList:_renderList,Fragment:_Fragment,vModelSelect:_vModelSelect,normalizeStyle:_normalizeStyle,vModelText:_vModelText,withModifiers:_withModifiers,unref:_unref,createBlock:_createBlock,withCtx:_withCtx,createStaticVNode:_createStaticVNode} = await importShared('vue');
 
 const _hoisted_1 = { class: "flex flex-col gap-6 p-4 md:p-6" };
 const _hoisted_2 = { class: "order-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
@@ -77,7 +28,7 @@ const _hoisted_11 = {
   key: 2,
   class: "mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200"
 };
-const _hoisted_12 = { class: "order-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_12 = { class: "order-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
 const _hoisted_13 = { class: "flex flex-wrap items-start justify-between gap-3" };
 const _hoisted_14 = {
   key: 0,
@@ -1751,6 +1702,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           toastMessage.value ? (_openBlock(), _createElementBlock("p", _hoisted_10, _toDisplayString(toastMessage.value), 1)) : _createCommentVNode("", true),
           errorMessage.value ? (_openBlock(), _createElementBlock("p", _hoisted_11, _toDisplayString(errorMessage.value), 1)) : _createCommentVNode("", true)
         ]),
+        _createVNode(_sfc_main$1, {
+          class: "order-2",
+          title: "Quick Insight",
+          description: sourceType.value === "LIVE" ? "Live vs baseline valuation snapshot delta analysis" : sourceType.value === "SNAPSHOT" ? "Applied snapshot vs prior snapshot delta analysis" : "CSV preview vs prior snapshot delta analysis",
+          "source-mode": sourceType.value,
+          "snapshot-id": appliedSnapshotId.value,
+          "preview-payload": appliedCsvPreview.value,
+          "display-currency": summaryCurrency.value,
+          "amount-mask": amountMaskEnabled.value,
+          "storage-key-prefix": "myasset:snapshot:quick-insight"
+        }, null, 8, ["description", "source-mode", "snapshot-id", "preview-payload", "display-currency", "amount-mask"]),
         _createElementVNode("article", _hoisted_12, [
           _createElementVNode("div", _hoisted_13, [
             _createElementVNode("div", null, [
@@ -2101,8 +2063,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             ])
           ])
         ])) : _createCommentVNode("", true),
-        _createVNode(_sfc_main$1, {
-          class: "order-4",
+        _createVNode(_sfc_main$2, {
+          class: "order-5",
           title: "Holdings Table",
           subtitle: "Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol",
           expanded: holdingsExpanded.value,
@@ -2121,8 +2083,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           onSetPage: _cache[32] || (_cache[32] = ($event) => holdingTable.page = $event),
           "onUpdate:searchTerm": _cache[33] || (_cache[33] = ($event) => holdingTable.q = $event)
         }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts", "display-currency"]),
-        _createVNode(_sfc_main$2, {
-          class: "order-5",
+        _createVNode(_sfc_main$3, {
+          class: "order-6",
           title: "Liabilities Table",
           subtitle: "Portfolio / Liability / Balance / Type",
           expanded: liabilitiesExpanded.value,
@@ -2140,8 +2102,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           onSetPage: _cache[36] || (_cache[36] = ($event) => liabilityTable.page = $event),
           "onUpdate:searchTerm": _cache[37] || (_cache[37] = ($event) => liabilityTable.q = $event)
         }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts"]),
-        _createVNode(_sfc_main$3, {
-          class: "order-2",
+        _createVNode(_sfc_main$4, {
+          class: "order-3",
           title: "Snapshot Dashboard Panel",
           description: "KPI, Donut, Treemap from the applied snapshot dataset.",
           "source-mode": "SNAPSHOT",
@@ -2237,7 +2199,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ref: snapshotDashboardRef,
               class: "space-y-4"
             }, [
-              kpiMode.value === "SUMMARY" && _unref(summaryVm) ? (_openBlock(), _createBlock(_sfc_main$4, {
+              kpiMode.value === "SUMMARY" && _unref(summaryVm) ? (_openBlock(), _createBlock(_sfc_main$5, {
                 key: 0,
                 currency: summaryCurrency.value,
                 "gross-assets-total": _unref(summaryVm).gross,
@@ -2254,7 +2216,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 subtitle: "Included in snapshot analysis",
                 "mask-amounts": amountMaskEnabled.value
               }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : _createCommentVNode("", true),
-              kpiMode.value === "PORTFOLIOS" ? (_openBlock(), _createBlock(_sfc_main$5, {
+              kpiMode.value === "PORTFOLIOS" ? (_openBlock(), _createBlock(_sfc_main$6, {
                 key: 1,
                 currency: summaryCurrency.value,
                 portfolios: kpiPortfolioCardRows.value,
@@ -2264,7 +2226,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 subtitle: `Portfolio-level KPI for the applied source | ${portfolioNetBasis.value ? "Net basis" : "Gross basis"}`
               }, null, 8, ["currency", "portfolios", "mask-amounts", "use-net-basis", "subtitle"])) : _createCommentVNode("", true),
               _createElementVNode("div", _hoisted_84, [
-                _createVNode(_sfc_main$6, {
+                _createVNode(_sfc_main$7, {
                   title: `Allocation | ${dashboardTarget.value}`,
                   subtitle: `Top N + Others (${holdingsPortfolioKey.value === "ALL" ? "all portfolios" : "filtered portfolio"})`,
                   currency: summaryCurrency.value,
@@ -2275,7 +2237,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   loading: _unref(donutLoading),
                   error: _unref(donutError)
                 }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position", "mask-amounts", "loading", "error"]),
-                _createVNode(_sfc_main$7, {
+                _createVNode(_sfc_main$8, {
                   title: "Treemap Holdings",
                   subtitle: dashboardTarget.value === "HOLDINGS" ? `Target=HOLDINGS | group_by=ASSET | color=return ${holdingsPortfolioKey.value === "ALL" ? "" : `| ${portfolioOptions.value.find((p) => p.key === holdingsPortfolioKey.value)?.label || "filtered portfolio"}`}` : `Target=${dashboardTarget.value} | group_by=PORTFOLIO | color=return`,
                   currency: summaryCurrency.value,
@@ -2289,8 +2251,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           ]),
           _: 1
         }, 8, ["expanded"]),
-        _createVNode(_sfc_main$8, {
-          class: "order-3",
+        _createVNode(_sfc_main$9, {
+          class: "order-4",
           title: "Portfolios Table",
           subtitle: "Portfolio / Current / Invested Principal / Profit / Return",
           expanded: portfoliosExpanded.value,
