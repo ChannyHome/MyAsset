@@ -20,6 +20,7 @@ from app.models.valuation_snapshot import ValuationSnapshot, ValuationSnapshotPo
 from app.schemas.analytics import (
     AnalyticsAllocationItemOut,
     AnalyticsAllocationOut,
+    AnalyticsGoalProgressOut,
     AnalyticsNetworthSeriesLineOut,
     AnalyticsNetworthSeriesLinePointOut,
     AnalyticsNetworthSeriesOut,
@@ -30,6 +31,7 @@ from app.schemas.analytics import (
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.analytics_summary import calculate_summary_values
+from app.services.goal_progress import build_goal_progress
 from app.services.quick_insight import QuickInsightValidationError, get_quick_insight
 from app.services.user_seed import SeedUser
 from app.services.valuation_snapshots import collect_valuation_snapshots_batch
@@ -253,6 +255,38 @@ def get_quick_insight_view(
         )
     except QuickInsightValidationError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+    except MissingFxRateError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
+        ) from exc
+
+
+@router.get("/goal-progress", response_model=AnalyticsGoalProgressOut)
+def get_goal_progress_view(
+    scope_type: str | None = None,
+    scope_id: int | None = None,
+    display_currency: str = "KRW",
+    basis: Literal["GROSS", "NET"] = Query(default="GROSS"),
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> AnalyticsGoalProgressOut:
+    normalized_scope_type, normalized_scope_id, scope_user_ids = _resolve_scope_user_ids(
+        db=db,
+        current_user=current_user,
+        scope_type=scope_type,
+        scope_id=scope_id,
+    )
+    try:
+        return build_goal_progress(
+            db=db,
+            owner_user_id=current_user.id,
+            scope_type=normalized_scope_type,
+            scope_id=normalized_scope_id,
+            scope_user_ids=scope_user_ids,
+            display_currency=display_currency,
+            basis=basis,
+        )
     except MissingFxRateError as exc:
         raise HTTPException(
             status_code=503,

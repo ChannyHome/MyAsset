@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -159,3 +159,26 @@ class AnalyticsQuickInsightOut(BaseModel):
     return_movers: AnalyticsQuickInsightRankedGroupOut
     portfolio_changes: AnalyticsQuickInsightPortfolioChangesOut
     warnings: AnalyticsQuickInsightWarningsOut
+
+
+class AnalyticsGoalProgressOut(BaseModel):
+    configured: bool
+    scope_type: Literal["USER", "HOUSEHOLD"]
+    scope_id: int
+    basis: Literal["GROSS", "NET"]
+    display_currency: Literal["KRW", "USD"]
+    current_amount: Decimal
+    target_amount: Decimal | None = None
+    progress_ratio_pct: Decimal | None = None
+    remaining_amount: Decimal | None = None
+    over_target_amount: Decimal | None = None
+    reached: bool
+    projected_reach_date: date | None = None
+    projected_months_to_goal: int | None = None
+    projection_3y: Decimal | None = None
+    projection_5y: Decimal | None = None
+    projection_10y: Decimal | None = None
+    recent_actual_annualized_return_pct: Decimal | None = None
+    recent_actual_window_days: int | None = None
+    comparison_tone: Literal["AHEAD", "BEHIND", "MATCHED", "UNAVAILABLE"]
+    as_of: datetime

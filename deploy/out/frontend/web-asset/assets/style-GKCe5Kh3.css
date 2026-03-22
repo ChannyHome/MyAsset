@@ -142,6 +142,7 @@
     --spacing: .25rem;
     --container-xs: 20rem;
     --container-md: 28rem;
+    --container-xl: 36rem;
     --container-2xl: 42rem;
     --container-3xl: 48rem;
     --container-4xl: 56rem;
@@ -546,6 +547,10 @@
     margin-inline: auto;
   }
 
+  .-mt-3 {
+    margin-top: calc(var(--spacing) * -3);
+  }
+
   .mt-0\.5 {
     margin-top: calc(var(--spacing) * .5);
   }
@@ -636,6 +641,10 @@
 
   .h-5 {
     height: calc(var(--spacing) * 5);
+  }
+
+  .h-6 {
+    height: calc(var(--spacing) * 6);
   }
 
   .h-7 {
@@ -742,6 +751,10 @@
     width: calc(var(--spacing) * 5);
   }
 
+  .w-6 {
+    width: calc(var(--spacing) * 6);
+  }
+
   .w-7 {
     width: calc(var(--spacing) * 7);
   }
@@ -802,8 +815,16 @@
     max-width: 30rem;
   }
 
+  .max-w-\[360px\] {
+    max-width: 360px;
+  }
+
   .max-w-md {
     max-width: var(--container-md);
+  }
+
+  .max-w-xl {
+    max-width: var(--container-xl);
   }
 
   .max-w-xs {
@@ -1133,6 +1154,16 @@
     border-color: var(--color-amber-400);
   }
 
+  .border-amber-500\/30 {
+    border-color: #f99c004d;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .border-amber-500\/30 {
+      border-color: color-mix(in oklab, var(--color-amber-500) 30%, transparent);
+    }
+  }
+
   .border-current {
     border-color: currentColor;
   }
@@ -1193,6 +1224,16 @@
     border-color: var(--color-emerald-300);
   }
 
+  .border-emerald-500\/30 {
+    border-color: #00bb7f4d;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .border-emerald-500\/30 {
+      border-color: color-mix(in oklab, var(--color-emerald-500) 30%, transparent);
+    }
+  }
+
   .border-emerald-500\/40 {
     border-color: #00bb7f66;
   }
@@ -1219,6 +1260,16 @@
 
   .border-indigo-400 {
     border-color: var(--color-indigo-400);
+  }
+
+  .border-indigo-400\/40 {
+    border-color: #7d87ff66;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .border-indigo-400\/40 {
+      border-color: color-mix(in oklab, var(--color-indigo-400) 40%, transparent);
+    }
   }
 
   .border-indigo-500 {
@@ -1265,6 +1316,10 @@
     border-color: var(--color-slate-300);
   }
 
+  .border-slate-400 {
+    border-color: var(--color-slate-400);
+  }
+
   .border-slate-600 {
     border-color: var(--color-slate-600);
   }
@@ -1291,6 +1346,16 @@
 
   .bg-amber-100 {
     background-color: var(--color-amber-100);
+  }
+
+  .bg-amber-500\/10 {
+    background-color: #f99c001a;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-amber-500\/10 {
+      background-color: color-mix(in oklab, var(--color-amber-500) 10%, transparent);
+    }
   }
 
   .bg-amber-500\/15 {
@@ -1417,6 +1482,16 @@
     background-color: var(--color-indigo-500);
   }
 
+  .bg-indigo-500\/10 {
+    background-color: #625fff1a;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-indigo-500\/10 {
+      background-color: color-mix(in oklab, var(--color-indigo-500) 10%, transparent);
+    }
+  }
+
   .bg-indigo-500\/15 {
     background-color: #625fff26;
   }
@@ -1487,6 +1562,10 @@
 
   .bg-slate-100 {
     background-color: var(--color-slate-100);
+  }
+
+  .bg-slate-200 {
+    background-color: var(--color-slate-200);
   }
 
   .bg-slate-300 {
@@ -1575,6 +1654,16 @@
     }
   }
 
+  .bg-slate-950\/90 {
+    background-color: #020618e6;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-slate-950\/90 {
+      background-color: color-mix(in oklab, var(--color-slate-950) 90%, transparent);
+    }
+  }
+
   .bg-slate-950\/95 {
     background-color: #020618f2;
   }
@@ -1593,6 +1682,10 @@
     .bg-teal-500\/15 {
       background-color: color-mix(in oklab, var(--color-teal-500) 15%, transparent);
     }
+  }
+
+  .bg-transparent {
+    background-color: #0000;
   }
 
   .bg-violet-50 {
@@ -1908,6 +2001,10 @@
     color: var(--color-amber-200);
   }
 
+  .text-amber-300 {
+    color: var(--color-amber-300);
+  }
+
   .text-amber-600 {
     color: var(--color-amber-600);
   }
@@ -1982,6 +2079,10 @@
 
   .text-indigo-300 {
     color: var(--color-indigo-300);
+  }
+
+  .text-indigo-500 {
+    color: var(--color-indigo-500);
   }
 
   .text-indigo-600 {
@@ -2405,6 +2506,16 @@
       background-color: var(--color-indigo-500);
     }
 
+    .hover\:bg-indigo-500\/15:hover {
+      background-color: #625fff26;
+    }
+
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:bg-indigo-500\/15:hover {
+        background-color: color-mix(in oklab, var(--color-indigo-500) 15%, transparent);
+      }
+    }
+
     .hover\:bg-indigo-600:hover {
       background-color: var(--color-indigo-600);
     }
@@ -2476,6 +2587,10 @@
     }
   }
 
+  .focus\:border-indigo-400:focus {
+    border-color: var(--color-indigo-400);
+  }
+
   .focus\:ring:focus {
     --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -2484,6 +2599,10 @@
   .focus\:ring-2:focus {
     --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+
+  .focus\:ring-indigo-400:focus {
+    --tw-ring-color: var(--color-indigo-400);
   }
 
   .focus\:ring-indigo-500:focus {
@@ -2653,8 +2772,16 @@
       grid-template-columns: auto minmax(0, 1fr);
     }
 
+    .md\:grid-cols-\[minmax\(0\,1fr\)\,minmax\(0\,1fr\)\,auto\,auto\] {
+      grid-template-columns: minmax(0, 1fr), minmax(0, 1fr), auto, auto;
+    }
+
     .md\:items-center {
       align-items: center;
+    }
+
+    .md\:items-end {
+      align-items: flex-end;
     }
 
     .md\:p-6 {
@@ -2735,6 +2862,10 @@
 
     .xl\:grid-cols-\[minmax\(0\,2fr\)\,minmax\(0\,1fr\)\] {
       grid-template-columns: minmax(0, 2fr), minmax(0, 1fr);
+    }
+
+    .xl\:grid-cols-\[minmax\(0\,360px\)_minmax\(0\,1fr\)\] {
+      grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
     }
 
     .xl\:overflow-visible {

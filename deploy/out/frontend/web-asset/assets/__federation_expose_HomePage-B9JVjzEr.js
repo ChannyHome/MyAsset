@@ -1,14 +1,778 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { f as formatDateTimeSeoul, A as AxiosError } from './datetime-D3NoeBy6.js';
+import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime-D3NoeBy6.js';
 import { g as getSummary, a as getNetworthSeries, b as getAllocation } from './ui-DnZ8IxrZ.js';
-import { _ as _sfc_main$a } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-8Ho99rjW.js';
-import { _ as _sfc_main$2, a as _sfc_main$3, b as _sfc_main$4, c as _sfc_main$5 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DcBqJiKv.js';
-import { _ as _sfc_main$6 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
-import { u as useDashboardDataAdapter, _ as _sfc_main$1, a as _sfc_main$7, b as _sfc_main$8, c as _sfc_main$9, d as _sfc_main$b } from './useDashboardDataAdapter-BP--kjoU.js';
+import { _ as _sfc_main$b } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-8Ho99rjW.js';
+import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5, c as _sfc_main$6 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DcBqJiKv.js';
+import { _ as _sfc_main$7 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
+import { u as useDashboardDataAdapter, _ as _sfc_main$2, a as _sfc_main$8, b as _sfc_main$9, c as _sfc_main$a, d as _sfc_main$c } from './useDashboardDataAdapter-JUoP73Tx.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
 import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
 import { u as updateQuotesNow, g as getMe, a as getReleaseNotes, b as getQuoteUpdateJobStatus } from './quotes-OIhGiauY.js';
 import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
+
+async function getMyGoalTarget(params) {
+  const { data } = await http.get("/users/me/goal-target", { params });
+  return data;
+}
+async function updateMyGoalTarget(payload) {
+  const { data } = await http.put("/users/me/goal-target", payload);
+  return data;
+}
+async function getGoalProgress(params) {
+  const { data } = await http.get("/analytics/goal-progress", { params });
+  return data;
+}
+
+const {defineComponent:_defineComponent$1} = await importShared('vue');
+
+const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,vModelCheckbox:_vModelCheckbox$1,withDirectives:_withDirectives$1,normalizeStyle:_normalizeStyle$1,normalizeClass:_normalizeClass$1,createTextVNode:_createTextVNode$1,renderList:_renderList$1,Fragment:_Fragment$1,vModelText:_vModelText} = await importShared('vue');
+
+const _hoisted_1$1 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_2$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_3$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_4$1 = { class: "text-base font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_5$1 = ["aria-expanded"];
+const _hoisted_6$1 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_7$1 = {
+  key: 0,
+  class: "mt-3 max-w-xl rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300"
+};
+const _hoisted_8$1 = { class: "flex items-center gap-3" };
+const _hoisted_9$1 = { class: "inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" };
+const _hoisted_10$1 = {
+  key: 0,
+  class: "mt-3 space-y-1"
+};
+const _hoisted_11$1 = { class: "text-sm font-medium text-slate-700 dark:text-slate-200" };
+const _hoisted_12$1 = {
+  key: 1,
+  class: "mt-4 space-y-4"
+};
+const _hoisted_13$1 = {
+  key: 0,
+  class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_14$1 = {
+  key: 1,
+  class: "rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100"
+};
+const _hoisted_15$1 = {
+  key: 2,
+  class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_16$1 = {
+  key: 3,
+  class: "space-y-4"
+};
+const _hoisted_17$1 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]" };
+const _hoisted_18$1 = { class: "rounded-2xl border border-slate-700 bg-slate-950/90 p-4" };
+const _hoisted_19$1 = { class: "mx-auto max-w-[360px]" };
+const _hoisted_20$1 = ["d"];
+const _hoisted_21$1 = ["d"];
+const _hoisted_22$1 = ["x2", "y2"];
+const _hoisted_23$1 = ["cx", "cy"];
+const _hoisted_24$1 = { class: "-mt-3 text-center" };
+const _hoisted_25$1 = { class: "text-[11px] uppercase tracking-[0.28em] text-slate-400" };
+const _hoisted_26$1 = { class: "mt-1 text-sm text-slate-300" };
+const _hoisted_27$1 = { class: "mt-3 text-xs text-slate-400" };
+const _hoisted_28$1 = { class: "space-y-4" };
+const _hoisted_29$1 = {
+  key: 0,
+  class: "rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+};
+const _hoisted_30$1 = { class: "grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" };
+const _hoisted_31$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_32$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_33$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_34$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_35$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_36$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_37$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_38$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_39$1 = { class: "rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70" };
+const _hoisted_40$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_41$1 = { class: "rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300" };
+const _hoisted_42$1 = { class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3" };
+const _hoisted_43$1 = { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" };
+const _hoisted_44$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_45$1 = { class: "mt-4 text-sm text-slate-700 dark:text-slate-200" };
+const _hoisted_46$1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" };
+const _hoisted_47$1 = { class: "flex flex-wrap items-center justify-between gap-3" };
+const _hoisted_48$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_49$1 = ["aria-expanded"];
+const _hoisted_50$1 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_51$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_52$1 = ["disabled"];
+const _hoisted_53$1 = {
+  key: 0,
+  class: "mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300"
+};
+const _hoisted_54$1 = {
+  key: 1,
+  class: "mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100"
+};
+const _hoisted_55$1 = {
+  key: 2,
+  class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
+};
+const _hoisted_56$1 = { class: "space-y-1 text-sm" };
+const _hoisted_57$1 = { class: "space-y-1 text-sm" };
+const _hoisted_58$1 = { class: "space-y-1 text-sm" };
+const _hoisted_59$1 = {
+  key: 3,
+  class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
+};
+const _hoisted_60$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_61 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_62 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_63 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_64 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_65 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const {computed: computed$1,onMounted: onMounted$1,reactive: reactive$1,ref: ref$1,watch: watch$1} = await importShared('vue');
+const gaugeViewBox = "0 0 360 240";
+const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
+  __name: "GoalProgressForecastCard",
+  props: {
+    title: { default: "Goal Progress and Forecast" },
+    subtitle: { default: "Track progress toward your target wealth." },
+    displayCurrency: {},
+    scopeType: { default: null },
+    scopeId: { default: null },
+    amountMask: { type: Boolean, default: false },
+    storageKeyPrefix: {}
+  },
+  setup(__props) {
+    const props = __props;
+    const loading = ref$1(false);
+    const saving = ref$1(false);
+    const errorMessage = ref$1("");
+    const successMessage = ref$1("");
+    const target = ref$1(null);
+    const progress = ref$1(null);
+    const editMode = ref$1(false);
+    const infoOpen = ref$1(false);
+    const assumptionsInfoOpen = ref$1(false);
+    const form = reactive$1({
+      targetAmount: "",
+      annualReturnRatePct: "",
+      monthlyInvestAmount: ""
+    });
+    function todayUiState() {
+      return {
+        expanded: true,
+        useNet: false
+      };
+    }
+    const expanded = ref$1(todayUiState().expanded);
+    const useNet = ref$1(todayUiState().useNet);
+    function loadUiState() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(`${props.storageKeyPrefix}:ui`);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.expanded === "boolean") expanded.value = parsed.expanded;
+        if (typeof parsed.useNet === "boolean") useNet.value = parsed.useNet;
+      } catch {
+      }
+    }
+    function saveUiState() {
+      if (typeof window === "undefined") return;
+      window.localStorage.setItem(
+        `${props.storageKeyPrefix}:ui`,
+        JSON.stringify({
+          expanded: expanded.value,
+          useNet: useNet.value
+        })
+      );
+    }
+    function toNumber(value) {
+      if (value == null) return 0;
+      const parsed = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    function formatCurrency(value, currency = "KRW") {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0
+      }).format(value || 0);
+    }
+    function formatSignedCurrency(value, currency = "KRW") {
+      const absolute = formatCurrency(Math.abs(value), currency);
+      if (value > 0) return `+${absolute}`;
+      if (value < 0) return `-${absolute}`;
+      return absolute;
+    }
+    function formatPercent(value) {
+      if (value == null) return "-";
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return "-";
+      return `${parsed >= 0 ? "+" : ""}${parsed.toFixed(2)}%`;
+    }
+    function formatRatio(value) {
+      if (value == null) return "-";
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return "-";
+      return `${Math.max(0, parsed).toFixed(1)}%`;
+    }
+    function formatProjectedDate(value) {
+      if (!value) return "-";
+      return value;
+    }
+    function formatAsOf(value) {
+      return formatDateTimeSeoul(value);
+    }
+    function amountMaskStyle() {
+      return props.amountMask ? { filter: "blur(6px)" } : void 0;
+    }
+    function getErrorMessage(error) {
+      if (error instanceof AxiosError) {
+        return error.response?.data?.detail || error.message;
+      }
+      if (error instanceof Error) {
+        return error.message;
+      }
+      return "Unknown error";
+    }
+    function populateForm(next) {
+      form.targetAmount = next?.configured && next.target_amount != null ? String(toNumber(next.target_amount)) : "";
+      form.annualReturnRatePct = next?.configured && next.annual_return_rate_pct != null ? String(toNumber(next.annual_return_rate_pct)) : "";
+      form.monthlyInvestAmount = next?.configured && next.monthly_invest_amount != null ? String(toNumber(next.monthly_invest_amount)) : "";
+    }
+    const canLoad = computed$1(() => Boolean(props.scopeType && props.scopeId != null));
+    const basis = computed$1(() => useNet.value ? "NET" : "GROSS");
+    const currentAmount = computed$1(() => toNumber(progress.value?.current_amount));
+    const targetAmount = computed$1(() => toNumber(progress.value?.target_amount));
+    const progressRatioPct = computed$1(() => {
+      const raw = toNumber(progress.value?.progress_ratio_pct);
+      return Math.max(0, Math.min(100, raw));
+    });
+    const remainingAmount = computed$1(() => toNumber(progress.value?.remaining_amount));
+    const overTargetAmount = computed$1(() => toNumber(progress.value?.over_target_amount));
+    const annualReturnInputValue = computed$1(() => toNumber(target.value?.annual_return_rate_pct));
+    const basisLabel = computed$1(() => basis.value === "NET" ? "Net" : "Gross");
+    async function refreshCard() {
+      if (!canLoad.value || !props.scopeType || props.scopeId == null) {
+        target.value = null;
+        progress.value = null;
+        return;
+      }
+      loading.value = true;
+      errorMessage.value = "";
+      successMessage.value = "";
+      try {
+        const preserveEditState = editMode.value && !saving.value;
+        const [targetOut, progressOut] = await Promise.all([
+          getMyGoalTarget({
+            scope_type: props.scopeType,
+            scope_id: props.scopeId,
+            display_currency: props.displayCurrency
+          }),
+          getGoalProgress({
+            scope_type: props.scopeType,
+            scope_id: props.scopeId,
+            display_currency: props.displayCurrency,
+            basis: basis.value
+          })
+        ]);
+        target.value = targetOut;
+        progress.value = progressOut;
+        if (!preserveEditState) {
+          populateForm(targetOut);
+        }
+        editMode.value = targetOut.configured ? preserveEditState : true;
+      } catch (error) {
+        errorMessage.value = getErrorMessage(error);
+      } finally {
+        loading.value = false;
+      }
+    }
+    function validateForm() {
+      const targetAmountValue = Number(form.targetAmount);
+      const annualReturnValue = Number(form.annualReturnRatePct);
+      const monthlyInvestValue = Number(form.monthlyInvestAmount);
+      if (!Number.isFinite(targetAmountValue) || targetAmountValue <= 0) {
+        return "Target amount must be greater than 0.";
+      }
+      if (!Number.isFinite(annualReturnValue) || annualReturnValue < 0 || annualReturnValue > 100) {
+        return "Annual return rate must be between 0 and 100.";
+      }
+      if (!Number.isFinite(monthlyInvestValue) || monthlyInvestValue < 0) {
+        return "Monthly invest amount must be 0 or greater.";
+      }
+      return "";
+    }
+    async function saveTarget() {
+      if (!props.scopeType || props.scopeId == null) return;
+      const validation = validateForm();
+      if (validation) {
+        errorMessage.value = validation;
+        successMessage.value = "";
+        return;
+      }
+      saving.value = true;
+      errorMessage.value = "";
+      successMessage.value = "";
+      try {
+        await updateMyGoalTarget({
+          scope_type: props.scopeType,
+          scope_id: props.scopeId,
+          display_currency: props.displayCurrency,
+          target_amount: Number(form.targetAmount),
+          annual_return_rate_pct: Number(form.annualReturnRatePct),
+          monthly_invest_amount: Number(form.monthlyInvestAmount)
+        });
+        await refreshCard();
+        editMode.value = false;
+        successMessage.value = "Goal settings saved.";
+      } catch (error) {
+        errorMessage.value = getErrorMessage(error);
+      } finally {
+        saving.value = false;
+      }
+    }
+    function resetForm() {
+      populateForm(target.value);
+      errorMessage.value = "";
+      successMessage.value = "";
+    }
+    function cancelEdit() {
+      resetForm();
+      if (target.value?.configured) {
+        editMode.value = false;
+      }
+    }
+    function toggleExpanded() {
+      expanded.value = !expanded.value;
+    }
+    function polarToCartesian(cx, cy, radius, angleInDegrees) {
+      const angleInRadians = angleInDegrees * Math.PI / 180;
+      return {
+        x: cx + radius * Math.cos(angleInRadians),
+        y: cy - radius * Math.sin(angleInRadians)
+      };
+    }
+    function describeArc(cx, cy, radius, startAngle, endAngle) {
+      const start = polarToCartesian(cx, cy, radius, endAngle);
+      const end = polarToCartesian(cx, cy, radius, startAngle);
+      const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      return ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
+    }
+    const gaugeTrackPath = computed$1(() => describeArc(180, 180, 118, 180, 0));
+    const gaugeProgressPath = computed$1(() => {
+      const ratio = progressRatioPct.value / 100;
+      const endAngle = 180 - 180 * ratio;
+      return describeArc(180, 180, 118, 180, endAngle);
+    });
+    const gaugeNeedleEnd = computed$1(() => {
+      const ratio = progressRatioPct.value / 100;
+      const angle = 180 - 180 * ratio;
+      return polarToCartesian(180, 180, 96, angle);
+    });
+    const currentMarker = computed$1(() => {
+      const ratio = progressRatioPct.value / 100;
+      const angle = 180 - 180 * ratio;
+      return polarToCartesian(180, 180, 118, angle);
+    });
+    const progressToneClass = computed$1(() => {
+      if (!progress.value?.configured) return "text-slate-300";
+      if (progress.value.reached) return "text-emerald-300";
+      if (progressRatioPct.value >= 75) return "text-emerald-300";
+      if (progressRatioPct.value >= 35) return "text-indigo-300";
+      return "text-amber-300";
+    });
+    const projectedReachLabel = computed$1(() => {
+      if (!progress.value?.configured) return "Set a goal to start forecasting.";
+      if (progress.value.reached) {
+        return `Goal reached. ${formatSignedCurrency(overTargetAmount.value, props.displayCurrency)} above target.`;
+      }
+      if (progress.value.projected_reach_date && progress.value.projected_months_to_goal != null) {
+        return `Estimated reach: ${formatProjectedDate(progress.value.projected_reach_date)} (${formatMonths(progress.value.projected_months_to_goal)}).`;
+      }
+      return "Not projected to reach the goal within 50 years under current assumptions.";
+    });
+    const comparisonComment = computed$1(() => {
+      if (!progress.value?.configured) return "Save target assumptions to compare them with recent realized growth.";
+      if (progress.value.recent_actual_annualized_return_pct == null || progress.value.recent_actual_window_days == null) {
+        return "Recent actual growth is unavailable because snapshot history is too short.";
+      }
+      const actualText = formatPercent(progress.value.recent_actual_annualized_return_pct);
+      const assumedText = formatPercent(target.value?.annual_return_rate_pct);
+      const base = `Recent actual annualized growth over ${progress.value.recent_actual_window_days} days was ${actualText}.`;
+      if (progress.value.comparison_tone === "AHEAD") {
+        return `${base} That's above your assumed ${assumedText}.`;
+      }
+      if (progress.value.comparison_tone === "BEHIND") {
+        return `${base} That's below your assumed ${assumedText}.`;
+      }
+      return `${base} That's broadly in line with your assumed ${assumedText}.`;
+    });
+    const collapsedSummary = computed$1(() => {
+      if (loading.value) return "Loading goal progress...";
+      if (!canLoad.value) return "Waiting for Home scope...";
+      if (errorMessage.value) return errorMessage.value;
+      if (!progress.value?.configured) return "No goal configured yet. Click Expand to set your target.";
+      const progressText = formatRatio(progress.value.progress_ratio_pct);
+      const basisText = basisLabel.value;
+      const targetText = formatCurrency(targetAmount.value, props.displayCurrency);
+      if (progress.value.reached) {
+        return `${basisText} progress ${progressText}. Goal reached above ${targetText}.`;
+      }
+      if (progress.value.projected_reach_date) {
+        return `${basisText} progress ${progressText}. Estimated reach ${progress.value.projected_reach_date}.`;
+      }
+      return `${basisText} progress ${progressText}. Goal not projected within 50 years.`;
+    });
+    function formatMonths(value) {
+      if (!Number.isFinite(value) || value < 0) return "-";
+      const total = Math.trunc(value);
+      const years = Math.floor(total / 12);
+      const months = total % 12;
+      if (years <= 0) return `${months}m`;
+      if (months <= 0) return `${years}y`;
+      return `${years}y ${months}m`;
+    }
+    const milestoneRows = computed$1(() => {
+      if (!progress.value?.configured) return [];
+      return [
+        { label: "3y", amount: toNumber(progress.value.projection_3y) },
+        { label: "5y", amount: toNumber(progress.value.projection_5y) },
+        { label: "10y", amount: toNumber(progress.value.projection_10y) }
+      ];
+    });
+    const canSave = computed$1(() => validateForm() === "" && !saving.value);
+    watch$1(
+      () => [expanded.value, useNet.value],
+      () => {
+        saveUiState();
+      },
+      { deep: true }
+    );
+    watch$1(
+      () => [props.scopeType, props.scopeId, props.displayCurrency, basis.value],
+      () => {
+        void refreshCard();
+      }
+    );
+    onMounted$1(() => {
+      loadUiState();
+      void refreshCard();
+    });
+    return (_ctx, _cache) => {
+      return _openBlock$1(), _createElementBlock$1("article", _hoisted_1$1, [
+        _createElementVNode$1("div", _hoisted_2$1, [
+          _createElementVNode$1("div", null, [
+            _createElementVNode$1("div", _hoisted_3$1, [
+              _createElementVNode$1("h2", _hoisted_4$1, _toDisplayString$1(__props.title), 1),
+              _createElementVNode$1("button", {
+                type: "button",
+                class: "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                "aria-expanded": infoOpen.value,
+                "aria-label": "Goal progress help",
+                onClick: _cache[0] || (_cache[0] = ($event) => infoOpen.value = !infoOpen.value)
+              }, " i ", 8, _hoisted_5$1)
+            ]),
+            _createElementVNode$1("p", _hoisted_6$1, _toDisplayString$1(__props.subtitle), 1),
+            infoOpen.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_7$1, " Tracks how close your current Gross or Net amount is to the saved target. Turn on Net to measure progress against net assets instead of gross assets. Forecast milestones use simple monthly compounding, and the monthly invest amount is added at month-end in each simulated month. ")) : _createCommentVNode$1("", true)
+          ]),
+          _createElementVNode$1("div", _hoisted_8$1, [
+            _createElementVNode$1("label", _hoisted_9$1, [
+              _withDirectives$1(_createElementVNode$1("input", {
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => useNet.value = $event),
+                type: "checkbox",
+                class: "h-4 w-4 rounded border-slate-400 bg-transparent text-indigo-500 focus:ring-indigo-400"
+              }, null, 512), [
+                [_vModelCheckbox$1, useNet.value]
+              ]),
+              _cache[7] || (_cache[7] = _createElementVNode$1("span", null, "Net", -1))
+            ]),
+            _createElementVNode$1("button", {
+              type: "button",
+              class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+              onClick: toggleExpanded
+            }, _toDisplayString$1(expanded.value ? "Collapse" : "Expand"), 1)
+          ])
+        ]),
+        !expanded.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_10$1, [
+          _cache[8] || (_cache[8] = _createElementVNode$1("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, " Collapsed. Click Expand to preview goal progress and forecast. ", -1)),
+          _createElementVNode$1("p", _hoisted_11$1, _toDisplayString$1(collapsedSummary.value), 1)
+        ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_12$1, [
+          loading.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_13$1, " Loading goal progress... ")) : errorMessage.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_14$1, _toDisplayString$1(errorMessage.value), 1)) : !canLoad.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_15$1, " Waiting for Home scope... ")) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_16$1, [
+            _createElementVNode$1("div", _hoisted_17$1, [
+              _createElementVNode$1("section", _hoisted_18$1, [
+                _createElementVNode$1("div", _hoisted_19$1, [
+                  (_openBlock$1(), _createElementBlock$1("svg", {
+                    viewBox: gaugeViewBox,
+                    class: "w-full"
+                  }, [
+                    _cache[9] || (_cache[9] = _createElementVNode$1("defs", null, [
+                      _createElementVNode$1("linearGradient", {
+                        id: "goal-gauge-progress",
+                        x1: "0%",
+                        x2: "100%",
+                        y1: "0%",
+                        y2: "0%"
+                      }, [
+                        _createElementVNode$1("stop", {
+                          offset: "0%",
+                          "stop-color": "#6366f1"
+                        }),
+                        _createElementVNode$1("stop", {
+                          offset: "60%",
+                          "stop-color": "#4f46e5"
+                        }),
+                        _createElementVNode$1("stop", {
+                          offset: "100%",
+                          "stop-color": "#10b981"
+                        })
+                      ])
+                    ], -1)),
+                    _createElementVNode$1("path", {
+                      d: gaugeTrackPath.value,
+                      fill: "none",
+                      stroke: "rgba(100,116,139,0.28)",
+                      "stroke-linecap": "round",
+                      "stroke-width": "22"
+                    }, null, 8, _hoisted_20$1),
+                    progress.value && progress.value.configured ? (_openBlock$1(), _createElementBlock$1("path", {
+                      key: 0,
+                      d: gaugeProgressPath.value,
+                      fill: "none",
+                      stroke: "url(#goal-gauge-progress)",
+                      "stroke-linecap": "round",
+                      "stroke-width": "22"
+                    }, null, 8, _hoisted_21$1)) : _createCommentVNode$1("", true),
+                    _createElementVNode$1("line", {
+                      x1: 180,
+                      y1: 180,
+                      x2: gaugeNeedleEnd.value.x,
+                      y2: gaugeNeedleEnd.value.y,
+                      stroke: "#cbd5f5",
+                      "stroke-linecap": "round",
+                      "stroke-width": "6"
+                    }, null, 8, _hoisted_22$1),
+                    _cache[10] || (_cache[10] = _createElementVNode$1("circle", {
+                      cx: "180",
+                      cy: "180",
+                      r: "14",
+                      fill: "#0f172a",
+                      stroke: "#a5b4fc",
+                      "stroke-width": "6"
+                    }, null, -1)),
+                    _createElementVNode$1("circle", {
+                      cx: currentMarker.value.x,
+                      cy: currentMarker.value.y,
+                      r: "6",
+                      fill: "#f8fafc",
+                      stroke: "#34d399",
+                      "stroke-width": "2"
+                    }, null, 8, _hoisted_23$1),
+                    _cache[11] || (_cache[11] = _createElementVNode$1("text", {
+                      x: "36",
+                      y: "198",
+                      fill: "#94a3b8",
+                      "font-size": "12",
+                      "font-weight": "700"
+                    }, "0%", -1)),
+                    _cache[12] || (_cache[12] = _createElementVNode$1("text", {
+                      x: "296",
+                      y: "198",
+                      fill: "#94a3b8",
+                      "font-size": "12",
+                      "font-weight": "700"
+                    }, "100%", -1)),
+                    _cache[13] || (_cache[13] = _createElementVNode$1("text", {
+                      x: "180",
+                      y: "98",
+                      "text-anchor": "middle",
+                      fill: "#a5b4fc",
+                      "font-size": "12",
+                      "font-weight": "800"
+                    }, "TARGET", -1))
+                  ]))
+                ]),
+                _createElementVNode$1("div", _hoisted_24$1, [
+                  _createElementVNode$1("p", _hoisted_25$1, _toDisplayString$1(basisLabel.value) + " progress", 1),
+                  _createElementVNode$1("p", {
+                    class: _normalizeClass$1(["mt-2 text-2xl font-semibold", progressToneClass.value])
+                  }, [
+                    _createElementVNode$1("span", {
+                      style: _normalizeStyle$1(amountMaskStyle())
+                    }, _toDisplayString$1(formatCurrency(currentAmount.value, __props.displayCurrency)), 5)
+                  ], 2),
+                  _createElementVNode$1("p", _hoisted_26$1, [
+                    _cache[14] || (_cache[14] = _createTextVNode$1(" Target ", -1)),
+                    _createElementVNode$1("span", {
+                      style: _normalizeStyle$1(amountMaskStyle())
+                    }, _toDisplayString$1(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5),
+                    _createTextVNode$1(" · " + _toDisplayString$1(formatRatio(progress.value?.progress_ratio_pct ?? null)), 1)
+                  ]),
+                  _createElementVNode$1("p", _hoisted_27$1, _toDisplayString$1(projectedReachLabel.value), 1)
+                ])
+              ]),
+              _createElementVNode$1("section", _hoisted_28$1, [
+                !progress.value?.configured ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_29$1, " No goal is configured for this Home scope yet. Set a target amount, annual return, and monthly invest amount to start forecasting. ")) : _createCommentVNode$1("", true),
+                _createElementVNode$1("div", _hoisted_30$1, [
+                  _createElementVNode$1("div", _hoisted_31$1, [
+                    _cache[15] || (_cache[15] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Remaining", -1)),
+                    _createElementVNode$1("p", _hoisted_32$1, [
+                      _createElementVNode$1("span", {
+                        style: _normalizeStyle$1(amountMaskStyle())
+                      }, _toDisplayString$1(progress.value?.configured ? formatCurrency(remainingAmount.value, __props.displayCurrency) : "-"), 5)
+                    ])
+                  ]),
+                  _createElementVNode$1("div", _hoisted_33$1, [
+                    _cache[16] || (_cache[16] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Estimated reach", -1)),
+                    _createElementVNode$1("p", _hoisted_34$1, _toDisplayString$1(progress.value?.configured ? formatProjectedDate(progress.value.projected_reach_date) : "-"), 1)
+                  ]),
+                  _createElementVNode$1("div", _hoisted_35$1, [
+                    _cache[17] || (_cache[17] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Time to goal", -1)),
+                    _createElementVNode$1("p", _hoisted_36$1, _toDisplayString$1(progress.value?.configured && progress.value.projected_months_to_goal != null ? formatMonths(progress.value.projected_months_to_goal) : "-"), 1)
+                  ]),
+                  _createElementVNode$1("div", _hoisted_37$1, [
+                    _cache[18] || (_cache[18] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Recent actual", -1)),
+                    _createElementVNode$1("p", _hoisted_38$1, _toDisplayString$1(progress.value?.configured && progress.value.recent_actual_annualized_return_pct != null ? formatPercent(progress.value.recent_actual_annualized_return_pct) : "-"), 1)
+                  ])
+                ]),
+                _createElementVNode$1("div", _hoisted_39$1, [
+                  _createElementVNode$1("div", _hoisted_40$1, [
+                    _cache[19] || (_cache[19] = _createElementVNode$1("div", null, [
+                      _createElementVNode$1("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Forecast milestones"),
+                      _createElementVNode$1("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Simple compounding with month-end contributions.")
+                    ], -1)),
+                    _createElementVNode$1("span", _hoisted_41$1, " as_of " + _toDisplayString$1(formatAsOf(progress.value?.as_of)), 1)
+                  ]),
+                  _createElementVNode$1("div", _hoisted_42$1, [
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(milestoneRows.value, (row) => {
+                      return _openBlock$1(), _createElementBlock$1("div", {
+                        key: row.label,
+                        class: "rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"
+                      }, [
+                        _createElementVNode$1("p", _hoisted_43$1, _toDisplayString$1(row.label), 1),
+                        _createElementVNode$1("p", _hoisted_44$1, [
+                          _createElementVNode$1("span", {
+                            style: _normalizeStyle$1(amountMaskStyle())
+                          }, _toDisplayString$1(formatCurrency(row.amount, __props.displayCurrency)), 5)
+                        ])
+                      ]);
+                    }), 128))
+                  ]),
+                  _createElementVNode$1("p", _hoisted_45$1, _toDisplayString$1(comparisonComment.value), 1)
+                ]),
+                _createElementVNode$1("div", _hoisted_46$1, [
+                  _createElementVNode$1("div", _hoisted_47$1, [
+                    _createElementVNode$1("div", null, [
+                      _createElementVNode$1("div", _hoisted_48$1, [
+                        _cache[20] || (_cache[20] = _createElementVNode$1("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Goal assumptions", -1)),
+                        _createElementVNode$1("button", {
+                          type: "button",
+                          class: "inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                          "aria-expanded": assumptionsInfoOpen.value,
+                          "aria-label": "Goal assumptions help",
+                          onClick: _cache[2] || (_cache[2] = ($event) => assumptionsInfoOpen.value = !assumptionsInfoOpen.value)
+                        }, " i ", 8, _hoisted_49$1)
+                      ]),
+                      _createElementVNode$1("p", _hoisted_50$1, "Stored in " + _toDisplayString$1(__props.displayCurrency) + " for the current Home scope.", 1)
+                    ]),
+                    _createElementVNode$1("div", _hoisted_51$1, [
+                      !editMode.value ? (_openBlock$1(), _createElementBlock$1("button", {
+                        key: 0,
+                        type: "button",
+                        class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                        onClick: _cache[3] || (_cache[3] = ($event) => editMode.value = true)
+                      }, " Edit ")) : (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 1 }, [
+                        _createElementVNode$1("button", {
+                          type: "button",
+                          class: "rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50",
+                          disabled: !canSave.value,
+                          onClick: saveTarget
+                        }, _toDisplayString$1(saving.value ? "Saving..." : "Save"), 9, _hoisted_52$1),
+                        _createElementVNode$1("button", {
+                          type: "button",
+                          class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                          onClick: resetForm
+                        }, " Reset "),
+                        target.value?.configured ? (_openBlock$1(), _createElementBlock$1("button", {
+                          key: 0,
+                          type: "button",
+                          class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                          onClick: cancelEdit
+                        }, " Cancel ")) : _createCommentVNode$1("", true)
+                      ], 64))
+                    ])
+                  ]),
+                  assumptionsInfoOpen.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_53$1, " Target amount is the wealth goal for this Home scope. Annual return is the assumed yearly growth rate, and monthly invest amount is added at month-end using monthly compounding in the forecast simulation. ")) : _createCommentVNode$1("", true),
+                  successMessage.value ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_54$1, _toDisplayString$1(successMessage.value), 1)) : _createCommentVNode$1("", true),
+                  editMode.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_55$1, [
+                    _createElementVNode$1("label", _hoisted_56$1, [
+                      _cache[21] || (_cache[21] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
+                      _withDirectives$1(_createElementVNode$1("input", {
+                        "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => form.targetAmount = $event),
+                        type: "number",
+                        min: "0",
+                        step: "1",
+                        class: "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      }, null, 512), [
+                        [_vModelText, form.targetAmount]
+                      ])
+                    ]),
+                    _createElementVNode$1("label", _hoisted_57$1, [
+                      _cache[22] || (_cache[22] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
+                      _withDirectives$1(_createElementVNode$1("input", {
+                        "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => form.annualReturnRatePct = $event),
+                        type: "number",
+                        min: "0",
+                        max: "100",
+                        step: "0.1",
+                        class: "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      }, null, 512), [
+                        [_vModelText, form.annualReturnRatePct]
+                      ])
+                    ]),
+                    _createElementVNode$1("label", _hoisted_58$1, [
+                      _cache[23] || (_cache[23] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
+                      _withDirectives$1(_createElementVNode$1("input", {
+                        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => form.monthlyInvestAmount = $event),
+                        type: "number",
+                        min: "0",
+                        step: "1",
+                        class: "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      }, null, 512), [
+                        [_vModelText, form.monthlyInvestAmount]
+                      ])
+                    ])
+                  ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_59$1, [
+                    _createElementVNode$1("div", _hoisted_60$1, [
+                      _cache[24] || (_cache[24] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
+                      _createElementVNode$1("p", _hoisted_61, [
+                        _createElementVNode$1("span", {
+                          style: _normalizeStyle$1(amountMaskStyle())
+                        }, _toDisplayString$1(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5)
+                      ])
+                    ]),
+                    _createElementVNode$1("div", _hoisted_62, [
+                      _cache[25] || (_cache[25] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
+                      _createElementVNode$1("p", _hoisted_63, _toDisplayString$1(target.value?.configured ? formatPercent(annualReturnInputValue.value) : "-"), 1)
+                    ]),
+                    _createElementVNode$1("div", _hoisted_64, [
+                      _cache[26] || (_cache[26] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
+                      _createElementVNode$1("p", _hoisted_65, [
+                        _createElementVNode$1("span", {
+                          style: _normalizeStyle$1(amountMaskStyle())
+                        }, _toDisplayString$1(target.value?.configured ? formatCurrency(toNumber(target.value?.monthly_invest_amount), __props.displayCurrency) : "-"), 5)
+                      ])
+                    ])
+                  ]))
+                ])
+              ])
+            ])
+          ]))
+        ]))
+      ]);
+    };
+  }
+});
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 
@@ -276,6 +1040,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     });
     const DEFAULT_HOME_CARD_ORDER = [
       "LIVE_DASHBOARD",
+      "GOAL_PROGRESS",
       "PORTFOLIOS_TABLE",
       "HOLDINGS_TABLE",
       "LIABILITIES_TABLE",
@@ -289,6 +1054,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const { displayCurrency, ensureInitialized } = useDisplayCurrency();
     const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
     const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
+    const homeGoalScopeType = computed(
+      () => summary.value?.scope_type === "HOUSEHOLD" ? "HOUSEHOLD" : summary.value?.scope_type === "USER" ? "USER" : null
+    );
+    const homeGoalScopeId = computed(() => summary.value?.scope_id != null ? Number(summary.value.scope_id) : null);
     const quickInsightDisplayCurrency = computed(
       () => summaryDisplayCurrency.value === "USD" ? "USD" : "KRW"
     );
@@ -823,7 +1592,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (!Array.isArray(value)) return [...DEFAULT_HOME_CARD_ORDER];
       const next = [];
       for (const item of value) {
-        if ((item === "LIVE_DASHBOARD" || item === "PORTFOLIOS_TABLE" || item === "HOLDINGS_TABLE" || item === "LIABILITIES_TABLE" || item === "REPORT_PANEL" || item === "QUICK_INSIGHT" || item === "RELEASE_NOTES") && !next.includes(item)) {
+        if ((item === "LIVE_DASHBOARD" || item === "GOAL_PROGRESS" || item === "PORTFOLIOS_TABLE" || item === "HOLDINGS_TABLE" || item === "LIABILITIES_TABLE" || item === "REPORT_PANEL" || item === "QUICK_INSIGHT" || item === "RELEASE_NOTES") && !next.includes(item)) {
           next.push(item);
         }
       }
@@ -1374,7 +2143,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return _openBlock(), _createElementBlock("section", _hoisted_1, [
         _createElementVNode("header", _hoisted_2, [
           _createElementVNode("div", _hoisted_3, [
-            _cache[34] || (_cache[34] = _createElementVNode("div", null, [
+            _cache[36] || (_cache[36] = _createElementVNode("div", null, [
               _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300" }, "Home"),
               _createElementVNode("h1", { class: "mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100" }, "Live Dashboard"),
               _createElementVNode("p", { class: "mt-1 text-sm text-slate-600 dark:text-slate-300" }, " This page now uses real API data from summary, holdings performance, and liabilities. ")
@@ -1423,7 +2192,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[12] || (_cache[12] = ($event) => onHomeCardDrop("LIVE_DASHBOARD", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$1, {
+            _createVNode(_sfc_main$2, {
               title: "Live Dashboard Panel",
               description: "Default is collapsed. Expand to preview dashboard widgets and export image.",
               "source-mode": "LIVE",
@@ -1434,7 +2203,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               controls: _withCtx(() => [
                 _createElementVNode("div", _hoisted_9, [
                   _createElementVNode("div", _hoisted_10, [
-                    _cache[37] || (_cache[37] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
+                    _cache[39] || (_cache[39] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "KPI", -1)),
                     _createElementVNode("div", _hoisted_11, [
                       _createElementVNode("button", {
                         type: "button",
@@ -1447,7 +2216,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onClick: _cache[2] || (_cache[2] = ($event) => liveKpiTarget.value = "PORTFOLIOS")
                       }, " Portfolios ", 2)
                     ]),
-                    _cache[38] || (_cache[38] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
+                    _cache[40] || (_cache[40] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Target", -1)),
                     _createElementVNode("div", _hoisted_12, [
                       (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["GROSS", "LIABILITIES", "NET", "HOLDINGS"], (target) => {
                         return _createElementVNode("button", {
@@ -1458,7 +2227,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, _toDisplayString(target), 11, _hoisted_13);
                       }), 64))
                     ]),
-                    _cache[39] || (_cache[39] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
+                    _cache[41] || (_cache[41] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Start", -1)),
                     _createElementVNode("div", _hoisted_14, [
                       (_openBlock(), _createElementBlock(_Fragment, null, _renderList(["TOP", "RIGHT", "LEFT"], (pos) => {
                         return _createElementVNode("button", {
@@ -1469,13 +2238,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, _toDisplayString(pos), 11, _hoisted_15);
                       }), 64))
                     ]),
-                    _cache[40] || (_cache[40] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
+                    _cache[42] || (_cache[42] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
                     _createElementVNode("div", _hoisted_16, [
                       _withDirectives(_createElementVNode("select", {
                         "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => livePortfolioKey.value = $event),
                         class: "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 sm:w-auto sm:min-w-[12rem] sm:py-1.5 sm:text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                       }, [
-                        _cache[35] || (_cache[35] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
+                        _cache[37] || (_cache[37] = _createElementVNode("option", { value: "ALL" }, "All", -1)),
                         (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolios.value, (item) => {
                           return _openBlock(), _createElementBlock("option", {
                             key: `home-live-portfolio-${item.id}`,
@@ -1493,10 +2262,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         }, null, 512), [
                           [_vModelCheckbox, livePortfolioNetBasis.value]
                         ]),
-                        _cache[36] || (_cache[36] = _createTextVNode(" Net ", -1))
+                        _cache[38] || (_cache[38] = _createTextVNode(" Net ", -1))
                       ])
                     ]),
-                    _cache[41] || (_cache[41] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
+                    _cache[43] || (_cache[43] = _createElementVNode("span", { class: "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400" }, "Actions", -1)),
                     _createElementVNode("div", _hoisted_19, [
                       canManageQuoteUpdates.value ? (_openBlock(), _createElementBlock("button", {
                         key: 0,
@@ -1535,7 +2304,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
                 }, [
                   _createElementVNode("div", _hoisted_23, [
-                    liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$2, {
+                    liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$3, {
                       key: 0,
                       title: "KPI Summary",
                       subtitle: "Included in print/snapshot",
@@ -1551,7 +2320,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "net-profit-total": kpiNetProfitTotal.value,
                       "as-of": asOf.value,
                       "mask-amounts": liveMaskAmounts.value
-                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$3, {
+                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$4, {
                       key: 1,
                       title: "KPI Portfolios",
                       subtitle: `Per portfolio | ${livePortfolioNetBasis.value ? "Net basis" : "Gross basis"} | Included in print/snapshot`,
@@ -1561,7 +2330,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "use-net-basis": livePortfolioNetBasis.value
                     }, null, 8, ["subtitle", "currency", "portfolios", "mask-amounts", "use-net-basis"]))
                   ]),
-                  _createVNode(_sfc_main$4, {
+                  _createVNode(_sfc_main$5, {
                     title: `Allocation | ${liveDashboardTarget.value}`,
                     subtitle: `Top N + Others (${livePortfolioKey.value === "ALL" ? "all portfolios" : "filtered portfolio"})`,
                     currency: summaryDisplayCurrency.value,
@@ -1572,7 +2341,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     loading: dashboardDonutLoading.value,
                     error: dashboardDonutError.value
                   }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position", "mask-amounts", "loading", "error"]),
-                  _createVNode(_sfc_main$5, {
+                  _createVNode(_sfc_main$6, {
                     title: `Treemap | ${liveDashboardTarget.value}`,
                     subtitle: liveDashboardTarget.value === "HOLDINGS" ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey.value === "ALL" ? "" : `| ${livePortfolioLabel.value}`}` : `Target=${liveDashboardTarget.value} | group_by=PORTFOLIO | color=return`,
                     currency: summaryDisplayCurrency.value,
@@ -1582,7 +2351,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     error: dashboardTreemapError.value
                   }, null, 8, ["title", "subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
                   _createElementVNode("div", _hoisted_24, [
-                    _createVNode(_sfc_main$6, {
+                    _createVNode(_sfc_main$7, {
                       title: "Networth Trend",
                       subtitle: "valuation_snapshots | bucket=DAY",
                       currency: summaryDisplayCurrency.value,
@@ -1612,15 +2381,34 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             }, 8, ["expanded"])
           ], 38),
           _createElementVNode("div", {
+            class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "GOAL_PROGRESS" ? "ring-2 ring-indigo-400/70" : ""]),
+            draggable: "true",
+            style: _normalizeStyle({ order: getHomeCardOrder("GOAL_PROGRESS") }),
+            onDragstart: _cache[13] || (_cache[13] = ($event) => onHomeCardDragStart("GOAL_PROGRESS", $event)),
+            onDragover: onHomeCardDragOver,
+            onDrop: _cache[14] || (_cache[14] = ($event) => onHomeCardDrop("GOAL_PROGRESS", $event)),
+            onDragend: onHomeCardDragEnd
+          }, [
+            _createVNode(_sfc_main$1, {
+              title: "Goal Progress and Forecast",
+              subtitle: "Track how close your current wealth is to the target and when it may be reached.",
+              "display-currency": summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
+              "scope-type": homeGoalScopeType.value,
+              "scope-id": homeGoalScopeId.value,
+              "amount-mask": liveMaskAmounts.value,
+              "storage-key-prefix": "myasset:home:goal-progress"
+            }, null, 8, ["display-currency", "scope-type", "scope-id", "amount-mask"])
+          ], 38),
+          _createElementVNode("div", {
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "PORTFOLIOS_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("PORTFOLIOS_TABLE") }),
-            onDragstart: _cache[16] || (_cache[16] = ($event) => onHomeCardDragStart("PORTFOLIOS_TABLE", $event)),
+            onDragstart: _cache[18] || (_cache[18] = ($event) => onHomeCardDragStart("PORTFOLIOS_TABLE", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[17] || (_cache[17] = ($event) => onHomeCardDrop("PORTFOLIOS_TABLE", $event)),
+            onDrop: _cache[19] || (_cache[19] = ($event) => onHomeCardDrop("PORTFOLIOS_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$7, {
+            _createVNode(_sfc_main$8, {
               title: "Portfolios Table",
               subtitle: "Portfolio / Current / Invested Principal / Profit / Return",
               expanded: homePortfoliosExpanded.value,
@@ -1636,23 +2424,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               "show-filter": true,
               "portfolio-key": homePortfolioKey.value,
               "portfolio-options": homePortfolioOptions.value,
-              onToggle: _cache[13] || (_cache[13] = ($event) => homePortfoliosExpanded.value = !homePortfoliosExpanded.value),
+              onToggle: _cache[15] || (_cache[15] = ($event) => homePortfoliosExpanded.value = !homePortfoliosExpanded.value),
               onSort: toggleHomePortfolioSort,
-              onSetPage: _cache[14] || (_cache[14] = ($event) => homePortfolioTable.page = $event),
+              onSetPage: _cache[16] || (_cache[16] = ($event) => homePortfolioTable.page = $event),
               onSelectAll: selectHomeAllPortfolios,
-              onSetPortfolioKey: _cache[15] || (_cache[15] = ($event) => homePortfolioKey.value = $event)
+              onSetPortfolioKey: _cache[17] || (_cache[17] = ($event) => homePortfolioKey.value = $event)
             }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "currency", "mask-amounts", "portfolio-key", "portfolio-options"])
           ], 38),
           _createElementVNode("div", {
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "HOLDINGS_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("HOLDINGS_TABLE") }),
-            onDragstart: _cache[21] || (_cache[21] = ($event) => onHomeCardDragStart("HOLDINGS_TABLE", $event)),
+            onDragstart: _cache[23] || (_cache[23] = ($event) => onHomeCardDragStart("HOLDINGS_TABLE", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[22] || (_cache[22] = ($event) => onHomeCardDrop("HOLDINGS_TABLE", $event)),
+            onDrop: _cache[24] || (_cache[24] = ($event) => onHomeCardDrop("HOLDINGS_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$8, {
+            _createVNode(_sfc_main$9, {
               title: "Holdings Table",
               subtitle: "Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol",
               expanded: homeHoldingsExpanded.value,
@@ -1666,22 +2454,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               "search-term": homeHoldingSearchTerm.value,
               "mask-amounts": liveMaskAmounts.value,
               "display-currency": summaryDisplayCurrency.value,
-              onToggle: _cache[18] || (_cache[18] = ($event) => homeHoldingsExpanded.value = !homeHoldingsExpanded.value),
+              onToggle: _cache[20] || (_cache[20] = ($event) => homeHoldingsExpanded.value = !homeHoldingsExpanded.value),
               onSort: toggleHomeHoldingSort,
-              onSetPage: _cache[19] || (_cache[19] = ($event) => homeHoldingTable.page = $event),
-              "onUpdate:searchTerm": _cache[20] || (_cache[20] = ($event) => homeHoldingSearchTerm.value = $event)
+              onSetPage: _cache[21] || (_cache[21] = ($event) => homeHoldingTable.page = $event),
+              "onUpdate:searchTerm": _cache[22] || (_cache[22] = ($event) => homeHoldingSearchTerm.value = $event)
             }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts", "display-currency"])
           ], 38),
           _createElementVNode("div", {
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "LIABILITIES_TABLE" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("LIABILITIES_TABLE") }),
-            onDragstart: _cache[26] || (_cache[26] = ($event) => onHomeCardDragStart("LIABILITIES_TABLE", $event)),
+            onDragstart: _cache[28] || (_cache[28] = ($event) => onHomeCardDragStart("LIABILITIES_TABLE", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[27] || (_cache[27] = ($event) => onHomeCardDrop("LIABILITIES_TABLE", $event)),
+            onDrop: _cache[29] || (_cache[29] = ($event) => onHomeCardDrop("LIABILITIES_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$9, {
+            _createVNode(_sfc_main$a, {
               title: "Liabilities Table",
               subtitle: "Portfolio / Liability / Balance / Type",
               expanded: homeLiabilitiesExpanded.value,
@@ -1694,24 +2482,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               "sort-order": homeLiabilityTable.sortOrder,
               "search-term": homeLiabilitySearchTerm.value,
               "mask-amounts": liveMaskAmounts.value,
-              onToggle: _cache[23] || (_cache[23] = ($event) => homeLiabilitiesExpanded.value = !homeLiabilitiesExpanded.value),
+              onToggle: _cache[25] || (_cache[25] = ($event) => homeLiabilitiesExpanded.value = !homeLiabilitiesExpanded.value),
               onSort: toggleHomeLiabilitySort,
-              onSetPage: _cache[24] || (_cache[24] = ($event) => homeLiabilityTable.page = $event),
-              "onUpdate:searchTerm": _cache[25] || (_cache[25] = ($event) => homeLiabilitySearchTerm.value = $event)
+              onSetPage: _cache[26] || (_cache[26] = ($event) => homeLiabilityTable.page = $event),
+              "onUpdate:searchTerm": _cache[27] || (_cache[27] = ($event) => homeLiabilitySearchTerm.value = $event)
             }, null, 8, ["expanded", "loading", "rows", "total", "page", "page-size", "sort-by", "sort-order", "search-term", "mask-amounts"])
           ], 38),
           _createElementVNode("div", {
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "REPORT_PANEL" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("REPORT_PANEL") }),
-            onDragstart: _cache[28] || (_cache[28] = ($event) => onHomeCardDragStart("REPORT_PANEL", $event)),
+            onDragstart: _cache[30] || (_cache[30] = ($event) => onHomeCardDragStart("REPORT_PANEL", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[29] || (_cache[29] = ($event) => onHomeCardDrop("REPORT_PANEL", $event)),
+            onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("REPORT_PANEL", $event)),
             onDragend: onHomeCardDragEnd
           }, [
             _createElementVNode("article", _hoisted_25, [
               _createElementVNode("div", _hoisted_26, [
-                _cache[42] || (_cache[42] = _createElementVNode("div", null, [
+                _cache[44] || (_cache[44] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
                 ], -1)),
@@ -1722,7 +2510,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
               reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
-                _createVNode(_sfc_main$a, {
+                _createVNode(_sfc_main$b, {
                   "display-currency": summaryDisplayCurrency.value,
                   "gross-assets-total": grossAssetsTotal.value,
                   "liabilities-total": liabilitiesTotal.value,
@@ -1738,7 +2526,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   "mask-amounts": liveMaskAmounts.value
                 }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
                 _createElementVNode("article", _hoisted_28, [
-                  _cache[47] || (_cache[47] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                  _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                     _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                     _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
                   ], -1)),
@@ -1758,11 +2546,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                         ]),
                         _createElementVNode("div", _hoisted_34, [
-                          _cache[43] || (_cache[43] = _createTextVNode(" Gross ", -1)),
+                          _cache[45] || (_cache[45] = _createTextVNode(" Gross ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(toNumber(item.gross_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                          _cache[44] || (_cache[44] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
+                          _cache[46] || (_cache[46] = _createTextVNode(" / Debt-Adjusted Principal ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(
@@ -1771,11 +2559,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           )), 5)
                         ]),
                         _createElementVNode("div", _hoisted_35, [
-                          _cache[45] || (_cache[45] = _createTextVNode(" Net ", -1)),
+                          _cache[47] || (_cache[47] = _createTextVNode(" Net ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatCurrency(toNumber(item.net_assets_total), item.base_currency || summaryDisplayCurrency.value)), 5),
-                          _cache[46] || (_cache[46] = _createTextVNode(" · Portfolio Profit ", -1)),
+                          _cache[48] || (_cache[48] = _createTextVNode(" · Portfolio Profit ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                           }, _toDisplayString(formatSignedCurrency(
@@ -1789,7 +2577,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ]),
                 _createElementVNode("div", _hoisted_36, [
                   _createElementVNode("article", _hoisted_37, [
-                    _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                    _cache[51] || (_cache[51] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                     ], -1)),
@@ -1812,7 +2600,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
-                            _cache[48] || (_cache[48] = _createTextVNode(" / ", -1)),
+                            _cache[50] || (_cache[50] = _createTextVNode(" / ", -1)),
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.avg_price, item.current_price_currency || summaryDisplayCurrency.value)), 5)
@@ -1822,7 +2610,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ]),
                   _createElementVNode("article", _hoisted_44, [
-                    _cache[50] || (_cache[50] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
+                    _cache[52] || (_cache[52] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                     ], -1)),
@@ -1846,7 +2634,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ])
                 ])
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[51] || (_cache[51] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[53] || (_cache[53] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to preview report cards. ", -1)
@@ -1857,17 +2645,18 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "QUICK_INSIGHT" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("QUICK_INSIGHT") }),
-            onDragstart: _cache[30] || (_cache[30] = ($event) => onHomeCardDragStart("QUICK_INSIGHT", $event)),
+            onDragstart: _cache[32] || (_cache[32] = ($event) => onHomeCardDragStart("QUICK_INSIGHT", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
+            onDrop: _cache[33] || (_cache[33] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$b, {
+            _createVNode(_sfc_main$c, {
               title: "Quick Insight",
-              description: "Live vs baseline valuation snapshot delta analysis",
+              description: "Valuation snapshot delta analysis",
               "source-mode": "LIVE",
               "display-currency": quickInsightDisplayCurrency.value,
               "amount-mask": liveMaskAmounts.value,
+              "allow-custom-compare": true,
               "storage-key-prefix": "myasset:home:quick-insight"
             }, null, 8, ["display-currency", "amount-mask"])
           ], 38),
@@ -1875,14 +2664,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             class: _normalizeClass(["rounded-2xl", homeCardDraggingKey.value === "RELEASE_NOTES" ? "ring-2 ring-indigo-400/70" : ""]),
             draggable: "true",
             style: _normalizeStyle({ order: getHomeCardOrder("RELEASE_NOTES") }),
-            onDragstart: _cache[32] || (_cache[32] = ($event) => onHomeCardDragStart("RELEASE_NOTES", $event)),
+            onDragstart: _cache[34] || (_cache[34] = ($event) => onHomeCardDragStart("RELEASE_NOTES", $event)),
             onDragover: onHomeCardDragOver,
-            onDrop: _cache[33] || (_cache[33] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
+            onDrop: _cache[35] || (_cache[35] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
             onDragend: onHomeCardDragEnd
           }, [
             _createElementVNode("article", _hoisted_52, [
               _createElementVNode("div", _hoisted_53, [
-                _cache[52] || (_cache[52] = _createElementVNode("div", null, [
+                _cache[54] || (_cache[54] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
                 ], -1)),
@@ -1905,7 +2694,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]);
                   }), 128))
                 ]))
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_60, [..._cache[53] || (_cache[53] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_60, [..._cache[55] || (_cache[55] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to view release notes. ", -1)

@@ -19,6 +19,7 @@ import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue
 import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
 import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
 import QuickInsightPanel from "../components/QuickInsightPanel.vue";
+import GoalProgressForecastCard from "../components/GoalProgressForecastCard.vue";
 import type {
   HoldingStatusRow,
   LiabilityStatusRow,
@@ -54,6 +55,7 @@ type HomeHoldingSortKey = "portfolio" | "asset" | "price" | "avg_cost" | "evalua
 type HomeLiabilitySortKey = "portfolio" | "liability" | "balance" | "type";
 type HomeCardKey =
   | "LIVE_DASHBOARD"
+  | "GOAL_PROGRESS"
   | "PORTFOLIOS_TABLE"
   | "HOLDINGS_TABLE"
   | "LIABILITIES_TABLE"
@@ -246,6 +248,7 @@ const homeLiabilityTable = reactive({
 });
 const DEFAULT_HOME_CARD_ORDER: HomeCardKey[] = [
   "LIVE_DASHBOARD",
+  "GOAL_PROGRESS",
   "PORTFOLIOS_TABLE",
   "HOLDINGS_TABLE",
   "LIABILITIES_TABLE",
@@ -261,6 +264,10 @@ const { displayCurrency, ensureInitialized } = useDisplayCurrency();
 const canManageQuoteUpdates = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 
 const summaryDisplayCurrency = computed(() => summary.value?.display_currency ?? displayCurrency.value);
+const homeGoalScopeType = computed<"USER" | "HOUSEHOLD" | null>(() =>
+  summary.value?.scope_type === "HOUSEHOLD" ? "HOUSEHOLD" : summary.value?.scope_type === "USER" ? "USER" : null,
+);
+const homeGoalScopeId = computed<number | null>(() => (summary.value?.scope_id != null ? Number(summary.value.scope_id) : null));
 const quickInsightDisplayCurrency = computed<"KRW" | "USD">(() =>
   summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
 );
@@ -868,6 +875,7 @@ function normalizeHomeCardOrder(value: unknown): HomeCardKey[] {
   for (const item of value) {
     if (
       (item === "LIVE_DASHBOARD"
+        || item === "GOAL_PROGRESS"
         || item === "PORTFOLIOS_TABLE"
         || item === "HOLDINGS_TABLE"
         || item === "LIABILITIES_TABLE"
@@ -1784,6 +1792,27 @@ watch(
         </div>
       </div>
         </DashboardPanelContainer>
+      </div>
+
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'GOAL_PROGRESS' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('GOAL_PROGRESS') }"
+        @dragstart="onHomeCardDragStart('GOAL_PROGRESS', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('GOAL_PROGRESS', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <GoalProgressForecastCard
+          title="Goal Progress and Forecast"
+          subtitle="Track how close your current wealth is to the target and when it may be reached."
+          :display-currency="summaryDisplayCurrency === 'USD' ? 'USD' : 'KRW'"
+          :scope-type="homeGoalScopeType"
+          :scope-id="homeGoalScopeId"
+          :amount-mask="liveMaskAmounts"
+          storage-key-prefix="myasset:home:goal-progress"
+        />
       </div>
 
       <div

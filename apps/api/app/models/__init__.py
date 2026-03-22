@@ -21,6 +21,7 @@ from app.models.snapshot import (
 )
 from app.models.user import User
 from app.models.fx_rate import FxRate
+from app.models.goal_target import GoalTarget
 from app.models.user_setting import UserSetting
 from app.models.valuation_snapshot import (
     ValuationSnapshot,
@@ -54,6 +55,7 @@ __all__ = [
     "ChatSession",
     "ChatMessage",
     "FxRate",
+    "GoalTarget",
     "UserSetting",
     "ValuationSnapshot",
     "ValuationSnapshotPortfolioRow",
