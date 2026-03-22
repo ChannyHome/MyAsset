@@ -67,6 +67,9 @@ const showNetDrivers = ref(DEFAULT_UI_STATE.netDrivers);
 const manualQuotesExpanded = ref(DEFAULT_UI_STATE.manualExpanded);
 const missingQuotesExpanded = ref(DEFAULT_UI_STATE.missingExpanded);
 const thresholdInfoOpen = ref(false);
+const driverInfoOpen = ref(false);
+const profitInfoOpen = ref(false);
+const returnInfoOpen = ref(false);
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -92,6 +95,11 @@ function formatSignedCurrency(value: number, currency: DisplayCurrency): string 
 function formatPercentPoint(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "-";
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%p`;
+}
+
+function formatPercent(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -287,12 +295,34 @@ function renderReturn(value: string | number | null | undefined): string {
   return formatPercentPoint(toNumber(value));
 }
 
+function renderReturnPercent(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "-";
+  return formatPercent(toNumber(value));
+}
+
 function toggleExpanded(): void {
   panelExpanded.value = !panelExpanded.value;
 }
 
 function toggleThresholdInfo(): void {
   thresholdInfoOpen.value = !thresholdInfoOpen.value;
+}
+
+function toggleDriverInfo(): void {
+  driverInfoOpen.value = !driverInfoOpen.value;
+}
+
+function toggleProfitInfo(): void {
+  profitInfoOpen.value = !profitInfoOpen.value;
+}
+
+function toggleReturnInfo(): void {
+  returnInfoOpen.value = !returnInfoOpen.value;
+}
+
+function hasCostBasisDelta(value: string | number | null | undefined): boolean {
+  if (value == null) return false;
+  return Math.abs(toNumber(value)) >= 1;
 }
 </script>
 
@@ -359,7 +389,32 @@ function toggleThresholdInfo(): void {
         </section>
 
         <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ driverCardTitle }}</h3>
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ driverCardTitle }}</h3>
+            <button
+              type="button"
+              class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              :aria-expanded="driverInfoOpen"
+              :aria-label="`${driverCardTitle} info`"
+              @click="toggleDriverInfo"
+            >
+              i
+            </button>
+          </div>
+          <div
+            v-if="driverInfoOpen"
+            class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+          >
+              <p class="font-semibold text-slate-700 dark:text-slate-100">{{ driverCardTitle }} meaning</p>
+              <p class="mt-1 [overflow-wrap:anywhere]">
+                {{ showNetDrivers
+                  ? "Top Net Drivers shows net-asset impact. Holdings use evaluated value delta, while liabilities reduce net when their balances rise."
+                  : "Top Gross Drivers shows evaluated value delta versus the selected baseline snapshot. This is current evaluated amount minus baseline evaluated amount." }}
+              </p>
+              <p v-if="!showNetDrivers" class="mt-2 [overflow-wrap:anywhere]">
+                Cost basis Δ is shown as a helper line so you can compare why Gross Delta and Profit Delta may diverge for the same holding.
+              </p>
+            </div>
           <div class="mt-3 grid gap-3 md:grid-cols-2">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">{{ driverPositiveLabel }}</p>
@@ -373,6 +428,14 @@ function toggleThresholdInfo(): void {
                         <span v-if="item.status" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">{{ item.status }}</span>
                       </div>
                       <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                      <p
+                        v-if="!showNetDrivers && hasCostBasisDelta(item.delta_cost_basis)"
+                        class="mt-1 text-xs [overflow-wrap:anywhere]"
+                        :class="insightDeltaClass(toNumber(item.delta_cost_basis))"
+                      >
+                        Cost basis Δ:
+                        <span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_cost_basis)) }}</span>
+                      </p>
                     </div>
                     <p class="text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_amount)) }}</span></p>
                   </div>
@@ -392,6 +455,14 @@ function toggleThresholdInfo(): void {
                         <span v-if="item.status" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">{{ item.status }}</span>
                       </div>
                       <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                      <p
+                        v-if="!showNetDrivers && hasCostBasisDelta(item.delta_cost_basis)"
+                        class="mt-1 text-xs [overflow-wrap:anywhere]"
+                        :class="insightDeltaClass(toNumber(item.delta_cost_basis))"
+                      >
+                        Cost basis Δ:
+                        <span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_cost_basis)) }}</span>
+                      </p>
                     </div>
                     <p class="text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_amount)) }}</span></p>
                   </div>
@@ -404,7 +475,27 @@ function toggleThresholdInfo(): void {
 
         <div class="grid gap-4 xl:grid-cols-2">
           <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Profit Delta Movers</h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Profit Delta Movers</h3>
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                :aria-expanded="profitInfoOpen"
+                aria-label="Profit Delta Movers info"
+                @click="toggleProfitInfo"
+              >
+                i
+              </button>
+            </div>
+            <div
+              v-if="profitInfoOpen"
+              class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+            >
+              <p class="font-semibold text-slate-700 dark:text-slate-100">Profit Delta formula</p>
+              <p class="mt-1 [overflow-wrap:anywhere]">
+                Profit Delta compares profit versus the selected baseline snapshot. Profit = evaluated value - cost basis, so Profit Delta = Gross Delta - Cost Basis Delta.
+              </p>
+            </div>
             <div class="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">Top 3</p>
@@ -415,8 +506,17 @@ function toggleThresholdInfo(): void {
                         <div class="flex flex-wrap items-center gap-2">
                           <p class="text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">{{ item.label }}</p>
                           <span v-if="item.display_class" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="displayClassBadgeClass(item.display_class)">{{ displayClassLabel(item.display_class) }}</span>
+                          <span v-if="item.status" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">{{ item.status }}</span>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                        <p
+                          v-if="hasCostBasisDelta(item.delta_cost_basis)"
+                          class="mt-1 text-xs [overflow-wrap:anywhere]"
+                          :class="insightDeltaClass(toNumber(item.delta_cost_basis))"
+                        >
+                          Cost basis Δ:
+                          <span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_cost_basis)) }}</span>
+                        </p>
                       </div>
                       <p class="text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_amount)) }}</span></p>
                     </div>
@@ -433,8 +533,17 @@ function toggleThresholdInfo(): void {
                         <div class="flex flex-wrap items-center gap-2">
                           <p class="text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">{{ item.label }}</p>
                           <span v-if="item.display_class" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="displayClassBadgeClass(item.display_class)">{{ displayClassLabel(item.display_class) }}</span>
+                          <span v-if="item.status" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="insightStatusBadgeClass(item.status)">{{ item.status }}</span>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                        <p
+                          v-if="hasCostBasisDelta(item.delta_cost_basis)"
+                          class="mt-1 text-xs [overflow-wrap:anywhere]"
+                          :class="insightDeltaClass(toNumber(item.delta_cost_basis))"
+                        >
+                          Cost basis Δ:
+                          <span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_cost_basis)) }}</span>
+                        </p>
                       </div>
                       <p class="text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(item.delta_amount)) }}</span></p>
                     </div>
@@ -446,7 +555,30 @@ function toggleThresholdInfo(): void {
           </section>
 
           <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Return Delta Movers</h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Return Delta Movers</h3>
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                :aria-expanded="returnInfoOpen"
+                aria-label="Return Delta Movers info"
+                @click="toggleReturnInfo"
+              >
+                i
+              </button>
+            </div>
+            <div
+              v-if="returnInfoOpen"
+              class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+            >
+              <p class="font-semibold text-slate-700 dark:text-slate-100">Return Delta formula</p>
+              <p class="mt-1 [overflow-wrap:anywhere]">
+                Return Delta compares return percentage versus the selected baseline snapshot. It is shown in percentage points (%p), not in currency amount.
+              </p>
+              <p class="mt-2 [overflow-wrap:anywhere]">
+                Each row also shows current return and baseline return so you can see which side of the gap changed.
+              </p>
+            </div>
             <div class="mt-3 grid gap-3 md:grid-cols-2">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300">Top 3</p>
@@ -459,6 +591,12 @@ function toggleThresholdInfo(): void {
                           <span v-if="item.display_class" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="displayClassBadgeClass(item.display_class)">{{ displayClassLabel(item.display_class) }}</span>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                        <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">
+                          Current:
+                          <span class="font-medium text-slate-700 dark:text-slate-200">{{ renderReturnPercent(item.current_return_pct) }}</span>
+                          · Baseline:
+                          <span class="font-medium text-slate-700 dark:text-slate-200">{{ renderReturnPercent(item.baseline_return_pct) }}</span>
+                        </p>
                       </div>
                       <p class="text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300">{{ renderReturn(item.delta_return_pct) }}</p>
                     </div>
@@ -477,6 +615,12 @@ function toggleThresholdInfo(): void {
                           <span v-if="item.display_class" class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="displayClassBadgeClass(item.display_class)">{{ displayClassLabel(item.display_class) }}</span>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">{{ item.portfolio_name || "-" }}</p>
+                        <p class="mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">
+                          Current:
+                          <span class="font-medium text-slate-700 dark:text-slate-200">{{ renderReturnPercent(item.current_return_pct) }}</span>
+                          · Baseline:
+                          <span class="font-medium text-slate-700 dark:text-slate-200">{{ renderReturnPercent(item.baseline_return_pct) }}</span>
+                        </p>
                       </div>
                       <p class="text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300">{{ renderReturn(item.delta_return_pct) }}</p>
                     </div>

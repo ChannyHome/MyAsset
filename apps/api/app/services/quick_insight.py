@@ -244,6 +244,11 @@ def _make_delta_item(
     delta_return_pct: Decimal | None = None,
     current_value: Decimal | None = None,
     baseline_value: Decimal | None = None,
+    delta_cost_basis: Decimal | None = None,
+    current_cost_basis: Decimal | None = None,
+    baseline_cost_basis: Decimal | None = None,
+    current_return_pct: Decimal | None = None,
+    baseline_return_pct: Decimal | None = None,
     status: str | None = None,
     asset_class: str | None = None,
     display_class: str | None = None,
@@ -257,6 +262,11 @@ def _make_delta_item(
         delta_return_pct=delta_return_pct,
         current_value=current_value,
         baseline_value=baseline_value,
+        delta_cost_basis=delta_cost_basis,
+        current_cost_basis=current_cost_basis,
+        baseline_cost_basis=baseline_cost_basis,
+        current_return_pct=current_return_pct,
+        baseline_return_pct=baseline_return_pct,
         status=status,
         asset_class=asset_class,
         display_class=display_class,
@@ -1181,6 +1191,8 @@ def _build_quick_insight_response(
         status = _status_for_pair(current_exists, baseline_exists)
         current_evaluated = current.evaluated if current is not None else Decimal("0")
         baseline_evaluated = baseline.evaluated if baseline is not None else Decimal("0")
+        current_cost_basis = current.cost_basis if current is not None else Decimal("0")
+        baseline_cost_basis = baseline.cost_basis if baseline is not None else Decimal("0")
         current_profit = current.profit if current is not None else Decimal("0")
         baseline_profit = baseline.profit if baseline is not None else Decimal("0")
         current_return = current.return_pct if current is not None else None
@@ -1201,6 +1213,9 @@ def _build_quick_insight_response(
                 delta_amount=current_evaluated - baseline_evaluated,
                 current_value=current_evaluated,
                 baseline_value=baseline_evaluated,
+                delta_cost_basis=current_cost_basis - baseline_cost_basis,
+                current_cost_basis=current_cost_basis,
+                baseline_cost_basis=baseline_cost_basis,
                 status=status,
                 asset_class=asset_class,
                 display_class=display_class,
@@ -1215,6 +1230,9 @@ def _build_quick_insight_response(
                 delta_amount=current_evaluated - baseline_evaluated,
                 current_value=current_evaluated,
                 baseline_value=baseline_evaluated,
+                delta_cost_basis=current_cost_basis - baseline_cost_basis,
+                current_cost_basis=current_cost_basis,
+                baseline_cost_basis=baseline_cost_basis,
                 status=status,
                 asset_class=asset_class,
                 display_class=display_class,
@@ -1229,6 +1247,9 @@ def _build_quick_insight_response(
                 delta_amount=current_profit - baseline_profit,
                 current_value=current_profit,
                 baseline_value=baseline_profit,
+                delta_cost_basis=current_cost_basis - baseline_cost_basis,
+                current_cost_basis=current_cost_basis,
+                baseline_cost_basis=baseline_cost_basis,
                 status=status,
                 asset_class=asset_class,
                 display_class=display_class,
@@ -1246,6 +1267,8 @@ def _build_quick_insight_response(
                 delta_return_pct=return_delta,
                 current_value=current_evaluated,
                 baseline_value=baseline_evaluated,
+                current_return_pct=Decimal(current_return) if current_return is not None else None,
+                baseline_return_pct=Decimal(baseline_return) if baseline_return is not None else None,
                 status=status,
                 asset_class=asset_class,
                 display_class=display_class,

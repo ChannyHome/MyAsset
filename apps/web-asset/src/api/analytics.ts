@@ -95,6 +95,11 @@ export type AnalyticsQuickInsightDeltaItemOut = {
   delta_return_pct?: string | number | null;
   current_value?: string | number | null;
   baseline_value?: string | number | null;
+  delta_cost_basis?: string | number | null;
+  current_cost_basis?: string | number | null;
+  baseline_cost_basis?: string | number | null;
+  current_return_pct?: string | number | null;
+  baseline_return_pct?: string | number | null;
   status?: "NEW" | "REMOVED" | null;
   asset_class?: string | null;
   display_class?: string | null;

@@ -89,6 +89,11 @@ class AnalyticsQuickInsightDeltaItemOut(BaseModel):
     delta_return_pct: Decimal | None = None
     current_value: Decimal | None = None
     baseline_value: Decimal | None = None
+    delta_cost_basis: Decimal | None = None
+    current_cost_basis: Decimal | None = None
+    baseline_cost_basis: Decimal | None = None
+    current_return_pct: Decimal | None = None
+    baseline_return_pct: Decimal | None = None
     status: Literal["NEW", "REMOVED"] | None = None
     asset_class: str | None = None
     display_class: str | None = None
