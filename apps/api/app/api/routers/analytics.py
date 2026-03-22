@@ -30,7 +30,7 @@ from app.schemas.analytics import (
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.analytics_summary import calculate_summary_values
-from app.services.quick_insight import get_quick_insight
+from app.services.quick_insight import QuickInsightValidationError, get_quick_insight
 from app.services.user_seed import SeedUser
 from app.services.valuation_snapshots import collect_valuation_snapshots_batch
 
@@ -224,7 +224,11 @@ def get_quick_insight_view(
     scope_type: str | None = None,
     scope_id: int | None = None,
     display_currency: str = "KRW",
-    period: Literal["1D", "7D", "30D"] = Query(default="1D"),
+    period: Literal["1D", "7D", "30D"] | None = Query(default=None),
+    mode: Literal["PRESET", "CUSTOM"] = Query(default="PRESET"),
+    preset: Literal["1D", "7D", "30D"] | None = Query(default=None),
+    current_date: date | None = Query(default=None),
+    compare_date: date | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
 ) -> AnalyticsQuickInsightOut:
@@ -242,7 +246,13 @@ def get_quick_insight_view(
             scope_user_ids=scope_user_ids,
             display_currency=display_currency,
             period=period,
+            mode=mode,
+            preset=preset,
+            current_date=current_date,
+            compare_date=compare_date,
         )
+    except QuickInsightValidationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
     except MissingFxRateError as exc:
         raise HTTPException(
             status_code=503,

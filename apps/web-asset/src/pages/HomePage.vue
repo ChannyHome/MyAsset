@@ -2080,10 +2080,11 @@ watch(
       >
         <QuickInsightPanel
           title="Quick Insight"
-          description="Live vs baseline valuation snapshot delta analysis"
+          description="Valuation snapshot delta analysis"
           source-mode="LIVE"
           :display-currency="quickInsightDisplayCurrency"
           :amount-mask="liveMaskAmounts"
+          :allow-custom-compare="true"
           storage-key-prefix="myasset:home:quick-insight"
         />
       </div>

@@ -84,7 +84,9 @@ export type AnalyticsSnapshotCollectOut = {
   upserted_rows: number;
 };
 
-export type QuickInsightPeriod = "1D" | "7D" | "30D";
+export type QuickInsightPeriod = "1D" | "7D" | "30D" | "CUSTOM";
+export type QuickInsightCompareMode = "PRESET" | "CUSTOM";
+export type QuickInsightPreset = "1D" | "7D" | "30D";
 
 export type AnalyticsQuickInsightDeltaItemOut = {
   entity_type: "HOLDING" | "LIABILITY" | "PORTFOLIO";
@@ -150,6 +152,11 @@ export type AnalyticsQuickInsightSummaryAlertOut = {
 
 export type AnalyticsQuickInsightOut = {
   period: QuickInsightPeriod;
+  compare_mode?: QuickInsightCompareMode | null;
+  requested_current_date?: string | null;
+  requested_compare_date?: string | null;
+  matched_current_snapshot_date?: string | null;
+  matched_compare_snapshot_date?: string | null;
   baseline_snapshot_date?: string | null;
   current_as_of: string;
   has_baseline: boolean;
@@ -207,7 +214,11 @@ export type QuickInsightQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
   display_currency?: "KRW" | "USD";
-  period?: QuickInsightPeriod;
+  period?: QuickInsightPreset;
+  mode?: QuickInsightCompareMode;
+  preset?: QuickInsightPreset;
+  current_date?: string;
+  compare_date?: string;
 };
 
 export async function getSummary(params: SummaryQuery = {}): Promise<AnalyticsSummaryV2Out> {

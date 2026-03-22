@@ -6,6 +6,7 @@ import {
   getQuickInsight,
   type AnalyticsQuickInsightOut,
   type QuickInsightPeriod,
+  type QuickInsightPreset,
 } from "../api/analytics";
 import {
   getSnapshotPreviewQuickInsight,
@@ -17,10 +18,13 @@ import { formatDateTimeSeoul } from "../utils/datetime";
 type DisplayCurrency = "KRW" | "USD";
 type SourceMode = "LIVE" | "SNAPSHOT" | "CSV_PREVIEW";
 type Severity = "positive" | "negative" | "neutral";
+type CompareHintState = "pending" | "exact" | "nearest" | "missing";
 
 type QuickInsightUiState = {
   expanded: boolean;
   period: QuickInsightPeriod;
+  currentDate: string;
+  compareDate: string;
   netDrivers: boolean;
   manualExpanded: boolean;
   missingExpanded: boolean;
@@ -34,6 +38,7 @@ const props = withDefaults(
     displayCurrency: DisplayCurrency;
     amountMask?: boolean;
     storageKeyPrefix: string;
+    allowCustomCompare?: boolean;
     scopeType?: "USER" | "HOUSEHOLD";
     scopeId?: number | null;
     snapshotId?: number | null;
@@ -43,6 +48,7 @@ const props = withDefaults(
     title: "Quick Insight",
     description: "Snapshot delta analysis",
     amountMask: false,
+    allowCustomCompare: false,
     scopeType: "USER",
     scopeId: null,
     snapshotId: null,
@@ -50,26 +56,55 @@ const props = withDefaults(
   },
 );
 
-const DEFAULT_UI_STATE: QuickInsightUiState = {
-  expanded: true,
-  period: "1D",
-  netDrivers: false,
-  manualExpanded: false,
-  missingExpanded: false,
-};
+const PRESET_OPTIONS: QuickInsightPreset[] = ["1D", "7D", "30D"];
+
+function formatDateInputValue(value: Date): string {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const day = `${value.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function todayDateInputValue(): string {
+  return formatDateInputValue(new Date());
+}
+
+function addDaysToDateInput(value: string, days: number): string {
+  const base = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(base.getTime())) return todayDateInputValue();
+  base.setDate(base.getDate() + days);
+  return formatDateInputValue(base);
+}
+
+function createDefaultUiState(): QuickInsightUiState {
+  const today = todayDateInputValue();
+  return {
+    expanded: true,
+    period: "1D",
+    currentDate: today,
+    compareDate: addDaysToDateInput(today, -1),
+    netDrivers: false,
+    manualExpanded: false,
+    missingExpanded: false,
+  };
+}
 
 const quickInsight = ref<AnalyticsQuickInsightOut | null>(null);
 const loading = ref(false);
 const errorMessage = ref("");
-const panelExpanded = ref(DEFAULT_UI_STATE.expanded);
-const period = ref<QuickInsightPeriod>(DEFAULT_UI_STATE.period);
-const showNetDrivers = ref(DEFAULT_UI_STATE.netDrivers);
-const manualQuotesExpanded = ref(DEFAULT_UI_STATE.manualExpanded);
-const missingQuotesExpanded = ref(DEFAULT_UI_STATE.missingExpanded);
+const panelExpanded = ref(createDefaultUiState().expanded);
+const period = ref<QuickInsightPeriod>(createDefaultUiState().period);
+const currentDate = ref(createDefaultUiState().currentDate);
+const compareDate = ref(createDefaultUiState().compareDate);
+const showNetDrivers = ref(createDefaultUiState().netDrivers);
+const manualQuotesExpanded = ref(createDefaultUiState().manualExpanded);
+const missingQuotesExpanded = ref(createDefaultUiState().missingExpanded);
 const thresholdInfoOpen = ref(false);
 const driverInfoOpen = ref(false);
 const profitInfoOpen = ref(false);
 const returnInfoOpen = ref(false);
+const currentDateInput = ref<HTMLInputElement | null>(null);
+const compareDateInput = ref<HTMLInputElement | null>(null);
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -156,16 +191,28 @@ function displayClassBadgeClass(displayClass: string | null | undefined): string
 }
 
 function normalizeUiState(raw: unknown): QuickInsightUiState {
+  const defaults = createDefaultUiState();
   if (!raw || typeof raw !== "object") {
-    return { ...DEFAULT_UI_STATE };
+    return defaults;
   }
   const parsed = raw as Partial<QuickInsightUiState>;
   return {
-    expanded: typeof parsed.expanded === "boolean" ? parsed.expanded : DEFAULT_UI_STATE.expanded,
-    period: parsed.period === "1D" || parsed.period === "7D" || parsed.period === "30D" ? parsed.period : DEFAULT_UI_STATE.period,
-    netDrivers: typeof parsed.netDrivers === "boolean" ? parsed.netDrivers : DEFAULT_UI_STATE.netDrivers,
-    manualExpanded: typeof parsed.manualExpanded === "boolean" ? parsed.manualExpanded : DEFAULT_UI_STATE.manualExpanded,
-    missingExpanded: typeof parsed.missingExpanded === "boolean" ? parsed.missingExpanded : DEFAULT_UI_STATE.missingExpanded,
+    expanded: typeof parsed.expanded === "boolean" ? parsed.expanded : defaults.expanded,
+    period:
+      parsed.period === "1D" || parsed.period === "7D" || parsed.period === "30D" || parsed.period === "CUSTOM"
+        ? parsed.period
+        : defaults.period,
+    currentDate:
+      typeof parsed.currentDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.currentDate)
+        ? parsed.currentDate
+        : defaults.currentDate,
+    compareDate:
+      typeof parsed.compareDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.compareDate)
+        ? parsed.compareDate
+        : defaults.compareDate,
+    netDrivers: typeof parsed.netDrivers === "boolean" ? parsed.netDrivers : defaults.netDrivers,
+    manualExpanded: typeof parsed.manualExpanded === "boolean" ? parsed.manualExpanded : defaults.manualExpanded,
+    missingExpanded: typeof parsed.missingExpanded === "boolean" ? parsed.missingExpanded : defaults.missingExpanded,
   };
 }
 
@@ -176,7 +223,9 @@ function loadUiState(): void {
   try {
     const parsed = normalizeUiState(JSON.parse(raw));
     panelExpanded.value = parsed.expanded;
-    period.value = parsed.period;
+    period.value = !props.allowCustomCompare && parsed.period === "CUSTOM" ? "1D" : parsed.period;
+    currentDate.value = parsed.currentDate;
+    compareDate.value = parsed.compareDate;
     showNetDrivers.value = parsed.netDrivers;
     manualQuotesExpanded.value = parsed.manualExpanded;
     missingQuotesExpanded.value = parsed.missingExpanded;
@@ -190,6 +239,8 @@ function saveUiState(): void {
   const payload: QuickInsightUiState = {
     expanded: panelExpanded.value,
     period: period.value,
+    currentDate: currentDate.value,
+    compareDate: compareDate.value,
     netDrivers: showNetDrivers.value,
     manualExpanded: manualQuotesExpanded.value,
     missingExpanded: missingQuotesExpanded.value,
@@ -201,6 +252,12 @@ if (typeof window !== "undefined") {
   loadUiState();
 }
 
+const customCompareEnabled = computed(() => props.allowCustomCompare && props.sourceMode === "LIVE");
+const isCustomMode = computed(() => customCompareEnabled.value && period.value === "CUSTOM");
+const periodButtons = computed<QuickInsightPeriod[]>(() =>
+  customCompareEnabled.value ? [...PRESET_OPTIONS, "CUSTOM"] : [...PRESET_OPTIONS],
+);
+const todayInputMax = computed(() => todayDateInputValue());
 const driverCardTitle = computed(() => (showNetDrivers.value ? "Top Net Drivers" : "Top Gross Drivers"));
 const driverPositiveLabel = computed(() => (showNetDrivers.value ? "Top Boosters" : "Top Gainers"));
 const driverNegativeLabel = computed(() => (showNetDrivers.value ? "Top Drags" : "Top Losers"));
@@ -222,11 +279,88 @@ const portfolioChangeItems = computed(() =>
 );
 const baselineLabel = computed(() => {
   if (!quickInsight.value) return "-";
-  return quickInsight.value.baseline_snapshot_date || `No ${quickInsight.value.period} snapshot baseline`;
+  return (
+    quickInsight.value.matched_compare_snapshot_date ||
+    quickInsight.value.baseline_snapshot_date ||
+    (quickInsight.value.period === "CUSTOM" ? "No custom snapshot baseline" : `No ${quickInsight.value.period} snapshot baseline`)
+  );
 });
+const compareModeLabel = computed(() =>
+  quickInsight.value?.compare_mode === "CUSTOM" ? "snapshot-to-snapshot compare" : "valuation snapshot delta analysis",
+);
+
+function compareHintClass(state: CompareHintState): string {
+  if (state === "exact") {
+    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+  }
+  if (state === "nearest") {
+    return "border-amber-500/30 bg-amber-500/10 text-amber-200";
+  }
+  if (state === "missing") {
+    return "border-rose-500/30 bg-rose-500/10 text-rose-200";
+  }
+  return "border-slate-700 bg-slate-800/60 text-slate-300";
+}
+
+function buildCompareHint(
+  requestedValue: string,
+  requestedFromInsight: string | null | undefined,
+  matchedFromInsight: string | null | undefined,
+): { state: CompareHintState; text: string } {
+  if (!isCustomMode.value) {
+    return { state: "pending", text: "" };
+  }
+  if (!quickInsight.value || quickInsight.value.compare_mode !== "CUSTOM") {
+    return { state: "pending", text: "Apply to check which snapshot will be used." };
+  }
+  if (requestedFromInsight !== requestedValue) {
+    return { state: "pending", text: "Apply to refresh the matched snapshot for this date." };
+  }
+  if (!matchedFromInsight) {
+    return { state: "missing", text: "No snapshot found on or before this date." };
+  }
+  if (matchedFromInsight === requestedValue) {
+    return { state: "exact", text: "Exact snapshot found for this date." };
+  }
+  return {
+    state: "nearest",
+    text: `No exact snapshot on this date. Using nearest snapshot: ${matchedFromInsight}.`,
+  };
+}
+
+const customCurrentHint = computed(() =>
+  buildCompareHint(
+    currentDate.value,
+    quickInsight.value?.requested_current_date,
+    quickInsight.value?.matched_current_snapshot_date,
+  ),
+);
+const customCompareHint = computed(() =>
+  buildCompareHint(
+    compareDate.value,
+    quickInsight.value?.requested_compare_date,
+    quickInsight.value?.matched_compare_snapshot_date,
+  ),
+);
 
 function amountMaskStyle() {
   return props.amountMask ? { filter: "blur(6px)" } : undefined;
+}
+
+function validateCustomCompare(): string {
+  if (!currentDate.value || !compareDate.value) {
+    return "Select both current and compare dates.";
+  }
+  if (currentDate.value > todayInputMax.value) {
+    return "Current date cannot be later than today.";
+  }
+  if (compareDate.value > todayInputMax.value) {
+    return "Compare date cannot be later than today.";
+  }
+  if (compareDate.value > currentDate.value) {
+    return "Compare date cannot be later than current date.";
+  }
+  return "";
 }
 
 async function loadQuickInsight(): Promise<void> {
@@ -234,11 +368,23 @@ async function loadQuickInsight(): Promise<void> {
   errorMessage.value = "";
   try {
     if (props.sourceMode === "LIVE") {
+      if (isCustomMode.value) {
+        quickInsight.value = await getQuickInsight({
+          scope_type: props.scopeType,
+          scope_id: props.scopeId ?? undefined,
+          display_currency: props.displayCurrency,
+          mode: "CUSTOM",
+          current_date: currentDate.value,
+          compare_date: compareDate.value,
+        });
+        return;
+      }
       quickInsight.value = await getQuickInsight({
         scope_type: props.scopeType,
         scope_id: props.scopeId ?? undefined,
         display_currency: props.displayCurrency,
-        period: period.value,
+        mode: "PRESET",
+        preset: period.value as QuickInsightPreset,
       });
       return;
     }
@@ -250,7 +396,7 @@ async function loadQuickInsight(): Promise<void> {
       }
       quickInsight.value = await getSnapshotQuickInsight(props.snapshotId, {
         display_currency: props.displayCurrency,
-        period: period.value,
+        period: (period.value === "CUSTOM" ? "1D" : period.value) as QuickInsightPreset,
       });
       return;
     }
@@ -262,7 +408,7 @@ async function loadQuickInsight(): Promise<void> {
 
     quickInsight.value = await getSnapshotPreviewQuickInsight(props.previewPayload, {
       display_currency: props.displayCurrency,
-      period: period.value,
+      period: (period.value === "CUSTOM" ? "1D" : period.value) as QuickInsightPreset,
     });
   } catch (error) {
     quickInsight.value = null;
@@ -274,14 +420,18 @@ async function loadQuickInsight(): Promise<void> {
 
 watch(
   () => [props.sourceMode, props.displayCurrency, props.scopeType, props.scopeId, props.snapshotId, props.previewPayload, period.value],
-  () => {
+  (_next, previous) => {
+    const previousPeriod = Array.isArray(previous) ? previous[6] : undefined;
+    if (props.sourceMode === "LIVE" && customCompareEnabled.value && period.value === "CUSTOM" && previousPeriod !== undefined && previousPeriod !== "CUSTOM") {
+      return;
+    }
     void loadQuickInsight();
   },
   { immediate: true },
 );
 
 watch(
-  () => [panelExpanded.value, period.value, showNetDrivers.value, manualQuotesExpanded.value, missingQuotesExpanded.value],
+  () => [panelExpanded.value, period.value, currentDate.value, compareDate.value, showNetDrivers.value, manualQuotesExpanded.value, missingQuotesExpanded.value],
   () => {
     saveUiState();
   },
@@ -324,6 +474,52 @@ function hasCostBasisDelta(value: string | number | null | undefined): boolean {
   if (value == null) return false;
   return Math.abs(toNumber(value)) >= 1;
 }
+
+function openNativeDatePicker(target: HTMLInputElement | null): void {
+  if (!target) return;
+  target.focus();
+  if (typeof target.showPicker === "function") {
+    try {
+      target.showPicker();
+    } catch {
+      // ignore browsers that block programmatic picker open
+    }
+  }
+}
+
+function setQuickInsightPeriod(option: QuickInsightPeriod): void {
+  period.value = option;
+  if (option === "CUSTOM") {
+    if (!currentDate.value) {
+      currentDate.value = todayDateInputValue();
+    }
+    if (!compareDate.value) {
+      compareDate.value = addDaysToDateInput(currentDate.value, -1);
+    }
+    errorMessage.value = "";
+  }
+}
+
+async function applyCustomCompare(): Promise<void> {
+  const validationMessage = validateCustomCompare();
+  if (validationMessage) {
+    errorMessage.value = validationMessage;
+    return;
+  }
+  await loadQuickInsight();
+}
+
+function resetCustomCompareDates(): void {
+  const today = todayDateInputValue();
+  currentDate.value = today;
+  compareDate.value = addDaysToDateInput(today, -1);
+  errorMessage.value = "";
+}
+
+async function resetCustomCompareAndApply(): Promise<void> {
+  resetCustomCompareDates();
+  await applyCustomCompare();
+}
 </script>
 
 <template>
@@ -356,7 +552,14 @@ function hasCostBasisDelta(value: string | number | null | undefined): boolean {
       </div>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
-          <button v-for="option in ['1D', '7D', '30D']" :key="option" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition" :class="period === option ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'" @click="period = option as QuickInsightPeriod">
+          <button
+            v-for="option in periodButtons"
+            :key="option"
+            type="button"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+            :class="period === option ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'"
+            @click="setQuickInsightPeriod(option)"
+          >
             {{ option }}
           </button>
         </div>
@@ -371,12 +574,89 @@ function hasCostBasisDelta(value: string | number | null | undefined): boolean {
     </div>
 
     <div v-if="panelExpanded" class="mt-4">
+      <section v-if="isCustomMode" class="mb-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr),minmax(0,1fr),auto,auto] md:items-end">
+          <label class="block min-w-0">
+            <span class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Current 기준일</span>
+            <input
+              ref="currentDateInput"
+              v-model="currentDate"
+              type="date"
+              :max="todayInputMax"
+              class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              @click="openNativeDatePicker(currentDateInput)"
+              @focus="openNativeDatePicker(currentDateInput)"
+            />
+            <span
+              class="mt-2 inline-flex rounded-lg border px-2.5 py-1 text-xs"
+              :class="compareHintClass(customCurrentHint.state)"
+            >
+              {{ customCurrentHint.text }}
+            </span>
+          </label>
+          <label class="block min-w-0">
+            <span class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">비교 기준일</span>
+            <input
+              ref="compareDateInput"
+              v-model="compareDate"
+              type="date"
+              :max="todayInputMax"
+              class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              @click="openNativeDatePicker(compareDateInput)"
+              @focus="openNativeDatePicker(compareDateInput)"
+            />
+            <span
+              class="mt-2 inline-flex rounded-lg border px-2.5 py-1 text-xs"
+              :class="compareHintClass(customCompareHint.state)"
+            >
+              {{ customCompareHint.text }}
+            </span>
+          </label>
+          <button
+            type="button"
+            class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="loading"
+              @click="applyCustomCompare"
+            >
+              Apply
+            </button>
+          <button
+            type="button"
+            class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="loading"
+            @click="resetCustomCompareDates"
+          >
+            Reset to Today
+          </button>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="rounded-xl border border-indigo-400/40 bg-indigo-500/10 px-4 py-2 text-sm font-semibold text-indigo-200 transition-colors hover:bg-indigo-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="loading"
+            @click="resetCustomCompareAndApply"
+          >
+            Reset to Today + Apply
+          </button>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Custom compare uses snapshot-to-snapshot comparison on the selected dates. Click a date field to open the calendar picker.
+          </p>
+        </div>
+      </section>
+
       <div v-if="loading" class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300">Loading snapshot delta insight...</div>
       <div v-else-if="errorMessage" class="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-500 dark:text-rose-300">{{ errorMessage }}</div>
       <div v-else-if="quickInsight" class="space-y-4">
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
           <span>Current as_of: {{ formatDateTime(quickInsight.current_as_of) }}</span>
-          <span>Baseline: {{ baselineLabel }}</span>
+          <span v-if="quickInsight.compare_mode">Mode: {{ compareModeLabel }}</span>
+          <template v-if="props.sourceMode === 'LIVE' && quickInsight.compare_mode">
+            <span>Requested current: {{ quickInsight.requested_current_date || "-" }}</span>
+            <span>Matched current snapshot: {{ quickInsight.matched_current_snapshot_date || "-" }}</span>
+            <span>Requested compare: {{ quickInsight.requested_compare_date || "-" }}</span>
+            <span>Matched compare snapshot: {{ quickInsight.matched_compare_snapshot_date || baselineLabel }}</span>
+          </template>
+          <span v-else>Baseline: {{ baselineLabel }}</span>
         </div>
 
         <section class="rounded-2xl border px-4 py-4" :class="insightSeverityClass(quickInsight.summary_alert.severity)">

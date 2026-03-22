@@ -143,7 +143,12 @@ class AnalyticsQuickInsightSummaryAlertOut(BaseModel):
 
 
 class AnalyticsQuickInsightOut(BaseModel):
-    period: Literal["1D", "7D", "30D"]
+    period: Literal["1D", "7D", "30D", "CUSTOM"]
+    compare_mode: Literal["PRESET", "CUSTOM"] | None = None
+    requested_current_date: str | None = None
+    requested_compare_date: str | None = None
+    matched_current_snapshot_date: str | None = None
+    matched_compare_snapshot_date: str | None = None
     baseline_snapshot_date: str | None = None
     current_as_of: datetime
     has_baseline: bool

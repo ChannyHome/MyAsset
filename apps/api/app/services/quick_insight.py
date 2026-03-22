@@ -42,12 +42,21 @@ from app.services.app_settings import get_fx_stale_minutes
 from app.services.currency import FxCache, convert_amount
 
 QuickInsightPeriod = Literal["1D", "7D", "30D"]
+QuickInsightResponsePeriod = Literal["1D", "7D", "30D", "CUSTOM"]
+QuickInsightCompareMode = Literal["PRESET", "CUSTOM"]
 
 _PERIOD_DAYS: dict[QuickInsightPeriod, int] = {
     "1D": 1,
     "7D": 7,
     "30D": 30,
 }
+
+
+class QuickInsightValidationError(Exception):
+    def __init__(self, *, status_code: int, detail: str) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.detail = detail
 
 
 @dataclass
@@ -117,6 +126,10 @@ def _normalize_period(period: str | None) -> QuickInsightPeriod:
     if value not in _PERIOD_DAYS:
         return "1D"
     return value  # type: ignore[return-value]
+
+
+def _normalize_compare_mode(mode: str | None) -> QuickInsightCompareMode:
+    return "CUSTOM" if str(mode or "").upper() == "CUSTOM" else "PRESET"
 
 
 def _find_baseline_snapshot(
@@ -325,7 +338,7 @@ def _top_n_by_abs(items: list[AnalyticsQuickInsightDeltaItemOut], n: int) -> lis
 
 def _build_summary_comment(
     *,
-    period: QuickInsightPeriod,
+    period_label: str,
     gross_delta: Decimal,
     net_delta: Decimal,
     liabilities_delta: Decimal,
@@ -338,7 +351,7 @@ def _build_summary_comment(
     threshold = _material_change_threshold(baseline_gross or Decimal("0"))
     if abs(gross_delta) < threshold and abs(net_delta) < threshold and abs(liabilities_delta) < threshold:
         return (
-            f"Minor move over {period}. "
+            f"Minor move over {period_label}. "
             f"Gross {_format_signed_decimal_text(gross_delta)}, "
             f"Net {_format_signed_decimal_text(net_delta)}.",
             "neutral",
@@ -347,49 +360,49 @@ def _build_summary_comment(
     if net_delta < 0:
         if liabilities_delta > 0 and net_drag is not None and net_drag.entity_type == "LIABILITY":
             return (
-                f"Alert: Net {period} down by {_format_decimal_text(liabilities_delta)},"
+                f"Alert: Net {period_label} down by {_format_decimal_text(liabilities_delta)},"
                 f" mainly due to increased liabilities in {net_drag.label}.",
                 "negative",
             )
         if gross_loser is not None:
             driver_reason = _display_reason(gross_loser.display_class)
             return (
-                f"Alert: Gross {period} down by {_format_decimal_text(abs(gross_delta))},"
+                f"Alert: Gross {period_label} down by {_format_decimal_text(abs(gross_delta))},"
                 f" mainly driven by {gross_loser.label} ({driver_reason}).",
                 "negative",
             )
-        return f"Alert: Net {period} moved lower versus baseline.", "negative"
+        return f"Alert: Net {period_label} moved lower versus baseline.", "negative"
 
     if net_delta > 0:
         if gross_gainer is not None:
             driver_reason = _display_reason(gross_gainer.display_class)
             return (
-                f"Comment: Net {period} up by {_format_decimal_text(net_delta)},"
+                f"Comment: Net {period_label} up by {_format_decimal_text(net_delta)},"
                 f" led by {gross_gainer.label} ({driver_reason}).",
                 "positive",
             )
         if net_boost is not None:
             driver_reason = _display_reason(net_boost.display_class)
             return (
-                f"Comment: Net {period} up by {_format_decimal_text(net_delta)},"
+                f"Comment: Net {period_label} up by {_format_decimal_text(net_delta)},"
                 f" helped by {net_boost.label} ({driver_reason}).",
                 "positive",
             )
-        return f"Comment: Net {period} moved higher versus baseline.", "positive"
+        return f"Comment: Net {period_label} moved higher versus baseline.", "positive"
 
     if gross_delta < 0 and gross_loser is not None:
         driver_reason = _display_reason(gross_loser.display_class)
         return (
-            f"Alert: Gross {period} is lower, mainly due to {gross_loser.label} ({driver_reason}).",
+            f"Alert: Gross {period_label} is lower, mainly due to {gross_loser.label} ({driver_reason}).",
             "negative",
         )
     if gross_delta > 0 and gross_gainer is not None:
         driver_reason = _display_reason(gross_gainer.display_class)
         return (
-            f"Comment: Gross {period} is higher, led by {gross_gainer.label} ({driver_reason}).",
+            f"Comment: Gross {period_label} is higher, led by {gross_gainer.label} ({driver_reason}).",
             "positive",
         )
-    return f"No net change over {period}, but components moved internally.", "neutral"
+    return f"No net change over {period_label}, but components moved internally.", "neutral"
 
 
 def _holding_key(portfolio_id: int | None, asset_id: int | None, asset_name: str) -> str:
@@ -807,6 +820,121 @@ def _load_baseline_portfolio_metrics(
     return metrics
 
 
+def _load_valuation_snapshot_holding_metrics(
+    db: Session,
+    *,
+    snapshot: ValuationSnapshot,
+    display_currency: str,
+    cache: FxCache,
+) -> tuple[
+    dict[str, HoldingMetric],
+    int,
+    int,
+    int,
+    list[AnalyticsQuickInsightWarningItemOut],
+    list[AnalyticsQuickInsightWarningItemOut],
+]:
+    rows = db.scalars(
+        select(ValuationSnapshotHoldingRow).where(ValuationSnapshotHoldingRow.valuation_snapshot_id == snapshot.id)
+    ).all()
+    stale_minutes, _stale_source = get_fx_stale_minutes(db)
+    stale_cutoff = snapshot.as_of - timedelta(minutes=stale_minutes)
+    metrics: dict[str, HoldingMetric] = {}
+    stale_quote_count = 0
+    manual_quote_count = 0
+    missing_quote_count = 0
+    manual_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+    missing_quote_items: list[AnalyticsQuickInsightWarningItemOut] = []
+
+    for row in rows:
+        key = _holding_key(row.portfolio_id, row.asset_id, row.asset_name)
+        label = f"{row.asset_name} ({row.symbol})" if row.symbol else row.asset_name
+        evaluated = _convert_snapshot_amount(
+            db,
+            amount=Decimal(row.evaluated_amount),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        )
+        cost_basis = _convert_snapshot_amount(
+            db,
+            amount=Decimal(row.cost_basis_total),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        )
+        profit = _convert_snapshot_amount(
+            db,
+            amount=Decimal(row.profit_total),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        )
+        display_class = _resolve_display_class(
+            asset_class=row.asset_class,
+            symbol=row.symbol,
+            label=label,
+            entity_type="HOLDING",
+        )
+        metrics[key] = HoldingMetric(
+            key=key,
+            portfolio_id=row.portfolio_id,
+            portfolio_name=row.portfolio_name,
+            asset_id=row.asset_id,
+            asset_name=label,
+            symbol=row.symbol,
+            asset_class=row.asset_class,
+            evaluated=evaluated,
+            cost_basis=cost_basis,
+            profit=profit,
+            return_pct=Decimal(row.return_pct) if row.return_pct is not None else None,
+            quote_source=row.quote_source,
+            quote_as_of=row.quote_as_of,
+        )
+        if display_class == "CASH":
+            continue
+        if not row.quote_source:
+            missing_quote_count += 1
+            missing_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=None,
+                    quote_as_of=None,
+                )
+            )
+            continue
+        if row.quote_as_of is not None and row.quote_as_of < stale_cutoff:
+            stale_quote_count += 1
+        if (row.quote_source or "").upper() == "MANUAL":
+            manual_quote_count += 1
+            manual_quote_items.append(
+                _make_warning_item(
+                    key=key,
+                    label=label,
+                    portfolio_name=row.portfolio_name,
+                    symbol=row.symbol,
+                    asset_class=row.asset_class,
+                    display_class=display_class,
+                    quote_source=row.quote_source,
+                    quote_as_of=row.quote_as_of,
+                )
+            )
+
+    return (
+        metrics,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    )
+
+
 def _value_for_currency(krw_value: Decimal, usd_value: Decimal, display_currency: str) -> Decimal:
     return Decimal(usd_value if display_currency == "USD" else krw_value)
 
@@ -816,6 +944,39 @@ def _summary_from_snapshot_set(snapshot: SnapshotSet, display_currency: str) -> 
         gross_assets_total=_value_for_currency(snapshot.gross_assets_krw, snapshot.gross_assets_usd, display_currency),
         liabilities_total=_value_for_currency(snapshot.liabilities_krw, snapshot.liabilities_usd, display_currency),
         net_assets_total=_value_for_currency(snapshot.net_assets_krw, snapshot.net_assets_usd, display_currency),
+        as_of=snapshot.as_of,
+    )
+
+
+def _summary_from_valuation_snapshot(
+    db: Session,
+    *,
+    snapshot: ValuationSnapshot,
+    display_currency: str,
+    cache: FxCache,
+) -> SummaryMetric:
+    return SummaryMetric(
+        gross_assets_total=_convert_snapshot_amount(
+            db,
+            amount=Decimal(snapshot.assets_total),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        ),
+        liabilities_total=_convert_snapshot_amount(
+            db,
+            amount=Decimal(snapshot.liabilities_total),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        ),
+        net_assets_total=_convert_snapshot_amount(
+            db,
+            amount=Decimal(snapshot.net_worth_total),
+            from_currency=snapshot.display_currency,
+            to_currency=display_currency,
+            cache=cache,
+        ),
         as_of=snapshot.as_of,
     )
 
@@ -1127,6 +1288,14 @@ def _build_quick_insight_response(
     baseline_label: str | None,
     has_baseline: bool,
     normalized_period: QuickInsightPeriod,
+    response_period: QuickInsightResponsePeriod | None = None,
+    compare_mode: QuickInsightCompareMode | None = None,
+    requested_current_date: date | None = None,
+    requested_compare_date: date | None = None,
+    matched_current_snapshot_date: date | None = None,
+    matched_compare_snapshot_date: date | None = None,
+    empty_comment: str | None = None,
+    period_label: str | None = None,
     current_holdings: dict[str, HoldingMetric],
     current_liabilities: dict[str, LiabilityMetric],
     current_portfolios: dict[str, PortfolioMetric],
@@ -1142,10 +1311,19 @@ def _build_quick_insight_response(
     manual_quote_items: list[AnalyticsQuickInsightWarningItemOut],
     missing_quote_items: list[AnalyticsQuickInsightWarningItemOut],
 ) -> AnalyticsQuickInsightOut:
+    resolved_period = response_period or normalized_period
+    resolved_period_label = period_label or resolved_period
     if not has_baseline or baseline_holdings is None or baseline_liabilities is None or baseline_portfolios is None or baseline_gross is None or baseline_liabilities_total is None or baseline_net is None:
         return AnalyticsQuickInsightOut(
-            period=normalized_period,
-            baseline_snapshot_date=None,
+            period=resolved_period,
+            compare_mode=compare_mode,
+            requested_current_date=requested_current_date.isoformat() if requested_current_date is not None else None,
+            requested_compare_date=requested_compare_date.isoformat() if requested_compare_date is not None else None,
+            matched_current_snapshot_date=matched_current_snapshot_date.isoformat() if matched_current_snapshot_date is not None else None,
+            matched_compare_snapshot_date=matched_compare_snapshot_date.isoformat() if matched_compare_snapshot_date is not None else None,
+            baseline_snapshot_date=baseline_label or (
+                matched_compare_snapshot_date.isoformat() if matched_compare_snapshot_date is not None else None
+            ),
             current_as_of=current_summary.as_of,
             has_baseline=False,
             summary_alert=AnalyticsQuickInsightSummaryAlertOut(
@@ -1153,7 +1331,7 @@ def _build_quick_insight_response(
                 net_delta=None,
                 liabilities_delta=None,
                 severity="neutral",
-                comment=f"No baseline snapshot data for {normalized_period}.",
+                comment=empty_comment or f"No baseline snapshot data for {resolved_period_label}.",
             ),
             gross_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=[], top_losers=[]),
             net_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=[], top_losers=[]),
@@ -1351,7 +1529,7 @@ def _build_quick_insight_response(
     net_delta = current_summary.net_assets_total - baseline_net
     liabilities_delta = current_summary.liabilities_total - baseline_liabilities_total
     summary_comment, severity = _build_summary_comment(
-        period=normalized_period,
+        period_label=resolved_period_label,
         gross_delta=gross_delta,
         net_delta=net_delta,
         liabilities_delta=liabilities_delta,
@@ -1363,7 +1541,12 @@ def _build_quick_insight_response(
     )
 
     return AnalyticsQuickInsightOut(
-        period=normalized_period,
+        period=resolved_period,
+        compare_mode=compare_mode,
+        requested_current_date=requested_current_date.isoformat() if requested_current_date is not None else None,
+        requested_compare_date=requested_compare_date.isoformat() if requested_compare_date is not None else None,
+        matched_current_snapshot_date=matched_current_snapshot_date.isoformat() if matched_current_snapshot_date is not None else None,
+        matched_compare_snapshot_date=matched_compare_snapshot_date.isoformat() if matched_compare_snapshot_date is not None else None,
         baseline_snapshot_date=baseline_label,
         current_as_of=current_summary.as_of,
         has_baseline=True,
@@ -1401,47 +1584,202 @@ def get_quick_insight(
     scope_user_ids: list[int],
     display_currency: str,
     period: str | None,
+    mode: str | None = None,
+    preset: str | None = None,
+    current_date: date | None = None,
+    compare_date: date | None = None,
 ) -> AnalyticsQuickInsightOut:
     normalized_currency = _normalize_display_currency(display_currency)
-    normalized_period = _normalize_period(period)
-    cache: FxCache = {}
-    current_summary = calculate_summary_values(
-        db=db,
-        scope_user_ids=scope_user_ids,
-        include_hidden=False,
-        include_excluded_portfolios=False,
-        include_excluded_liabilities=False,
-        display_currency=normalized_currency,
-        fx_strict_mode=settings.fx_strict_mode,
-    )
-    current_holdings, stale_quote_count, manual_quote_count, missing_quote_count, manual_quote_items, missing_quote_items = _load_current_holding_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    current_liabilities = _load_current_liability_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
-    current_portfolios = _load_current_portfolio_metrics(
-        db,
-        scope_user_ids=scope_user_ids,
-        display_currency=normalized_currency,
-        cache=cache,
-    )
+    normalized_period = _normalize_period(preset or period)
+    normalized_mode = _normalize_compare_mode(mode)
+    response_period: QuickInsightResponsePeriod = "CUSTOM" if normalized_mode == "CUSTOM" else normalized_period
+    requested_current_date = current_date or date.today()
+    requested_compare_date = compare_date
+    if normalized_mode == "PRESET":
+        requested_compare_date = requested_current_date - timedelta(days=_PERIOD_DAYS[normalized_period])
+    elif requested_compare_date is None:
+        raise QuickInsightValidationError(status_code=400, detail="Select both current and compare dates.")
 
-    baseline_date = datetime.now(UTC).date() - timedelta(days=_PERIOD_DAYS[normalized_period])
-    baseline_snapshot = _find_baseline_snapshot(
+    today = date.today()
+    if requested_compare_date is None:
+        raise QuickInsightValidationError(status_code=400, detail="Select both current and compare dates.")
+    if normalized_mode == "CUSTOM" and requested_current_date > today:
+        raise QuickInsightValidationError(
+            status_code=400,
+            detail="Current date cannot be later than today.",
+        )
+    if normalized_mode == "CUSTOM" and requested_compare_date > today:
+        raise QuickInsightValidationError(
+            status_code=400,
+            detail="Compare date cannot be later than today.",
+        )
+    if normalized_mode == "CUSTOM" and requested_compare_date > requested_current_date:
+        raise QuickInsightValidationError(
+            status_code=400,
+            detail="Compare date cannot be later than current date.",
+        )
+
+    cache: FxCache = {}
+    current_snapshot = _find_baseline_snapshot(
         db,
         scope_type=scope_type,
         scope_id=scope_id,
         target_currency=normalized_currency,
-        baseline_date=baseline_date,
+        baseline_date=requested_current_date,
     )
-    has_baseline = baseline_snapshot is not None
+    compare_snapshot = _find_baseline_snapshot(
+        db,
+        scope_type=scope_type,
+        scope_id=scope_id,
+        target_currency=normalized_currency,
+        baseline_date=requested_compare_date,
+    )
+
+    if normalized_mode == "CUSTOM":
+        if current_snapshot is None:
+            raise QuickInsightValidationError(
+                status_code=404,
+                detail="No snapshot found on or before selected current date.",
+            )
+        if compare_snapshot is None:
+            raise QuickInsightValidationError(
+                status_code=404,
+                detail="No snapshot found on or before selected compare date.",
+            )
+        if current_snapshot.id == compare_snapshot.id:
+            raise QuickInsightValidationError(
+                status_code=400,
+                detail="Selected dates map to the same snapshot.",
+            )
+
+    empty_summary = SummaryMetric(
+        gross_assets_total=Decimal("0"),
+        liabilities_total=Decimal("0"),
+        net_assets_total=Decimal("0"),
+        as_of=datetime.now(UTC).replace(tzinfo=None),
+    )
+    if current_snapshot is None:
+        return _build_quick_insight_response(
+            current_summary=empty_summary,
+            baseline_label=compare_snapshot.snapshot_date.isoformat() if compare_snapshot is not None else None,
+            has_baseline=False,
+            normalized_period=normalized_period,
+            response_period=response_period,
+            compare_mode=normalized_mode,
+            requested_current_date=requested_current_date,
+            requested_compare_date=requested_compare_date,
+            matched_current_snapshot_date=None,
+            matched_compare_snapshot_date=compare_snapshot.snapshot_date if compare_snapshot is not None else None,
+            empty_comment="No snapshot found on or before selected current date.",
+            period_label="custom compare" if normalized_mode == "CUSTOM" else normalized_period,
+            current_holdings={},
+            current_liabilities={},
+            current_portfolios={},
+            baseline_holdings=None,
+            baseline_liabilities=None,
+            baseline_portfolios=None,
+            baseline_gross=None,
+            baseline_liabilities_total=None,
+            baseline_net=None,
+            stale_quote_count=0,
+            manual_quote_count=0,
+            missing_quote_count=0,
+            manual_quote_items=[],
+            missing_quote_items=[],
+        )
+
+    current_summary = _summary_from_valuation_snapshot(
+        db,
+        snapshot=current_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    (
+        current_holdings,
+        stale_quote_count,
+        manual_quote_count,
+        missing_quote_count,
+        manual_quote_items,
+        missing_quote_items,
+    ) = _load_valuation_snapshot_holding_metrics(
+        db,
+        snapshot=current_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    current_liabilities = _load_baseline_liability_metrics(
+        db,
+        snapshot=current_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    current_portfolios = _load_baseline_portfolio_metrics(
+        db,
+        snapshot=current_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+
+    if compare_snapshot is None:
+        return _build_quick_insight_response(
+            current_summary=current_summary,
+            baseline_label=None,
+            has_baseline=False,
+            normalized_period=normalized_period,
+            response_period=response_period,
+            compare_mode=normalized_mode,
+            requested_current_date=requested_current_date,
+            requested_compare_date=requested_compare_date,
+            matched_current_snapshot_date=current_snapshot.snapshot_date,
+            matched_compare_snapshot_date=None,
+            empty_comment="No snapshot found on or before selected compare date.",
+            period_label="custom compare" if normalized_mode == "CUSTOM" else normalized_period,
+            current_holdings=current_holdings,
+            current_liabilities=current_liabilities,
+            current_portfolios=current_portfolios,
+            baseline_holdings=None,
+            baseline_liabilities=None,
+            baseline_portfolios=None,
+            baseline_gross=None,
+            baseline_liabilities_total=None,
+            baseline_net=None,
+            stale_quote_count=stale_quote_count,
+            manual_quote_count=manual_quote_count,
+            missing_quote_count=missing_quote_count,
+            manual_quote_items=manual_quote_items,
+            missing_quote_items=missing_quote_items,
+        )
+
+    if current_snapshot.id == compare_snapshot.id:
+        return _build_quick_insight_response(
+            current_summary=current_summary,
+            baseline_label=compare_snapshot.snapshot_date.isoformat(),
+            has_baseline=False,
+            normalized_period=normalized_period,
+            response_period=response_period,
+            compare_mode=normalized_mode,
+            requested_current_date=requested_current_date,
+            requested_compare_date=requested_compare_date,
+            matched_current_snapshot_date=current_snapshot.snapshot_date,
+            matched_compare_snapshot_date=compare_snapshot.snapshot_date,
+            empty_comment="Selected dates map to the same snapshot.",
+            period_label="custom compare" if normalized_mode == "CUSTOM" else normalized_period,
+            current_holdings=current_holdings,
+            current_liabilities=current_liabilities,
+            current_portfolios=current_portfolios,
+            baseline_holdings=None,
+            baseline_liabilities=None,
+            baseline_portfolios=None,
+            baseline_gross=None,
+            baseline_liabilities_total=None,
+            baseline_net=None,
+            stale_quote_count=stale_quote_count,
+            manual_quote_count=manual_quote_count,
+            missing_quote_count=missing_quote_count,
+            manual_quote_items=manual_quote_items,
+            missing_quote_items=missing_quote_items,
+        )
+
     baseline_holdings = None
     baseline_liabilities = None
     baseline_portfolios = None
@@ -1449,58 +1787,47 @@ def get_quick_insight(
     baseline_liabilities_total = None
     baseline_net = None
     baseline_label = None
-    if baseline_snapshot is not None:
-        baseline_holdings = _load_baseline_holding_metrics(
-            db,
-            snapshot=baseline_snapshot,
-            display_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_liabilities = _load_baseline_liability_metrics(
-            db,
-            snapshot=baseline_snapshot,
-            display_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_portfolios = _load_baseline_portfolio_metrics(
-            db,
-            snapshot=baseline_snapshot,
-            display_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_gross = _convert_snapshot_amount(
-            db,
-            amount=Decimal(baseline_snapshot.assets_total),
-            from_currency=baseline_snapshot.display_currency,
-            to_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_liabilities_total = _convert_snapshot_amount(
-            db,
-            amount=Decimal(baseline_snapshot.liabilities_total),
-            from_currency=baseline_snapshot.display_currency,
-            to_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_net = _convert_snapshot_amount(
-            db,
-            amount=Decimal(baseline_snapshot.net_worth_total),
-            from_currency=baseline_snapshot.display_currency,
-            to_currency=normalized_currency,
-            cache=cache,
-        )
-        baseline_label = baseline_snapshot.snapshot_date.isoformat()
+    baseline_summary = _summary_from_valuation_snapshot(
+        db,
+        snapshot=compare_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    baseline_holdings = _load_baseline_holding_metrics(
+        db,
+        snapshot=compare_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    baseline_liabilities = _load_baseline_liability_metrics(
+        db,
+        snapshot=compare_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    baseline_portfolios = _load_baseline_portfolio_metrics(
+        db,
+        snapshot=compare_snapshot,
+        display_currency=normalized_currency,
+        cache=cache,
+    )
+    baseline_gross = baseline_summary.gross_assets_total
+    baseline_liabilities_total = baseline_summary.liabilities_total
+    baseline_net = baseline_summary.net_assets_total
+    baseline_label = compare_snapshot.snapshot_date.isoformat()
 
     return _build_quick_insight_response(
-        current_summary=SummaryMetric(
-            gross_assets_total=current_summary.gross_assets_total,
-            liabilities_total=current_summary.liabilities_total,
-            net_assets_total=current_summary.net_assets_total,
-            as_of=current_summary.as_of,
-        ),
+        current_summary=current_summary,
         baseline_label=baseline_label,
-        has_baseline=has_baseline,
+        has_baseline=True,
         normalized_period=normalized_period,
+        response_period=response_period,
+        compare_mode=normalized_mode,
+        requested_current_date=requested_current_date,
+        requested_compare_date=requested_compare_date,
+        matched_current_snapshot_date=current_snapshot.snapshot_date,
+        matched_compare_snapshot_date=compare_snapshot.snapshot_date,
+        period_label="custom compare" if normalized_mode == "CUSTOM" else normalized_period,
         current_holdings=current_holdings,
         current_liabilities=current_liabilities,
         current_portfolios=current_portfolios,

@@ -1,6 +1,6 @@
 import { http } from "./http";
 import type { SortOrder } from "./assets";
-import type { AnalyticsQuickInsightOut, QuickInsightPeriod } from "./analytics";
+import type { AnalyticsQuickInsightOut, QuickInsightPreset } from "./analytics";
 
 export type SnapshotSourceType = "MANUAL" | "CSV_PREVIEW";
 export type SnapshotMode = "SUMMARY" | "PORTFOLIO_RETURN";
@@ -276,7 +276,7 @@ export type SnapshotSeriesQuery = {
 
 export type SnapshotQuickInsightQuery = {
   display_currency?: SnapshotDisplayCurrency;
-  period?: QuickInsightPeriod;
+  period?: QuickInsightPreset;
 };
 
 export async function captureSnapshot(payload: { name?: string; note?: string } = {}): Promise<SnapshotSummaryOut> {
