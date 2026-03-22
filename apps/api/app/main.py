@@ -2,6 +2,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.middleware.access_log import ApiAccessLogMiddleware
+from app.api.routers.admin_openai import router as admin_openai_router
 from app.api.routers.admin_secrets import router as admin_secrets_router
 from app.api.routers.admin_history import router as admin_history_router
 from app.api.routers.admin_entity_history import router as admin_entity_history_router
@@ -9,6 +10,7 @@ from app.api.routers.admin_users import router as admin_users_router
 from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assets import router as assets_router
 from app.api.routers.auth import router as auth_router
+from app.api.routers.chat import router as chat_router
 from app.api.routers.health import router as health_router
 from app.api.routers.holdings import router as holdings_router
 from app.api.routers.households import router as households_router
@@ -40,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_users_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_secrets_router, prefix=settings.api_v1_prefix)
+    app.include_router(admin_openai_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_history_router, prefix=settings.api_v1_prefix)
     app.include_router(admin_entity_history_router, prefix=settings.api_v1_prefix)
     app.include_router(households_router, prefix=settings.api_v1_prefix)
@@ -54,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(trades_router, prefix=settings.api_v1_prefix)
     app.include_router(snapshots_router, prefix=settings.api_v1_prefix)
     app.include_router(analytics_router, prefix=settings.api_v1_prefix)
+    app.include_router(chat_router, prefix=settings.api_v1_prefix)
 
     @app.on_event("startup")
     def on_startup() -> None:

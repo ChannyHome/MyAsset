@@ -13,7 +13,7 @@ import {
   RemoteTradePage,
 } from "../remotes";
 import BudgetComingSoonPage from "../pages/BudgetComingSoonPage.vue";
-import ChatComingSoonPage from "../pages/ChatComingSoonPage.vue";
+import ChatPage from "../pages/ChatPage.vue";
 import ForbiddenPage from "../pages/ForbiddenPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import NotFoundPage from "../pages/NotFoundPage.vue";
@@ -57,7 +57,7 @@ const routes: RouteRecordRaw[] = [
       { path: "trade", name: "trade", component: RemoteTradePage },
       { path: "report", name: "report", component: RemoteReportPage },
       { path: "history", name: "history", component: RemoteHistoryPage, meta: { minRole: "MAINTAINER" } },
-      { path: "chat", name: "chat", component: ChatComingSoonPage },
+      { path: "chat", name: "chat", component: ChatPage },
       { path: "budget", name: "budget", component: BudgetComingSoonPage },
       { path: "app-settings", name: "app-settings", component: AppSettingsPage, meta: { minRole: "ADMIN" } },
       { path: "lab", name: "lab", component: RemoteLabPage, meta: { minRole: "MAINTAINER" } },

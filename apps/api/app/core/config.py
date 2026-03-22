@@ -33,6 +33,16 @@ class Settings(BaseSettings):
 
     app_secrets_master_key: str = ""
 
+    openai_enabled: bool = True
+    openai_api_key: str = ""
+    openai_default_model: str = "gpt-5.4-mini"
+    openai_heavy_model: str = "gpt-5.4"
+    openai_project_id: str = ""
+    openai_organization_id: str = ""
+    openai_timeout_seconds: float = 45.0
+    openai_reasoning_effort_default: str = "medium"
+    openai_reasoning_effort_heavy: str = "high"
+
     jwt_secret_key: str = "change-this-in-production"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60

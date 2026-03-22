@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+﻿from pydantic import BaseModel, Field
 
 
 class QuoteIntervalOut(BaseModel):
@@ -25,4 +25,13 @@ class TokenRefreshEnabledOut(BaseModel):
 
 
 class TokenRefreshEnabledUpdate(BaseModel):
+    enabled: bool
+
+
+class OpenAIEnabledOut(BaseModel):
+    enabled: bool
+    source: str
+
+
+class OpenAIEnabledUpdate(BaseModel):
     enabled: bool
