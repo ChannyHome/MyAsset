@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { AxiosError } from "axios";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 
 import {
   getCompositionSeries,
@@ -12,6 +12,7 @@ import {
   type AnalyticsCompositionSeriesOut,
   type AnalyticsCompositionTab,
 } from "../api/analytics";
+import { getMySettings, updateMySettings } from "../api/userSettings";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 type PortfolioOption = {
@@ -84,6 +85,9 @@ const errorMessage = ref("");
 const inspectIndex = ref<number | null>(null);
 const infoOpen = ref(false);
 const hoveredSegmentKey = ref<string | null>(null);
+const thresholdSaving = ref(false);
+const thresholdSaveError = ref("");
+const USER_REBALANCE_THRESHOLD_EVENT = "myasset:user-settings:asset-rebalance-threshold";
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -401,6 +405,52 @@ function clearHoveredSegment(): void {
   hoveredSegmentKey.value = null;
 }
 
+function normalizeAssetThreshold(value: number | null | undefined): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 10;
+  return Math.min(30, Math.max(5, Math.round(parsed)));
+}
+
+async function loadAssetThresholdFromSettings(): Promise<void> {
+  try {
+    const settings = await getMySettings();
+    ui.assetThresholdPct = normalizeAssetThreshold(settings.asset_rebalance_threshold_pct);
+  } catch {
+    // keep local/default value if user settings are unavailable
+  }
+}
+
+function broadcastAssetThreshold(value: number): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<number>(USER_REBALANCE_THRESHOLD_EVENT, {
+      detail: value,
+    }),
+  );
+}
+
+async function setAssetThreshold(value: number): Promise<void> {
+  const normalized = normalizeAssetThreshold(value);
+  if (ui.assetThresholdPct === normalized && !thresholdSaveError.value) return;
+  ui.assetThresholdPct = normalized;
+  thresholdSaving.value = true;
+  thresholdSaveError.value = "";
+  try {
+    await updateMySettings({ asset_rebalance_threshold_pct: normalized });
+    broadcastAssetThreshold(normalized);
+  } catch (error) {
+    thresholdSaveError.value = getErrorMessage(error);
+  } finally {
+    thresholdSaving.value = false;
+  }
+}
+
+function handleAssetThresholdBroadcast(event: Event): void {
+  const customEvent = event as CustomEvent<number>;
+  ui.assetThresholdPct = normalizeAssetThreshold(customEvent.detail);
+  thresholdSaveError.value = "";
+}
+
 const legendWithColors = computed(() =>
   legendItems.value.map((item) => ({
     ...item,
@@ -631,7 +681,17 @@ watch(
 onMounted(() => {
   loadUiState();
   ensurePortfolioSelection();
+  void loadAssetThresholdFromSettings();
+  if (typeof window !== "undefined") {
+    window.addEventListener(USER_REBALANCE_THRESHOLD_EVENT, handleAssetThresholdBroadcast as EventListener);
+  }
   void refreshData();
+});
+
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener(USER_REBALANCE_THRESHOLD_EVENT, handleAssetThresholdBroadcast as EventListener);
+  }
 });
 </script>
 
@@ -791,10 +851,12 @@ onMounted(() => {
 	                type="button"
 	                class="rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors"
 	                :class="ui.assetThresholdPct === option ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
-	                @click="ui.assetThresholdPct = option"
+	                :disabled="thresholdSaving"
+	                @click="void setAssetThreshold(option)"
 	              >
 	                {{ option }}%
 	              </button>
+	              <span v-if="thresholdSaving" class="text-[11px] text-slate-500 dark:text-slate-400">Saving...</span>
 	            </div>
 	          </template>
 
@@ -894,6 +956,32 @@ onMounted(() => {
 	                  Flag single assets above {{ rebalancingDraft.thresholdPct.toFixed(0) }}% of gross assets. Assets between
 	                  {{ rebalancingDraft.nearPct.toFixed(0) }}% and {{ rebalancingDraft.thresholdPct.toFixed(0) }}% are near the draft limit.
 	                </p>
+	                <div
+	                  v-if="rebalancingDraft.aboveLimit.length > 0"
+	                  class="mt-3 rounded-xl border border-rose-500/35 bg-rose-500/10 px-3 py-3 text-rose-100"
+	                >
+	                  <p class="font-semibold">
+	                    Warning: {{ rebalancingDraft.aboveLimit.length }}
+	                    {{ rebalancingDraft.aboveLimit.length === 1 ? "asset exceeds" : "assets exceed" }}
+	                    your {{ rebalancingDraft.thresholdPct.toFixed(0) }}% rule.
+	                  </p>
+	                  <p class="mt-1 text-rose-100/90">
+	                    Gross Composition > Asset is currently flagging concentrated positions that may need a rebalance review.
+	                  </p>
+	                </div>
+	                <div
+	                  v-else-if="rebalancingDraft.nearLimit.length > 0"
+	                  class="mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-amber-100"
+	                >
+	                  <p class="font-semibold">
+	                    Heads up: {{ rebalancingDraft.nearLimit.length }}
+	                    {{ rebalancingDraft.nearLimit.length === 1 ? "asset is" : "assets are" }}
+	                    near your {{ rebalancingDraft.thresholdPct.toFixed(0) }}% rule.
+	                  </p>
+	                  <p class="mt-1 text-amber-100/90">
+	                    These positions are not above the threshold yet, but they are close enough to watch during future rebalancing.
+	                  </p>
+	                </div>
 	                <div class="mt-3 flex flex-wrap gap-2">
 	                  <template v-if="rebalancingDraft.aboveLimit.length > 0 || rebalancingDraft.nearLimit.length > 0">
 	                    <button
@@ -936,6 +1024,9 @@ onMounted(() => {
 	                    No asset currently exceeds the draft {{ rebalancingDraft.thresholdPct.toFixed(0) }}% threshold.
 	                  </span>
 	                </div>
+	                <p v-if="thresholdSaveError" class="mt-3 text-rose-200">
+	                  Failed to save your threshold setting: {{ thresholdSaveError }}
+	                </p>
 	              </div>
 	              <div v-if="capitalStructurePills.length > 0" class="mt-3 flex flex-wrap items-center gap-2">
 	                <span

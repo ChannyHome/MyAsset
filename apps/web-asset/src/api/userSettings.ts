@@ -10,6 +10,7 @@ export type UserSettingsOut = {
   hide_values: boolean;
   name_clamp_enabled: boolean;
   mobile_allocation_top_n: number;
+  asset_rebalance_threshold_pct: number;
   hide_small_assets: boolean;
   small_asset_threshold: string | number;
   display_currency: DisplayCurrency;
@@ -21,6 +22,7 @@ export type UserSettingsUpdateIn = {
   display_currency?: DisplayCurrency;
   name_clamp_enabled?: boolean;
   mobile_allocation_top_n?: number;
+  asset_rebalance_threshold_pct?: number;
 };
 
 export async function getMySettings(): Promise<UserSettingsOut> {

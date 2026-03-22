@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime-D3NoeBy6.js';
-import { d as getQuickInsight } from './ui-DnZ8IxrZ.js';
+import { e as getQuickInsight } from './ui-DfQNiIxJ.js';
 
 const {defineComponent:_defineComponent$4} = await importShared('vue');
 
@@ -826,178 +826,177 @@ const _hoisted_31 = { class: "mt-3 grid gap-3 md:grid-cols-3" };
 const _hoisted_32 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
 const _hoisted_33 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
 const _hoisted_34 = { class: "rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30" };
-const _hoisted_35 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
-const _hoisted_36 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_37 = { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_38 = ["aria-expanded", "aria-label"];
-const _hoisted_39 = {
+const _hoisted_35 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_36 = { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_37 = ["aria-expanded", "aria-label"];
+const _hoisted_38 = {
   key: 0,
   class: "mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
 };
-const _hoisted_40 = { class: "font-semibold text-slate-700 dark:text-slate-100" };
-const _hoisted_41 = { class: "mt-1 [overflow-wrap:anywhere]" };
-const _hoisted_42 = {
+const _hoisted_39 = { class: "font-semibold text-slate-700 dark:text-slate-100" };
+const _hoisted_40 = { class: "mt-1 [overflow-wrap:anywhere]" };
+const _hoisted_41 = {
   key: 0,
   class: "mt-2 [overflow-wrap:anywhere]"
 };
-const _hoisted_43 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
-const _hoisted_44 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" };
-const _hoisted_45 = {
+const _hoisted_42 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_43 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" };
+const _hoisted_44 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_46 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_47 = { class: "min-w-0 flex-1" };
-const _hoisted_48 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_49 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_50 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_51 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
-const _hoisted_52 = {
+const _hoisted_45 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_46 = { class: "min-w-0 flex-1" };
+const _hoisted_47 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_48 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_49 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_50 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
+const _hoisted_51 = {
   key: 1,
   class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_53 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" };
-const _hoisted_54 = {
+const _hoisted_52 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" };
+const _hoisted_53 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_55 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_56 = { class: "min-w-0 flex-1" };
-const _hoisted_57 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_58 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_59 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_60 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
-const _hoisted_61 = {
+const _hoisted_54 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_55 = { class: "min-w-0 flex-1" };
+const _hoisted_56 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_57 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_58 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_59 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
+const _hoisted_60 = {
   key: 1,
   class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_62 = { class: "grid gap-4 xl:grid-cols-2" };
-const _hoisted_63 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
-const _hoisted_64 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_65 = ["aria-expanded"];
-const _hoisted_66 = {
+const _hoisted_61 = { class: "grid gap-4 xl:grid-cols-2" };
+const _hoisted_62 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_63 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_64 = ["aria-expanded"];
+const _hoisted_65 = {
   key: 0,
   class: "mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
 };
-const _hoisted_67 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
-const _hoisted_68 = {
+const _hoisted_66 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_67 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_69 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_70 = { class: "min-w-0 flex-1" };
-const _hoisted_71 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_72 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_73 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_74 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
+const _hoisted_68 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_69 = { class: "min-w-0 flex-1" };
+const _hoisted_70 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_71 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_72 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_73 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
+const _hoisted_74 = {
+  key: 1,
+  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
 const _hoisted_75 = {
-  key: 1,
-  class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
-};
-const _hoisted_76 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_77 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_78 = { class: "min-w-0 flex-1" };
-const _hoisted_79 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_80 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_81 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_82 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
-const _hoisted_83 = {
+const _hoisted_76 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_77 = { class: "min-w-0 flex-1" };
+const _hoisted_78 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_79 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_80 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_81 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
+const _hoisted_82 = {
   key: 1,
   class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_84 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
-const _hoisted_85 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_86 = ["aria-expanded"];
-const _hoisted_87 = {
+const _hoisted_83 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_84 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_85 = ["aria-expanded"];
+const _hoisted_86 = {
   key: 0,
   class: "mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
 };
-const _hoisted_88 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
-const _hoisted_89 = {
+const _hoisted_87 = { class: "mt-3 grid gap-3 md:grid-cols-2" };
+const _hoisted_88 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_90 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_91 = { class: "min-w-0 flex-1" };
-const _hoisted_92 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_93 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_89 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_90 = { class: "min-w-0 flex-1" };
+const _hoisted_91 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_92 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_93 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
 const _hoisted_94 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_95 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_95 = { class: "font-medium text-slate-700 dark:text-slate-200" };
 const _hoisted_96 = { class: "font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_97 = { class: "font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_98 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
-const _hoisted_99 = {
+const _hoisted_97 = { class: "text-left text-sm font-semibold text-emerald-600 sm:text-right dark:text-emerald-300" };
+const _hoisted_98 = {
   key: 1,
   class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_100 = {
+const _hoisted_99 = {
   key: 0,
   class: "mt-2 space-y-2"
 };
-const _hoisted_101 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_102 = { class: "min-w-0 flex-1" };
-const _hoisted_103 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_104 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_100 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_101 = { class: "min-w-0 flex-1" };
+const _hoisted_102 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_103 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_104 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
 const _hoisted_105 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
-const _hoisted_106 = { class: "mt-1 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400" };
+const _hoisted_106 = { class: "font-medium text-slate-700 dark:text-slate-200" };
 const _hoisted_107 = { class: "font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_108 = { class: "font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_109 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
-const _hoisted_110 = {
+const _hoisted_108 = { class: "text-left text-sm font-semibold text-rose-500 sm:text-right dark:text-rose-300" };
+const _hoisted_109 = {
   key: 1,
   class: "mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_111 = { class: "grid gap-4 xl:grid-cols-[minmax(0,2fr),minmax(0,1fr)]" };
-const _hoisted_112 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
-const _hoisted_113 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_114 = {
+const _hoisted_110 = { class: "grid gap-4 xl:grid-cols-[minmax(0,2fr),minmax(0,1fr)]" };
+const _hoisted_111 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_112 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_113 = {
   key: 0,
   class: "mt-3 space-y-2"
 };
-const _hoisted_115 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_116 = { class: "min-w-0 flex-1" };
-const _hoisted_117 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_118 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_119 = {
+const _hoisted_114 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_115 = { class: "min-w-0 flex-1" };
+const _hoisted_116 = { class: "text-sm font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_117 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_118 = {
   key: 1,
   class: "mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_120 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
-const _hoisted_121 = { class: "mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300" };
+const _hoisted_119 = { class: "rounded-2xl border border-slate-200 p-4 dark:border-slate-700" };
+const _hoisted_120 = { class: "mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300" };
+const _hoisted_121 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_122 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_123 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_124 = { class: "flex flex-wrap items-center justify-between gap-3" };
-const _hoisted_125 = {
+const _hoisted_123 = { class: "flex flex-wrap items-center justify-between gap-3" };
+const _hoisted_124 = {
   key: 0,
   class: "mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700"
 };
-const _hoisted_126 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_127 = { class: "min-w-0 flex-1" };
-const _hoisted_128 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_129 = { class: "font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_130 = { class: "mt-0.5 [overflow-wrap:anywhere] text-slate-500 dark:text-slate-400" };
-const _hoisted_131 = { key: 0 };
-const _hoisted_132 = { class: "text-slate-500 dark:text-slate-400" };
-const _hoisted_133 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_134 = { class: "flex flex-wrap items-center justify-between gap-3" };
-const _hoisted_135 = {
+const _hoisted_125 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_126 = { class: "min-w-0 flex-1" };
+const _hoisted_127 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_128 = { class: "font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_129 = { class: "mt-0.5 [overflow-wrap:anywhere] text-slate-500 dark:text-slate-400" };
+const _hoisted_130 = { key: 0 };
+const _hoisted_131 = { class: "text-slate-500 dark:text-slate-400" };
+const _hoisted_132 = { class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_133 = { class: "flex flex-wrap items-center justify-between gap-3" };
+const _hoisted_134 = {
   key: 0,
   class: "mt-2 space-y-2 border-t border-slate-200 pt-2 text-xs dark:border-slate-700"
 };
-const _hoisted_136 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
-const _hoisted_137 = { class: "min-w-0 flex-1" };
-const _hoisted_138 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_139 = { class: "font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
-const _hoisted_140 = { class: "mt-0.5 [overflow-wrap:anywhere] text-slate-500 dark:text-slate-400" };
-const _hoisted_141 = { key: 0 };
-const _hoisted_142 = {
+const _hoisted_135 = { class: "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between" };
+const _hoisted_136 = { class: "min-w-0 flex-1" };
+const _hoisted_137 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_138 = { class: "font-semibold text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100" };
+const _hoisted_139 = { class: "mt-0.5 [overflow-wrap:anywhere] text-slate-500 dark:text-slate-400" };
+const _hoisted_140 = { key: 0 };
+const _hoisted_141 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const {computed: computed$1,ref: ref$1,watch} = await importShared('vue');
+const {computed: computed$1,nextTick,ref: ref$1,watch} = await importShared('vue');
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "QuickInsightPanel",
   props: {
@@ -1059,6 +1058,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const returnInfoOpen = ref$1(false);
     const currentDateInput = ref$1(null);
     const compareDateInput = ref$1(null);
+    const driverSectionRef = ref$1(null);
+    const driverSectionFlash = ref$1(false);
     function toNumber(value) {
       if (value == null) return 0;
       const parsed = typeof value === "number" ? value : Number(value);
@@ -1341,6 +1342,41 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function renderAmount(value) {
       return formatSignedCurrency(value, props.displayCurrency);
     }
+    function splitTextAndAmounts(source) {
+      const pattern = /([+-]?(?:₩|\$)\d[\d,]*(?:\.\d+)?)/g;
+      const parts = [];
+      let lastIndex = 0;
+      for (const match of source.matchAll(pattern)) {
+        const matchIndex = match.index ?? 0;
+        if (matchIndex > lastIndex) {
+          parts.push({ text: source.slice(lastIndex, matchIndex), isAmount: false, isDriver: false });
+        }
+        parts.push({ text: match[0], isAmount: true, isDriver: false });
+        lastIndex = matchIndex + match[0].length;
+      }
+      if (lastIndex < source.length) {
+        parts.push({ text: source.slice(lastIndex), isAmount: false, isDriver: false });
+      }
+      return parts;
+    }
+    const summaryCommentDisplayParts = computed$1(() => {
+      const alert = quickInsight.value?.summary_alert;
+      const comment = alert?.comment || "";
+      const driverLabel = alert?.driver_label || "";
+      if (!comment) return [];
+      if (!driverLabel) return splitTextAndAmounts(comment);
+      const matchIndex = comment.indexOf(driverLabel);
+      if (matchIndex < 0) return splitTextAndAmounts(comment);
+      return [
+        ...splitTextAndAmounts(comment.slice(0, matchIndex)),
+        { text: driverLabel, isAmount: false, isDriver: true },
+        ...splitTextAndAmounts(comment.slice(matchIndex + driverLabel.length))
+      ];
+    });
+    const canJumpToSummaryDriver = computed$1(() => {
+      const alert = quickInsight.value?.summary_alert;
+      return Boolean(alert?.driver_label && alert?.driver_target);
+    });
     function renderReturn(value) {
       return formatPercentPoint(toNumber(value));
     }
@@ -1362,6 +1398,18 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     }
     function toggleReturnInfo() {
       returnInfoOpen.value = !returnInfoOpen.value;
+    }
+    async function jumpToSummaryDriver() {
+      if (!quickInsight.value?.summary_alert.driver_target) return;
+      panelExpanded.value = true;
+      showNetDrivers.value = quickInsight.value.summary_alert.driver_target === "NET_DRIVERS";
+      await nextTick();
+      driverSectionFlash.value = false;
+      driverSectionRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+      driverSectionFlash.value = true;
+      window.setTimeout(() => {
+        driverSectionFlash.value = false;
+      }, 1400);
     }
     function hasCostBasisDelta(value) {
       if (value == null) return false;
@@ -1531,7 +1579,23 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             _createElementVNode("section", {
               class: _normalizeClass(["rounded-2xl border px-4 py-4", insightSeverityClass(quickInsight.value.summary_alert.severity)])
             }, [
-              _createElementVNode("p", _hoisted_30, _toDisplayString(quickInsight.value.summary_alert.comment), 1),
+              _createElementVNode("p", _hoisted_30, [
+                (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(summaryCommentDisplayParts.value, (part, index) => {
+                  return _openBlock(), _createElementBlock(_Fragment, {
+                    key: `summary-comment-${index}`
+                  }, [
+                    part.isDriver && canJumpToSummaryDriver.value ? (_openBlock(), _createElementBlock("button", {
+                      key: 0,
+                      type: "button",
+                      class: "inline font-semibold text-indigo-100 underline decoration-indigo-300/60 underline-offset-2 transition hover:text-white",
+                      onClick: jumpToSummaryDriver
+                    }, _toDisplayString(part.text), 1)) : (_openBlock(), _createElementBlock("span", {
+                      key: 1,
+                      style: _normalizeStyle(part.isAmount ? amountMaskStyle() : void 0)
+                    }, _toDisplayString(part.text), 5))
+                  ], 64);
+                }), 128))
+              ]),
               _createElementVNode("div", _hoisted_31, [
                 _createElementVNode("div", _hoisted_32, [
                   _cache[14] || (_cache[14] = _createElementVNode("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Gross", -1)),
@@ -1565,35 +1629,39 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 ])
               ])
             ], 2),
-            _createElementVNode("section", _hoisted_35, [
-              _createElementVNode("div", _hoisted_36, [
-                _createElementVNode("h3", _hoisted_37, _toDisplayString(driverCardTitle.value), 1),
+            _createElementVNode("section", {
+              ref_key: "driverSectionRef",
+              ref: driverSectionRef,
+              class: _normalizeClass(["scroll-mt-24 rounded-2xl border border-slate-200 p-4 transition-all duration-500 dark:border-slate-700", driverSectionFlash.value ? "ring-2 ring-indigo-400/60 bg-indigo-500/5 shadow-[0_0_0_1px_rgba(129,140,248,0.18)]" : ""])
+            }, [
+              _createElementVNode("div", _hoisted_35, [
+                _createElementVNode("h3", _hoisted_36, _toDisplayString(driverCardTitle.value), 1),
                 _createElementVNode("button", {
                   type: "button",
                   class: "inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                   "aria-expanded": driverInfoOpen.value,
                   "aria-label": `${driverCardTitle.value} info`,
                   onClick: toggleDriverInfo
-                }, " i ", 8, _hoisted_38)
+                }, " i ", 8, _hoisted_37)
               ]),
-              driverInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_39, [
-                _createElementVNode("p", _hoisted_40, _toDisplayString(driverCardTitle.value) + " meaning", 1),
-                _createElementVNode("p", _hoisted_41, _toDisplayString(showNetDrivers.value ? "Top Net Drivers shows net-asset impact. Holdings use evaluated value delta, while liabilities reduce net when their balances rise." : "Top Gross Drivers shows evaluated value delta versus the selected baseline snapshot. This is current evaluated amount minus baseline evaluated amount."), 1),
-                !showNetDrivers.value ? (_openBlock(), _createElementBlock("p", _hoisted_42, " Cost basis Δ is shown as a helper line so you can compare why Gross Delta and Profit Delta may diverge for the same holding. ")) : _createCommentVNode("", true)
+              driverInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_38, [
+                _createElementVNode("p", _hoisted_39, _toDisplayString(driverCardTitle.value) + " meaning", 1),
+                _createElementVNode("p", _hoisted_40, _toDisplayString(showNetDrivers.value ? "Top Net Drivers shows net-asset impact. Holdings use evaluated value delta, while liabilities reduce net when their balances rise." : "Top Gross Drivers shows evaluated value delta versus the selected baseline snapshot. This is current evaluated amount minus baseline evaluated amount."), 1),
+                !showNetDrivers.value ? (_openBlock(), _createElementBlock("p", _hoisted_41, " Cost basis Δ is shown as a helper line so you can compare why Gross Delta and Profit Delta may diverge for the same holding. ")) : _createCommentVNode("", true)
               ])) : _createCommentVNode("", true),
-              _createElementVNode("div", _hoisted_43, [
+              _createElementVNode("div", _hoisted_42, [
                 _createElementVNode("div", null, [
-                  _createElementVNode("p", _hoisted_44, _toDisplayString(driverPositiveLabel.value), 1),
-                  driverPositiveItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_45, [
+                  _createElementVNode("p", _hoisted_43, _toDisplayString(driverPositiveLabel.value), 1),
+                  driverPositiveItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_44, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(driverPositiveItems.value, (item) => {
                       return _openBlock(), _createElementBlock("li", {
                         key: `driver-positive-${item.key}`,
                         class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                       }, [
-                        _createElementVNode("div", _hoisted_46, [
-                          _createElementVNode("div", _hoisted_47, [
-                            _createElementVNode("div", _hoisted_48, [
-                              _createElementVNode("p", _hoisted_49, _toDisplayString(item.label), 1),
+                        _createElementVNode("div", _hoisted_45, [
+                          _createElementVNode("div", _hoisted_46, [
+                            _createElementVNode("div", _hoisted_47, [
+                              _createElementVNode("p", _hoisted_48, _toDisplayString(item.label), 1),
                               item.display_class ? (_openBlock(), _createElementBlock("span", {
                                 key: 0,
                                 class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
@@ -1603,7 +1671,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
                               }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
                             ]),
-                            _createElementVNode("p", _hoisted_50, _toDisplayString(item.portfolio_name || "-"), 1),
+                            _createElementVNode("p", _hoisted_49, _toDisplayString(item.portfolio_name || "-"), 1),
                             !showNetDrivers.value && hasCostBasisDelta(item.delta_cost_basis) ? (_openBlock(), _createElementBlock("p", {
                               key: 0,
                               class: _normalizeClass(["mt-1 text-xs [overflow-wrap:anywhere]", insightDeltaClass(toNumber(item.delta_cost_basis))])
@@ -1614,7 +1682,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                               }, _toDisplayString(renderAmount(toNumber(item.delta_cost_basis))), 5)
                             ], 2)) : _createCommentVNode("", true)
                           ]),
-                          _createElementVNode("p", _hoisted_51, [
+                          _createElementVNode("p", _hoisted_50, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(amountMaskStyle())
                             }, _toDisplayString(renderAmount(toNumber(item.delta_amount))), 5)
@@ -1622,20 +1690,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         ])
                       ]);
                     }), 128))
-                  ])) : (_openBlock(), _createElementBlock("p", _hoisted_52, _toDisplayString(showNetDrivers.value ? "No boosters." : "No gainers."), 1))
+                  ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, _toDisplayString(showNetDrivers.value ? "No boosters." : "No gainers."), 1))
                 ]),
                 _createElementVNode("div", null, [
-                  _createElementVNode("p", _hoisted_53, _toDisplayString(driverNegativeLabel.value), 1),
-                  driverNegativeItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_54, [
+                  _createElementVNode("p", _hoisted_52, _toDisplayString(driverNegativeLabel.value), 1),
+                  driverNegativeItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_53, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(driverNegativeItems.value, (item) => {
                       return _openBlock(), _createElementBlock("li", {
                         key: `driver-negative-${item.key}`,
                         class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                       }, [
-                        _createElementVNode("div", _hoisted_55, [
-                          _createElementVNode("div", _hoisted_56, [
-                            _createElementVNode("div", _hoisted_57, [
-                              _createElementVNode("p", _hoisted_58, _toDisplayString(item.label), 1),
+                        _createElementVNode("div", _hoisted_54, [
+                          _createElementVNode("div", _hoisted_55, [
+                            _createElementVNode("div", _hoisted_56, [
+                              _createElementVNode("p", _hoisted_57, _toDisplayString(item.label), 1),
                               item.display_class ? (_openBlock(), _createElementBlock("span", {
                                 key: 0,
                                 class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
@@ -1645,7 +1713,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
                               }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
                             ]),
-                            _createElementVNode("p", _hoisted_59, _toDisplayString(item.portfolio_name || "-"), 1),
+                            _createElementVNode("p", _hoisted_58, _toDisplayString(item.portfolio_name || "-"), 1),
                             !showNetDrivers.value && hasCostBasisDelta(item.delta_cost_basis) ? (_openBlock(), _createElementBlock("p", {
                               key: 0,
                               class: _normalizeClass(["mt-1 text-xs [overflow-wrap:anywhere]", insightDeltaClass(toNumber(item.delta_cost_basis))])
@@ -1656,7 +1724,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                               }, _toDisplayString(renderAmount(toNumber(item.delta_cost_basis))), 5)
                             ], 2)) : _createCommentVNode("", true)
                           ]),
-                          _createElementVNode("p", _hoisted_60, [
+                          _createElementVNode("p", _hoisted_59, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(amountMaskStyle())
                             }, _toDisplayString(renderAmount(toNumber(item.delta_amount))), 5)
@@ -1664,13 +1732,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         ])
                       ]);
                     }), 128))
-                  ])) : (_openBlock(), _createElementBlock("p", _hoisted_61, _toDisplayString(showNetDrivers.value ? "No drags." : "No losers."), 1))
+                  ])) : (_openBlock(), _createElementBlock("p", _hoisted_60, _toDisplayString(showNetDrivers.value ? "No drags." : "No losers."), 1))
                 ])
               ])
-            ]),
-            _createElementVNode("div", _hoisted_62, [
-              _createElementVNode("section", _hoisted_63, [
-                _createElementVNode("div", _hoisted_64, [
+            ], 2),
+            _createElementVNode("div", _hoisted_61, [
+              _createElementVNode("section", _hoisted_62, [
+                _createElementVNode("div", _hoisted_63, [
                   _cache[19] || (_cache[19] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Profit Delta Movers", -1)),
                   _createElementVNode("button", {
                     type: "button",
@@ -1678,25 +1746,25 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     "aria-expanded": profitInfoOpen.value,
                     "aria-label": "Profit Delta Movers info",
                     onClick: toggleProfitInfo
-                  }, " i ", 8, _hoisted_65)
+                  }, " i ", 8, _hoisted_64)
                 ]),
-                profitInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_66, [..._cache[20] || (_cache[20] = [
+                profitInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_65, [..._cache[20] || (_cache[20] = [
                   _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-100" }, "Profit Delta formula", -1),
                   _createElementVNode("p", { class: "mt-1 [overflow-wrap:anywhere]" }, " Profit Delta compares profit versus the selected baseline snapshot. Profit = evaluated value - cost basis, so Profit Delta = Gross Delta - Cost Basis Delta. ", -1)
                 ])])) : _createCommentVNode("", true),
-                _createElementVNode("div", _hoisted_67, [
+                _createElementVNode("div", _hoisted_66, [
                   _createElementVNode("div", null, [
                     _cache[22] || (_cache[22] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" }, "Top 3", -1)),
-                    quickInsight.value.profit_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_68, [
+                    quickInsight.value.profit_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_67, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.profit_movers.top_gainers, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `profit-gain-${item.key}`,
                           class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                         }, [
-                          _createElementVNode("div", _hoisted_69, [
-                            _createElementVNode("div", _hoisted_70, [
-                              _createElementVNode("div", _hoisted_71, [
-                                _createElementVNode("p", _hoisted_72, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_68, [
+                            _createElementVNode("div", _hoisted_69, [
+                              _createElementVNode("div", _hoisted_70, [
+                                _createElementVNode("p", _hoisted_71, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
@@ -1706,7 +1774,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
                                 }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_73, _toDisplayString(item.portfolio_name || "-"), 1),
+                              _createElementVNode("p", _hoisted_72, _toDisplayString(item.portfolio_name || "-"), 1),
                               hasCostBasisDelta(item.delta_cost_basis) ? (_openBlock(), _createElementBlock("p", {
                                 key: 0,
                                 class: _normalizeClass(["mt-1 text-xs [overflow-wrap:anywhere]", insightDeltaClass(toNumber(item.delta_cost_basis))])
@@ -1717,7 +1785,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 }, _toDisplayString(renderAmount(toNumber(item.delta_cost_basis))), 5)
                               ], 2)) : _createCommentVNode("", true)
                             ]),
-                            _createElementVNode("p", _hoisted_74, [
+                            _createElementVNode("p", _hoisted_73, [
                               _createElementVNode("span", {
                                 style: _normalizeStyle(amountMaskStyle())
                               }, _toDisplayString(renderAmount(toNumber(item.delta_amount))), 5)
@@ -1725,20 +1793,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           ])
                         ]);
                       }), 128))
-                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_75, "No movers yet."))
+                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_74, "No movers yet."))
                   ]),
                   _createElementVNode("div", null, [
                     _cache[24] || (_cache[24] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" }, "Bottom 3", -1)),
-                    quickInsight.value.profit_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_76, [
+                    quickInsight.value.profit_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_75, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.profit_movers.top_losers, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `profit-loss-${item.key}`,
                           class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                         }, [
-                          _createElementVNode("div", _hoisted_77, [
-                            _createElementVNode("div", _hoisted_78, [
-                              _createElementVNode("div", _hoisted_79, [
-                                _createElementVNode("p", _hoisted_80, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_76, [
+                            _createElementVNode("div", _hoisted_77, [
+                              _createElementVNode("div", _hoisted_78, [
+                                _createElementVNode("p", _hoisted_79, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
@@ -1748,7 +1816,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
                                 }, _toDisplayString(item.status), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_81, _toDisplayString(item.portfolio_name || "-"), 1),
+                              _createElementVNode("p", _hoisted_80, _toDisplayString(item.portfolio_name || "-"), 1),
                               hasCostBasisDelta(item.delta_cost_basis) ? (_openBlock(), _createElementBlock("p", {
                                 key: 0,
                                 class: _normalizeClass(["mt-1 text-xs [overflow-wrap:anywhere]", insightDeltaClass(toNumber(item.delta_cost_basis))])
@@ -1759,7 +1827,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                                 }, _toDisplayString(renderAmount(toNumber(item.delta_cost_basis))), 5)
                               ], 2)) : _createCommentVNode("", true)
                             ]),
-                            _createElementVNode("p", _hoisted_82, [
+                            _createElementVNode("p", _hoisted_81, [
                               _createElementVNode("span", {
                                 style: _normalizeStyle(amountMaskStyle())
                               }, _toDisplayString(renderAmount(toNumber(item.delta_amount))), 5)
@@ -1767,12 +1835,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           ])
                         ]);
                       }), 128))
-                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_83, "No losers yet."))
+                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_82, "No losers yet."))
                   ])
                 ])
               ]),
-              _createElementVNode("section", _hoisted_84, [
-                _createElementVNode("div", _hoisted_85, [
+              _createElementVNode("section", _hoisted_83, [
+                _createElementVNode("div", _hoisted_84, [
                   _cache[25] || (_cache[25] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Return Delta Movers", -1)),
                   _createElementVNode("button", {
                     type: "button",
@@ -1780,93 +1848,93 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     "aria-expanded": returnInfoOpen.value,
                     "aria-label": "Return Delta Movers info",
                     onClick: toggleReturnInfo
-                  }, " i ", 8, _hoisted_86)
+                  }, " i ", 8, _hoisted_85)
                 ]),
-                returnInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_87, [..._cache[26] || (_cache[26] = [
+                returnInfoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_86, [..._cache[26] || (_cache[26] = [
                   _createElementVNode("p", { class: "font-semibold text-slate-700 dark:text-slate-100" }, "Return Delta formula", -1),
                   _createElementVNode("p", { class: "mt-1 [overflow-wrap:anywhere]" }, " Return Delta compares return percentage versus the selected baseline snapshot. It is shown in percentage points (%p), not in currency amount. ", -1),
                   _createElementVNode("p", { class: "mt-2 [overflow-wrap:anywhere]" }, " Each row also shows current return and baseline return so you can see which side of the gap changed. ", -1)
                 ])])) : _createCommentVNode("", true),
-                _createElementVNode("div", _hoisted_88, [
+                _createElementVNode("div", _hoisted_87, [
                   _createElementVNode("div", null, [
                     _cache[29] || (_cache[29] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-300" }, "Top 3", -1)),
-                    quickInsight.value.return_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_89, [
+                    quickInsight.value.return_movers.top_gainers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_88, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.return_movers.top_gainers, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `return-gain-${item.key}`,
                           class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                         }, [
-                          _createElementVNode("div", _hoisted_90, [
-                            _createElementVNode("div", _hoisted_91, [
-                              _createElementVNode("div", _hoisted_92, [
-                                _createElementVNode("p", _hoisted_93, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_89, [
+                            _createElementVNode("div", _hoisted_90, [
+                              _createElementVNode("div", _hoisted_91, [
+                                _createElementVNode("p", _hoisted_92, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
                                 }, _toDisplayString(displayClassLabel(item.display_class)), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_94, _toDisplayString(item.portfolio_name || "-"), 1),
-                              _createElementVNode("p", _hoisted_95, [
+                              _createElementVNode("p", _hoisted_93, _toDisplayString(item.portfolio_name || "-"), 1),
+                              _createElementVNode("p", _hoisted_94, [
                                 _cache[27] || (_cache[27] = _createTextVNode(" Current: ", -1)),
-                                _createElementVNode("span", _hoisted_96, _toDisplayString(renderReturnPercent(item.current_return_pct)), 1),
+                                _createElementVNode("span", _hoisted_95, _toDisplayString(renderReturnPercent(item.current_return_pct)), 1),
                                 _cache[28] || (_cache[28] = _createTextVNode(" · Baseline: ", -1)),
-                                _createElementVNode("span", _hoisted_97, _toDisplayString(renderReturnPercent(item.baseline_return_pct)), 1)
+                                _createElementVNode("span", _hoisted_96, _toDisplayString(renderReturnPercent(item.baseline_return_pct)), 1)
                               ])
                             ]),
-                            _createElementVNode("p", _hoisted_98, _toDisplayString(renderReturn(item.delta_return_pct)), 1)
+                            _createElementVNode("p", _hoisted_97, _toDisplayString(renderReturn(item.delta_return_pct)), 1)
                           ])
                         ]);
                       }), 128))
-                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_99, "No movers yet."))
+                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_98, "No movers yet."))
                   ]),
                   _createElementVNode("div", null, [
                     _cache[32] || (_cache[32] = _createElementVNode("p", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-rose-500 dark:text-rose-300" }, "Bottom 3", -1)),
-                    quickInsight.value.return_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_100, [
+                    quickInsight.value.return_movers.top_losers.length ? (_openBlock(), _createElementBlock("ul", _hoisted_99, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.return_movers.top_losers, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `return-loss-${item.key}`,
                           class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                         }, [
-                          _createElementVNode("div", _hoisted_101, [
-                            _createElementVNode("div", _hoisted_102, [
-                              _createElementVNode("div", _hoisted_103, [
-                                _createElementVNode("p", _hoisted_104, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_100, [
+                            _createElementVNode("div", _hoisted_101, [
+                              _createElementVNode("div", _hoisted_102, [
+                                _createElementVNode("p", _hoisted_103, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
                                 }, _toDisplayString(displayClassLabel(item.display_class)), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_105, _toDisplayString(item.portfolio_name || "-"), 1),
-                              _createElementVNode("p", _hoisted_106, [
+                              _createElementVNode("p", _hoisted_104, _toDisplayString(item.portfolio_name || "-"), 1),
+                              _createElementVNode("p", _hoisted_105, [
                                 _cache[30] || (_cache[30] = _createTextVNode(" Current: ", -1)),
-                                _createElementVNode("span", _hoisted_107, _toDisplayString(renderReturnPercent(item.current_return_pct)), 1),
+                                _createElementVNode("span", _hoisted_106, _toDisplayString(renderReturnPercent(item.current_return_pct)), 1),
                                 _cache[31] || (_cache[31] = _createTextVNode(" · Baseline: ", -1)),
-                                _createElementVNode("span", _hoisted_108, _toDisplayString(renderReturnPercent(item.baseline_return_pct)), 1)
+                                _createElementVNode("span", _hoisted_107, _toDisplayString(renderReturnPercent(item.baseline_return_pct)), 1)
                               ])
                             ]),
-                            _createElementVNode("p", _hoisted_109, _toDisplayString(renderReturn(item.delta_return_pct)), 1)
+                            _createElementVNode("p", _hoisted_108, _toDisplayString(renderReturn(item.delta_return_pct)), 1)
                           ])
                         ]);
                       }), 128))
-                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_110, "No losers yet."))
+                    ])) : (_openBlock(), _createElementBlock("p", _hoisted_109, "No losers yet."))
                   ])
                 ])
               ])
             ]),
-            _createElementVNode("div", _hoisted_111, [
-              _createElementVNode("section", _hoisted_112, [
+            _createElementVNode("div", _hoisted_110, [
+              _createElementVNode("section", _hoisted_111, [
                 _cache[33] || (_cache[33] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Portfolio Changes", -1)),
-                _createElementVNode("p", _hoisted_113, _toDisplayString(portfolioChangeTitle.value), 1),
-                portfolioChangeItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_114, [
+                _createElementVNode("p", _hoisted_112, _toDisplayString(portfolioChangeTitle.value), 1),
+                portfolioChangeItems.value.length ? (_openBlock(), _createElementBlock("ul", _hoisted_113, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(portfolioChangeItems.value, (item) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: `portfolio-change-${item.key}`,
                       class: "rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
                     }, [
-                      _createElementVNode("div", _hoisted_115, [
-                        _createElementVNode("div", _hoisted_116, [
-                          _createElementVNode("p", _hoisted_117, _toDisplayString(item.label), 1),
-                          _createElementVNode("p", _hoisted_118, [
+                      _createElementVNode("div", _hoisted_114, [
+                        _createElementVNode("div", _hoisted_115, [
+                          _createElementVNode("p", _hoisted_116, _toDisplayString(item.label), 1),
+                          _createElementVNode("p", _hoisted_117, [
                             item.status ? (_openBlock(), _createElementBlock("span", {
                               key: 0,
                               class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", insightStatusBadgeClass(item.status)])
@@ -1883,14 +1951,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       ])
                     ]);
                   }), 128))
-                ])) : (_openBlock(), _createElementBlock("p", _hoisted_119, "No portfolio changes yet."))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_118, "No portfolio changes yet."))
               ]),
-              _createElementVNode("section", _hoisted_120, [
+              _createElementVNode("section", _hoisted_119, [
                 _cache[35] || (_cache[35] = _createElementVNode("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Warnings", -1)),
-                _createElementVNode("ul", _hoisted_121, [
-                  _createElementVNode("li", _hoisted_122, "Stale quotes: " + _toDisplayString(quickInsight.value.warnings.stale_quote_count), 1),
-                  _createElementVNode("li", _hoisted_123, [
-                    _createElementVNode("div", _hoisted_124, [
+                _createElementVNode("ul", _hoisted_120, [
+                  _createElementVNode("li", _hoisted_121, "Stale quotes: " + _toDisplayString(quickInsight.value.warnings.stale_quote_count), 1),
+                  _createElementVNode("li", _hoisted_122, [
+                    _createElementVNode("div", _hoisted_123, [
                       _createElementVNode("span", null, "Manual quotes: " + _toDisplayString(quickInsight.value.warnings.manual_quote_count), 1),
                       quickInsight.value.warnings.manual_quote_count > 0 ? (_openBlock(), _createElementBlock("button", {
                         key: 0,
@@ -1899,34 +1967,34 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onClick: _cache[7] || (_cache[7] = ($event) => manualQuotesExpanded.value = !manualQuotesExpanded.value)
                       }, _toDisplayString(manualQuotesExpanded.value ? "Collapse" : "Expand"), 1)) : _createCommentVNode("", true)
                     ]),
-                    manualQuotesExpanded.value && quickInsight.value.warnings.manual_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_125, [
+                    manualQuotesExpanded.value && quickInsight.value.warnings.manual_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_124, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.warnings.manual_quotes, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `manual-quote-${item.key}`,
                           class: "rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
                         }, [
-                          _createElementVNode("div", _hoisted_126, [
-                            _createElementVNode("div", _hoisted_127, [
-                              _createElementVNode("div", _hoisted_128, [
-                                _createElementVNode("p", _hoisted_129, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_125, [
+                            _createElementVNode("div", _hoisted_126, [
+                              _createElementVNode("div", _hoisted_127, [
+                                _createElementVNode("p", _hoisted_128, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
                                 }, _toDisplayString(displayClassLabel(item.display_class)), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_130, [
+                              _createElementVNode("p", _hoisted_129, [
                                 _createTextVNode(_toDisplayString(item.portfolio_name || "-"), 1),
-                                item.symbol ? (_openBlock(), _createElementBlock("span", _hoisted_131, " · " + _toDisplayString(item.symbol), 1)) : _createCommentVNode("", true)
+                                item.symbol ? (_openBlock(), _createElementBlock("span", _hoisted_130, " · " + _toDisplayString(item.symbol), 1)) : _createCommentVNode("", true)
                               ])
                             ]),
-                            _createElementVNode("p", _hoisted_132, _toDisplayString(formatDateTime(item.quote_as_of)), 1)
+                            _createElementVNode("p", _hoisted_131, _toDisplayString(formatDateTime(item.quote_as_of)), 1)
                           ])
                         ]);
                       }), 128))
                     ])) : _createCommentVNode("", true)
                   ]),
-                  _createElementVNode("li", _hoisted_133, [
-                    _createElementVNode("div", _hoisted_134, [
+                  _createElementVNode("li", _hoisted_132, [
+                    _createElementVNode("div", _hoisted_133, [
                       _createElementVNode("span", null, "Missing quotes: " + _toDisplayString(quickInsight.value.warnings.missing_quote_count), 1),
                       quickInsight.value.warnings.missing_quote_count > 0 ? (_openBlock(), _createElementBlock("button", {
                         key: 0,
@@ -1935,24 +2003,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         onClick: _cache[8] || (_cache[8] = ($event) => missingQuotesExpanded.value = !missingQuotesExpanded.value)
                       }, _toDisplayString(missingQuotesExpanded.value ? "Collapse" : "Expand"), 1)) : _createCommentVNode("", true)
                     ]),
-                    missingQuotesExpanded.value && quickInsight.value.warnings.missing_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_135, [
+                    missingQuotesExpanded.value && quickInsight.value.warnings.missing_quotes.length ? (_openBlock(), _createElementBlock("ul", _hoisted_134, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(quickInsight.value.warnings.missing_quotes, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: `missing-quote-${item.key}`,
                           class: "rounded-lg bg-white/70 px-2 py-2 dark:bg-slate-900/40"
                         }, [
-                          _createElementVNode("div", _hoisted_136, [
-                            _createElementVNode("div", _hoisted_137, [
-                              _createElementVNode("div", _hoisted_138, [
-                                _createElementVNode("p", _hoisted_139, _toDisplayString(item.label), 1),
+                          _createElementVNode("div", _hoisted_135, [
+                            _createElementVNode("div", _hoisted_136, [
+                              _createElementVNode("div", _hoisted_137, [
+                                _createElementVNode("p", _hoisted_138, _toDisplayString(item.label), 1),
                                 item.display_class ? (_openBlock(), _createElementBlock("span", {
                                   key: 0,
                                   class: _normalizeClass(["inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", displayClassBadgeClass(item.display_class)])
                                 }, _toDisplayString(displayClassLabel(item.display_class)), 3)) : _createCommentVNode("", true)
                               ]),
-                              _createElementVNode("p", _hoisted_140, [
+                              _createElementVNode("p", _hoisted_139, [
                                 _createTextVNode(_toDisplayString(item.portfolio_name || "-"), 1),
-                                item.symbol ? (_openBlock(), _createElementBlock("span", _hoisted_141, " · " + _toDisplayString(item.symbol), 1)) : _createCommentVNode("", true)
+                                item.symbol ? (_openBlock(), _createElementBlock("span", _hoisted_140, " · " + _toDisplayString(item.symbol), 1)) : _createCommentVNode("", true)
                               ]),
                               _cache[34] || (_cache[34] = _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, "No current quote available", -1))
                             ])
@@ -1965,7 +2033,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               ])
             ])
           ])) : _createCommentVNode("", true)
-        ])) : (_openBlock(), _createElementBlock("p", _hoisted_142, [..._cache[36] || (_cache[36] = [
+        ])) : (_openBlock(), _createElementBlock("p", _hoisted_141, [..._cache[36] || (_cache[36] = [
           _createTextVNode(" Collapsed. Click ", -1),
           _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
           _createTextVNode(" to view snapshot delta insight. ", -1)

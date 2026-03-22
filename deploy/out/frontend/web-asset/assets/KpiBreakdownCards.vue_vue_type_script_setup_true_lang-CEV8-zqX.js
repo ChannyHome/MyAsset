@@ -1,5 +1,5 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
-import { u as useUiStore } from './ui-DnZ8IxrZ.js';
+import { u as useUiStore } from './ui-DfQNiIxJ.js';
 
 const {defineComponent:_defineComponent} = await importShared('vue');
 

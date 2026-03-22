@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import type { PortfolioTableRowOut } from "../api/portfolios";
@@ -13,17 +13,21 @@ const props = withDefaults(
     title?: string;
     subtitle?: string;
     useNetBasis?: boolean;
+    storageKey?: string;
   }>(),
   {
     maskAmounts: false,
     title: "KPI Portfolios",
     subtitle: "",
     useNetBasis: false,
+    storageKey: "",
   },
 );
 
 const uiStore = useUiStore();
 const { nameClampEnabled } = storeToRefs(uiStore);
+const expanded = ref(true);
+const infoOpen = ref(false);
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -150,10 +154,29 @@ const rows = computed(() => {
   return base;
 });
 
+const collapsedSummary = computed(() => {
+  const topRow = rows.value[0];
+  if (!topRow) return "No portfolio KPI data.";
+  return `Top portfolio · ${topRow.name} · ${formatCurrency(currentValue(topRow), topRow.base_currency || props.currency)}`;
+});
+
+function loadExpandedState(): void {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  const raw = window.localStorage.getItem(props.storageKey);
+  if (raw === "1") expanded.value = true;
+  if (raw === "0") expanded.value = false;
+}
+
+watch(expanded, (value) => {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+});
+
 onMounted(() => {
   if (typeof uiStore.init === "function") {
     uiStore.init();
   }
+  loadExpandedState();
 });
 </script>
 
@@ -161,16 +184,52 @@ onMounted(() => {
   <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-pressed="infoOpen"
+            :aria-label="infoOpen ? 'Hide KPI Portfolios info' : 'Show KPI Portfolios info'"
+            @click="infoOpen = !infoOpen"
+          >
+            i
+          </button>
+        </div>
         <p v-if="subtitle" class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
       </div>
-      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-        {{ currency }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {{ currency }}
+        </span>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="expanded = !expanded"
+        >
+          {{ expanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
     </div>
 
     <div
-      v-if="rows.length === 0"
+      v-if="infoOpen"
+      class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p>KPI Portfolios compares current value, principal, profit, and return across portfolios.</p>
+      <p class="mt-1">When Net basis is enabled, current, principal, profit, and return switch to debt-adjusted portfolio metrics.</p>
+    </div>
+
+    <div
+      v-if="!expanded"
+      class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p class="font-medium text-slate-700 dark:text-slate-200">Collapsed. Click Expand to preview KPI portfolios.</p>
+      <p class="mt-1" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">{{ collapsedSummary }}</p>
+    </div>
+
+    <div
+      v-else-if="rows.length === 0"
       class="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
     >
       No portfolio KPI data.

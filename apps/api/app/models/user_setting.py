@@ -23,6 +23,7 @@ class UserSetting(Base):
     hide_values: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("0"))
     name_clamp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("1"))
     mobile_allocation_top_n: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("6"))
+    asset_rebalance_threshold_pct: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("10"))
     hide_small_assets: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("0"))
     small_asset_threshold: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, server_default=text("100000"))
     display_currency: Mapped[str] = mapped_column(String(3), nullable=False, server_default="KRW")

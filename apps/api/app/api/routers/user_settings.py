@@ -20,6 +20,16 @@ def _normalize_mobile_top_n(value: int | None) -> int:
     return int(value)
 
 
+def _normalize_asset_rebalance_threshold(value: int | None) -> int:
+    if value is None:
+        return 10
+    if value < 5:
+        return 5
+    if value > 30:
+        return 30
+    return int(value)
+
+
 def _get_or_create_user_settings(db: Session, user_id: int) -> UserSetting:
     row = db.get(UserSetting, user_id)
     if row is not None:
@@ -35,6 +45,10 @@ def _get_or_create_user_settings(db: Session, user_id: int) -> UserSetting:
         normalized_top_n = _normalize_mobile_top_n(row.mobile_allocation_top_n)
         if normalized_top_n != row.mobile_allocation_top_n:
             row.mobile_allocation_top_n = normalized_top_n
+            dirty = True
+        normalized_asset_threshold = _normalize_asset_rebalance_threshold(row.asset_rebalance_threshold_pct)
+        if normalized_asset_threshold != row.asset_rebalance_threshold_pct:
+            row.asset_rebalance_threshold_pct = normalized_asset_threshold
             dirty = True
         if dirty:
             db.commit()
@@ -70,6 +84,8 @@ def update_my_settings(
         row.name_clamp_enabled = bool(updates["name_clamp_enabled"])
     if "mobile_allocation_top_n" in updates and updates["mobile_allocation_top_n"] is not None:
         row.mobile_allocation_top_n = _normalize_mobile_top_n(updates["mobile_allocation_top_n"])
+    if "asset_rebalance_threshold_pct" in updates and updates["asset_rebalance_threshold_pct"] is not None:
+        row.asset_rebalance_threshold_pct = _normalize_asset_rebalance_threshold(updates["asset_rebalance_threshold_pct"])
     db.commit()
     db.refresh(row)
     return row

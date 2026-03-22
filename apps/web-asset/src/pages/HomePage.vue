@@ -1716,7 +1716,7 @@ watch(
             v-if="liveKpiTarget === 'SUMMARY'"
             title="KPI Summary"
             subtitle="Included in print/snapshot"
-            storage-key="myasset:home:live-dashboard:kpi-summary:expanded"
+            storage-key="myasset:home:live-dashboard:kpi-panel:expanded"
             :currency="summaryDisplayCurrency"
             :gross-assets-total="grossAssetsTotal"
             :liabilities-total="liabilitiesTotal"
@@ -1733,6 +1733,7 @@ watch(
           <KpiPortfolioSummaryCard
             v-else
             title="KPI Portfolios"
+            storage-key="myasset:home:live-dashboard:kpi-panel:expanded"
             :subtitle="`Per portfolio | ${livePortfolioNetBasis ? 'Net basis' : 'Gross basis'} | Included in print/snapshot`"
             :currency="summaryDisplayCurrency"
             :portfolios="liveKpiPortfolioRows"

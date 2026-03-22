@@ -1,6 +1,6 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { h as http, f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
-import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
+import { a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 
 async function getChatStatus() {
   const { data } = await http.get("/chat/status");

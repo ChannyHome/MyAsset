@@ -6,6 +6,7 @@ type UserSettingsOut = {
   display_currency: DisplayCurrency;
   name_clamp_enabled: boolean;
   mobile_allocation_top_n: number;
+  asset_rebalance_threshold_pct: number;
 };
 
 export async function getMySettings(): Promise<UserSettingsOut> {
@@ -17,6 +18,7 @@ export type UserSettingsUpdateIn = {
   display_currency?: DisplayCurrency;
   name_clamp_enabled?: boolean;
   mobile_allocation_top_n?: number;
+  asset_rebalance_threshold_pct?: number;
 };
 
 export async function updateMySettings(payload: UserSettingsUpdateIn): Promise<UserSettingsOut> {

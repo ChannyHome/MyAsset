@@ -1,14 +1,14 @@
 import { importShared } from './__federation_fn_import-B1auV5c8.js';
 import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime-D3NoeBy6.js';
-import { g as getSummary, a as getNetworthSeries, b as getAllocation } from './ui-DnZ8IxrZ.js';
-import { _ as _sfc_main$b } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-8Ho99rjW.js';
-import { _ as _sfc_main$3, a as _sfc_main$4, b as _sfc_main$5, c as _sfc_main$6 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DcBqJiKv.js';
-import { _ as _sfc_main$7 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DwR4Hfe0.js';
-import { u as useDashboardDataAdapter, _ as _sfc_main$2, a as _sfc_main$8, b as _sfc_main$9, c as _sfc_main$a, d as _sfc_main$c } from './useDashboardDataAdapter-JUoP73Tx.js';
+import { g as getCompositionSeries, a as getSummary, b as getNetworthSeries, c as getAllocation } from './ui-DfQNiIxJ.js';
+import { _ as _sfc_main$c } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CEV8-zqX.js';
+import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DRqt5y9P.js';
+import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Yn8JWYtk.js';
+import { u as useDashboardDataAdapter, _ as _sfc_main$3, a as _sfc_main$9, b as _sfc_main$a, c as _sfc_main$b, d as _sfc_main$d } from './useDashboardDataAdapter-Co3-MFt6.js';
+import { g as getMySettings, u as updateMySettings, a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
 import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
 import { u as updateQuotesNow, g as getMe, a as getReleaseNotes, b as getQuoteUpdateJobStatus } from './quotes-OIhGiauY.js';
-import { u as useDisplayCurrency } from './useDisplayCurrency-HdS6Uz1W.js';
 
 async function getMyGoalTarget(params) {
   const { data } = await http.get("/users/me/goal-target", { params });
@@ -23,114 +23,114 @@ async function getGoalProgress(params) {
   return data;
 }
 
-const {defineComponent:_defineComponent$1} = await importShared('vue');
+const {defineComponent:_defineComponent$2} = await importShared('vue');
 
-const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,vModelCheckbox:_vModelCheckbox$1,withDirectives:_withDirectives$1,normalizeStyle:_normalizeStyle$1,normalizeClass:_normalizeClass$1,createTextVNode:_createTextVNode$1,renderList:_renderList$1,Fragment:_Fragment$1,vModelText:_vModelText} = await importShared('vue');
+const {toDisplayString:_toDisplayString$2,createElementVNode:_createElementVNode$2,openBlock:_openBlock$2,createElementBlock:_createElementBlock$2,createCommentVNode:_createCommentVNode$2,vModelCheckbox:_vModelCheckbox$1,withDirectives:_withDirectives$2,normalizeStyle:_normalizeStyle$2,normalizeClass:_normalizeClass$2,createTextVNode:_createTextVNode$2,renderList:_renderList$2,Fragment:_Fragment$2,vModelText:_vModelText} = await importShared('vue');
 
-const _hoisted_1$1 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_2$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_3$1 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_4$1 = { class: "text-base font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_5$1 = ["aria-expanded"];
-const _hoisted_6$1 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_7$1 = {
+const _hoisted_1$2 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_2$2 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_3$2 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_4$2 = { class: "text-base font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_5$2 = ["aria-expanded"];
+const _hoisted_6$2 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_7$2 = {
   key: 0,
   class: "mt-3 max-w-xl rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300"
 };
-const _hoisted_8$1 = { class: "flex items-center gap-3" };
-const _hoisted_9$1 = { class: "inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" };
-const _hoisted_10$1 = {
+const _hoisted_8$2 = { class: "flex items-center gap-3" };
+const _hoisted_9$2 = { class: "inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200" };
+const _hoisted_10$2 = {
   key: 0,
   class: "mt-3 space-y-1"
 };
-const _hoisted_11$1 = { class: "text-sm font-medium text-slate-700 dark:text-slate-200" };
-const _hoisted_12$1 = {
+const _hoisted_11$2 = { class: "text-sm font-medium text-slate-700 dark:text-slate-200" };
+const _hoisted_12$2 = {
   key: 1,
   class: "mt-4 space-y-4"
 };
-const _hoisted_13$1 = {
+const _hoisted_13$2 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_14$1 = {
+const _hoisted_14$2 = {
   key: 1,
   class: "rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100"
 };
-const _hoisted_15$1 = {
+const _hoisted_15$2 = {
   key: 2,
   class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_16$1 = {
+const _hoisted_16$2 = {
   key: 3,
   class: "space-y-4"
 };
-const _hoisted_17$1 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]" };
-const _hoisted_18$1 = { class: "rounded-2xl border border-slate-700 bg-slate-950/90 p-4" };
-const _hoisted_19$1 = { class: "mx-auto max-w-[360px]" };
-const _hoisted_20$1 = ["d"];
-const _hoisted_21$1 = ["d"];
-const _hoisted_22$1 = ["x2", "y2"];
-const _hoisted_23$1 = ["cx", "cy"];
-const _hoisted_24$1 = { class: "-mt-3 text-center" };
-const _hoisted_25$1 = { class: "text-[11px] uppercase tracking-[0.28em] text-slate-400" };
-const _hoisted_26$1 = { class: "mt-1 text-sm text-slate-300" };
-const _hoisted_27$1 = { class: "mt-3 text-xs text-slate-400" };
-const _hoisted_28$1 = { class: "space-y-4" };
-const _hoisted_29$1 = {
+const _hoisted_17$2 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]" };
+const _hoisted_18$2 = { class: "rounded-2xl border border-slate-700 bg-slate-950/90 p-4" };
+const _hoisted_19$2 = { class: "mx-auto max-w-[360px]" };
+const _hoisted_20$2 = ["d"];
+const _hoisted_21$2 = ["d"];
+const _hoisted_22$2 = ["x2", "y2"];
+const _hoisted_23$2 = ["cx", "cy"];
+const _hoisted_24$2 = { class: "-mt-3 text-center" };
+const _hoisted_25$2 = { class: "text-[11px] uppercase tracking-[0.28em] text-slate-400" };
+const _hoisted_26$2 = { class: "mt-1 text-sm text-slate-300" };
+const _hoisted_27$2 = { class: "mt-3 text-xs text-slate-400" };
+const _hoisted_28$2 = { class: "space-y-4" };
+const _hoisted_29$2 = {
   key: 0,
   class: "rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
 };
-const _hoisted_30$1 = { class: "grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" };
-const _hoisted_31$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_32$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_33$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_34$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_35$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_36$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_37$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_38$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_39$1 = { class: "rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70" };
-const _hoisted_40$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_41$1 = { class: "rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300" };
-const _hoisted_42$1 = { class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3" };
-const _hoisted_43$1 = { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" };
-const _hoisted_44$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_45$1 = { class: "mt-4 text-sm text-slate-700 dark:text-slate-200" };
-const _hoisted_46$1 = { class: "rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" };
-const _hoisted_47$1 = { class: "flex flex-wrap items-center justify-between gap-3" };
-const _hoisted_48$1 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_49$1 = ["aria-expanded"];
-const _hoisted_50$1 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_51$1 = { class: "flex flex-wrap items-center gap-2" };
-const _hoisted_52$1 = ["disabled"];
-const _hoisted_53$1 = {
+const _hoisted_30$2 = { class: "grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" };
+const _hoisted_31$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_32$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_33$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_34$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_35$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_36$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_37$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_38$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_39$2 = { class: "rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70" };
+const _hoisted_40$2 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_41$2 = { class: "rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300" };
+const _hoisted_42$2 = { class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3" };
+const _hoisted_43$2 = { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" };
+const _hoisted_44$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_45$2 = { class: "mt-4 text-sm text-slate-700 dark:text-slate-200" };
+const _hoisted_46$2 = { class: "rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" };
+const _hoisted_47$2 = { class: "flex flex-wrap items-center justify-between gap-3" };
+const _hoisted_48$2 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_49$2 = ["aria-expanded"];
+const _hoisted_50$2 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_51$2 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_52$2 = ["disabled"];
+const _hoisted_53$2 = {
   key: 0,
   class: "mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300"
 };
-const _hoisted_54$1 = {
+const _hoisted_54$2 = {
   key: 1,
   class: "mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100"
 };
-const _hoisted_55$1 = {
+const _hoisted_55$2 = {
   key: 2,
   class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
 };
-const _hoisted_56$1 = { class: "space-y-1 text-sm" };
-const _hoisted_57$1 = { class: "space-y-1 text-sm" };
-const _hoisted_58$1 = { class: "space-y-1 text-sm" };
-const _hoisted_59$1 = {
+const _hoisted_56$2 = { class: "space-y-1 text-sm" };
+const _hoisted_57$2 = { class: "space-y-1 text-sm" };
+const _hoisted_58$2 = { class: "space-y-1 text-sm" };
+const _hoisted_59$2 = {
   key: 3,
   class: "mt-4 grid grid-cols-1 gap-3 md:grid-cols-3"
 };
-const _hoisted_60$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_61 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_62 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_63 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_64 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_65 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const {computed: computed$1,onMounted: onMounted$1,reactive: reactive$1,ref: ref$1,watch: watch$1} = await importShared('vue');
+const _hoisted_60$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_61$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_62$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_63$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_64$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_65$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const {computed: computed$2,onMounted: onMounted$2,reactive: reactive$2,ref: ref$2,watch: watch$2} = await importShared('vue');
 const gaugeViewBox = "0 0 360 240";
-const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
+const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
   __name: "GoalProgressForecastCard",
   props: {
     title: { default: "Goal Progress and Forecast" },
@@ -143,16 +143,16 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
   },
   setup(__props) {
     const props = __props;
-    const loading = ref$1(false);
-    const saving = ref$1(false);
-    const errorMessage = ref$1("");
-    const successMessage = ref$1("");
-    const target = ref$1(null);
-    const progress = ref$1(null);
-    const editMode = ref$1(false);
-    const infoOpen = ref$1(false);
-    const assumptionsInfoOpen = ref$1(false);
-    const form = reactive$1({
+    const loading = ref$2(false);
+    const saving = ref$2(false);
+    const errorMessage = ref$2("");
+    const successMessage = ref$2("");
+    const target = ref$2(null);
+    const progress = ref$2(null);
+    const editMode = ref$2(false);
+    const infoOpen = ref$2(false);
+    const assumptionsInfoOpen = ref$2(false);
+    const form = reactive$2({
       targetAmount: "",
       annualReturnRatePct: "",
       monthlyInvestAmount: ""
@@ -163,8 +163,8 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
         useNet: false
       };
     }
-    const expanded = ref$1(todayUiState().expanded);
-    const useNet = ref$1(todayUiState().useNet);
+    const expanded = ref$2(todayUiState().expanded);
+    const useNet = ref$2(todayUiState().useNet);
     function loadUiState() {
       if (typeof window === "undefined") return;
       const raw = window.localStorage.getItem(`${props.storageKeyPrefix}:ui`);
@@ -240,18 +240,18 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
       form.annualReturnRatePct = next?.configured && next.annual_return_rate_pct != null ? String(toNumber(next.annual_return_rate_pct)) : "";
       form.monthlyInvestAmount = next?.configured && next.monthly_invest_amount != null ? String(toNumber(next.monthly_invest_amount)) : "";
     }
-    const canLoad = computed$1(() => Boolean(props.scopeType && props.scopeId != null));
-    const basis = computed$1(() => useNet.value ? "NET" : "GROSS");
-    const currentAmount = computed$1(() => toNumber(progress.value?.current_amount));
-    const targetAmount = computed$1(() => toNumber(progress.value?.target_amount));
-    const progressRatioPct = computed$1(() => {
+    const canLoad = computed$2(() => Boolean(props.scopeType && props.scopeId != null));
+    const basis = computed$2(() => useNet.value ? "NET" : "GROSS");
+    const currentAmount = computed$2(() => toNumber(progress.value?.current_amount));
+    const targetAmount = computed$2(() => toNumber(progress.value?.target_amount));
+    const progressRatioPct = computed$2(() => {
       const raw = toNumber(progress.value?.progress_ratio_pct);
       return Math.max(0, Math.min(100, raw));
     });
-    const remainingAmount = computed$1(() => toNumber(progress.value?.remaining_amount));
-    const overTargetAmount = computed$1(() => toNumber(progress.value?.over_target_amount));
-    const annualReturnInputValue = computed$1(() => toNumber(target.value?.annual_return_rate_pct));
-    const basisLabel = computed$1(() => basis.value === "NET" ? "Net" : "Gross");
+    const remainingAmount = computed$2(() => toNumber(progress.value?.remaining_amount));
+    const overTargetAmount = computed$2(() => toNumber(progress.value?.over_target_amount));
+    const annualReturnInputValue = computed$2(() => toNumber(target.value?.annual_return_rate_pct));
+    const basisLabel = computed$2(() => basis.value === "NET" ? "Net" : "Gross");
     async function refreshCard() {
       if (!canLoad.value || !props.scopeType || props.scopeId == null) {
         target.value = null;
@@ -359,30 +359,30 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
       const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
       return ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
     }
-    const gaugeTrackPath = computed$1(() => describeArc(180, 180, 118, 180, 0));
-    const gaugeProgressPath = computed$1(() => {
+    const gaugeTrackPath = computed$2(() => describeArc(180, 180, 118, 180, 0));
+    const gaugeProgressPath = computed$2(() => {
       const ratio = progressRatioPct.value / 100;
       const endAngle = 180 - 180 * ratio;
       return describeArc(180, 180, 118, 180, endAngle);
     });
-    const gaugeNeedleEnd = computed$1(() => {
+    const gaugeNeedleEnd = computed$2(() => {
       const ratio = progressRatioPct.value / 100;
       const angle = 180 - 180 * ratio;
       return polarToCartesian(180, 180, 96, angle);
     });
-    const currentMarker = computed$1(() => {
+    const currentMarker = computed$2(() => {
       const ratio = progressRatioPct.value / 100;
       const angle = 180 - 180 * ratio;
       return polarToCartesian(180, 180, 118, angle);
     });
-    const progressToneClass = computed$1(() => {
+    const progressToneClass = computed$2(() => {
       if (!progress.value?.configured) return "text-slate-300";
       if (progress.value.reached) return "text-emerald-300";
       if (progressRatioPct.value >= 75) return "text-emerald-300";
       if (progressRatioPct.value >= 35) return "text-indigo-300";
       return "text-amber-300";
     });
-    const projectedReachLabel = computed$1(() => {
+    const projectedReachLabel = computed$2(() => {
       if (!progress.value?.configured) return "Set a goal to start forecasting.";
       if (progress.value.reached) {
         return `Goal reached. ${formatSignedCurrency(overTargetAmount.value, props.displayCurrency)} above target.`;
@@ -392,7 +392,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
       }
       return "Not projected to reach the goal within 50 years under current assumptions.";
     });
-    const comparisonComment = computed$1(() => {
+    const comparisonComment = computed$2(() => {
       if (!progress.value?.configured) return "Save target assumptions to compare them with recent realized growth.";
       if (progress.value.recent_actual_annualized_return_pct == null || progress.value.recent_actual_window_days == null) {
         return "Recent actual growth is unavailable because snapshot history is too short.";
@@ -408,7 +408,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
       }
       return `${base} That's broadly in line with your assumed ${assumedText}.`;
     });
-    const collapsedSummary = computed$1(() => {
+    const collapsedSummary = computed$2(() => {
       if (loading.value) return "Loading goal progress...";
       if (!canLoad.value) return "Waiting for Home scope...";
       if (errorMessage.value) return errorMessage.value;
@@ -433,7 +433,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
       if (months <= 0) return `${years}y`;
       return `${years}y ${months}m`;
     }
-    const milestoneRows = computed$1(() => {
+    const milestoneRows = computed$2(() => {
       if (!progress.value?.configured) return [];
       return [
         { label: "3y", amount: toNumber(progress.value.projection_3y) },
@@ -441,109 +441,109 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
         { label: "10y", amount: toNumber(progress.value.projection_10y) }
       ];
     });
-    const canSave = computed$1(() => validateForm() === "" && !saving.value);
-    watch$1(
+    const canSave = computed$2(() => validateForm() === "" && !saving.value);
+    watch$2(
       () => [expanded.value, useNet.value],
       () => {
         saveUiState();
       },
       { deep: true }
     );
-    watch$1(
+    watch$2(
       () => [props.scopeType, props.scopeId, props.displayCurrency, basis.value],
       () => {
         void refreshCard();
       }
     );
-    onMounted$1(() => {
+    onMounted$2(() => {
       loadUiState();
       void refreshCard();
     });
     return (_ctx, _cache) => {
-      return _openBlock$1(), _createElementBlock$1("article", _hoisted_1$1, [
-        _createElementVNode$1("div", _hoisted_2$1, [
-          _createElementVNode$1("div", null, [
-            _createElementVNode$1("div", _hoisted_3$1, [
-              _createElementVNode$1("h2", _hoisted_4$1, _toDisplayString$1(__props.title), 1),
-              _createElementVNode$1("button", {
+      return _openBlock$2(), _createElementBlock$2("article", _hoisted_1$2, [
+        _createElementVNode$2("div", _hoisted_2$2, [
+          _createElementVNode$2("div", null, [
+            _createElementVNode$2("div", _hoisted_3$2, [
+              _createElementVNode$2("h2", _hoisted_4$2, _toDisplayString$2(__props.title), 1),
+              _createElementVNode$2("button", {
                 type: "button",
                 class: "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 "aria-expanded": infoOpen.value,
                 "aria-label": "Goal progress help",
                 onClick: _cache[0] || (_cache[0] = ($event) => infoOpen.value = !infoOpen.value)
-              }, " i ", 8, _hoisted_5$1)
+              }, " i ", 8, _hoisted_5$2)
             ]),
-            _createElementVNode$1("p", _hoisted_6$1, _toDisplayString$1(__props.subtitle), 1),
-            infoOpen.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_7$1, " Tracks how close your current Gross or Net amount is to the saved target. Turn on Net to measure progress against net assets instead of gross assets. Forecast milestones use simple monthly compounding, and the monthly invest amount is added at month-end in each simulated month. ")) : _createCommentVNode$1("", true)
+            _createElementVNode$2("p", _hoisted_6$2, _toDisplayString$2(__props.subtitle), 1),
+            infoOpen.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_7$2, " Tracks how close your current Gross or Net amount is to the saved target. Turn on Net to measure progress against net assets instead of gross assets. Forecast milestones use simple monthly compounding, and the monthly invest amount is added at month-end in each simulated month. ")) : _createCommentVNode$2("", true)
           ]),
-          _createElementVNode$1("div", _hoisted_8$1, [
-            _createElementVNode$1("label", _hoisted_9$1, [
-              _withDirectives$1(_createElementVNode$1("input", {
+          _createElementVNode$2("div", _hoisted_8$2, [
+            _createElementVNode$2("label", _hoisted_9$2, [
+              _withDirectives$2(_createElementVNode$2("input", {
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => useNet.value = $event),
                 type: "checkbox",
                 class: "h-4 w-4 rounded border-slate-400 bg-transparent text-indigo-500 focus:ring-indigo-400"
               }, null, 512), [
                 [_vModelCheckbox$1, useNet.value]
               ]),
-              _cache[7] || (_cache[7] = _createElementVNode$1("span", null, "Net", -1))
+              _cache[7] || (_cache[7] = _createElementVNode$2("span", null, "Net", -1))
             ]),
-            _createElementVNode$1("button", {
+            _createElementVNode$2("button", {
               type: "button",
               class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
               onClick: toggleExpanded
-            }, _toDisplayString$1(expanded.value ? "Collapse" : "Expand"), 1)
+            }, _toDisplayString$2(expanded.value ? "Collapse" : "Expand"), 1)
           ])
         ]),
-        !expanded.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_10$1, [
-          _cache[8] || (_cache[8] = _createElementVNode$1("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, " Collapsed. Click Expand to preview goal progress and forecast. ", -1)),
-          _createElementVNode$1("p", _hoisted_11$1, _toDisplayString$1(collapsedSummary.value), 1)
-        ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_12$1, [
-          loading.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_13$1, " Loading goal progress... ")) : errorMessage.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_14$1, _toDisplayString$1(errorMessage.value), 1)) : !canLoad.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_15$1, " Waiting for Home scope... ")) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_16$1, [
-            _createElementVNode$1("div", _hoisted_17$1, [
-              _createElementVNode$1("section", _hoisted_18$1, [
-                _createElementVNode$1("div", _hoisted_19$1, [
-                  (_openBlock$1(), _createElementBlock$1("svg", {
+        !expanded.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_10$2, [
+          _cache[8] || (_cache[8] = _createElementVNode$2("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, " Collapsed. Click Expand to preview goal progress and forecast. ", -1)),
+          _createElementVNode$2("p", _hoisted_11$2, _toDisplayString$2(collapsedSummary.value), 1)
+        ])) : (_openBlock$2(), _createElementBlock$2("div", _hoisted_12$2, [
+          loading.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_13$2, " Loading goal progress... ")) : errorMessage.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_14$2, _toDisplayString$2(errorMessage.value), 1)) : !canLoad.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_15$2, " Waiting for Home scope... ")) : (_openBlock$2(), _createElementBlock$2("div", _hoisted_16$2, [
+            _createElementVNode$2("div", _hoisted_17$2, [
+              _createElementVNode$2("section", _hoisted_18$2, [
+                _createElementVNode$2("div", _hoisted_19$2, [
+                  (_openBlock$2(), _createElementBlock$2("svg", {
                     viewBox: gaugeViewBox,
                     class: "w-full"
                   }, [
-                    _cache[9] || (_cache[9] = _createElementVNode$1("defs", null, [
-                      _createElementVNode$1("linearGradient", {
+                    _cache[9] || (_cache[9] = _createElementVNode$2("defs", null, [
+                      _createElementVNode$2("linearGradient", {
                         id: "goal-gauge-progress",
                         x1: "0%",
                         x2: "100%",
                         y1: "0%",
                         y2: "0%"
                       }, [
-                        _createElementVNode$1("stop", {
+                        _createElementVNode$2("stop", {
                           offset: "0%",
                           "stop-color": "#6366f1"
                         }),
-                        _createElementVNode$1("stop", {
+                        _createElementVNode$2("stop", {
                           offset: "60%",
                           "stop-color": "#4f46e5"
                         }),
-                        _createElementVNode$1("stop", {
+                        _createElementVNode$2("stop", {
                           offset: "100%",
                           "stop-color": "#10b981"
                         })
                       ])
                     ], -1)),
-                    _createElementVNode$1("path", {
+                    _createElementVNode$2("path", {
                       d: gaugeTrackPath.value,
                       fill: "none",
                       stroke: "rgba(100,116,139,0.28)",
                       "stroke-linecap": "round",
                       "stroke-width": "22"
-                    }, null, 8, _hoisted_20$1),
-                    progress.value && progress.value.configured ? (_openBlock$1(), _createElementBlock$1("path", {
+                    }, null, 8, _hoisted_20$2),
+                    progress.value && progress.value.configured ? (_openBlock$2(), _createElementBlock$2("path", {
                       key: 0,
                       d: gaugeProgressPath.value,
                       fill: "none",
                       stroke: "url(#goal-gauge-progress)",
                       "stroke-linecap": "round",
                       "stroke-width": "22"
-                    }, null, 8, _hoisted_21$1)) : _createCommentVNode$1("", true),
-                    _createElementVNode$1("line", {
+                    }, null, 8, _hoisted_21$2)) : _createCommentVNode$2("", true),
+                    _createElementVNode$2("line", {
                       x1: 180,
                       y1: 180,
                       x2: gaugeNeedleEnd.value.x,
@@ -551,8 +551,8 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                       stroke: "#cbd5f5",
                       "stroke-linecap": "round",
                       "stroke-width": "6"
-                    }, null, 8, _hoisted_22$1),
-                    _cache[10] || (_cache[10] = _createElementVNode$1("circle", {
+                    }, null, 8, _hoisted_22$2),
+                    _cache[10] || (_cache[10] = _createElementVNode$2("circle", {
                       cx: "180",
                       cy: "180",
                       r: "14",
@@ -560,29 +560,29 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                       stroke: "#a5b4fc",
                       "stroke-width": "6"
                     }, null, -1)),
-                    _createElementVNode$1("circle", {
+                    _createElementVNode$2("circle", {
                       cx: currentMarker.value.x,
                       cy: currentMarker.value.y,
                       r: "6",
                       fill: "#f8fafc",
                       stroke: "#34d399",
                       "stroke-width": "2"
-                    }, null, 8, _hoisted_23$1),
-                    _cache[11] || (_cache[11] = _createElementVNode$1("text", {
+                    }, null, 8, _hoisted_23$2),
+                    _cache[11] || (_cache[11] = _createElementVNode$2("text", {
                       x: "36",
                       y: "198",
                       fill: "#94a3b8",
                       "font-size": "12",
                       "font-weight": "700"
                     }, "0%", -1)),
-                    _cache[12] || (_cache[12] = _createElementVNode$1("text", {
+                    _cache[12] || (_cache[12] = _createElementVNode$2("text", {
                       x: "296",
                       y: "198",
                       fill: "#94a3b8",
                       "font-size": "12",
                       "font-weight": "700"
                     }, "100%", -1)),
-                    _cache[13] || (_cache[13] = _createElementVNode$1("text", {
+                    _cache[13] || (_cache[13] = _createElementVNode$2("text", {
                       x: "180",
                       y: "98",
                       "text-anchor": "middle",
@@ -592,122 +592,122 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                     }, "TARGET", -1))
                   ]))
                 ]),
-                _createElementVNode$1("div", _hoisted_24$1, [
-                  _createElementVNode$1("p", _hoisted_25$1, _toDisplayString$1(basisLabel.value) + " progress", 1),
-                  _createElementVNode$1("p", {
-                    class: _normalizeClass$1(["mt-2 text-2xl font-semibold", progressToneClass.value])
+                _createElementVNode$2("div", _hoisted_24$2, [
+                  _createElementVNode$2("p", _hoisted_25$2, _toDisplayString$2(basisLabel.value) + " progress", 1),
+                  _createElementVNode$2("p", {
+                    class: _normalizeClass$2(["mt-2 text-2xl font-semibold", progressToneClass.value])
                   }, [
-                    _createElementVNode$1("span", {
-                      style: _normalizeStyle$1(amountMaskStyle())
-                    }, _toDisplayString$1(formatCurrency(currentAmount.value, __props.displayCurrency)), 5)
+                    _createElementVNode$2("span", {
+                      style: _normalizeStyle$2(amountMaskStyle())
+                    }, _toDisplayString$2(formatCurrency(currentAmount.value, __props.displayCurrency)), 5)
                   ], 2),
-                  _createElementVNode$1("p", _hoisted_26$1, [
-                    _cache[14] || (_cache[14] = _createTextVNode$1(" Target ", -1)),
-                    _createElementVNode$1("span", {
-                      style: _normalizeStyle$1(amountMaskStyle())
-                    }, _toDisplayString$1(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5),
-                    _createTextVNode$1(" · " + _toDisplayString$1(formatRatio(progress.value?.progress_ratio_pct ?? null)), 1)
+                  _createElementVNode$2("p", _hoisted_26$2, [
+                    _cache[14] || (_cache[14] = _createTextVNode$2(" Target ", -1)),
+                    _createElementVNode$2("span", {
+                      style: _normalizeStyle$2(amountMaskStyle())
+                    }, _toDisplayString$2(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5),
+                    _createTextVNode$2(" · " + _toDisplayString$2(formatRatio(progress.value?.progress_ratio_pct ?? null)), 1)
                   ]),
-                  _createElementVNode$1("p", _hoisted_27$1, _toDisplayString$1(projectedReachLabel.value), 1)
+                  _createElementVNode$2("p", _hoisted_27$2, _toDisplayString$2(projectedReachLabel.value), 1)
                 ])
               ]),
-              _createElementVNode$1("section", _hoisted_28$1, [
-                !progress.value?.configured ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_29$1, " No goal is configured for this Home scope yet. Set a target amount, annual return, and monthly invest amount to start forecasting. ")) : _createCommentVNode$1("", true),
-                _createElementVNode$1("div", _hoisted_30$1, [
-                  _createElementVNode$1("div", _hoisted_31$1, [
-                    _cache[15] || (_cache[15] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Remaining", -1)),
-                    _createElementVNode$1("p", _hoisted_32$1, [
-                      _createElementVNode$1("span", {
-                        style: _normalizeStyle$1(amountMaskStyle())
-                      }, _toDisplayString$1(progress.value?.configured ? formatCurrency(remainingAmount.value, __props.displayCurrency) : "-"), 5)
+              _createElementVNode$2("section", _hoisted_28$2, [
+                !progress.value?.configured ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_29$2, " No goal is configured for this Home scope yet. Set a target amount, annual return, and monthly invest amount to start forecasting. ")) : _createCommentVNode$2("", true),
+                _createElementVNode$2("div", _hoisted_30$2, [
+                  _createElementVNode$2("div", _hoisted_31$2, [
+                    _cache[15] || (_cache[15] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Remaining", -1)),
+                    _createElementVNode$2("p", _hoisted_32$2, [
+                      _createElementVNode$2("span", {
+                        style: _normalizeStyle$2(amountMaskStyle())
+                      }, _toDisplayString$2(progress.value?.configured ? formatCurrency(remainingAmount.value, __props.displayCurrency) : "-"), 5)
                     ])
                   ]),
-                  _createElementVNode$1("div", _hoisted_33$1, [
-                    _cache[16] || (_cache[16] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Estimated reach", -1)),
-                    _createElementVNode$1("p", _hoisted_34$1, _toDisplayString$1(progress.value?.configured ? formatProjectedDate(progress.value.projected_reach_date) : "-"), 1)
+                  _createElementVNode$2("div", _hoisted_33$2, [
+                    _cache[16] || (_cache[16] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Estimated reach", -1)),
+                    _createElementVNode$2("p", _hoisted_34$2, _toDisplayString$2(progress.value?.configured ? formatProjectedDate(progress.value.projected_reach_date) : "-"), 1)
                   ]),
-                  _createElementVNode$1("div", _hoisted_35$1, [
-                    _cache[17] || (_cache[17] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Time to goal", -1)),
-                    _createElementVNode$1("p", _hoisted_36$1, _toDisplayString$1(progress.value?.configured && progress.value.projected_months_to_goal != null ? formatMonths(progress.value.projected_months_to_goal) : "-"), 1)
+                  _createElementVNode$2("div", _hoisted_35$2, [
+                    _cache[17] || (_cache[17] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Time to goal", -1)),
+                    _createElementVNode$2("p", _hoisted_36$2, _toDisplayString$2(progress.value?.configured && progress.value.projected_months_to_goal != null ? formatMonths(progress.value.projected_months_to_goal) : "-"), 1)
                   ]),
-                  _createElementVNode$1("div", _hoisted_37$1, [
-                    _cache[18] || (_cache[18] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Recent actual", -1)),
-                    _createElementVNode$1("p", _hoisted_38$1, _toDisplayString$1(progress.value?.configured && progress.value.recent_actual_annualized_return_pct != null ? formatPercent(progress.value.recent_actual_annualized_return_pct) : "-"), 1)
+                  _createElementVNode$2("div", _hoisted_37$2, [
+                    _cache[18] || (_cache[18] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "Recent actual", -1)),
+                    _createElementVNode$2("p", _hoisted_38$2, _toDisplayString$2(progress.value?.configured && progress.value.recent_actual_annualized_return_pct != null ? formatPercent(progress.value.recent_actual_annualized_return_pct) : "-"), 1)
                   ])
                 ]),
-                _createElementVNode$1("div", _hoisted_39$1, [
-                  _createElementVNode$1("div", _hoisted_40$1, [
-                    _cache[19] || (_cache[19] = _createElementVNode$1("div", null, [
-                      _createElementVNode$1("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Forecast milestones"),
-                      _createElementVNode$1("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Simple compounding with month-end contributions.")
+                _createElementVNode$2("div", _hoisted_39$2, [
+                  _createElementVNode$2("div", _hoisted_40$2, [
+                    _cache[19] || (_cache[19] = _createElementVNode$2("div", null, [
+                      _createElementVNode$2("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Forecast milestones"),
+                      _createElementVNode$2("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Simple compounding with month-end contributions.")
                     ], -1)),
-                    _createElementVNode$1("span", _hoisted_41$1, " as_of " + _toDisplayString$1(formatAsOf(progress.value?.as_of)), 1)
+                    _createElementVNode$2("span", _hoisted_41$2, " as_of " + _toDisplayString$2(formatAsOf(progress.value?.as_of)), 1)
                   ]),
-                  _createElementVNode$1("div", _hoisted_42$1, [
-                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(milestoneRows.value, (row) => {
-                      return _openBlock$1(), _createElementBlock$1("div", {
+                  _createElementVNode$2("div", _hoisted_42$2, [
+                    (_openBlock$2(true), _createElementBlock$2(_Fragment$2, null, _renderList$2(milestoneRows.value, (row) => {
+                      return _openBlock$2(), _createElementBlock$2("div", {
                         key: row.label,
                         class: "rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900"
                       }, [
-                        _createElementVNode$1("p", _hoisted_43$1, _toDisplayString$1(row.label), 1),
-                        _createElementVNode$1("p", _hoisted_44$1, [
-                          _createElementVNode$1("span", {
-                            style: _normalizeStyle$1(amountMaskStyle())
-                          }, _toDisplayString$1(formatCurrency(row.amount, __props.displayCurrency)), 5)
+                        _createElementVNode$2("p", _hoisted_43$2, _toDisplayString$2(row.label), 1),
+                        _createElementVNode$2("p", _hoisted_44$2, [
+                          _createElementVNode$2("span", {
+                            style: _normalizeStyle$2(amountMaskStyle())
+                          }, _toDisplayString$2(formatCurrency(row.amount, __props.displayCurrency)), 5)
                         ])
                       ]);
                     }), 128))
                   ]),
-                  _createElementVNode$1("p", _hoisted_45$1, _toDisplayString$1(comparisonComment.value), 1)
+                  _createElementVNode$2("p", _hoisted_45$2, _toDisplayString$2(comparisonComment.value), 1)
                 ]),
-                _createElementVNode$1("div", _hoisted_46$1, [
-                  _createElementVNode$1("div", _hoisted_47$1, [
-                    _createElementVNode$1("div", null, [
-                      _createElementVNode$1("div", _hoisted_48$1, [
-                        _cache[20] || (_cache[20] = _createElementVNode$1("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Goal assumptions", -1)),
-                        _createElementVNode$1("button", {
+                _createElementVNode$2("div", _hoisted_46$2, [
+                  _createElementVNode$2("div", _hoisted_47$2, [
+                    _createElementVNode$2("div", null, [
+                      _createElementVNode$2("div", _hoisted_48$2, [
+                        _cache[20] || (_cache[20] = _createElementVNode$2("h3", { class: "text-sm font-semibold text-slate-900 dark:text-slate-100" }, "Goal assumptions", -1)),
+                        _createElementVNode$2("button", {
                           type: "button",
                           class: "inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                           "aria-expanded": assumptionsInfoOpen.value,
                           "aria-label": "Goal assumptions help",
                           onClick: _cache[2] || (_cache[2] = ($event) => assumptionsInfoOpen.value = !assumptionsInfoOpen.value)
-                        }, " i ", 8, _hoisted_49$1)
+                        }, " i ", 8, _hoisted_49$2)
                       ]),
-                      _createElementVNode$1("p", _hoisted_50$1, "Stored in " + _toDisplayString$1(__props.displayCurrency) + " for the current Home scope.", 1)
+                      _createElementVNode$2("p", _hoisted_50$2, "Stored in " + _toDisplayString$2(__props.displayCurrency) + " for the current Home scope.", 1)
                     ]),
-                    _createElementVNode$1("div", _hoisted_51$1, [
-                      !editMode.value ? (_openBlock$1(), _createElementBlock$1("button", {
+                    _createElementVNode$2("div", _hoisted_51$2, [
+                      !editMode.value ? (_openBlock$2(), _createElementBlock$2("button", {
                         key: 0,
                         type: "button",
                         class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                         onClick: _cache[3] || (_cache[3] = ($event) => editMode.value = true)
-                      }, " Edit ")) : (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 1 }, [
-                        _createElementVNode$1("button", {
+                      }, " Edit ")) : (_openBlock$2(), _createElementBlock$2(_Fragment$2, { key: 1 }, [
+                        _createElementVNode$2("button", {
                           type: "button",
                           class: "rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50",
                           disabled: !canSave.value,
                           onClick: saveTarget
-                        }, _toDisplayString$1(saving.value ? "Saving..." : "Save"), 9, _hoisted_52$1),
-                        _createElementVNode$1("button", {
+                        }, _toDisplayString$2(saving.value ? "Saving..." : "Save"), 9, _hoisted_52$2),
+                        _createElementVNode$2("button", {
                           type: "button",
                           class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                           onClick: resetForm
                         }, " Reset "),
-                        target.value?.configured ? (_openBlock$1(), _createElementBlock$1("button", {
+                        target.value?.configured ? (_openBlock$2(), _createElementBlock$2("button", {
                           key: 0,
                           type: "button",
                           class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                           onClick: cancelEdit
-                        }, " Cancel ")) : _createCommentVNode$1("", true)
+                        }, " Cancel ")) : _createCommentVNode$2("", true)
                       ], 64))
                     ])
                   ]),
-                  assumptionsInfoOpen.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_53$1, " Target amount is the wealth goal for this Home scope. Annual return is the assumed yearly growth rate, and monthly invest amount is added at month-end using monthly compounding in the forecast simulation. ")) : _createCommentVNode$1("", true),
-                  successMessage.value ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_54$1, _toDisplayString$1(successMessage.value), 1)) : _createCommentVNode$1("", true),
-                  editMode.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_55$1, [
-                    _createElementVNode$1("label", _hoisted_56$1, [
-                      _cache[21] || (_cache[21] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
-                      _withDirectives$1(_createElementVNode$1("input", {
+                  assumptionsInfoOpen.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_53$2, " Target amount is the wealth goal for this Home scope. Annual return is the assumed yearly growth rate, and monthly invest amount is added at month-end using monthly compounding in the forecast simulation. ")) : _createCommentVNode$2("", true),
+                  successMessage.value ? (_openBlock$2(), _createElementBlock$2("p", _hoisted_54$2, _toDisplayString$2(successMessage.value), 1)) : _createCommentVNode$2("", true),
+                  editMode.value ? (_openBlock$2(), _createElementBlock$2("div", _hoisted_55$2, [
+                    _createElementVNode$2("label", _hoisted_56$2, [
+                      _cache[21] || (_cache[21] = _createElementVNode$2("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
+                      _withDirectives$2(_createElementVNode$2("input", {
                         "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => form.targetAmount = $event),
                         type: "number",
                         min: "0",
@@ -717,9 +717,9 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                         [_vModelText, form.targetAmount]
                       ])
                     ]),
-                    _createElementVNode$1("label", _hoisted_57$1, [
-                      _cache[22] || (_cache[22] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
-                      _withDirectives$1(_createElementVNode$1("input", {
+                    _createElementVNode$2("label", _hoisted_57$2, [
+                      _cache[22] || (_cache[22] = _createElementVNode$2("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
+                      _withDirectives$2(_createElementVNode$2("input", {
                         "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => form.annualReturnRatePct = $event),
                         type: "number",
                         min: "0",
@@ -730,9 +730,9 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                         [_vModelText, form.annualReturnRatePct]
                       ])
                     ]),
-                    _createElementVNode$1("label", _hoisted_58$1, [
-                      _cache[23] || (_cache[23] = _createElementVNode$1("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
-                      _withDirectives$1(_createElementVNode$1("input", {
+                    _createElementVNode$2("label", _hoisted_58$2, [
+                      _cache[23] || (_cache[23] = _createElementVNode$2("span", { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
+                      _withDirectives$2(_createElementVNode$2("input", {
                         "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => form.monthlyInvestAmount = $event),
                         type: "number",
                         min: "0",
@@ -742,30 +742,1174 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                         [_vModelText, form.monthlyInvestAmount]
                       ])
                     ])
-                  ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_59$1, [
-                    _createElementVNode$1("div", _hoisted_60$1, [
-                      _cache[24] || (_cache[24] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
-                      _createElementVNode$1("p", _hoisted_61, [
-                        _createElementVNode$1("span", {
-                          style: _normalizeStyle$1(amountMaskStyle())
-                        }, _toDisplayString$1(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5)
+                  ])) : (_openBlock$2(), _createElementBlock$2("div", _hoisted_59$2, [
+                    _createElementVNode$2("div", _hoisted_60$2, [
+                      _cache[24] || (_cache[24] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "목표자산", -1)),
+                      _createElementVNode$2("p", _hoisted_61$2, [
+                        _createElementVNode$2("span", {
+                          style: _normalizeStyle$2(amountMaskStyle())
+                        }, _toDisplayString$2(target.value?.configured ? formatCurrency(targetAmount.value, __props.displayCurrency) : "-"), 5)
                       ])
                     ]),
-                    _createElementVNode$1("div", _hoisted_62, [
-                      _cache[25] || (_cache[25] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
-                      _createElementVNode$1("p", _hoisted_63, _toDisplayString$1(target.value?.configured ? formatPercent(annualReturnInputValue.value) : "-"), 1)
+                    _createElementVNode$2("div", _hoisted_62$2, [
+                      _cache[25] || (_cache[25] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
+                      _createElementVNode$2("p", _hoisted_63$1, _toDisplayString$2(target.value?.configured ? formatPercent(annualReturnInputValue.value) : "-"), 1)
                     ]),
-                    _createElementVNode$1("div", _hoisted_64, [
-                      _cache[26] || (_cache[26] = _createElementVNode$1("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
-                      _createElementVNode$1("p", _hoisted_65, [
-                        _createElementVNode$1("span", {
-                          style: _normalizeStyle$1(amountMaskStyle())
-                        }, _toDisplayString$1(target.value?.configured ? formatCurrency(toNumber(target.value?.monthly_invest_amount), __props.displayCurrency) : "-"), 5)
+                    _createElementVNode$2("div", _hoisted_64$1, [
+                      _cache[26] || (_cache[26] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
+                      _createElementVNode$2("p", _hoisted_65$1, [
+                        _createElementVNode$2("span", {
+                          style: _normalizeStyle$2(amountMaskStyle())
+                        }, _toDisplayString$2(target.value?.configured ? formatCurrency(toNumber(target.value?.monthly_invest_amount), __props.displayCurrency) : "-"), 5)
                       ])
                     ])
                   ]))
                 ])
               ])
+            ])
+          ]))
+        ]))
+      ]);
+    };
+  }
+});
+
+const {defineComponent:_defineComponent$1} = await importShared('vue');
+
+const {toDisplayString:_toDisplayString$1,createElementVNode:_createElementVNode$1,createTextVNode:_createTextVNode$1,openBlock:_openBlock$1,createElementBlock:_createElementBlock$1,createCommentVNode:_createCommentVNode$1,renderList:_renderList$1,Fragment:_Fragment$1,normalizeClass:_normalizeClass$1,vModelSelect:_vModelSelect$1,withDirectives:_withDirectives$1,normalizeStyle:_normalizeStyle$1} = await importShared('vue');
+
+const _hoisted_1$1 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_2$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_3$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_4$1 = { class: "text-base font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_5$1 = ["aria-expanded", "aria-label"];
+const _hoisted_6$1 = { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_7$1 = {
+  key: 0,
+  class: "mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 shadow-sm dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+};
+const _hoisted_8$1 = { class: "font-semibold text-slate-700 dark:text-slate-100" };
+const _hoisted_9$1 = { class: "mt-2 [overflow-wrap:anywhere]" };
+const _hoisted_10$1 = { class: "font-semibold text-slate-700 dark:text-slate-100" };
+const _hoisted_11$1 = { class: "mt-2 [overflow-wrap:anywhere]" };
+const _hoisted_12$1 = {
+  key: 1,
+  class: "mt-3 space-y-1"
+};
+const _hoisted_13$1 = { class: "text-sm font-medium text-slate-700 dark:text-slate-200" };
+const _hoisted_14$1 = {
+  key: 2,
+  class: "mt-4 space-y-4"
+};
+const _hoisted_15$1 = { class: "rounded-2xl border border-slate-200 p-3 dark:border-slate-700" };
+const _hoisted_16$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_17$1 = ["onClick"];
+const _hoisted_18$1 = { class: "mt-3 flex flex-wrap items-center gap-2" };
+const _hoisted_19$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_20$1 = ["onClick"];
+const _hoisted_21$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_22$1 = {
+  key: 0,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_23$1 = ["onClick"];
+const _hoisted_24$1 = {
+  key: 1,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_25$1 = ["value"];
+const _hoisted_26$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_27$1 = ["onClick"];
+const _hoisted_28$1 = {
+  key: 2,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_29$1 = ["onClick"];
+const _hoisted_30$1 = {
+  key: 3,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_31$1 = ["disabled", "onClick"];
+const _hoisted_32$1 = {
+  key: 0,
+  class: "text-[11px] text-slate-500 dark:text-slate-400"
+};
+const _hoisted_33$1 = {
+  key: 1,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_34$1 = ["onClick"];
+const _hoisted_35$1 = {
+  key: 2,
+  class: "mt-3 text-xs text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400"
+};
+const _hoisted_36$1 = {
+  key: 0,
+  class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_37$1 = {
+  key: 1,
+  class: "rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100"
+};
+const _hoisted_38$1 = {
+  key: 2,
+  class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_39$1 = {
+  key: 3,
+  class: "rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_40$1 = {
+  key: 4,
+  class: "space-y-4"
+};
+const _hoisted_41$1 = { class: "rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70" };
+const _hoisted_42$1 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_43$1 = { class: "text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" };
+const _hoisted_44$1 = { class: "mt-2 text-sm text-slate-700 dark:text-slate-200" };
+const _hoisted_45$1 = {
+  key: 0,
+  class: "mt-3 flex flex-wrap items-center gap-2"
+};
+const _hoisted_46$1 = { class: "uppercase tracking-[0.16em]" };
+const _hoisted_47$1 = { class: "font-semibold" };
+const _hoisted_48$1 = {
+  key: 1,
+  class: "mt-3 flex flex-wrap items-center gap-2"
+};
+const _hoisted_49$1 = { class: "font-medium" };
+const _hoisted_50$1 = { class: "text-slate-500 dark:text-slate-400" };
+const _hoisted_51$1 = {
+  key: 2,
+  class: "mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-3 text-xs text-slate-700 dark:text-slate-200"
+};
+const _hoisted_52$1 = { class: "flex flex-wrap items-center gap-2" };
+const _hoisted_53$1 = { class: "rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" };
+const _hoisted_54$1 = { class: "rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" };
+const _hoisted_55$1 = { class: "mt-2 text-slate-600 dark:text-slate-300" };
+const _hoisted_56$1 = {
+  key: 0,
+  class: "mt-3 rounded-xl border border-rose-500/35 bg-rose-500/10 px-3 py-3 text-rose-100"
+};
+const _hoisted_57$1 = { class: "font-semibold" };
+const _hoisted_58$1 = {
+  key: 1,
+  class: "mt-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-3 text-amber-100"
+};
+const _hoisted_59$1 = { class: "font-semibold" };
+const _hoisted_60$1 = { class: "mt-3 flex flex-wrap gap-2" };
+const _hoisted_61$1 = ["onMouseenter", "onFocus"];
+const _hoisted_62$1 = { class: "font-semibold" };
+const _hoisted_63 = { class: "text-rose-200" };
+const _hoisted_64 = ["onMouseenter", "onFocus"];
+const _hoisted_65 = { class: "font-semibold" };
+const _hoisted_66 = {
+  key: 1,
+  class: "inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+};
+const _hoisted_67 = {
+  key: 2,
+  class: "mt-3 text-rose-200"
+};
+const _hoisted_68 = {
+  key: 3,
+  class: "mt-3 flex flex-wrap items-center gap-2"
+};
+const _hoisted_69 = { class: "font-medium" };
+const _hoisted_70 = { class: "text-slate-500 dark:text-slate-400" };
+const _hoisted_71 = { class: "rounded-full bg-slate-200 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300" };
+const _hoisted_72 = { class: "mt-4 overflow-x-auto pb-2" };
+const _hoisted_73 = ["viewBox", "width"];
+const _hoisted_74 = ["x2", "y1", "y2"];
+const _hoisted_75 = ["x", "y"];
+const _hoisted_76 = ["x", "y", "width", "height"];
+const _hoisted_77 = ["x", "y", "width", "height", "fill", "stroke", "stroke-width", "opacity"];
+const _hoisted_78 = ["x", "width", "height", "onMouseenter", "onMousemove", "onClick", "onTouchstartPassive"];
+const _hoisted_79 = ["x", "y", "fill", "font-size", "font-weight"];
+const _hoisted_80 = { class: "mt-4 flex flex-wrap gap-2" };
+const _hoisted_81 = ["title", "onMouseenter"];
+const _hoisted_82 = { class: "name-clamp-2 max-w-[11rem] leading-4" };
+const _hoisted_83 = {
+  key: 0,
+  class: "mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
+};
+const _hoisted_84 = ["onMouseenter"];
+const _hoisted_85 = { class: "flex items-start gap-2" };
+const _hoisted_86 = ["title"];
+const _hoisted_87 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_88 = {
+  key: 0,
+  class: "text-xs text-slate-500 dark:text-slate-400"
+};
+const {computed: computed$1,onBeforeUnmount: onBeforeUnmount$1,onMounted: onMounted$1,reactive: reactive$1,ref: ref$1,watch: watch$1} = await importShared('vue');
+const USER_REBALANCE_THRESHOLD_EVENT = "myasset:user-settings:asset-rebalance-threshold";
+const chartHeight = 280;
+const chartPaddingLeft = 54;
+const chartPaddingRight = 20;
+const chartPaddingTop = 18;
+const chartPaddingBottom = 34;
+const barWidth = 42;
+const barGap = 18;
+const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
+  __name: "CompositionStackedCard",
+  props: {
+    title: {},
+    description: {},
+    chartKind: {},
+    displayCurrency: {},
+    scopeType: { default: null },
+    scopeId: { default: null },
+    amountMask: { type: Boolean, default: false },
+    storageKeyPrefix: {},
+    portfolioOptions: { default: () => [] }
+  },
+  setup(__props) {
+    const props = __props;
+    const TAB_OPTIONS = [
+      "GROSS_COMPOSITION",
+      "CAPITAL_STRUCTURE",
+      "LIABILITY_BREAKDOWN"
+    ];
+    const BUCKET_OPTIONS = ["DAY", "WEEK", "MONTH"];
+    const SUMMARY_GROSS_GROUP_OPTIONS = ["ASSET_CLASS", "PORTFOLIO", "ASSET"];
+    const PORTFOLIO_GROSS_GROUP_OPTIONS = ["ASSET_CLASS", "ASSET"];
+    const LIABILITY_GROUP_OPTIONS = ["PORTFOLIO", "LIABILITY_TYPE"];
+    const ASSET_TOP_N_OPTIONS = [5, 8, 10, 12];
+    const ASSET_THRESHOLD_OPTIONS = [8, 10, 12, 15];
+    function createDefaultUiState() {
+      return {
+        expanded: true,
+        tab: "GROSS_COMPOSITION",
+        bucket: "DAY",
+        grossMode: "SUMMARY",
+        grossGroup: "ASSET_CLASS",
+        assetTopN: 8,
+        assetThresholdPct: 10,
+        liabilityGroup: "PORTFOLIO",
+        portfolioKey: ""
+      };
+    }
+    const ui = reactive$1(createDefaultUiState());
+    const data = ref$1(null);
+    const loading = ref$1(false);
+    const errorMessage = ref$1("");
+    const inspectIndex = ref$1(null);
+    const infoOpen = ref$1(false);
+    const hoveredSegmentKey = ref$1(null);
+    const thresholdSaving = ref$1(false);
+    const thresholdSaveError = ref$1("");
+    function toNumber(value) {
+      if (value == null) return 0;
+      const parsed = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    function formatCurrency(value, currency) {
+      return new Intl.NumberFormat("ko-KR", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0
+      }).format(value || 0);
+    }
+    function formatCompactAmount(value) {
+      return new Intl.NumberFormat("ko-KR", {
+        notation: "compact",
+        maximumFractionDigits: 1
+      }).format(value || 0);
+    }
+    function formatPercent(value) {
+      if (value == null || !Number.isFinite(value)) return "-";
+      return `${value.toFixed(1)}%`;
+    }
+    function formatDateTime(value) {
+      return formatDateTimeSeoul(value);
+    }
+    function amountMaskStyle() {
+      return props.amountMask ? { filter: "blur(6px)" } : void 0;
+    }
+    function getErrorMessage(error) {
+      if (error instanceof AxiosError) {
+        return error.response?.data?.detail || error.message;
+      }
+      if (error instanceof Error) return error.message;
+      return "Unknown error";
+    }
+    function loadUiState() {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(`${props.storageKeyPrefix}:ui`);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.expanded === "boolean") ui.expanded = parsed.expanded;
+        if (TAB_OPTIONS.includes(parsed.tab)) ui.tab = parsed.tab;
+        if (BUCKET_OPTIONS.includes(parsed.bucket)) ui.bucket = parsed.bucket;
+        if (parsed.grossMode === "SUMMARY" || parsed.grossMode === "PORTFOLIO") ui.grossMode = parsed.grossMode;
+        if (parsed.grossGroup === "ASSET_CLASS" || parsed.grossGroup === "PORTFOLIO" || parsed.grossGroup === "ASSET") {
+          ui.grossGroup = parsed.grossGroup;
+        } else if (parsed.grossSummaryGroup === "ASSET_CLASS" || parsed.grossSummaryGroup === "PORTFOLIO") {
+          ui.grossGroup = parsed.grossSummaryGroup;
+        }
+        if (parsed.liabilityGroup === "PORTFOLIO" || parsed.liabilityGroup === "LIABILITY_TYPE") {
+          ui.liabilityGroup = parsed.liabilityGroup;
+        }
+        if (typeof parsed.assetTopN === "number" && Number.isFinite(parsed.assetTopN) && parsed.assetTopN >= 3 && parsed.assetTopN <= 20) {
+          ui.assetTopN = Math.round(parsed.assetTopN);
+        }
+        if (typeof parsed.assetThresholdPct === "number" && Number.isFinite(parsed.assetThresholdPct) && parsed.assetThresholdPct >= 5 && parsed.assetThresholdPct <= 30) {
+          ui.assetThresholdPct = Math.round(parsed.assetThresholdPct);
+        }
+        if (typeof parsed.portfolioKey === "string") ui.portfolioKey = parsed.portfolioKey;
+      } catch {
+      }
+    }
+    function saveUiState() {
+      if (typeof window === "undefined") return;
+      window.localStorage.setItem(`${props.storageKeyPrefix}:ui`, JSON.stringify(ui));
+    }
+    const canLoad = computed$1(() => Boolean(props.scopeType && props.scopeId != null));
+    const effectiveMode = computed$1(
+      () => ui.tab === "GROSS_COMPOSITION" ? ui.grossMode : "SUMMARY"
+    );
+    const effectiveGroupBy = computed$1(() => {
+      if (ui.tab === "LIABILITY_BREAKDOWN") return ui.liabilityGroup;
+      if (ui.tab === "CAPITAL_STRUCTURE") return "PORTFOLIO";
+      if (ui.grossMode === "PORTFOLIO") {
+        return ui.grossGroup === "ASSET" ? "ASSET" : "ASSET_CLASS";
+      }
+      return ui.grossGroup;
+    });
+    const selectedPortfolioId = computed$1(() => {
+      if (ui.tab !== "GROSS_COMPOSITION" || ui.grossMode !== "PORTFOLIO") return void 0;
+      const parsed = Number(ui.portfolioKey);
+      return Number.isFinite(parsed) ? parsed : void 0;
+    });
+    const showAssetTopNControls = computed$1(() => ui.tab === "GROSS_COMPOSITION" && ui.grossGroup === "ASSET");
+    const showAssetThresholdControls = computed$1(
+      () => ui.tab === "GROSS_COMPOSITION" && ui.grossGroup === "ASSET"
+    );
+    const enableStrongSegmentHover = computed$1(
+      () => props.chartKind === "ALLOCATION" && ui.tab === "GROSS_COMPOSITION" && ui.grossGroup === "ASSET"
+    );
+    const assetNearThresholdPct = computed$1(() => Math.max(0, ui.assetThresholdPct - 2));
+    function ensurePortfolioSelection() {
+      if (ui.tab !== "GROSS_COMPOSITION" || ui.grossMode !== "PORTFOLIO") return;
+      const validKeys = props.portfolioOptions.map((item) => item.key);
+      if (validKeys.length === 0) {
+        ui.portfolioKey = "";
+        return;
+      }
+      if (!validKeys.includes(ui.portfolioKey)) {
+        ui.portfolioKey = validKeys[0] ?? "";
+      }
+    }
+    async function refreshData() {
+      if (!canLoad.value || !props.scopeType || props.scopeId == null) {
+        data.value = null;
+        return;
+      }
+      ensurePortfolioSelection();
+      if (ui.tab === "GROSS_COMPOSITION" && ui.grossMode === "PORTFOLIO" && !selectedPortfolioId.value) {
+        data.value = null;
+        errorMessage.value = props.portfolioOptions.length === 0 ? "No portfolios available for portfolio mode." : "";
+        return;
+      }
+      loading.value = true;
+      errorMessage.value = "";
+      inspectIndex.value = null;
+      try {
+        data.value = await getCompositionSeries({
+          scope_type: props.scopeType,
+          scope_id: props.scopeId,
+          display_currency: props.displayCurrency,
+          chart_kind: props.chartKind,
+          tab: ui.tab,
+          mode: effectiveMode.value,
+          group_by: effectiveGroupBy.value,
+          portfolio_id: selectedPortfolioId.value,
+          bucket: ui.bucket,
+          limit: 12,
+          top_n: effectiveGroupBy.value === "ASSET" ? ui.assetTopN : void 0
+        });
+      } catch (error) {
+        data.value = null;
+        errorMessage.value = getErrorMessage(error);
+      } finally {
+        loading.value = false;
+      }
+    }
+    const chartPoints = computed$1(() => data.value?.points ?? []);
+    const legendItems = computed$1(() => data.value?.legend ?? []);
+    const latestPoint = computed$1(() => {
+      if (chartPoints.value.length === 0) return null;
+      return chartPoints.value[chartPoints.value.length - 1] ?? null;
+    });
+    const inspectedPoint = computed$1(() => {
+      if (inspectIndex.value == null) return latestPoint.value;
+      return chartPoints.value[inspectIndex.value] ?? latestPoint.value;
+    });
+    const isInspectingHoveredDate = computed$1(() => inspectIndex.value != null && inspectedPoint.value != null);
+    const inspectedDatePillLabel = computed$1(() => {
+      if (!inspectedPoint.value) return "-";
+      return isInspectingHoveredDate.value ? "Hovering date" : "Latest date";
+    });
+    const inspectedDatePillValue = computed$1(() => {
+      if (!inspectedPoint.value) return "-";
+      return inspectedPoint.value.snapshot_date || inspectedPoint.value.bucket_label;
+    });
+    const chartSummaryDateLabel = computed$1(() => inspectedPoint.value?.bucket_label ?? "-");
+    const chartSummaryAmountLabel = computed$1(
+      () => props.chartKind === "ALLOCATION" ? "Underlying total" : "Total"
+    );
+    const chartSummaryAmountText = computed$1(
+      () => formatCurrency(toNumber(inspectedPoint.value?.total_amount), props.displayCurrency)
+    );
+    const collapsedSummary = computed$1(() => {
+      if (!data.value?.has_data || !latestPoint.value) return "Collapsed. Click Expand to preview stacked composition.";
+      return `${tabLabel(ui.tab)} · ${latestPoint.value.bucket_label} · ${props.chartKind === "ALLOCATION" ? "100% normalized" : "stacked amount view"}`;
+    });
+    function tabLabel(tab) {
+      if (tab === "CAPITAL_STRUCTURE") return "Capital Structure";
+      if (tab === "LIABILITY_BREAKDOWN") return "Liability Breakdown";
+      return "Gross Composition";
+    }
+    const infoSummary = computed$1(() => {
+      if (props.chartKind === "AMOUNT") {
+        return "Tracks how the total amount changed over time and how much each component contributed to that move.";
+      }
+      return "Normalizes each bar to 100% so you can compare composition changes without total size distorting the view.";
+    });
+    const tabHelpTitle = computed$1(() => {
+      if (ui.tab === "CAPITAL_STRUCTURE") return "Capital Structure";
+      if (ui.tab === "LIABILITY_BREAKDOWN") return "Liability Breakdown";
+      return "Gross Composition";
+    });
+    const tabHelpBody = computed$1(() => {
+      if (ui.tab === "CAPITAL_STRUCTURE") {
+        if (props.chartKind === "AMOUNT") {
+          return "Each bar equals gross assets, split into net assets and liabilities as positive amounts. Use this to see whether debt is taking a larger share of total assets.";
+        }
+        return "Each bar is normalized to 100% of gross assets. It shows how the net-vs-liabilities mix is changing over time.";
+      }
+      if (ui.tab === "LIABILITY_BREAKDOWN") {
+        if (props.chartKind === "AMOUNT") {
+          return "Each bar equals total liabilities, broken down by portfolio or liability type. Use this to see which debt bucket is growing in actual amount.";
+        }
+        return "Each bar is normalized to 100% of liabilities. It shows where debt concentration is moving without being affected by total liability size.";
+      }
+      if (props.chartKind === "AMOUNT") {
+        return ui.grossGroup === "ASSET" ? `Each bar shows the actual amount split across individual assets. Top ${ui.assetTopN} assets stay separate, and the rest are combined into Others.` : "Each bar shows the actual amount split across asset classes or portfolios. Use this for growth and contribution analysis, especially when you want to know what really increased in money terms.";
+      }
+      return ui.grossGroup === "ASSET" ? `Each bar is normalized to 100% of gross assets and split by individual assets. Top ${ui.assetTopN} assets stay separate, which makes single-name weight drift and rebalancing checks easier.` : "Each bar is normalized to 100% of gross assets. Use this for mix and rebalancing analysis, such as checking whether crypto or cash share is drifting up or down.";
+    });
+    const tabHelpFooter = computed$1(() => {
+      if (ui.tab === "GROSS_COMPOSITION" && props.chartKind === "ALLOCATION") {
+        return `This is the best view for future allocation rules like 'BTC should stay under ${ui.assetThresholdPct}% of total assets.'`;
+      }
+      if (ui.tab === "LIABILITY_BREAKDOWN") {
+        return "Liabilities are shown as positive stack segments here on purpose so debt composition stays easy to compare.";
+      }
+      return "DAY, WEEK, and MONTH use snapshot history, with WEEK and MONTH selecting the last snapshot in each bucket.";
+    });
+    function bucketLabel(bucket) {
+      return bucket;
+    }
+    function grossGroupLabel(value) {
+      if (value === "PORTFOLIO") return "Portfolio";
+      if (value === "ASSET") return "Asset";
+      return "Asset Class";
+    }
+    function liabilityGroupLabel(value) {
+      return value === "LIABILITY_TYPE" ? "Liability Type" : "Portfolio";
+    }
+    const inlineHint = computed$1(() => {
+      if (ui.tab === "CAPITAL_STRUCTURE") {
+        return "Capital Structure uses Gross as the full bar, with Net + Liabilities = Gross.";
+      }
+      if (ui.tab === "LIABILITY_BREAKDOWN") {
+        return ui.liabilityGroup === "PORTFOLIO" ? "Portfolio groups debt by account or institution bucket so you can see where total liabilities are concentrated." : "Liability Type groups debt by type so you can compare categories like loan, mortgage, or credit balance.";
+      }
+      if (ui.grossGroup === "ASSET") {
+        return `Asset groups Gross Composition by individual holdings. Top ${ui.assetTopN} assets stay separate and smaller positions are combined into Others.`;
+      }
+      return "";
+    });
+    function hashString(value) {
+      let hash = 0;
+      for (let index = 0; index < value.length; index += 1) {
+        hash = hash * 31 + value.charCodeAt(index) >>> 0;
+      }
+      return hash;
+    }
+    const fallbackPalette = [
+      "#60a5fa",
+      "#34d399",
+      "#f59e0b",
+      "#a78bfa",
+      "#ef4444",
+      "#14b8a6",
+      "#f472b6",
+      "#84cc16",
+      "#fb7185",
+      "#38bdf8"
+    ];
+    function colorForToken(token) {
+      const normalized = token.toUpperCase();
+      if (normalized === "ASSET:OTHERS" || normalized === "OTHERS") return "#64748b";
+      if (normalized === "REAL_ESTATE") return "#57c0c7";
+      if (normalized === "DEPOSIT_SAVING") return "#a3d16f";
+      if (normalized === "STOCK") return "#7aa2e3";
+      if (normalized === "CRYPTO") return "#e25d4f";
+      if (normalized === "CASH") return "#8b7ce6";
+      if (normalized === "BOND") return "#f4bf4f";
+      if (normalized === "NET") return "#8b7ce6";
+      if (normalized === "LIABILITIES" || normalized.startsWith("LIABILITY_TYPE")) return "#e15263";
+      return fallbackPalette[hashString(token) % fallbackPalette.length] ?? "#94a3b8";
+    }
+    function setHoveredSegment(key) {
+      hoveredSegmentKey.value = key;
+    }
+    function clearHoveredSegment() {
+      hoveredSegmentKey.value = null;
+    }
+    function normalizeAssetThreshold(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return 10;
+      return Math.min(30, Math.max(5, Math.round(parsed)));
+    }
+    async function loadAssetThresholdFromSettings() {
+      try {
+        const settings = await getMySettings();
+        ui.assetThresholdPct = normalizeAssetThreshold(settings.asset_rebalance_threshold_pct);
+      } catch {
+      }
+    }
+    function broadcastAssetThreshold(value) {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(USER_REBALANCE_THRESHOLD_EVENT, {
+          detail: value
+        })
+      );
+    }
+    async function setAssetThreshold(value) {
+      const normalized = normalizeAssetThreshold(value);
+      if (ui.assetThresholdPct === normalized && !thresholdSaveError.value) return;
+      ui.assetThresholdPct = normalized;
+      thresholdSaving.value = true;
+      thresholdSaveError.value = "";
+      try {
+        await updateMySettings({ asset_rebalance_threshold_pct: normalized });
+        broadcastAssetThreshold(normalized);
+      } catch (error) {
+        thresholdSaveError.value = getErrorMessage(error);
+      } finally {
+        thresholdSaving.value = false;
+      }
+    }
+    function handleAssetThresholdBroadcast(event) {
+      const customEvent = event;
+      ui.assetThresholdPct = normalizeAssetThreshold(customEvent.detail);
+      thresholdSaveError.value = "";
+    }
+    const legendWithColors = computed$1(
+      () => legendItems.value.map((item) => ({
+        ...item,
+        color: colorForToken(item.color_token || item.key)
+      }))
+    );
+    const legendColorByKey = computed$1(() => {
+      const map = /* @__PURE__ */ new Map();
+      for (const item of legendWithColors.value) {
+        map.set(item.key, item.color);
+      }
+      return map;
+    });
+    const displayedSegments = computed$1(
+      () => inspectedPoint.value?.segments.map((segment) => ({
+        ...segment,
+        color: legendColorByKey.value.get(segment.key) ?? "#94a3b8"
+      })) ?? []
+    );
+    const capitalStructurePills = computed$1(() => {
+      if (ui.tab !== "CAPITAL_STRUCTURE" || !inspectedPoint.value) return [];
+      return displayedSegments.value.map((segment) => ({
+        key: segment.key,
+        label: segment.label,
+        color: segment.color,
+        ratioPct: toNumber(segment.ratio_pct),
+        amount: toNumber(segment.amount)
+      }));
+    });
+    const grossCompositionPills = computed$1(() => {
+      if (ui.tab !== "GROSS_COMPOSITION" || !inspectedPoint.value) return [];
+      return [...displayedSegments.value].map((segment) => ({
+        key: segment.key,
+        label: segment.label,
+        color: segment.color,
+        ratioPct: toNumber(segment.ratio_pct),
+        amount: toNumber(segment.amount)
+      })).sort((left, right) => right.amount - left.amount).slice(0, 3);
+    });
+    const rebalancingDraft = computed$1(() => {
+      if (ui.tab !== "GROSS_COMPOSITION" || ui.grossGroup !== "ASSET" || !inspectedPoint.value) return null;
+      const items = displayedSegments.value.filter((segment) => segment.key !== "asset:others").map((segment) => ({
+        key: segment.key,
+        label: segment.label,
+        color: segment.color,
+        ratioPct: toNumber(segment.ratio_pct),
+        amount: toNumber(segment.amount),
+        excessPct: Math.max(0, toNumber(segment.ratio_pct) - ui.assetThresholdPct)
+      })).sort((left, right) => right.ratioPct - left.ratioPct);
+      return {
+        thresholdPct: ui.assetThresholdPct,
+        nearPct: assetNearThresholdPct.value,
+        aboveLimit: items.filter((item) => item.ratioPct > ui.assetThresholdPct).slice(0, 4),
+        nearLimit: items.filter((item) => item.ratioPct >= assetNearThresholdPct.value && item.ratioPct <= ui.assetThresholdPct).slice(0, 4),
+        usingDate: inspectedDatePillValue.value,
+        hovered: isInspectingHoveredDate.value
+      };
+    });
+    const hoverBandWidth = barWidth + barGap;
+    const chartWidth = computed$1(() => Math.max(760, chartPaddingLeft + chartPaddingRight + chartPoints.value.length * (barWidth + barGap)));
+    const plotHeight = computed$1(() => chartHeight - chartPaddingTop - chartPaddingBottom);
+    const yAxisMax = computed$1(() => {
+      if (props.chartKind === "ALLOCATION") return 100;
+      const rows = chartPoints.value.map((point) => toNumber(point.total_amount));
+      const maxValue = rows.length > 0 ? Math.max(...rows, 0) : 0;
+      if (maxValue <= 0) return 1;
+      return maxValue * 1.1;
+    });
+    function toX(index) {
+      return chartPaddingLeft + index * (barWidth + barGap);
+    }
+    function toY(value) {
+      const ratio = Math.max(0, Math.min(1, value / yAxisMax.value));
+      return chartPaddingTop + plotHeight.value * (1 - ratio);
+    }
+    const yTicks = computed$1(() => {
+      const tickValues = props.chartKind === "ALLOCATION" ? [0, 25, 50, 75, 100] : [0, 1, 2, 3, 4].map((step) => yAxisMax.value / 4 * step);
+      return tickValues.map((value) => ({
+        value,
+        y: toY(value)
+      }));
+    });
+    const barLayouts = computed$1(
+      () => chartPoints.value.map((point, index) => {
+        let currentY = chartHeight - chartPaddingBottom;
+        const rects = point.segments.map((segment) => {
+          const rawValue = props.chartKind === "ALLOCATION" ? toNumber(segment.ratio_pct) : toNumber(segment.amount);
+          const height = Math.max(0, rawValue / yAxisMax.value * plotHeight.value);
+          const rect = {
+            key: segment.key,
+            label: segment.label,
+            color: legendColorByKey.value.get(segment.key) ?? "#94a3b8",
+            x: toX(index),
+            y: currentY - height,
+            width: barWidth,
+            height,
+            amount: toNumber(segment.amount),
+            ratioPct: toNumber(segment.ratio_pct)
+          };
+          currentY -= height;
+          return rect;
+        });
+        return {
+          point,
+          x: toX(index),
+          hoverX: toX(index) - barGap / 2,
+          hoverWidth: hoverBandWidth,
+          rects
+        };
+      })
+    );
+    function resolveHoveredSegmentKeyFromBand(event, rects) {
+      if (!enableStrongSegmentHover.value) return null;
+      const currentTarget = event.currentTarget;
+      if (!(currentTarget instanceof SVGRectElement)) return null;
+      const bounds = currentTarget.getBoundingClientRect();
+      if (bounds.height <= 0) return null;
+      const relativeY = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
+      const svgY = chartPaddingTop + relativeY * plotHeight.value;
+      const matched = rects.find((rect) => rect.height > 0 && svgY >= rect.y && svgY <= rect.y + rect.height);
+      return matched?.key ?? null;
+    }
+    function handleBandHover(event, index, rects) {
+      inspectIndex.value = index;
+      hoveredSegmentKey.value = resolveHoveredSegmentKeyFromBand(event, rects);
+    }
+    function clearBandHover() {
+      inspectIndex.value = null;
+      hoveredSegmentKey.value = null;
+    }
+    function segmentOpacity(segmentKey, index) {
+      if (enableStrongSegmentHover.value && hoveredSegmentKey.value) {
+        return hoveredSegmentKey.value === segmentKey ? 1 : 0.22;
+      }
+      return inspectIndex.value == null || inspectIndex.value === index ? 1 : 0.6;
+    }
+    function segmentStroke(segmentKey) {
+      if (enableStrongSegmentHover.value && hoveredSegmentKey.value === segmentKey) {
+        return "rgba(255,255,255,0.92)";
+      }
+      return "transparent";
+    }
+    function segmentStrokeWidth(segmentKey) {
+      return enableStrongSegmentHover.value && hoveredSegmentKey.value === segmentKey ? 1.5 : 0;
+    }
+    function segmentHighlightClasses(segmentKey) {
+      if (!enableStrongSegmentHover.value || !hoveredSegmentKey.value) return "";
+      return hoveredSegmentKey.value === segmentKey ? "border-indigo-400/60 ring-2 ring-indigo-400/45" : "opacity-60";
+    }
+    watch$1(
+      () => ({ ...ui }),
+      () => {
+        saveUiState();
+      },
+      { deep: true }
+    );
+    watch$1(
+      () => [props.scopeType, props.scopeId, props.displayCurrency, props.portfolioOptions, ui.tab, ui.bucket, ui.grossMode, ui.grossGroup, ui.assetTopN, ui.liabilityGroup, ui.portfolioKey],
+      () => {
+        void refreshData();
+      },
+      { deep: true }
+    );
+    watch$1(
+      () => [ui.tab, ui.grossMode],
+      () => {
+        if (ui.grossMode === "PORTFOLIO" && ui.grossGroup === "PORTFOLIO") {
+          ui.grossGroup = "ASSET_CLASS";
+        }
+        ensurePortfolioSelection();
+      }
+    );
+    watch$1(
+      enableStrongSegmentHover,
+      (enabled) => {
+        if (!enabled) {
+          hoveredSegmentKey.value = null;
+        }
+      }
+    );
+    onMounted$1(() => {
+      loadUiState();
+      ensurePortfolioSelection();
+      void loadAssetThresholdFromSettings();
+      if (typeof window !== "undefined") {
+        window.addEventListener(USER_REBALANCE_THRESHOLD_EVENT, handleAssetThresholdBroadcast);
+      }
+      void refreshData();
+    });
+    onBeforeUnmount$1(() => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(USER_REBALANCE_THRESHOLD_EVENT, handleAssetThresholdBroadcast);
+      }
+    });
+    return (_ctx, _cache) => {
+      return _openBlock$1(), _createElementBlock$1("article", _hoisted_1$1, [
+        _createElementVNode$1("div", _hoisted_2$1, [
+          _createElementVNode$1("div", null, [
+            _createElementVNode$1("div", _hoisted_3$1, [
+              _createElementVNode$1("h3", _hoisted_4$1, _toDisplayString$1(__props.title), 1),
+              _createElementVNode$1("button", {
+                type: "button",
+                class: "inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                "aria-expanded": infoOpen.value,
+                "aria-label": `${__props.title} info`,
+                onClick: _cache[0] || (_cache[0] = ($event) => infoOpen.value = !infoOpen.value)
+              }, " i ", 8, _hoisted_5$1)
+            ]),
+            _createElementVNode$1("p", _hoisted_6$1, _toDisplayString$1(__props.description), 1)
+          ]),
+          _createElementVNode$1("button", {
+            type: "button",
+            class: "rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+            onClick: _cache[1] || (_cache[1] = ($event) => ui.expanded = !ui.expanded)
+          }, _toDisplayString$1(ui.expanded ? "Collapse" : "Expand"), 1)
+        ]),
+        infoOpen.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_7$1, [
+          _createElementVNode$1("p", _hoisted_8$1, _toDisplayString$1(infoSummary.value), 1),
+          _createElementVNode$1("p", _hoisted_9$1, [
+            _createElementVNode$1("span", _hoisted_10$1, _toDisplayString$1(tabHelpTitle.value) + ":", 1),
+            _createTextVNode$1(" " + _toDisplayString$1(tabHelpBody.value), 1)
+          ]),
+          _createElementVNode$1("p", _hoisted_11$1, _toDisplayString$1(tabHelpFooter.value), 1)
+        ])) : _createCommentVNode$1("", true),
+        !ui.expanded ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_12$1, [
+          _cache[12] || (_cache[12] = _createElementVNode$1("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Collapsed. Click Expand to preview stacked composition.", -1)),
+          _createElementVNode$1("p", _hoisted_13$1, _toDisplayString$1(collapsedSummary.value), 1)
+        ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_14$1, [
+          _createElementVNode$1("div", _hoisted_15$1, [
+            _createElementVNode$1("div", _hoisted_16$1, [
+              (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(TAB_OPTIONS, (option) => {
+                return _createElementVNode$1("button", {
+                  key: `${__props.storageKeyPrefix}-tab-${option}`,
+                  type: "button",
+                  class: _normalizeClass$1(["rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors", ui.tab === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                  onClick: ($event) => ui.tab = option
+                }, _toDisplayString$1(tabLabel(option)), 11, _hoisted_17$1);
+              }), 64))
+            ]),
+            _createElementVNode$1("div", _hoisted_18$1, [
+              _createElementVNode$1("div", _hoisted_19$1, [
+                _cache[13] || (_cache[13] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
+                (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(BUCKET_OPTIONS, (option) => {
+                  return _createElementVNode$1("button", {
+                    key: `${__props.storageKeyPrefix}-bucket-${option}`,
+                    type: "button",
+                    class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.bucket === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    onClick: ($event) => ui.bucket = option
+                  }, _toDisplayString$1(bucketLabel(option)), 11, _hoisted_20$1);
+                }), 64))
+              ]),
+              ui.tab === "GROSS_COMPOSITION" ? (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 0 }, [
+                _createElementVNode$1("div", _hoisted_21$1, [
+                  _cache[14] || (_cache[14] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Mode", -1)),
+                  _createElementVNode$1("button", {
+                    type: "button",
+                    class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.grossMode === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    onClick: _cache[2] || (_cache[2] = ($event) => ui.grossMode = "SUMMARY")
+                  }, " Summary ", 2),
+                  _createElementVNode$1("button", {
+                    type: "button",
+                    class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.grossMode === "PORTFOLIO" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    onClick: _cache[3] || (_cache[3] = ($event) => ui.grossMode = "PORTFOLIO")
+                  }, " Portfolio ", 2)
+                ]),
+                ui.grossMode === "SUMMARY" ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_22$1, [
+                  _cache[15] || (_cache[15] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                  (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(SUMMARY_GROSS_GROUP_OPTIONS, (option) => {
+                    return _createElementVNode$1("button", {
+                      key: `${__props.storageKeyPrefix}-gross-group-${option}`,
+                      type: "button",
+                      class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.grossGroup === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                      onClick: ($event) => ui.grossGroup = option
+                    }, _toDisplayString$1(grossGroupLabel(option)), 11, _hoisted_23$1);
+                  }), 64))
+                ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_24$1, [
+                  _cache[17] || (_cache[17] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
+                  _withDirectives$1(_createElementVNode$1("select", {
+                    "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => ui.portfolioKey = $event),
+                    class: "min-w-[12rem] rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  }, [
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(__props.portfolioOptions, (item) => {
+                      return _openBlock$1(), _createElementBlock$1("option", {
+                        key: `${__props.storageKeyPrefix}-portfolio-${item.key}`,
+                        value: item.key
+                      }, _toDisplayString$1(item.label), 9, _hoisted_25$1);
+                    }), 128))
+                  ], 512), [
+                    [_vModelSelect$1, ui.portfolioKey]
+                  ]),
+                  _createElementVNode$1("div", _hoisted_26$1, [
+                    _cache[16] || (_cache[16] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                    (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(PORTFOLIO_GROSS_GROUP_OPTIONS, (option) => {
+                      return _createElementVNode$1("button", {
+                        key: `${__props.storageKeyPrefix}-gross-portfolio-group-${option}`,
+                        type: "button",
+                        class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.grossGroup === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                        onClick: ($event) => ui.grossGroup = option
+                      }, _toDisplayString$1(grossGroupLabel(option)), 11, _hoisted_27$1);
+                    }), 64))
+                  ])
+                ])),
+                showAssetTopNControls.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_28$1, [
+                  _cache[18] || (_cache[18] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top N", -1)),
+                  (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(ASSET_TOP_N_OPTIONS, (option) => {
+                    return _createElementVNode$1("button", {
+                      key: `${__props.storageKeyPrefix}-asset-top-n-${option}`,
+                      type: "button",
+                      class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.assetTopN === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                      onClick: ($event) => ui.assetTopN = option
+                    }, _toDisplayString$1(option), 11, _hoisted_29$1);
+                  }), 64))
+                ])) : _createCommentVNode$1("", true),
+                showAssetThresholdControls.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_30$1, [
+                  _cache[19] || (_cache[19] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Rule %", -1)),
+                  (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(ASSET_THRESHOLD_OPTIONS, (option) => {
+                    return _createElementVNode$1("button", {
+                      key: `${__props.storageKeyPrefix}-asset-threshold-${option}`,
+                      type: "button",
+                      class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.assetThresholdPct === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                      disabled: thresholdSaving.value,
+                      onClick: ($event) => void setAssetThreshold(option)
+                    }, _toDisplayString$1(option) + "% ", 11, _hoisted_31$1);
+                  }), 64)),
+                  thresholdSaving.value ? (_openBlock$1(), _createElementBlock$1("span", _hoisted_32$1, "Saving...")) : _createCommentVNode$1("", true)
+                ])) : _createCommentVNode$1("", true)
+              ], 64)) : ui.tab === "LIABILITY_BREAKDOWN" ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_33$1, [
+                _cache[20] || (_cache[20] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(LIABILITY_GROUP_OPTIONS, (option) => {
+                  return _createElementVNode$1("button", {
+                    key: `${__props.storageKeyPrefix}-liability-group-${option}`,
+                    type: "button",
+                    class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.liabilityGroup === option ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
+                    onClick: ($event) => ui.liabilityGroup = option
+                  }, _toDisplayString$1(liabilityGroupLabel(option)), 11, _hoisted_34$1);
+                }), 64))
+              ])) : _createCommentVNode$1("", true),
+              inlineHint.value ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_35$1, _toDisplayString$1(inlineHint.value), 1)) : _createCommentVNode$1("", true)
+            ])
+          ]),
+          loading.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_36$1, " Loading composition history... ")) : errorMessage.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_37$1, _toDisplayString$1(errorMessage.value), 1)) : !canLoad.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_38$1, " Waiting for Home scope... ")) : !data.value?.has_data ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_39$1, " No valuation snapshot history yet. ")) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_40$1, [
+            _createElementVNode$1("div", _hoisted_41$1, [
+              _createElementVNode$1("div", _hoisted_42$1, [
+                _createElementVNode$1("div", null, [
+                  _createElementVNode$1("p", _hoisted_43$1, _toDisplayString$1(tabLabel(ui.tab)), 1),
+                  _createElementVNode$1("p", _hoisted_44$1, [
+                    _createElementVNode$1("span", null, _toDisplayString$1(chartSummaryDateLabel.value), 1),
+                    _cache[21] || (_cache[21] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, " · ", -1)),
+                    _createElementVNode$1("span", null, _toDisplayString$1(chartSummaryAmountLabel.value), 1),
+                    _createElementVNode$1("span", {
+                      class: "ml-1",
+                      style: _normalizeStyle$1(amountMaskStyle())
+                    }, _toDisplayString$1(chartSummaryAmountText.value), 5)
+                  ]),
+                  inspectedPoint.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_45$1, [
+                    _createElementVNode$1("span", {
+                      class: _normalizeClass$1([
+                        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium",
+                        isInspectingHoveredDate.value ? "border-indigo-400/50 bg-indigo-500/15 text-indigo-200" : "border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                      ])
+                    }, [
+                      _createElementVNode$1("span", _hoisted_46$1, _toDisplayString$1(inspectedDatePillLabel.value), 1),
+                      _createElementVNode$1("span", _hoisted_47$1, _toDisplayString$1(inspectedDatePillValue.value), 1)
+                    ], 2)
+                  ])) : _createCommentVNode$1("", true),
+                  grossCompositionPills.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_48$1, [
+                    _cache[23] || (_cache[23] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top now", -1)),
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(grossCompositionPills.value, (item) => {
+                      return _openBlock$1(), _createElementBlock$1("span", {
+                        key: `${__props.storageKeyPrefix}-gross-pill-${item.key}`,
+                        class: "inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      }, [
+                        _createElementVNode$1("span", {
+                          class: "h-2.5 w-2.5 rounded-full",
+                          style: _normalizeStyle$1({ backgroundColor: item.color })
+                        }, null, 4),
+                        _createElementVNode$1("span", _hoisted_49$1, _toDisplayString$1(item.label), 1),
+                        _createElementVNode$1("span", _hoisted_50$1, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
+                        _cache[22] || (_cache[22] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
+                        _createElementVNode$1("span", {
+                          class: "text-slate-500 dark:text-slate-400",
+                          style: _normalizeStyle$1(amountMaskStyle())
+                        }, _toDisplayString$1(formatCurrency(item.amount, __props.displayCurrency)), 5)
+                      ]);
+                    }), 128))
+                  ])) : _createCommentVNode$1("", true),
+                  rebalancingDraft.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_51$1, [
+                    _createElementVNode$1("div", _hoisted_52$1, [
+                      _cache[24] || (_cache[24] = _createElementVNode$1("span", { class: "rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-semibold text-amber-200" }, " Draft rebalancing rule ", -1)),
+                      _createElementVNode$1("span", _hoisted_53$1, " Single asset > " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% ", 1),
+                      _createElementVNode$1("span", _hoisted_54$1, _toDisplayString$1(rebalancingDraft.value.hovered ? "Using hovered date" : "Using latest date") + " " + _toDisplayString$1(rebalancingDraft.value.usingDate), 1)
+                    ]),
+                    _createElementVNode$1("p", _hoisted_55$1, " Flag single assets above " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% of gross assets. Assets between " + _toDisplayString$1(rebalancingDraft.value.nearPct.toFixed(0)) + "% and " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% are near the draft limit. ", 1),
+                    rebalancingDraft.value.aboveLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_56$1, [
+                      _createElementVNode$1("p", _hoisted_57$1, " Warning: " + _toDisplayString$1(rebalancingDraft.value.aboveLimit.length) + " " + _toDisplayString$1(rebalancingDraft.value.aboveLimit.length === 1 ? "asset exceeds" : "assets exceed") + " your " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% rule. ", 1),
+                      _cache[25] || (_cache[25] = _createElementVNode$1("p", { class: "mt-1 text-rose-100/90" }, " Gross Composition > Asset is currently flagging concentrated positions that may need a rebalance review. ", -1))
+                    ])) : rebalancingDraft.value.nearLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_58$1, [
+                      _createElementVNode$1("p", _hoisted_59$1, " Heads up: " + _toDisplayString$1(rebalancingDraft.value.nearLimit.length) + " " + _toDisplayString$1(rebalancingDraft.value.nearLimit.length === 1 ? "asset is" : "assets are") + " near your " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% rule. ", 1),
+                      _cache[26] || (_cache[26] = _createElementVNode$1("p", { class: "mt-1 text-amber-100/90" }, " These positions are not above the threshold yet, but they are close enough to watch during future rebalancing. ", -1))
+                    ])) : _createCommentVNode$1("", true),
+                    _createElementVNode$1("div", _hoisted_60$1, [
+                      rebalancingDraft.value.aboveLimit.length > 0 || rebalancingDraft.value.nearLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 0 }, [
+                        (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(rebalancingDraft.value.aboveLimit, (item) => {
+                          return _openBlock$1(), _createElementBlock$1("button", {
+                            key: `${__props.storageKeyPrefix}-rebalance-over-${item.key}`,
+                            type: "button",
+                            class: _normalizeClass$1(["inline-flex items-center gap-2 rounded-full border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-left text-rose-100 transition-colors", segmentHighlightClasses(item.key)]),
+                            onMouseenter: ($event) => setHoveredSegment(item.key),
+                            onMouseleave: _cache[5] || (_cache[5] = ($event) => clearHoveredSegment()),
+                            onFocus: ($event) => setHoveredSegment(item.key),
+                            onBlur: _cache[6] || (_cache[6] = ($event) => clearHoveredSegment())
+                          }, [
+                            _createElementVNode$1("span", {
+                              class: "h-2.5 w-2.5 rounded-full",
+                              style: _normalizeStyle$1({ backgroundColor: item.color })
+                            }, null, 4),
+                            _createElementVNode$1("span", _hoisted_62$1, _toDisplayString$1(item.label), 1),
+                            _createElementVNode$1("span", null, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
+                            _createElementVNode$1("span", _hoisted_63, "+" + _toDisplayString$1(item.excessPct.toFixed(1)) + "%p", 1)
+                          ], 42, _hoisted_61$1);
+                        }), 128)),
+                        (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(rebalancingDraft.value.nearLimit, (item) => {
+                          return _openBlock$1(), _createElementBlock$1("button", {
+                            key: `${__props.storageKeyPrefix}-rebalance-near-${item.key}`,
+                            type: "button",
+                            class: _normalizeClass$1(["inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-left text-amber-100 transition-colors", segmentHighlightClasses(item.key)]),
+                            onMouseenter: ($event) => setHoveredSegment(item.key),
+                            onMouseleave: _cache[7] || (_cache[7] = ($event) => clearHoveredSegment()),
+                            onFocus: ($event) => setHoveredSegment(item.key),
+                            onBlur: _cache[8] || (_cache[8] = ($event) => clearHoveredSegment())
+                          }, [
+                            _createElementVNode$1("span", {
+                              class: "h-2.5 w-2.5 rounded-full",
+                              style: _normalizeStyle$1({ backgroundColor: item.color })
+                            }, null, 4),
+                            _createElementVNode$1("span", _hoisted_65, _toDisplayString$1(item.label), 1),
+                            _createElementVNode$1("span", null, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
+                            _cache[27] || (_cache[27] = _createElementVNode$1("span", { class: "text-amber-200" }, "near limit", -1))
+                          ], 42, _hoisted_64);
+                        }), 128))
+                      ], 64)) : (_openBlock$1(), _createElementBlock$1("span", _hoisted_66, " No asset currently exceeds the draft " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% threshold. ", 1))
+                    ]),
+                    thresholdSaveError.value ? (_openBlock$1(), _createElementBlock$1("p", _hoisted_67, " Failed to save your threshold setting: " + _toDisplayString$1(thresholdSaveError.value), 1)) : _createCommentVNode$1("", true)
+                  ])) : _createCommentVNode$1("", true),
+                  capitalStructurePills.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_68, [
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(capitalStructurePills.value, (item) => {
+                      return _openBlock$1(), _createElementBlock$1("span", {
+                        key: `${__props.storageKeyPrefix}-capital-pill-${item.key}`,
+                        class: "inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      }, [
+                        _createElementVNode$1("span", {
+                          class: "h-2.5 w-2.5 rounded-full",
+                          style: _normalizeStyle$1({ backgroundColor: item.color })
+                        }, null, 4),
+                        _createElementVNode$1("span", _hoisted_69, _toDisplayString$1(item.label), 1),
+                        _createElementVNode$1("span", _hoisted_70, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
+                        _cache[28] || (_cache[28] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
+                        _createElementVNode$1("span", {
+                          class: "text-slate-500 dark:text-slate-400",
+                          style: _normalizeStyle$1(amountMaskStyle())
+                        }, _toDisplayString$1(formatCurrency(item.amount, __props.displayCurrency)), 5)
+                      ]);
+                    }), 128))
+                  ])) : _createCommentVNode$1("", true)
+                ]),
+                _createElementVNode$1("span", _hoisted_71, " as_of " + _toDisplayString$1(formatDateTime(data.value?.as_of)), 1)
+              ]),
+              _createElementVNode$1("div", _hoisted_72, [
+                (_openBlock$1(), _createElementBlock$1("svg", {
+                  viewBox: `0 0 ${chartWidth.value} ${chartHeight}`,
+                  width: chartWidth.value,
+                  height: chartHeight,
+                  class: "min-w-full"
+                }, [
+                  _createElementVNode$1("g", null, [
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(yTicks.value, (tick) => {
+                      return _openBlock$1(), _createElementBlock$1("line", {
+                        key: `${__props.storageKeyPrefix}-grid-${tick.value}`,
+                        x1: chartPaddingLeft,
+                        x2: chartWidth.value - chartPaddingRight,
+                        y1: tick.y,
+                        y2: tick.y,
+                        stroke: "rgba(148,163,184,0.18)",
+                        "stroke-width": "1"
+                      }, null, 8, _hoisted_74);
+                    }), 128))
+                  ]),
+                  _createElementVNode$1("g", {
+                    style: _normalizeStyle$1(__props.chartKind === "AMOUNT" ? amountMaskStyle() : void 0)
+                  }, [
+                    (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(yTicks.value, (tick) => {
+                      return _openBlock$1(), _createElementBlock$1("text", {
+                        key: `${__props.storageKeyPrefix}-tick-${tick.value}`,
+                        x: chartPaddingLeft - 10,
+                        y: tick.y + 4,
+                        "text-anchor": "end",
+                        fill: "#94a3b8",
+                        "font-size": "11"
+                      }, _toDisplayString$1(__props.chartKind === "ALLOCATION" ? formatPercent(tick.value) : formatCompactAmount(tick.value)), 9, _hoisted_75);
+                    }), 128))
+                  ], 4),
+                  (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(barLayouts.value, (bar, index) => {
+                    return _openBlock$1(), _createElementBlock$1("g", {
+                      key: `${__props.storageKeyPrefix}-bar-${bar.point.snapshot_date}`
+                    }, [
+                      inspectIndex.value === index ? (_openBlock$1(), _createElementBlock$1("rect", {
+                        key: 0,
+                        x: bar.x - 8,
+                        y: chartPaddingTop - 6,
+                        width: barWidth + 16,
+                        height: plotHeight.value + 12,
+                        rx: "10",
+                        fill: "rgba(129, 140, 248, 0.12)",
+                        stroke: "rgba(129, 140, 248, 0.35)",
+                        "stroke-width": "1",
+                        "pointer-events": "none"
+                      }, null, 8, _hoisted_76)) : _createCommentVNode$1("", true),
+                      (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(bar.rects, (segment) => {
+                        return _openBlock$1(), _createElementBlock$1("rect", {
+                          key: `${__props.storageKeyPrefix}-segment-${bar.point.snapshot_date}-${segment.key}`,
+                          x: segment.x,
+                          y: segment.y,
+                          width: segment.width,
+                          height: segment.height,
+                          fill: segment.color,
+                          stroke: segmentStroke(segment.key),
+                          "stroke-width": segmentStrokeWidth(segment.key),
+                          rx: "4",
+                          opacity: segmentOpacity(segment.key, index),
+                          "pointer-events": "none"
+                        }, null, 8, _hoisted_77);
+                      }), 128)),
+                      _createElementVNode$1("rect", {
+                        x: bar.hoverX,
+                        y: chartPaddingTop,
+                        width: bar.hoverWidth,
+                        height: plotHeight.value,
+                        fill: "transparent",
+                        onMouseenter: ($event) => handleBandHover($event, index, bar.rects),
+                        onMousemove: ($event) => handleBandHover($event, index, bar.rects),
+                        onMouseleave: _cache[9] || (_cache[9] = ($event) => clearBandHover()),
+                        onClick: ($event) => inspectIndex.value = index,
+                        onTouchstartPassive: ($event) => inspectIndex.value = index
+                      }, null, 40, _hoisted_78),
+                      _createElementVNode$1("text", {
+                        x: bar.x + barWidth / 2,
+                        y: chartHeight - 10,
+                        "text-anchor": "middle",
+                        fill: inspectIndex.value === index ? "#c4b5fd" : "#94a3b8",
+                        "font-size": inspectIndex.value === index ? 12 : 11,
+                        "font-weight": inspectIndex.value === index ? 700 : 500
+                      }, _toDisplayString$1(bar.point.bucket_label), 9, _hoisted_79)
+                    ]);
+                  }), 128))
+                ], 8, _hoisted_73))
+              ]),
+              _createElementVNode$1("div", _hoisted_80, [
+                (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(legendWithColors.value, (item) => {
+                  return _openBlock$1(), _createElementBlock$1("span", {
+                    key: `${__props.storageKeyPrefix}-legend-${item.key}`,
+                    class: _normalizeClass$1(["inline-flex max-w-full items-start gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200", segmentHighlightClasses(item.key)]),
+                    title: item.label,
+                    onMouseenter: ($event) => setHoveredSegment(item.key),
+                    onMouseleave: _cache[10] || (_cache[10] = ($event) => clearHoveredSegment())
+                  }, [
+                    _createElementVNode$1("span", {
+                      class: "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                      style: _normalizeStyle$1({ backgroundColor: item.color })
+                    }, null, 4),
+                    _createElementVNode$1("span", _hoisted_82, _toDisplayString$1(item.label), 1)
+                  ], 42, _hoisted_81);
+                }), 128))
+              ]),
+              displayedSegments.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_83, [
+                (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(displayedSegments.value, (segment) => {
+                  return _openBlock$1(), _createElementBlock$1("div", {
+                    key: `${__props.storageKeyPrefix}-inspect-${segment.key}`,
+                    class: _normalizeClass$1(["rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm transition-colors dark:border-slate-700 dark:bg-slate-900", segmentHighlightClasses(segment.key)]),
+                    onMouseenter: ($event) => setHoveredSegment(segment.key),
+                    onMouseleave: _cache[11] || (_cache[11] = ($event) => clearHoveredSegment())
+                  }, [
+                    _createElementVNode$1("div", _hoisted_85, [
+                      _createElementVNode$1("span", {
+                        class: "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
+                        style: _normalizeStyle$1({ backgroundColor: segment.color })
+                      }, null, 4),
+                      _createElementVNode$1("span", {
+                        class: "name-clamp-2 min-w-0 flex-1 font-medium leading-5 text-slate-800 dark:text-slate-100",
+                        title: segment.label
+                      }, _toDisplayString$1(segment.label), 9, _hoisted_86)
+                    ]),
+                    _createElementVNode$1("p", _hoisted_87, [
+                      _createElementVNode$1("span", {
+                        style: _normalizeStyle$1(__props.chartKind === "AMOUNT" ? amountMaskStyle() : void 0)
+                      }, _toDisplayString$1(__props.chartKind === "AMOUNT" ? formatCurrency(toNumber(segment.amount), __props.displayCurrency) : formatPercent(toNumber(segment.ratio_pct))), 5),
+                      __props.chartKind === "AMOUNT" ? (_openBlock$1(), _createElementBlock$1("span", _hoisted_88, " · " + _toDisplayString$1(formatPercent(toNumber(segment.ratio_pct))), 1)) : _createCommentVNode$1("", true)
+                    ])
+                  ], 42, _hoisted_84);
+                }), 128))
+              ])) : _createCommentVNode$1("", true)
             ])
           ]))
         ]))
@@ -808,75 +1952,77 @@ const _hoisted_22 = {
 };
 const _hoisted_23 = { class: "xl:col-span-2" };
 const _hoisted_24 = { class: "xl:col-span-2" };
-const _hoisted_25 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_26 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_27 = {
+const _hoisted_25 = { class: "xl:col-span-2" };
+const _hoisted_26 = { class: "xl:col-span-2" };
+const _hoisted_27 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_28 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_29 = {
   key: 0,
   class: "mt-4 space-y-4"
 };
-const _hoisted_28 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_29 = {
+const _hoisted_30 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_31 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_30 = {
+const _hoisted_32 = {
   key: 1,
   class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
 };
-const _hoisted_31 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_32 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_33 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_34 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_35 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
-const _hoisted_36 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
-const _hoisted_37 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_38 = {
+const _hoisted_33 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_34 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_35 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_36 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_37 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_38 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
+const _hoisted_39 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_40 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_39 = {
+const _hoisted_41 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_40 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_41 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_42 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_43 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_44 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_45 = {
+const _hoisted_42 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_43 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_44 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_45 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_46 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_47 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_46 = {
+const _hoisted_48 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_47 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_48 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_49 = { class: "text-xs text-slate-500" };
-const _hoisted_50 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_51 = {
+const _hoisted_49 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_50 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_51 = { class: "text-xs text-slate-500" };
+const _hoisted_52 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_53 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_52 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_53 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_54 = {
+const _hoisted_54 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_55 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_56 = {
   key: 0,
   class: "mt-4"
 };
-const _hoisted_55 = {
+const _hoisted_57 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_56 = {
+const _hoisted_58 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_57 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_58 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_59 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_60 = {
+const _hoisted_59 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_60 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_61 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_62 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
@@ -2192,7 +3338,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[12] || (_cache[12] = ($event) => onHomeCardDrop("LIVE_DASHBOARD", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$2, {
+            _createVNode(_sfc_main$3, {
               title: "Live Dashboard Panel",
               description: "Default is collapsed. Expand to preview dashboard widgets and export image.",
               "source-mode": "LIVE",
@@ -2304,10 +3450,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
                 }, [
                   _createElementVNode("div", _hoisted_23, [
-                    liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$3, {
+                    liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$4, {
                       key: 0,
                       title: "KPI Summary",
                       subtitle: "Included in print/snapshot",
+                      "storage-key": "myasset:home:live-dashboard:kpi-panel:expanded",
                       currency: summaryDisplayCurrency.value,
                       "gross-assets-total": grossAssetsTotal.value,
                       "liabilities-total": liabilitiesTotal.value,
@@ -2320,9 +3467,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "net-profit-total": kpiNetProfitTotal.value,
                       "as-of": asOf.value,
                       "mask-amounts": liveMaskAmounts.value
-                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$4, {
+                    }, null, 8, ["currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "gross-return-pct", "net-return-pct", "gross-profit-total", "net-profit-total", "as-of", "mask-amounts"])) : (_openBlock(), _createBlock(_sfc_main$5, {
                       key: 1,
                       title: "KPI Portfolios",
+                      "storage-key": "myasset:home:live-dashboard:kpi-panel:expanded",
                       subtitle: `Per portfolio | ${livePortfolioNetBasis.value ? "Net basis" : "Gross basis"} | Included in print/snapshot`,
                       currency: summaryDisplayCurrency.value,
                       portfolios: liveKpiPortfolioRows.value,
@@ -2330,9 +3478,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "use-net-basis": livePortfolioNetBasis.value
                     }, null, 8, ["subtitle", "currency", "portfolios", "mask-amounts", "use-net-basis"]))
                   ]),
-                  _createVNode(_sfc_main$5, {
+                  _createVNode(_sfc_main$6, {
                     title: `Allocation | ${liveDashboardTarget.value}`,
                     subtitle: `Top N + Others (${livePortfolioKey.value === "ALL" ? "all portfolios" : "filtered portfolio"})`,
+                    "storage-key": "myasset:home:live-dashboard:allocation-donut:expanded",
                     currency: summaryDisplayCurrency.value,
                     total: donutTotal.value,
                     items: donutItems.value,
@@ -2341,8 +3490,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     loading: dashboardDonutLoading.value,
                     error: dashboardDonutError.value
                   }, null, 8, ["title", "subtitle", "currency", "total", "items", "start-position", "mask-amounts", "loading", "error"]),
-                  _createVNode(_sfc_main$6, {
+                  _createVNode(_sfc_main$7, {
                     title: `Treemap | ${liveDashboardTarget.value}`,
+                    "storage-key": "myasset:home:live-dashboard:allocation-treemap:expanded",
                     subtitle: liveDashboardTarget.value === "HOLDINGS" ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey.value === "ALL" ? "" : `| ${livePortfolioLabel.value}`}` : `Target=${liveDashboardTarget.value} | group_by=PORTFOLIO | color=return`,
                     currency: summaryDisplayCurrency.value,
                     items: liveTreemapItems.value,
@@ -2351,9 +3501,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     error: dashboardTreemapError.value
                   }, null, 8, ["title", "subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
                   _createElementVNode("div", _hoisted_24, [
-                    _createVNode(_sfc_main$7, {
+                    _createVNode(_sfc_main$8, {
                       title: "Networth Trend",
                       subtitle: "valuation_snapshots | bucket=DAY",
+                      "storage-key": "myasset:home:live-dashboard:networth-trend:expanded",
                       currency: summaryDisplayCurrency.value,
                       points: trendPoints.value,
                       "mask-amounts": liveMaskAmounts.value,
@@ -2374,6 +3525,32 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "onUpdate:portfolioMetric": _cache[9] || (_cache[9] = ($event) => homeTrendPortfolioMetric.value = $event),
                       "onUpdate:portfolioKey": _cache[10] || (_cache[10] = ($event) => homeTrendPortfolioKey.value = $event)
                     }, null, 8, ["currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "portfolio-lines", "portfolio-options", "portfolio-key"])
+                  ]),
+                  _createElementVNode("div", _hoisted_25, [
+                    _createVNode(_sfc_main$1, {
+                      title: "Amount Breakdown",
+                      description: "Actual amount changes over time, including total size and component movement.",
+                      "chart-kind": "AMOUNT",
+                      "display-currency": summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
+                      "scope-type": homeGoalScopeType.value,
+                      "scope-id": homeGoalScopeId.value,
+                      "amount-mask": liveMaskAmounts.value,
+                      "portfolio-options": homePortfolioOptions.value,
+                      "storage-key-prefix": "myasset:home:amount-breakdown"
+                    }, null, 8, ["display-currency", "scope-type", "scope-id", "amount-mask", "portfolio-options"])
+                  ]),
+                  _createElementVNode("div", _hoisted_26, [
+                    _createVNode(_sfc_main$1, {
+                      title: "Allocation Trend",
+                      description: "100% normalized composition changes over time, separated from total size.",
+                      "chart-kind": "ALLOCATION",
+                      "display-currency": summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
+                      "scope-type": homeGoalScopeType.value,
+                      "scope-id": homeGoalScopeId.value,
+                      "amount-mask": liveMaskAmounts.value,
+                      "portfolio-options": homePortfolioOptions.value,
+                      "storage-key-prefix": "myasset:home:allocation-trend"
+                    }, null, 8, ["display-currency", "scope-type", "scope-id", "amount-mask", "portfolio-options"])
                   ])
                 ], 512)
               ]),
@@ -2389,7 +3566,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[14] || (_cache[14] = ($event) => onHomeCardDrop("GOAL_PROGRESS", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$1, {
+            _createVNode(_sfc_main$2, {
               title: "Goal Progress and Forecast",
               subtitle: "Track how close your current wealth is to the target and when it may be reached.",
               "display-currency": summaryDisplayCurrency.value === "USD" ? "USD" : "KRW",
@@ -2408,7 +3585,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[19] || (_cache[19] = ($event) => onHomeCardDrop("PORTFOLIOS_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$8, {
+            _createVNode(_sfc_main$9, {
               title: "Portfolios Table",
               subtitle: "Portfolio / Current / Invested Principal / Profit / Return",
               expanded: homePortfoliosExpanded.value,
@@ -2440,7 +3617,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[24] || (_cache[24] = ($event) => onHomeCardDrop("HOLDINGS_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$9, {
+            _createVNode(_sfc_main$a, {
               title: "Holdings Table",
               subtitle: "Portfolio / Asset / Price / Avg Cost / Evaluated / Cost Basis / Profit / Return / Symbol",
               expanded: homeHoldingsExpanded.value,
@@ -2469,7 +3646,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[29] || (_cache[29] = ($event) => onHomeCardDrop("LIABILITIES_TABLE", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$a, {
+            _createVNode(_sfc_main$b, {
               title: "Liabilities Table",
               subtitle: "Portfolio / Liability / Balance / Type",
               expanded: homeLiabilitiesExpanded.value,
@@ -2497,8 +3674,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("REPORT_PANEL", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createElementVNode("article", _hoisted_25, [
-              _createElementVNode("div", _hoisted_26, [
+            _createElementVNode("article", _hoisted_27, [
+              _createElementVNode("div", _hoisted_28, [
                 _cache[44] || (_cache[44] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
@@ -2509,8 +3686,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   onClick: toggleReportPanel
                 }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
-              reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_27, [
-                _createVNode(_sfc_main$b, {
+              reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_29, [
+                _createVNode(_sfc_main$c, {
                   "display-currency": summaryDisplayCurrency.value,
                   "gross-assets-total": grossAssetsTotal.value,
                   "liabilities-total": liabilitiesTotal.value,
@@ -2525,27 +3702,27 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   liabilities: liabilities.value,
                   "mask-amounts": liveMaskAmounts.value
                 }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
-                _createElementVNode("article", _hoisted_28, [
+                _createElementVNode("article", _hoisted_30, [
                   _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                     _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                     _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
                   ], -1)),
-                  topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_29, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_30, [
+                  topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_31, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_32, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topPortfolios.value, (item) => {
                       return _openBlock(), _createElementBlock("li", {
                         key: item.id,
                         class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                       }, [
-                        _createElementVNode("div", _hoisted_31, [
-                          _createElementVNode("p", _hoisted_32, [
+                        _createElementVNode("div", _hoisted_33, [
+                          _createElementVNode("p", _hoisted_34, [
                             _createTextVNode(_toDisplayString(item.name) + " ", 1),
-                            _createElementVNode("span", _hoisted_33, _toDisplayString(item.type), 1)
+                            _createElementVNode("span", _hoisted_35, _toDisplayString(item.type), 1)
                           ]),
                           _createElementVNode("p", {
                             class: _normalizeClass(["text-xs font-semibold", item.total_return_pct == null ? "text-slate-500" : toNumber(item.total_return_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                           }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                         ]),
-                        _createElementVNode("div", _hoisted_34, [
+                        _createElementVNode("div", _hoisted_36, [
                           _cache[45] || (_cache[45] = _createTextVNode(" Gross ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
@@ -2558,7 +3735,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                             item.base_currency || summaryDisplayCurrency.value
                           )), 5)
                         ]),
-                        _createElementVNode("div", _hoisted_35, [
+                        _createElementVNode("div", _hoisted_37, [
                           _cache[47] || (_cache[47] = _createTextVNode(" Net ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
@@ -2575,28 +3752,28 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     }), 128))
                   ]))
                 ]),
-                _createElementVNode("div", _hoisted_36, [
-                  _createElementVNode("article", _hoisted_37, [
+                _createElementVNode("div", _hoisted_38, [
+                  _createElementVNode("article", _hoisted_39, [
                     _cache[51] || (_cache[51] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                     ], -1)),
-                    topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_38, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_39, [
+                    topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_40, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_41, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topHoldings.value, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: item.holding_id,
                           class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                         }, [
-                          _createElementVNode("div", _hoisted_40, [
-                            _createElementVNode("p", _hoisted_41, [
+                          _createElementVNode("div", _hoisted_42, [
+                            _createElementVNode("p", _hoisted_43, [
                               _createTextVNode(_toDisplayString(item.asset_name) + " ", 1),
-                              _createElementVNode("span", _hoisted_42, _toDisplayString(item.asset_symbol || "-"), 1)
+                              _createElementVNode("span", _hoisted_44, _toDisplayString(item.asset_symbol || "-"), 1)
                             ]),
                             _createElementVNode("p", {
                               class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                             }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
                           ]),
-                          _createElementVNode("div", _hoisted_43, [
+                          _createElementVNode("div", _hoisted_45, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
@@ -2609,22 +3786,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       }), 128))
                     ]))
                   ]),
-                  _createElementVNode("article", _hoisted_44, [
+                  _createElementVNode("article", _hoisted_46, [
                     _cache[52] || (_cache[52] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                     ], -1)),
-                    topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_45, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_46, [
+                    topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_47, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_48, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topLiabilities.value, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: item.id,
                           class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                         }, [
-                          _createElementVNode("div", _hoisted_47, [
-                            _createElementVNode("p", _hoisted_48, _toDisplayString(item.name), 1),
-                            _createElementVNode("p", _hoisted_49, _toDisplayString(item.liability_type), 1)
+                          _createElementVNode("div", _hoisted_49, [
+                            _createElementVNode("p", _hoisted_50, _toDisplayString(item.name), 1),
+                            _createElementVNode("p", _hoisted_51, _toDisplayString(item.liability_type), 1)
                           ]),
-                          _createElementVNode("div", _hoisted_50, [
+                          _createElementVNode("div", _hoisted_52, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency.value)), 5)
@@ -2634,7 +3811,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ])
                 ])
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_51, [..._cache[53] || (_cache[53] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_53, [..._cache[53] || (_cache[53] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to preview report cards. ", -1)
@@ -2650,7 +3827,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[33] || (_cache[33] = ($event) => onHomeCardDrop("QUICK_INSIGHT", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createVNode(_sfc_main$c, {
+            _createVNode(_sfc_main$d, {
               title: "Quick Insight",
               description: "Valuation snapshot delta analysis",
               "source-mode": "LIVE",
@@ -2669,8 +3846,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[35] || (_cache[35] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createElementVNode("article", _hoisted_52, [
-              _createElementVNode("div", _hoisted_53, [
+            _createElementVNode("article", _hoisted_54, [
+              _createElementVNode("div", _hoisted_55, [
                 _cache[54] || (_cache[54] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
@@ -2681,20 +3858,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   onClick: toggleReleaseNotesPanel
                 }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
-              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_54, [
-                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_55, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_56, [
+              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_56, [
+                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_57, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_58, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: note.id,
                       class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                     }, [
-                      _createElementVNode("p", _hoisted_57, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                      _createElementVNode("p", _hoisted_58, _toDisplayString(note.title), 1),
-                      _createElementVNode("p", _hoisted_59, _toDisplayString(note.summary), 1)
+                      _createElementVNode("p", _hoisted_59, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                      _createElementVNode("p", _hoisted_60, _toDisplayString(note.title), 1),
+                      _createElementVNode("p", _hoisted_61, _toDisplayString(note.summary), 1)
                     ]);
                   }), 128))
                 ]))
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_60, [..._cache[55] || (_cache[55] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_62, [..._cache[55] || (_cache[55] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to view release notes. ", -1)

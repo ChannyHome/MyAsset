@@ -18,6 +18,7 @@ class UserSettingsOut(BaseModel):
     hide_values: bool
     name_clamp_enabled: bool
     mobile_allocation_top_n: int
+    asset_rebalance_threshold_pct: int
     hide_small_assets: bool
     small_asset_threshold: Decimal
     display_currency: DisplayCurrency
@@ -29,3 +30,4 @@ class UserSettingsUpdate(BaseModel):
     display_currency: DisplayCurrency | None = None
     name_clamp_enabled: bool | None = None
     mobile_allocation_top_n: int | None = Field(default=None, ge=3, le=12)
+    asset_rebalance_threshold_pct: int | None = Field(default=None, ge=5, le=30)
