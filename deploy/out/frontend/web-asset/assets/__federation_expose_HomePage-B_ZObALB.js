@@ -926,18 +926,15 @@ const _hoisted_76 = ["x", "y", "width", "height"];
 const _hoisted_77 = ["x", "y", "width", "height", "fill", "stroke", "stroke-width", "opacity"];
 const _hoisted_78 = ["x", "width", "height", "onMouseenter", "onMousemove", "onClick", "onTouchstartPassive"];
 const _hoisted_79 = ["x", "y", "fill", "font-size", "font-weight"];
-const _hoisted_80 = { class: "mt-4 flex flex-wrap gap-2" };
-const _hoisted_81 = ["title", "onMouseenter"];
-const _hoisted_82 = { class: "name-clamp-2 max-w-[11rem] leading-4" };
-const _hoisted_83 = {
+const _hoisted_80 = {
   key: 0,
   class: "mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
 };
-const _hoisted_84 = ["onMouseenter"];
-const _hoisted_85 = { class: "flex items-start gap-2" };
-const _hoisted_86 = ["title"];
-const _hoisted_87 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
-const _hoisted_88 = {
+const _hoisted_81 = ["onMouseenter"];
+const _hoisted_82 = { class: "flex items-start gap-2" };
+const _hoisted_83 = ["title"];
+const _hoisted_84 = { class: "mt-1 text-slate-600 dark:text-slate-300" };
+const _hoisted_85 = {
   key: 0,
   class: "text-xs text-slate-500 dark:text-slate-400"
 };
@@ -1535,7 +1532,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
           _createElementVNode$1("p", _hoisted_11$1, _toDisplayString$1(tabHelpFooter.value), 1)
         ])) : _createCommentVNode$1("", true),
         !ui.expanded ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_12$1, [
-          _cache[12] || (_cache[12] = _createElementVNode$1("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Collapsed. Click Expand to preview stacked composition.", -1)),
+          _cache[11] || (_cache[11] = _createElementVNode$1("p", { class: "text-xs text-slate-500 dark:text-slate-400" }, "Collapsed. Click Expand to preview stacked composition.", -1)),
           _createElementVNode$1("p", _hoisted_13$1, _toDisplayString$1(collapsedSummary.value), 1)
         ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_14$1, [
           _createElementVNode$1("div", _hoisted_15$1, [
@@ -1551,7 +1548,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
             ]),
             _createElementVNode$1("div", _hoisted_18$1, [
               _createElementVNode$1("div", _hoisted_19$1, [
-                _cache[13] || (_cache[13] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
+                _cache[12] || (_cache[12] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
                 (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(BUCKET_OPTIONS, (option) => {
                   return _createElementVNode$1("button", {
                     key: `${__props.storageKeyPrefix}-bucket-${option}`,
@@ -1563,7 +1560,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
               ]),
               ui.tab === "GROSS_COMPOSITION" ? (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 0 }, [
                 _createElementVNode$1("div", _hoisted_21$1, [
-                  _cache[14] || (_cache[14] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Mode", -1)),
+                  _cache[13] || (_cache[13] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Mode", -1)),
                   _createElementVNode$1("button", {
                     type: "button",
                     class: _normalizeClass$1(["rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-colors", ui.grossMode === "SUMMARY" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"]),
@@ -1576,7 +1573,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   }, " Portfolio ", 2)
                 ]),
                 ui.grossMode === "SUMMARY" ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_22$1, [
-                  _cache[15] || (_cache[15] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                  _cache[14] || (_cache[14] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
                   (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(SUMMARY_GROSS_GROUP_OPTIONS, (option) => {
                     return _createElementVNode$1("button", {
                       key: `${__props.storageKeyPrefix}-gross-group-${option}`,
@@ -1586,7 +1583,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                     }, _toDisplayString$1(grossGroupLabel(option)), 11, _hoisted_23$1);
                   }), 64))
                 ])) : (_openBlock$1(), _createElementBlock$1("div", _hoisted_24$1, [
-                  _cache[17] || (_cache[17] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
+                  _cache[16] || (_cache[16] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Portfolio", -1)),
                   _withDirectives$1(_createElementVNode$1("select", {
                     "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => ui.portfolioKey = $event),
                     class: "min-w-[12rem] rounded-lg border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
@@ -1601,7 +1598,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                     [_vModelSelect$1, ui.portfolioKey]
                   ]),
                   _createElementVNode$1("div", _hoisted_26$1, [
-                    _cache[16] || (_cache[16] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                    _cache[15] || (_cache[15] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
                     (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(PORTFOLIO_GROSS_GROUP_OPTIONS, (option) => {
                       return _createElementVNode$1("button", {
                         key: `${__props.storageKeyPrefix}-gross-portfolio-group-${option}`,
@@ -1613,7 +1610,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   ])
                 ])),
                 showAssetTopNControls.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_28$1, [
-                  _cache[18] || (_cache[18] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top N", -1)),
+                  _cache[17] || (_cache[17] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top N", -1)),
                   (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(ASSET_TOP_N_OPTIONS, (option) => {
                     return _createElementVNode$1("button", {
                       key: `${__props.storageKeyPrefix}-asset-top-n-${option}`,
@@ -1624,7 +1621,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   }), 64))
                 ])) : _createCommentVNode$1("", true),
                 showAssetThresholdControls.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_30$1, [
-                  _cache[19] || (_cache[19] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Rule %", -1)),
+                  _cache[18] || (_cache[18] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Rule %", -1)),
                   (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(ASSET_THRESHOLD_OPTIONS, (option) => {
                     return _createElementVNode$1("button", {
                       key: `${__props.storageKeyPrefix}-asset-threshold-${option}`,
@@ -1637,7 +1634,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   thresholdSaving.value ? (_openBlock$1(), _createElementBlock$1("span", _hoisted_32$1, "Saving...")) : _createCommentVNode$1("", true)
                 ])) : _createCommentVNode$1("", true)
               ], 64)) : ui.tab === "LIABILITY_BREAKDOWN" ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_33$1, [
-                _cache[20] || (_cache[20] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
+                _cache[19] || (_cache[19] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Group", -1)),
                 (_openBlock$1(), _createElementBlock$1(_Fragment$1, null, _renderList$1(LIABILITY_GROUP_OPTIONS, (option) => {
                   return _createElementVNode$1("button", {
                     key: `${__props.storageKeyPrefix}-liability-group-${option}`,
@@ -1657,7 +1654,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   _createElementVNode$1("p", _hoisted_43$1, _toDisplayString$1(tabLabel(ui.tab)), 1),
                   _createElementVNode$1("p", _hoisted_44$1, [
                     _createElementVNode$1("span", null, _toDisplayString$1(chartSummaryDateLabel.value), 1),
-                    _cache[21] || (_cache[21] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, " · ", -1)),
+                    _cache[20] || (_cache[20] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, " · ", -1)),
                     _createElementVNode$1("span", null, _toDisplayString$1(chartSummaryAmountLabel.value), 1),
                     _createElementVNode$1("span", {
                       class: "ml-1",
@@ -1676,7 +1673,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                     ], 2)
                   ])) : _createCommentVNode$1("", true),
                   grossCompositionPills.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_48$1, [
-                    _cache[23] || (_cache[23] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top now", -1)),
+                    _cache[22] || (_cache[22] = _createElementVNode$1("span", { class: "text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400" }, "Top now", -1)),
                     (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(grossCompositionPills.value, (item) => {
                       return _openBlock$1(), _createElementBlock$1("span", {
                         key: `${__props.storageKeyPrefix}-gross-pill-${item.key}`,
@@ -1688,7 +1685,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                         }, null, 4),
                         _createElementVNode$1("span", _hoisted_49$1, _toDisplayString$1(item.label), 1),
                         _createElementVNode$1("span", _hoisted_50$1, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
-                        _cache[22] || (_cache[22] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
+                        _cache[21] || (_cache[21] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
                         _createElementVNode$1("span", {
                           class: "text-slate-500 dark:text-slate-400",
                           style: _normalizeStyle$1(amountMaskStyle())
@@ -1698,17 +1695,17 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   ])) : _createCommentVNode$1("", true),
                   rebalancingDraft.value ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_51$1, [
                     _createElementVNode$1("div", _hoisted_52$1, [
-                      _cache[24] || (_cache[24] = _createElementVNode$1("span", { class: "rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-semibold text-amber-200" }, " Draft rebalancing rule ", -1)),
+                      _cache[23] || (_cache[23] = _createElementVNode$1("span", { class: "rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-semibold text-amber-200" }, " Draft rebalancing rule ", -1)),
                       _createElementVNode$1("span", _hoisted_53$1, " Single asset > " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% ", 1),
                       _createElementVNode$1("span", _hoisted_54$1, _toDisplayString$1(rebalancingDraft.value.hovered ? "Using hovered date" : "Using latest date") + " " + _toDisplayString$1(rebalancingDraft.value.usingDate), 1)
                     ]),
                     _createElementVNode$1("p", _hoisted_55$1, " Flag single assets above " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% of gross assets. Assets between " + _toDisplayString$1(rebalancingDraft.value.nearPct.toFixed(0)) + "% and " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% are near the draft limit. ", 1),
                     rebalancingDraft.value.aboveLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_56$1, [
                       _createElementVNode$1("p", _hoisted_57$1, " Warning: " + _toDisplayString$1(rebalancingDraft.value.aboveLimit.length) + " " + _toDisplayString$1(rebalancingDraft.value.aboveLimit.length === 1 ? "asset exceeds" : "assets exceed") + " your " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% rule. ", 1),
-                      _cache[25] || (_cache[25] = _createElementVNode$1("p", { class: "mt-1 text-rose-100/90" }, " Gross Composition > Asset is currently flagging concentrated positions that may need a rebalance review. ", -1))
+                      _cache[24] || (_cache[24] = _createElementVNode$1("p", { class: "mt-1 text-rose-100/90" }, " Gross Composition > Asset is currently flagging concentrated positions that may need a rebalance review. ", -1))
                     ])) : rebalancingDraft.value.nearLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_58$1, [
                       _createElementVNode$1("p", _hoisted_59$1, " Heads up: " + _toDisplayString$1(rebalancingDraft.value.nearLimit.length) + " " + _toDisplayString$1(rebalancingDraft.value.nearLimit.length === 1 ? "asset is" : "assets are") + " near your " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% rule. ", 1),
-                      _cache[26] || (_cache[26] = _createElementVNode$1("p", { class: "mt-1 text-amber-100/90" }, " These positions are not above the threshold yet, but they are close enough to watch during future rebalancing. ", -1))
+                      _cache[25] || (_cache[25] = _createElementVNode$1("p", { class: "mt-1 text-amber-100/90" }, " These positions are not above the threshold yet, but they are close enough to watch during future rebalancing. ", -1))
                     ])) : _createCommentVNode$1("", true),
                     _createElementVNode$1("div", _hoisted_60$1, [
                       rebalancingDraft.value.aboveLimit.length > 0 || rebalancingDraft.value.nearLimit.length > 0 ? (_openBlock$1(), _createElementBlock$1(_Fragment$1, { key: 0 }, [
@@ -1747,7 +1744,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                             }, null, 4),
                             _createElementVNode$1("span", _hoisted_65, _toDisplayString$1(item.label), 1),
                             _createElementVNode$1("span", null, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
-                            _cache[27] || (_cache[27] = _createElementVNode$1("span", { class: "text-amber-200" }, "near limit", -1))
+                            _cache[26] || (_cache[26] = _createElementVNode$1("span", { class: "text-amber-200" }, "near limit", -1))
                           ], 42, _hoisted_64);
                         }), 128))
                       ], 64)) : (_openBlock$1(), _createElementBlock$1("span", _hoisted_66, " No asset currently exceeds the draft " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% threshold. ", 1))
@@ -1766,7 +1763,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                         }, null, 4),
                         _createElementVNode$1("span", _hoisted_69, _toDisplayString$1(item.label), 1),
                         _createElementVNode$1("span", _hoisted_70, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
-                        _cache[28] || (_cache[28] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
+                        _cache[27] || (_cache[27] = _createElementVNode$1("span", { class: "text-slate-400 dark:text-slate-500" }, "·", -1)),
                         _createElementVNode$1("span", {
                           class: "text-slate-500 dark:text-slate-400",
                           style: _normalizeStyle$1(amountMaskStyle())
@@ -1866,32 +1863,15 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                   }), 128))
                 ], 8, _hoisted_73))
               ]),
-              _createElementVNode$1("div", _hoisted_80, [
-                (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(legendWithColors.value, (item) => {
-                  return _openBlock$1(), _createElementBlock$1("span", {
-                    key: `${__props.storageKeyPrefix}-legend-${item.key}`,
-                    class: _normalizeClass$1(["inline-flex max-w-full items-start gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200", segmentHighlightClasses(item.key)]),
-                    title: item.label,
-                    onMouseenter: ($event) => setHoveredSegment(item.key),
-                    onMouseleave: _cache[10] || (_cache[10] = ($event) => clearHoveredSegment())
-                  }, [
-                    _createElementVNode$1("span", {
-                      class: "mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                      style: _normalizeStyle$1({ backgroundColor: item.color })
-                    }, null, 4),
-                    _createElementVNode$1("span", _hoisted_82, _toDisplayString$1(item.label), 1)
-                  ], 42, _hoisted_81);
-                }), 128))
-              ]),
-              displayedSegments.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_83, [
+              displayedSegments.value.length > 0 ? (_openBlock$1(), _createElementBlock$1("div", _hoisted_80, [
                 (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(displayedSegments.value, (segment) => {
                   return _openBlock$1(), _createElementBlock$1("div", {
                     key: `${__props.storageKeyPrefix}-inspect-${segment.key}`,
                     class: _normalizeClass$1(["rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm transition-colors dark:border-slate-700 dark:bg-slate-900", segmentHighlightClasses(segment.key)]),
                     onMouseenter: ($event) => setHoveredSegment(segment.key),
-                    onMouseleave: _cache[11] || (_cache[11] = ($event) => clearHoveredSegment())
+                    onMouseleave: _cache[10] || (_cache[10] = ($event) => clearHoveredSegment())
                   }, [
-                    _createElementVNode$1("div", _hoisted_85, [
+                    _createElementVNode$1("div", _hoisted_82, [
                       _createElementVNode$1("span", {
                         class: "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
                         style: _normalizeStyle$1({ backgroundColor: segment.color })
@@ -1899,15 +1879,15 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                       _createElementVNode$1("span", {
                         class: "name-clamp-2 min-w-0 flex-1 font-medium leading-5 text-slate-800 dark:text-slate-100",
                         title: segment.label
-                      }, _toDisplayString$1(segment.label), 9, _hoisted_86)
+                      }, _toDisplayString$1(segment.label), 9, _hoisted_83)
                     ]),
-                    _createElementVNode$1("p", _hoisted_87, [
+                    _createElementVNode$1("p", _hoisted_84, [
                       _createElementVNode$1("span", {
                         style: _normalizeStyle$1(__props.chartKind === "AMOUNT" ? amountMaskStyle() : void 0)
                       }, _toDisplayString$1(__props.chartKind === "AMOUNT" ? formatCurrency(toNumber(segment.amount), __props.displayCurrency) : formatPercent(toNumber(segment.ratio_pct))), 5),
-                      __props.chartKind === "AMOUNT" ? (_openBlock$1(), _createElementBlock$1("span", _hoisted_88, " · " + _toDisplayString$1(formatPercent(toNumber(segment.ratio_pct))), 1)) : _createCommentVNode$1("", true)
+                      __props.chartKind === "AMOUNT" ? (_openBlock$1(), _createElementBlock$1("span", _hoisted_85, " · " + _toDisplayString$1(formatPercent(toNumber(segment.ratio_pct))), 1)) : _createCommentVNode$1("", true)
                     ])
-                  ], 42, _hoisted_84);
+                  ], 42, _hoisted_81);
                 }), 128))
               ])) : _createCommentVNode$1("", true)
             ])

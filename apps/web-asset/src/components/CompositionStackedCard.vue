@@ -1131,24 +1131,9 @@ onBeforeUnmount(() => {
             </svg>
           </div>
 
-	          <div class="mt-4 flex flex-wrap gap-2">
-	            <span
-	              v-for="item in legendWithColors"
-	              :key="`${storageKeyPrefix}-legend-${item.key}`"
-	              class="inline-flex max-w-full items-start gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-	              :class="segmentHighlightClasses(item.key)"
-	              :title="item.label"
-	              @mouseenter="setHoveredSegment(item.key)"
-	              @mouseleave="clearHoveredSegment()"
-	            >
-	              <span class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: item.color }" />
-	              <span class="name-clamp-2 max-w-[11rem] leading-4">{{ item.label }}</span>
-	            </span>
-	          </div>
-
           <div v-if="displayedSegments.length > 0" class="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-	            <div
-	              v-for="segment in displayedSegments"
+            <div
+              v-for="segment in displayedSegments"
 	              :key="`${storageKeyPrefix}-inspect-${segment.key}`"
 	              class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm transition-colors dark:border-slate-700 dark:bg-slate-900"
 	              :class="segmentHighlightClasses(segment.key)"
