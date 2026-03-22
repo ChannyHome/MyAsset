@@ -20,6 +20,7 @@ from app.models.valuation_snapshot import ValuationSnapshot, ValuationSnapshotPo
 from app.schemas.analytics import (
     AnalyticsAllocationItemOut,
     AnalyticsAllocationOut,
+    AnalyticsCompositionSeriesOut,
     AnalyticsGoalProgressOut,
     AnalyticsNetworthSeriesLineOut,
     AnalyticsNetworthSeriesLinePointOut,
@@ -31,6 +32,7 @@ from app.schemas.analytics import (
 )
 from app.services.currency import FxCache, MissingFxRateError, convert_amount
 from app.services.analytics_summary import calculate_summary_values
+from app.services.composition_series import CompositionSeriesValidationError, build_composition_series
 from app.services.goal_progress import build_goal_progress
 from app.services.quick_insight import QuickInsightValidationError, get_quick_insight
 from app.services.user_seed import SeedUser
@@ -292,6 +294,49 @@ def get_goal_progress_view(
             status_code=503,
             detail=f"Missing FX rate for {exc.from_currency}->{exc.to_currency}. Please refresh FX quotes.",
         ) from exc
+
+
+@router.get("/composition-series", response_model=AnalyticsCompositionSeriesOut)
+def get_composition_series(
+    scope_type: str | None = None,
+    scope_id: int | None = None,
+    display_currency: str = "KRW",
+    chart_kind: Literal["AMOUNT", "ALLOCATION"] = Query(default="AMOUNT"),
+    tab: Literal["GROSS_COMPOSITION", "CAPITAL_STRUCTURE", "LIABILITY_BREAKDOWN"] = Query(
+        default="GROSS_COMPOSITION"
+    ),
+    mode: Literal["SUMMARY", "PORTFOLIO"] = Query(default="SUMMARY"),
+    group_by: Literal["ASSET_CLASS", "PORTFOLIO", "LIABILITY_TYPE", "ASSET"] | None = Query(default=None),
+    portfolio_id: int | None = Query(default=None, ge=1),
+    bucket: SeriesBucket = Query(default="DAY"),
+    limit: int = Query(default=12, ge=1, le=60),
+    top_n: int = Query(default=8, ge=3, le=20),
+    db: Session = Depends(get_db),
+    current_user: SeedUser = Depends(get_current_user),
+) -> AnalyticsCompositionSeriesOut:
+    normalized_scope_type, normalized_scope_id, _scope_user_ids = _resolve_scope_user_ids(
+        db=db,
+        current_user=current_user,
+        scope_type=scope_type,
+        scope_id=scope_id,
+    )
+    try:
+        return build_composition_series(
+            db=db,
+            scope_type=normalized_scope_type,
+            scope_id=normalized_scope_id,
+            display_currency=display_currency,
+            chart_kind=chart_kind,
+            tab=tab,
+            mode=mode,
+            group_by=group_by,
+            portfolio_id=portfolio_id,
+            bucket=bucket,
+            limit=limit,
+            top_n=top_n,
+        )
+    except CompositionSeriesValidationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
 
 @router.get("/allocation", response_model=AnalyticsAllocationOut)

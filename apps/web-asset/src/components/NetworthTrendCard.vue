@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 type NetworthPoint = {
   label: string;
@@ -47,6 +47,7 @@ const props = withDefaults(
     portfolioOptions?: PortfolioOption[];
     portfolioKey?: string;
     showPortfolioSelector?: boolean;
+    storageKey?: string;
   }>(),
   {
     title: "Networth Trend",
@@ -65,6 +66,7 @@ const props = withDefaults(
     portfolioOptions: () => [],
     portfolioKey: "ALL",
     showPortfolioSelector: true,
+    storageKey: "",
   },
 );
 
@@ -88,6 +90,15 @@ const chartWidth = 760;
 const chartHeight = 240;
 const chartPadding = 56;
 const inspectText = ref("");
+const expanded = ref(true);
+const infoOpen = ref(false);
+
+function loadExpandedState(): void {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  const raw = window.localStorage.getItem(props.storageKey);
+  if (raw === "1") expanded.value = true;
+  if (raw === "0") expanded.value = false;
+}
 
 const showGrossModel = computed({
   get: () => props.showGross,
@@ -192,6 +203,31 @@ const allValues = computed<[number, number]>(() => {
 
 const firstPoint = computed(() => (props.points.length > 0 ? props.points[0] : null));
 const lastPoint = computed(() => (props.points.length > 0 ? props.points[props.points.length - 1] : null));
+
+const collapsedSummary = computed(() => {
+  if (props.mode === "PORTFOLIO") {
+    const metricLabel =
+      props.portfolioMetric === "CURRENT_VALUE"
+        ? "Current Value"
+        : props.portfolioMetric === "CURRENT_NET"
+          ? "Current Net"
+          : props.portfolioMetric === "PROFIT"
+            ? "Profit"
+            : "Return";
+    return `Portfolio trend · ${metricLabel} · ${lastPoint.value?.label ?? "-"}`;
+  }
+  if (!lastPoint.value) return "No trend data.";
+  return `Latest snapshot · Gross ${formatCurrency(lastPoint.value.gross, props.currency)} · Net ${formatCurrency(lastPoint.value.net, props.currency)}`;
+});
+
+watch(expanded, (value) => {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+});
+
+onMounted(() => {
+  loadExpandedState();
+});
 
 function toX(index: number, total: number): number {
   if (total <= 1) return chartPadding;
@@ -337,15 +373,63 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
   <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-pressed="infoOpen"
+            :aria-label="infoOpen ? 'Hide trend info' : 'Show trend info'"
+            @click="infoOpen = !infoOpen"
+          >
+            i
+          </button>
+        </div>
         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
       </div>
-      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-        {{ currency }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {{ currency }}
+        </span>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="expanded = !expanded"
+        >
+          {{ expanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
     </div>
 
-    <div v-if="showModeToggle" class="mt-3 flex flex-wrap items-center gap-2">
+    <div
+      v-if="infoOpen"
+      class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p>Networth Trend shows how the selected scope changed across valuation snapshots over time.</p>
+      <p class="mt-1">Summary compares Gross, Liabilities, and Net. Portfolio mode lets us inspect a single metric across portfolios.</p>
+    </div>
+
+    <div
+      v-if="!expanded"
+      class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p class="font-medium text-slate-700 dark:text-slate-200">Collapsed. Click Expand to preview the latest networth trend.</p>
+      <p
+        class="mt-1"
+        :style="
+          props.maskAmounts && (modeModel !== 'PORTFOLIO' || portfolioMetricModel !== 'RETURN')
+            ? { filter: 'blur(6px)' }
+            : undefined
+        "
+      >
+        {{ collapsedSummary }}
+      </p>
+      <p v-if="firstPoint && lastPoint" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Range: {{ firstPoint.label }} -> {{ lastPoint.label }}
+      </p>
+    </div>
+
+    <div v-else-if="showModeToggle" class="mt-3 flex flex-wrap items-center gap-2">
       <button
         type="button"
         class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
@@ -431,16 +515,16 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       </select>
     </div>
 
-    <div v-if="loading" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div v-if="expanded && loading" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
       Loading trend...
     </div>
-    <div v-else-if="error" class="mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+    <div v-else-if="expanded && error" class="mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
       {{ error }}
     </div>
-    <div v-else-if="points.length <= 1" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div v-else-if="expanded && points.length <= 1" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
       Need at least 2 snapshot points to draw trend line.
     </div>
-    <div v-else class="mt-3 space-y-3">
+    <div v-else-if="expanded" class="mt-3 space-y-3">
       <div v-if="modeModel === 'SUMMARY' && showVisibilityControls" class="flex flex-wrap items-center gap-4 text-xs">
         <label class="inline-flex items-center gap-2">
           <input

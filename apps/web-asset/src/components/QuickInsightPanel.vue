@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import { AxiosError } from "axios";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
 import {
   getQuickInsight,
@@ -105,6 +105,8 @@ const profitInfoOpen = ref(false);
 const returnInfoOpen = ref(false);
 const currentDateInput = ref<HTMLInputElement | null>(null);
 const compareDateInput = ref<HTMLInputElement | null>(null);
+const driverSectionRef = ref<HTMLElement | null>(null);
+const driverSectionFlash = ref(false);
 
 function toNumber(value: string | number | null | undefined): number {
   if (value == null) return 0;
@@ -441,6 +443,44 @@ function renderAmount(value: number): string {
   return formatSignedCurrency(value, props.displayCurrency);
 }
 
+function splitTextAndAmounts(source: string): Array<{ text: string; isAmount: boolean; isDriver: boolean }> {
+  const pattern = /([+-]?(?:₩|\$)\d[\d,]*(?:\.\d+)?)/g;
+  const parts: Array<{ text: string; isAmount: boolean; isDriver: boolean }> = [];
+  let lastIndex = 0;
+  for (const match of source.matchAll(pattern)) {
+    const matchIndex = match.index ?? 0;
+    if (matchIndex > lastIndex) {
+      parts.push({ text: source.slice(lastIndex, matchIndex), isAmount: false, isDriver: false });
+    }
+    parts.push({ text: match[0], isAmount: true, isDriver: false });
+    lastIndex = matchIndex + match[0].length;
+  }
+  if (lastIndex < source.length) {
+    parts.push({ text: source.slice(lastIndex), isAmount: false, isDriver: false });
+  }
+  return parts;
+}
+
+const summaryCommentDisplayParts = computed(() => {
+  const alert = quickInsight.value?.summary_alert;
+  const comment = alert?.comment || "";
+  const driverLabel = alert?.driver_label || "";
+  if (!comment) return [];
+  if (!driverLabel) return splitTextAndAmounts(comment);
+  const matchIndex = comment.indexOf(driverLabel);
+  if (matchIndex < 0) return splitTextAndAmounts(comment);
+  return [
+    ...splitTextAndAmounts(comment.slice(0, matchIndex)),
+    { text: driverLabel, isAmount: false, isDriver: true },
+    ...splitTextAndAmounts(comment.slice(matchIndex + driverLabel.length)),
+  ];
+});
+
+const canJumpToSummaryDriver = computed(() => {
+  const alert = quickInsight.value?.summary_alert;
+  return Boolean(alert?.driver_label && alert?.driver_target);
+});
+
 function renderReturn(value: string | number | null | undefined): string {
   return formatPercentPoint(toNumber(value));
 }
@@ -468,6 +508,19 @@ function toggleProfitInfo(): void {
 
 function toggleReturnInfo(): void {
   returnInfoOpen.value = !returnInfoOpen.value;
+}
+
+async function jumpToSummaryDriver(): Promise<void> {
+  if (!quickInsight.value?.summary_alert.driver_target) return;
+  panelExpanded.value = true;
+  showNetDrivers.value = quickInsight.value.summary_alert.driver_target === "NET_DRIVERS";
+  await nextTick();
+  driverSectionFlash.value = false;
+  driverSectionRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+  driverSectionFlash.value = true;
+  window.setTimeout(() => {
+    driverSectionFlash.value = false;
+  }, 1400);
 }
 
 function hasCostBasisDelta(value: string | number | null | undefined): boolean {
@@ -660,7 +713,22 @@ async function resetCustomCompareAndApply(): Promise<void> {
         </div>
 
         <section class="rounded-2xl border px-4 py-4" :class="insightSeverityClass(quickInsight.summary_alert.severity)">
-          <p class="text-sm font-semibold [overflow-wrap:anywhere]">{{ quickInsight.summary_alert.comment }}</p>
+          <p class="text-sm font-semibold [overflow-wrap:anywhere]">
+            <template
+              v-for="(part, index) in summaryCommentDisplayParts"
+              :key="`summary-comment-${index}`"
+            >
+              <button
+                v-if="part.isDriver && canJumpToSummaryDriver"
+                type="button"
+                class="inline font-semibold text-indigo-100 underline decoration-indigo-300/60 underline-offset-2 transition hover:text-white"
+                @click="jumpToSummaryDriver"
+              >
+                {{ part.text }}
+              </button>
+              <span v-else :style="part.isAmount ? amountMaskStyle() : undefined">{{ part.text }}</span>
+            </template>
+          </p>
           <div class="mt-3 grid gap-3 md:grid-cols-3">
             <div class="rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30"><p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Gross</p><p class="mt-1 text-sm font-semibold" :class="insightDeltaClass(toNumber(quickInsight.summary_alert.gross_delta))"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(quickInsight.summary_alert.gross_delta)) }}</span></p></div>
             <div class="rounded-xl bg-white/40 px-3 py-3 dark:bg-slate-900/30"><p class="text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Net</p><p class="mt-1 text-sm font-semibold" :class="insightDeltaClass(toNumber(quickInsight.summary_alert.net_delta))"><span :style="amountMaskStyle()">{{ renderAmount(toNumber(quickInsight.summary_alert.net_delta)) }}</span></p></div>
@@ -668,7 +736,11 @@ async function resetCustomCompareAndApply(): Promise<void> {
           </div>
         </section>
 
-        <section class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+        <section
+          ref="driverSectionRef"
+          class="scroll-mt-24 rounded-2xl border border-slate-200 p-4 transition-all duration-500 dark:border-slate-700"
+          :class="driverSectionFlash ? 'ring-2 ring-indigo-400/60 bg-indigo-500/5 shadow-[0_0_0_1px_rgba(129,140,248,0.18)]' : ''"
+        >
           <div class="flex flex-wrap items-center gap-2">
             <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ driverCardTitle }}</h3>
             <button

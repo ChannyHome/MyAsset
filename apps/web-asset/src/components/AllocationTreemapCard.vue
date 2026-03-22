@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 type AllocationItem = {
   key: string;
@@ -18,12 +18,14 @@ const props = withDefaults(
     maskAmounts?: boolean;
     loading?: boolean;
     error?: string;
+    storageKey?: string;
   }>(),
   {
     subtitle: "",
     maskAmounts: false,
     loading: false,
     error: "",
+    storageKey: "",
   },
 );
 
@@ -99,6 +101,21 @@ const returnRangeLabel = computed(() => {
   return `${formatSignedPercent(returnRange.value.min)} ~ ${formatSignedPercent(returnRange.value.max)}`;
 });
 
+const expanded = ref(true);
+const infoOpen = ref(false);
+const topItem = computed(() => normalizedItems.value[0] ?? null);
+const collapsedSummary = computed(() => {
+  if (!topItem.value) return "No holdings allocation data.";
+  return `Top block: ${topItem.value.label} ${formatPercent(topItem.value.ratioPct)}`;
+});
+
+function loadExpandedState(): void {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  const raw = window.localStorage.getItem(props.storageKey);
+  if (raw === "1") expanded.value = true;
+  if (raw === "0") expanded.value = false;
+}
+
 function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
@@ -115,28 +132,76 @@ function formatSignedPercent(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return "-";
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
+
+watch(expanded, (value) => {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+});
+
+onMounted(() => {
+  loadExpandedState();
+});
 </script>
 
 <template>
   <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-pressed="infoOpen"
+            :aria-label="infoOpen ? 'Hide treemap info' : 'Show treemap info'"
+            @click="infoOpen = !infoOpen"
+          >
+            i
+          </button>
+        </div>
         <p v-if="subtitle" class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
       </div>
-      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-        {{ currency }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {{ currency }}
+        </span>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="expanded = !expanded"
+        >
+          {{ expanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
     </div>
 
-    <div v-if="loading" class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div
+      v-if="infoOpen"
+      class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p>Treemap blocks are sized by allocation ratio, so bigger blocks represent larger positions.</p>
+      <p class="mt-1">Color represents return tone, which helps us spot large winners and laggards at a glance.</p>
+    </div>
+
+    <div v-if="expanded && loading" class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
       Loading...
     </div>
-    <div v-else-if="error" class="mt-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+    <div v-else-if="expanded && error" class="mt-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
       {{ error }}
     </div>
-    <div v-else-if="normalizedItems.length === 0" class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div
+      v-else-if="expanded && normalizedItems.length === 0"
+      class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+    >
       No holdings allocation data.
+    </div>
+    <div
+      v-else-if="!expanded"
+      class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p class="font-medium text-slate-700 dark:text-slate-200">Collapsed. Click Expand to preview the latest treemap.</p>
+      <p class="mt-1">{{ collapsedSummary }}</p>
+      <p v-if="returnRangeLabel" class="mt-1">Return range: {{ returnRangeLabel }}</p>
     </div>
     <div v-else class="mt-4 space-y-3">
       <div class="flex min-h-[180px] flex-wrap gap-1.5 rounded-xl bg-slate-950/95 p-1.5">

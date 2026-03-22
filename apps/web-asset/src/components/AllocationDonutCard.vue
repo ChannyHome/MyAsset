@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import { useUiStore } from "../stores/ui";
@@ -26,6 +26,7 @@ const props = withDefaults(
     error?: string;
     mobileTopN?: number;
     enableMobileTopN?: boolean;
+    storageKey?: string;
   }>(),
   {
     subtitle: "",
@@ -34,11 +35,14 @@ const props = withDefaults(
     loading: false,
     error: "",
     enableMobileTopN: true,
+    storageKey: "",
   },
 );
 
 const uiStore = useUiStore();
 const { mobileAllocationTopN } = storeToRefs(uiStore);
+const expanded = ref(true);
+const infoOpen = ref(false);
 
 const palette = [
   "#0ea5e9",
@@ -65,6 +69,13 @@ const normalizedItems = computed(() =>
 const viewportWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1280);
 const activeLegendTooltipKey = ref<string | null>(null);
 
+function loadExpandedState(): void {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  const raw = window.localStorage.getItem(props.storageKey);
+  if (raw === "1") expanded.value = true;
+  if (raw === "0") expanded.value = false;
+}
+
 function updateViewportWidth() {
   viewportWidth.value = window.innerWidth;
   if (viewportWidth.value >= 768) {
@@ -73,6 +84,7 @@ function updateViewportWidth() {
 }
 
 onMounted(() => {
+  loadExpandedState();
   if (typeof uiStore.init === "function") {
     uiStore.init();
   }
@@ -81,6 +93,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateViewportWidth);
+});
+
+watch(expanded, (value) => {
+  if (typeof window === "undefined" || !props.storageKey) return;
+  window.localStorage.setItem(props.storageKey, value ? "1" : "0");
 });
 
 const listScrollThreshold = computed(() => {
@@ -124,6 +141,15 @@ const displayItems = computed(() => {
       color: "#64748b",
     },
   ];
+});
+
+const topDisplayItem = computed(() => displayItems.value[0] ?? null);
+
+const collapsedSummary = computed(() => {
+  if (displayItems.value.length === 0 || !topDisplayItem.value) {
+    return "No allocation data.";
+  }
+  return `Top allocation: ${topDisplayItem.value.label} ${formatPercent(topDisplayItem.value.ratioPct)}`;
 });
 
 const shouldEnableListScroll = computed(() => displayItems.value.length > listScrollThreshold.value);
@@ -181,15 +207,54 @@ function formatPercent(value: number): string {
   <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="flex items-start justify-between gap-2">
       <div>
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h3>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-pressed="infoOpen"
+            :aria-label="infoOpen ? 'Hide allocation info' : 'Show allocation info'"
+            @click="infoOpen = !infoOpen"
+          >
+            i
+          </button>
+        </div>
         <p v-if="subtitle" class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ subtitle }}</p>
       </div>
-      <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-        {{ currency }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {{ currency }}
+        </span>
+        <button
+          type="button"
+          class="rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          @click="expanded = !expanded"
+        >
+          {{ expanded ? "Collapse" : "Expand" }}
+        </button>
+      </div>
     </div>
 
-    <div v-if="loading" class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div
+      v-if="infoOpen"
+      class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p>This donut shows the latest allocation mix for the selected scope.</p>
+      <p class="mt-1">Use it to spot the biggest positions quickly. On mobile, smaller slices can be grouped into Others.</p>
+    </div>
+
+    <div
+      v-if="!expanded"
+      class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+    >
+      <p class="font-medium text-slate-700 dark:text-slate-200">Collapsed. Click Expand to preview the latest allocation mix.</p>
+      <p class="mt-1">{{ collapsedSummary }}</p>
+      <p class="mt-1" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
+        Total {{ formatCurrency(total, currency) }}
+      </p>
+    </div>
+
+    <div v-else-if="loading" class="mt-4 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
       Loading...
     </div>
     <div v-else-if="error" class="mt-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">

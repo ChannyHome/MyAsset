@@ -105,6 +105,15 @@ class SummaryMetric:
     as_of: datetime
 
 
+@dataclass
+class SummaryCommentBuild:
+    comment: str
+    severity: Literal["positive", "negative", "neutral"]
+    driver_label: str | None = None
+    driver_key: str | None = None
+    driver_target: Literal["GROSS_DRIVERS", "NET_DRIVERS"] | None = None
+
+
 def _holding_effective_cost_basis(holding: Holding) -> tuple[Decimal, str]:
     invested = Decimal(holding.invested_amount) if holding.invested_amount is not None else None
     fallback_cost = Decimal(holding.quantity) * Decimal(holding.avg_price)
@@ -247,6 +256,23 @@ def _format_signed_decimal_text(value: Decimal) -> str:
     return text
 
 
+def _format_currency_text(
+    value: Decimal,
+    display_currency: str,
+    *,
+    signed: bool = False,
+) -> str:
+    normalized_currency = _normalize_display_currency(display_currency)
+    symbol = "$" if normalized_currency == "USD" else "₩"
+    absolute_text = _format_decimal_text(abs(Decimal(value)))
+    if signed:
+        if Decimal(value) > 0:
+            return f"+{symbol}{absolute_text}"
+        if Decimal(value) < 0:
+            return f"-{symbol}{absolute_text}"
+    return f"{symbol}{absolute_text}"
+
+
 def _make_delta_item(
     *,
     entity_type: Literal["HOLDING", "LIABILITY", "PORTFOLIO"],
@@ -339,6 +365,7 @@ def _top_n_by_abs(items: list[AnalyticsQuickInsightDeltaItemOut], n: int) -> lis
 def _build_summary_comment(
     *,
     period_label: str,
+    display_currency: str,
     gross_delta: Decimal,
     net_delta: Decimal,
     liabilities_delta: Decimal,
@@ -347,62 +374,99 @@ def _build_summary_comment(
     gross_gainer: AnalyticsQuickInsightDeltaItemOut | None,
     net_drag: AnalyticsQuickInsightDeltaItemOut | None,
     net_boost: AnalyticsQuickInsightDeltaItemOut | None,
-) -> tuple[str, Literal["positive", "negative", "neutral"]]:
+) -> SummaryCommentBuild:
     threshold = _material_change_threshold(baseline_gross or Decimal("0"))
     if abs(gross_delta) < threshold and abs(net_delta) < threshold and abs(liabilities_delta) < threshold:
-        return (
-            f"Minor move over {period_label}. "
-            f"Gross {_format_signed_decimal_text(gross_delta)}, "
-            f"Net {_format_signed_decimal_text(net_delta)}.",
-            "neutral",
+        return SummaryCommentBuild(
+            comment=(
+                f"Minor move over {period_label}. "
+                f"Gross {_format_currency_text(gross_delta, display_currency, signed=True)}, "
+                f"Net {_format_currency_text(net_delta, display_currency, signed=True)}."
+            ),
+            severity="neutral",
         )
 
     if net_delta < 0:
         if liabilities_delta > 0 and net_drag is not None and net_drag.entity_type == "LIABILITY":
-            return (
-                f"Alert: Net {period_label} down by {_format_decimal_text(liabilities_delta)},"
-                f" mainly due to increased liabilities in {net_drag.label}.",
-                "negative",
+            return SummaryCommentBuild(
+                comment=(
+                    f"Alert: Net {period_label} down by {_format_currency_text(liabilities_delta, display_currency)},"
+                    f" mainly due to increased liabilities in {net_drag.label}."
+                ),
+                severity="negative",
+                driver_label=net_drag.label,
+                driver_key=net_drag.key,
+                driver_target="NET_DRIVERS",
             )
         if gross_loser is not None:
             driver_reason = _display_reason(gross_loser.display_class)
-            return (
-                f"Alert: Gross {period_label} down by {_format_decimal_text(abs(gross_delta))},"
-                f" mainly driven by {gross_loser.label} ({driver_reason}).",
-                "negative",
+            return SummaryCommentBuild(
+                comment=(
+                    f"Alert: Gross {period_label} down by {_format_currency_text(abs(gross_delta), display_currency)},"
+                    f" mainly driven by {gross_loser.label} ({driver_reason})."
+                ),
+                severity="negative",
+                driver_label=gross_loser.label,
+                driver_key=gross_loser.key,
+                driver_target="GROSS_DRIVERS",
             )
-        return f"Alert: Net {period_label} moved lower versus baseline.", "negative"
+        return SummaryCommentBuild(
+            comment=f"Alert: Net {period_label} moved lower versus baseline.",
+            severity="negative",
+        )
 
     if net_delta > 0:
         if gross_gainer is not None:
             driver_reason = _display_reason(gross_gainer.display_class)
-            return (
-                f"Comment: Net {period_label} up by {_format_decimal_text(net_delta)},"
-                f" led by {gross_gainer.label} ({driver_reason}).",
-                "positive",
+            return SummaryCommentBuild(
+                comment=(
+                    f"Comment: Net {period_label} up by {_format_currency_text(net_delta, display_currency)},"
+                    f" led by {gross_gainer.label} ({driver_reason})."
+                ),
+                severity="positive",
+                driver_label=gross_gainer.label,
+                driver_key=gross_gainer.key,
+                driver_target="GROSS_DRIVERS",
             )
         if net_boost is not None:
             driver_reason = _display_reason(net_boost.display_class)
-            return (
-                f"Comment: Net {period_label} up by {_format_decimal_text(net_delta)},"
-                f" helped by {net_boost.label} ({driver_reason}).",
-                "positive",
+            return SummaryCommentBuild(
+                comment=(
+                    f"Comment: Net {period_label} up by {_format_currency_text(net_delta, display_currency)},"
+                    f" helped by {net_boost.label} ({driver_reason})."
+                ),
+                severity="positive",
+                driver_label=net_boost.label,
+                driver_key=net_boost.key,
+                driver_target="NET_DRIVERS",
             )
-        return f"Comment: Net {period_label} moved higher versus baseline.", "positive"
+        return SummaryCommentBuild(
+            comment=f"Comment: Net {period_label} moved higher versus baseline.",
+            severity="positive",
+        )
 
     if gross_delta < 0 and gross_loser is not None:
         driver_reason = _display_reason(gross_loser.display_class)
-        return (
-            f"Alert: Gross {period_label} is lower, mainly due to {gross_loser.label} ({driver_reason}).",
-            "negative",
+        return SummaryCommentBuild(
+            comment=f"Alert: Gross {period_label} is lower, mainly due to {gross_loser.label} ({driver_reason}).",
+            severity="negative",
+            driver_label=gross_loser.label,
+            driver_key=gross_loser.key,
+            driver_target="GROSS_DRIVERS",
         )
     if gross_delta > 0 and gross_gainer is not None:
         driver_reason = _display_reason(gross_gainer.display_class)
-        return (
-            f"Comment: Gross {period_label} is higher, led by {gross_gainer.label} ({driver_reason}).",
-            "positive",
+        return SummaryCommentBuild(
+            comment=f"Comment: Gross {period_label} is higher, led by {gross_gainer.label} ({driver_reason}).",
+            severity="positive",
+            driver_label=gross_gainer.label,
+            driver_key=gross_gainer.key,
+            driver_target="GROSS_DRIVERS",
         )
-    return f"No net change over {period_label}, but components moved internally.", "neutral"
+    return SummaryCommentBuild(
+        comment=f"No net change over {period_label}, but components moved internally.",
+        severity="neutral",
+    )
 
 
 def _holding_key(portfolio_id: int | None, asset_id: int | None, asset_name: str) -> str:
@@ -1284,6 +1348,7 @@ def _load_preview_portfolio_metrics(
 
 def _build_quick_insight_response(
     *,
+    display_currency: str,
     current_summary: SummaryMetric,
     baseline_label: str | None,
     has_baseline: bool,
@@ -1528,8 +1593,9 @@ def _build_quick_insight_response(
     gross_delta = current_summary.gross_assets_total - baseline_gross
     net_delta = current_summary.net_assets_total - baseline_net
     liabilities_delta = current_summary.liabilities_total - baseline_liabilities_total
-    summary_comment, severity = _build_summary_comment(
+    summary_comment = _build_summary_comment(
         period_label=resolved_period_label,
+        display_currency=display_currency,
         gross_delta=gross_delta,
         net_delta=net_delta,
         liabilities_delta=liabilities_delta,
@@ -1554,8 +1620,11 @@ def _build_quick_insight_response(
             gross_delta=gross_delta,
             net_delta=net_delta,
             liabilities_delta=liabilities_delta,
-            severity=severity,
-            comment=summary_comment,
+            severity=summary_comment.severity,
+            comment=summary_comment.comment,
+            driver_label=summary_comment.driver_label,
+            driver_key=summary_comment.driver_key,
+            driver_target=summary_comment.driver_target,
         ),
         gross_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=gross_gainers, top_losers=gross_losers),
         net_drivers=AnalyticsQuickInsightDriverGroupOut(top_gainers=net_gainers, top_losers=net_losers),
@@ -1660,6 +1729,7 @@ def get_quick_insight(
     )
     if current_snapshot is None:
         return _build_quick_insight_response(
+            display_currency=normalized_currency,
             current_summary=empty_summary,
             baseline_label=compare_snapshot.snapshot_date.isoformat() if compare_snapshot is not None else None,
             has_baseline=False,
@@ -1722,6 +1792,7 @@ def get_quick_insight(
 
     if compare_snapshot is None:
         return _build_quick_insight_response(
+            display_currency=normalized_currency,
             current_summary=current_summary,
             baseline_label=None,
             has_baseline=False,
@@ -1752,6 +1823,7 @@ def get_quick_insight(
 
     if current_snapshot.id == compare_snapshot.id:
         return _build_quick_insight_response(
+            display_currency=normalized_currency,
             current_summary=current_summary,
             baseline_label=compare_snapshot.snapshot_date.isoformat(),
             has_baseline=False,
@@ -1817,6 +1889,7 @@ def get_quick_insight(
     baseline_label = compare_snapshot.snapshot_date.isoformat()
 
     return _build_quick_insight_response(
+        display_currency=normalized_currency,
         current_summary=current_summary,
         baseline_label=baseline_label,
         has_baseline=True,
@@ -1910,6 +1983,7 @@ def get_snapshot_quick_insight(
         baseline_label = baseline_snapshot.as_of.isoformat()
 
     return _build_quick_insight_response(
+        display_currency=normalized_currency,
         current_summary=current_summary,
         baseline_label=baseline_label,
         has_baseline=has_baseline,
@@ -1989,6 +2063,7 @@ def get_preview_quick_insight(
         baseline_label = baseline_snapshot.as_of.isoformat()
 
     return _build_quick_insight_response(
+        display_currency=normalized_currency,
         current_summary=current_summary,
         baseline_label=baseline_label,
         has_baseline=has_baseline,

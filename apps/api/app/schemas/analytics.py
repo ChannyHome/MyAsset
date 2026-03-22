@@ -72,6 +72,42 @@ class AnalyticsNetworthSeriesOut(BaseModel):
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
 
 
+class AnalyticsCompositionLegendItemOut(BaseModel):
+    key: str
+    label: str
+    color_token: str
+
+
+class AnalyticsCompositionSegmentOut(BaseModel):
+    key: str
+    label: str
+    amount: Decimal
+    ratio_pct: Decimal
+
+
+class AnalyticsCompositionPointOut(BaseModel):
+    bucket_label: str
+    snapshot_date: str
+    total_amount: Decimal
+    segments: list[AnalyticsCompositionSegmentOut]
+
+
+class AnalyticsCompositionSeriesOut(BaseModel):
+    scope_type: str
+    scope_id: int
+    display_currency: str
+    chart_kind: Literal["AMOUNT", "ALLOCATION"]
+    tab: Literal["GROSS_COMPOSITION", "CAPITAL_STRUCTURE", "LIABILITY_BREAKDOWN"]
+    mode: Literal["SUMMARY", "PORTFOLIO"]
+    group_by: Literal["ASSET_CLASS", "PORTFOLIO", "LIABILITY_TYPE", "ASSET"]
+    bucket: Literal["DAY", "WEEK", "MONTH"]
+    limit: int
+    legend: list[AnalyticsCompositionLegendItemOut]
+    points: list[AnalyticsCompositionPointOut]
+    as_of: datetime
+    has_data: bool
+
+
 class AnalyticsSnapshotCollectOut(BaseModel):
     snapshot_date: str
     display_currency: str
@@ -140,6 +176,9 @@ class AnalyticsQuickInsightSummaryAlertOut(BaseModel):
     liabilities_delta: Decimal | None = None
     severity: Literal["positive", "negative", "neutral"]
     comment: str
+    driver_label: str | None = None
+    driver_key: str | None = None
+    driver_target: Literal["GROSS_DRIVERS", "NET_DRIVERS"] | None = None
 
 
 class AnalyticsQuickInsightOut(BaseModel):

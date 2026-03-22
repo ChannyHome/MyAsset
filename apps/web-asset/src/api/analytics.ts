@@ -76,6 +76,48 @@ export type AnalyticsNetworthSeriesOut = {
   portfolio_lines: AnalyticsNetworthSeriesLineOut[];
 };
 
+export type AnalyticsCompositionChartKind = "AMOUNT" | "ALLOCATION";
+export type AnalyticsCompositionTab = "GROSS_COMPOSITION" | "CAPITAL_STRUCTURE" | "LIABILITY_BREAKDOWN";
+export type AnalyticsCompositionMode = "SUMMARY" | "PORTFOLIO";
+export type AnalyticsCompositionGroupBy = "ASSET_CLASS" | "PORTFOLIO" | "LIABILITY_TYPE" | "ASSET";
+export type AnalyticsCompositionBucket = "DAY" | "WEEK" | "MONTH";
+
+export type AnalyticsCompositionLegendItemOut = {
+  key: string;
+  label: string;
+  color_token: string;
+};
+
+export type AnalyticsCompositionSegmentOut = {
+  key: string;
+  label: string;
+  amount: string | number;
+  ratio_pct: string | number;
+};
+
+export type AnalyticsCompositionPointOut = {
+  bucket_label: string;
+  snapshot_date: string;
+  total_amount: string | number;
+  segments: AnalyticsCompositionSegmentOut[];
+};
+
+export type AnalyticsCompositionSeriesOut = {
+  scope_type: string;
+  scope_id: number;
+  display_currency: string;
+  chart_kind: AnalyticsCompositionChartKind;
+  tab: AnalyticsCompositionTab;
+  mode: AnalyticsCompositionMode;
+  group_by: AnalyticsCompositionGroupBy;
+  bucket: AnalyticsCompositionBucket;
+  limit: number;
+  legend: AnalyticsCompositionLegendItemOut[];
+  points: AnalyticsCompositionPointOut[];
+  as_of: string;
+  has_data: boolean;
+};
+
 export type AnalyticsSnapshotCollectOut = {
   snapshot_date: string;
   display_currency: string;
@@ -148,6 +190,9 @@ export type AnalyticsQuickInsightSummaryAlertOut = {
   liabilities_delta?: string | number | null;
   severity: "positive" | "negative" | "neutral";
   comment: string;
+  driver_label?: string | null;
+  driver_key?: string | null;
+  driver_target?: "GROSS_DRIVERS" | "NET_DRIVERS" | null;
 };
 
 export type AnalyticsQuickInsightOut = {
@@ -203,6 +248,20 @@ export type NetworthSeriesQuery = {
   limit?: number;
 };
 
+export type CompositionSeriesQuery = {
+  scope_type?: "USER" | "HOUSEHOLD";
+  scope_id?: number;
+  display_currency?: "KRW" | "USD";
+  chart_kind?: AnalyticsCompositionChartKind;
+  tab?: AnalyticsCompositionTab;
+  mode?: AnalyticsCompositionMode;
+  group_by?: AnalyticsCompositionGroupBy;
+  portfolio_id?: number;
+  bucket?: AnalyticsCompositionBucket;
+  limit?: number;
+  top_n?: number;
+};
+
 export type SnapshotCollectQuery = {
   display_currency?: "KRW" | "USD";
   snapshot_date?: string;
@@ -233,6 +292,13 @@ export async function getAllocation(params: AllocationQuery = {}): Promise<Analy
 
 export async function getNetworthSeries(params: NetworthSeriesQuery = {}): Promise<AnalyticsNetworthSeriesOut> {
   const { data } = await http.get<AnalyticsNetworthSeriesOut>("/analytics/networth-series", { params });
+  return data;
+}
+
+export async function getCompositionSeries(
+  params: CompositionSeriesQuery = {},
+): Promise<AnalyticsCompositionSeriesOut> {
+  const { data } = await http.get<AnalyticsCompositionSeriesOut>("/analytics/composition-series", { params });
   return data;
 }
 

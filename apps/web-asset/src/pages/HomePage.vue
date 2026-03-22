@@ -20,6 +20,7 @@ import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
 import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
 import QuickInsightPanel from "../components/QuickInsightPanel.vue";
 import GoalProgressForecastCard from "../components/GoalProgressForecastCard.vue";
+import CompositionStackedCard from "../components/CompositionStackedCard.vue";
 import type {
   HoldingStatusRow,
   LiabilityStatusRow,
@@ -1715,6 +1716,7 @@ watch(
             v-if="liveKpiTarget === 'SUMMARY'"
             title="KPI Summary"
             subtitle="Included in print/snapshot"
+            storage-key="myasset:home:live-dashboard:kpi-summary:expanded"
             :currency="summaryDisplayCurrency"
             :gross-assets-total="grossAssetsTotal"
             :liabilities-total="liabilitiesTotal"
@@ -1742,6 +1744,7 @@ watch(
         <AllocationDonutCard
           :title="`Allocation | ${liveDashboardTarget}`"
           :subtitle="`Top N + Others (${livePortfolioKey === 'ALL' ? 'all portfolios' : 'filtered portfolio'})`"
+          storage-key="myasset:home:live-dashboard:allocation-donut:expanded"
           :currency="summaryDisplayCurrency"
           :total="donutTotal"
           :items="donutItems"
@@ -1753,6 +1756,7 @@ watch(
 
         <AllocationTreemapCard
           :title="`Treemap | ${liveDashboardTarget}`"
+          storage-key="myasset:home:live-dashboard:allocation-treemap:expanded"
           :subtitle="
             liveDashboardTarget === 'HOLDINGS'
               ? `Target=HOLDINGS | group_by=ASSET | color=return ${livePortfolioKey === 'ALL' ? '' : `| ${livePortfolioLabel}`}`
@@ -1769,6 +1773,7 @@ watch(
           <NetworthTrendCard
             title="Networth Trend"
             subtitle="valuation_snapshots | bucket=DAY"
+            storage-key="myasset:home:live-dashboard:networth-trend:expanded"
             :currency="summaryDisplayCurrency"
             :points="trendPoints"
             :mask-amounts="liveMaskAmounts"
@@ -1788,6 +1793,34 @@ watch(
             @update:mode="homeTrendMode = $event"
             @update:portfolio-metric="homeTrendPortfolioMetric = $event"
             @update:portfolio-key="homeTrendPortfolioKey = $event"
+          />
+        </div>
+
+        <div class="xl:col-span-2">
+          <CompositionStackedCard
+            title="Amount Breakdown"
+            description="Actual amount changes over time, including total size and component movement."
+            chart-kind="AMOUNT"
+            :display-currency="summaryDisplayCurrency === 'USD' ? 'USD' : 'KRW'"
+            :scope-type="homeGoalScopeType"
+            :scope-id="homeGoalScopeId"
+            :amount-mask="liveMaskAmounts"
+            :portfolio-options="homePortfolioOptions"
+            storage-key-prefix="myasset:home:amount-breakdown"
+          />
+        </div>
+
+        <div class="xl:col-span-2">
+          <CompositionStackedCard
+            title="Allocation Trend"
+            description="100% normalized composition changes over time, separated from total size."
+            chart-kind="ALLOCATION"
+            :display-currency="summaryDisplayCurrency === 'USD' ? 'USD' : 'KRW'"
+            :scope-type="homeGoalScopeType"
+            :scope-id="homeGoalScopeId"
+            :amount-mask="liveMaskAmounts"
+            :portfolio-options="homePortfolioOptions"
+            storage-key-prefix="myasset:home:allocation-trend"
           />
         </div>
       </div>
