@@ -4,12 +4,24 @@ param(
     [string]$NginxRoot = "C:\nginx",
     [string]$BuildOutDir = "deploy/out/frontend",
     [int]$ApiPort = 8000,
+    [switch]$LogToFile,
+    [string]$LogDir = "logs/api",
+    [int]$HealthTimeoutSeconds = 20,
     [switch]$InstallDependencies,
     [switch]$SkipFrontend,
     [switch]$SkipApiRestart
 )
 
 $ErrorActionPreference = "Stop"
+
+try {
+    if ($Host -and $Host.UI -and $Host.UI.RawUI) {
+        $Host.UI.RawUI.WindowTitle = "MYASSET PUBLISH"
+    }
+}
+catch {
+    # Ignore console title failures in non-interactive hosts.
+}
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $publishFrontendScript = Join-Path $PSScriptRoot "publish-frontend-windows.ps1"
@@ -38,7 +50,11 @@ else {
         throw "restart-api.ps1 not found: $restartApiScript"
     }
     Write-Host "[stack] restarting API"
-    & $restartApiScript -ApiPort $ApiPort
+    & $restartApiScript `
+        -ApiPort $ApiPort `
+        -LogToFile:$LogToFile `
+        -LogDir $LogDir `
+        -HealthTimeoutSeconds $HealthTimeoutSeconds
 }
 
 Write-Host "[done] local stack publish completed"

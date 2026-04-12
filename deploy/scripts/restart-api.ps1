@@ -1,5 +1,8 @@
 param(
     [int]$ApiPort = 8000,
+    [switch]$LogToFile,
+    [string]$LogDir = "logs/api",
+    [int]$HealthTimeoutSeconds = 20,
     [switch]$Elevated
 )
 
@@ -9,6 +12,18 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $runApiScript = Join-Path $repoRoot "run-api.ps1"
 $runtimeDir = Join-Path $repoRoot ".runtime"
 $stateFile = Join-Path $runtimeDir "api-launcher.json"
+$healthUrl = "http://127.0.0.1:$ApiPort/api/v1/health"
+
+function Set-ScriptWindowTitle([string]$Title) {
+    try {
+        if ($Host -and $Host.UI -and $Host.UI.RawUI) {
+            $Host.UI.RawUI.WindowTitle = $Title
+        }
+    }
+    catch {
+        # Ignore console title failures in non-interactive hosts.
+    }
+}
 
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -18,23 +33,34 @@ function Test-IsAdministrator {
 
 function Invoke-SelfElevatedRestart([int]$Port) {
     $argList = @(
-        "-NoExit",
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
         "-File", $PSCommandPath,
         "-ApiPort", $Port,
+        "-HealthTimeoutSeconds", $HealthTimeoutSeconds,
         "-Elevated"
     )
+    if ($LogToFile) {
+        $argList += "-LogToFile"
+    }
+    if ($LogDir) {
+        $argList += @("-LogDir", $LogDir)
+    }
 
     Write-Host "[api] relaunching restart-api with administrator rights"
     try {
-        Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $argList | Out-Null
+        $process = Start-Process -FilePath "powershell.exe" -Verb RunAs -ArgumentList $argList -PassThru -Wait
     }
     catch {
         throw "[api] administrator elevation was cancelled or failed."
     }
 
-    Write-Host "[api] elevated restart window opened. follow that window for restart progress."
+    $exitCode = if ($null -ne $process.ExitCode) { [int]$process.ExitCode } else { 1 }
+    if ($exitCode -ne 0) {
+        throw "[api] elevated restart failed with exit code $exitCode."
+    }
+
+    Write-Host "[api] elevated restart completed successfully."
     exit 0
 }
 
@@ -85,6 +111,31 @@ function Wait-ForPortToBeFree([int]$Port, [int]$RetryCount = 16, [int]$DelayMs =
             return $true
         }
         Start-Sleep -Milliseconds $DelayMs
+    }
+    return $false
+}
+
+function Wait-ForApiHealth(
+    [string]$Url,
+    [int]$Port,
+    [int]$TimeoutSeconds = 20,
+    [int]$IntervalMilliseconds = 1000
+) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $ownerPid = Get-PortOwnerPid -Port $Port
+        if ($null -ne $ownerPid) {
+            try {
+                $response = Invoke-RestMethod -Method Get -Uri $Url -TimeoutSec 5
+                if ($null -ne $response) {
+                    return $true
+                }
+            }
+            catch {
+                # keep polling until timeout
+            }
+        }
+        Start-Sleep -Milliseconds $IntervalMilliseconds
     }
     return $false
 }
@@ -199,8 +250,11 @@ if (-not (Test-Path $runApiScript)) {
     throw "run-api.ps1 not found: $runApiScript"
 }
 
+Set-ScriptWindowTitle -Title "MYASSET API RESTART"
+
 Write-Host "[api] repo root: $repoRoot"
 Write-Host "[api] restarting API on port $ApiPort"
+Write-Host "[api] health URL: $healthUrl"
 
 $trackedState = Read-LauncherState
 if ($trackedState -and $trackedState.pid) {
@@ -236,14 +290,38 @@ if (-not $portFreed) {
 }
 
 Write-Host "[api] starting API in a new PowerShell window"
-$launcher = Start-Process -FilePath "powershell.exe" -ArgumentList @(
+$launcherArgs = @(
     "-NoExit",
+    "-NoProfile",
     "-ExecutionPolicy", "Bypass",
-    "-File", $runApiScript
-) -PassThru
+    "-File", $runApiScript,
+    "-Port", $ApiPort,
+    "-HealthTimeoutSeconds", $HealthTimeoutSeconds
+)
+if ($LogToFile) {
+    $launcherArgs += "-LogToFile"
+}
+if ($LogDir) {
+    $launcherArgs += @("-LogDir", $LogDir)
+}
+$launcher = Start-Process -FilePath "powershell.exe" -ArgumentList $launcherArgs -PassThru
 
-Write-LauncherState -LauncherProcessId $launcher.Id
+Write-Host "[api] waiting for API health..."
+if (-not (Wait-ForApiHealth -Url $healthUrl -Port $ApiPort -TimeoutSeconds $HealthTimeoutSeconds)) {
+    throw "[api] API restart failed. health check did not return 200 within $HealthTimeoutSeconds seconds."
+}
+
+$launcherState = Read-LauncherState
 
 Write-Host "[done] API restarted"
 Write-Host "  - launcher PID: $($launcher.Id)"
 Write-Host "  - script: $runApiScript"
+Write-Host "  - health: OK ($healthUrl)"
+if ($launcherState -and $launcherState.stdout_log) {
+    Write-Host "  - stdout log: $($launcherState.stdout_log)"
+}
+if ($launcherState -and $launcherState.stderr_log) {
+    Write-Host "  - stderr log: $($launcherState.stderr_log)"
+}
+
+exit 0

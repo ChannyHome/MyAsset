@@ -11,6 +11,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+try {
+    if ($Host -and $Host.UI -and $Host.UI.RawUI) {
+        $Host.UI.RawUI.WindowTitle = "MYASSET PUBLISH"
+    }
+}
+catch {
+    # Ignore console title failures in non-interactive hosts.
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $buildScript = Join-Path $PSScriptRoot "build-frontend.ps1"
 $deployScript = Join-Path $PSScriptRoot "deploy-frontend-windows.ps1"
@@ -42,7 +51,7 @@ else {
 
 if ($SkipReload) {
     Write-Host "[publish] skip nginx reload"
-    exit 0
+    return
 }
 
 if (-not (Test-Path $nginxExe)) {
