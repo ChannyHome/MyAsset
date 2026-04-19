@@ -56,6 +56,7 @@ const props = withDefaults(
     rangeStartDate?: string | null;
     rangeEndDate?: string | null;
     showRangeBucketControls?: boolean;
+    showRefreshControl?: boolean;
   }>(),
   {
     title: "Networth Trend",
@@ -80,6 +81,7 @@ const props = withDefaults(
     rangeStartDate: null,
     rangeEndDate: null,
     showRangeBucketControls: true,
+    showRefreshControl: false,
   },
 );
 
@@ -92,6 +94,7 @@ const emit = defineEmits<{
   (e: "update:portfolioKey", value: string): void;
   (e: "update:range", value: NetworthTrendRange): void;
   (e: "update:bucket", value: NetworthTrendBucket): void;
+  (e: "refresh"): void;
 }>();
 
 type RenderLine = {
@@ -101,17 +104,19 @@ type RenderLine = {
   values: Array<number | null>;
 };
 
-const chartHeight = 240;
-const plotPaddingX = 56;
-const chartPaddingY = 56;
+const chartHeight = 320;
+const plotPaddingX = 52;
+const chartPaddingY = 62;
 const minPlotWidth = 560;
 const inspectText = ref("");
 const expanded = ref(true);
 const infoOpen = ref(false);
 const plotScrollRef = ref<HTMLDivElement | null>(null);
+const plotViewportWidth = ref(0);
 const viewportStartIndex = ref(0);
 const viewportEndIndex = ref(0);
 const zoomLevel = ref<ZoomLevel>(0);
+let plotResizeObserver: ResizeObserver | null = null;
 
 const zoomMultipliers: Record<ZoomLevel, number> = {
   [-2]: 0.65,
@@ -219,17 +224,36 @@ const chartLabels = computed(() => {
   return Array.from(dataLabels).sort();
 });
 
-const basePointGap = computed(() => {
-  const total = Math.max(chartLabels.value.length, 2);
-  if (props.bucket === "DAY") {
-    const targetWidth =
-      props.range === "1M" ? 520 : props.range === "3M" ? 620 : props.range === "6M" ? 1180 : 1800;
-    const minGap = props.range === "1M" ? 12 : props.range === "3M" ? 7 : 6;
-    const maxGap = props.range === "1M" ? 18 : props.range === "3M" ? 12 : 10;
-    return Math.max(minGap, Math.min(maxGap, targetWidth / Math.max(1, total - 1)));
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function currentPlotViewportWidth(): number {
+  return Math.max(1, plotViewportWidth.value || minPlotWidth);
+}
+
+const svgWidthStyle = computed(() => (plotViewportWidth.value > 0 ? `${plotWidth.value}px` : "100%"));
+
+const defaultVisiblePointSlots = computed(() => {
+  const viewportWidth = currentPlotViewportWidth();
+  const compact = viewportWidth < 760;
+
+  if (compact) {
+    if (props.bucket === "DAY") return props.range === "1M" ? 18 : 22;
+    if (props.bucket === "WEEK") return 16;
+    return 10;
   }
-  if (props.bucket === "WEEK") return 38;
-  return 58;
+
+  const usable = Math.max(1, viewportWidth - plotPaddingX * 2);
+  if (props.bucket === "DAY") return clampNumber(Math.floor(usable / 28) + 1, 24, 90);
+  if (props.bucket === "WEEK") return clampNumber(Math.floor(usable / 52) + 1, 14, 40);
+  return clampNumber(Math.floor(usable / 76) + 1, 8, 24);
+});
+
+const basePointGap = computed(() => {
+  const slots = Math.max(2, defaultVisiblePointSlots.value);
+  const usable = Math.max(1, currentPlotViewportWidth() - plotPaddingX * 2);
+  return Math.max(1, usable / Math.max(1, slots - 1));
 });
 
 const pointGap = computed(() => Math.max(4, basePointGap.value * zoomMultipliers[zoomLevel.value]));
@@ -243,7 +267,8 @@ const pointRadius = computed(() => {
 
 const plotWidth = computed(() => {
   const total = Math.max(chartLabels.value.length, 2);
-  return Math.max(minPlotWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
+  const viewportWidth = currentPlotViewportWidth();
+  return Math.max(viewportWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
 });
 
 const renderLines = computed<RenderLine[]>(() => {
@@ -362,22 +387,27 @@ watch(expanded, (value) => {
   if (typeof window !== "undefined" && props.storageKey) {
     window.localStorage.setItem(props.storageKey, value ? "1" : "0");
   }
-  void nextTick(syncVisibleRange);
+  void nextTick(value ? scrollToLatest : syncVisibleRange);
 });
 
 function handleResize(): void {
-  syncVisibleRange();
+  measurePlotViewport(true);
 }
 
 onMounted(() => {
   loadExpandedState();
-  void nextTick(syncVisibleRange);
+  void nextTick(() => {
+    observePlotViewport();
+    scrollToLatest();
+  });
   if (typeof window !== "undefined") {
     window.addEventListener("resize", handleResize);
   }
 });
 
 onBeforeUnmount(() => {
+  plotResizeObserver?.disconnect();
+  plotResizeObserver = null;
   if (typeof window !== "undefined") {
     window.removeEventListener("resize", handleResize);
   }
@@ -400,7 +430,7 @@ watch(
   () => {
     viewportStartIndex.value = 0;
     viewportEndIndex.value = 0;
-    void nextTick(syncVisibleRange);
+    void nextTick(scrollToLatest);
   },
 );
 
@@ -411,9 +441,17 @@ watch(
   },
 );
 
+watch(plotScrollRef, () => {
+  void nextTick(() => {
+    observePlotViewport();
+    measurePlotViewport(true);
+  });
+});
+
 function setZoomLevel(next: number): void {
+  const keepLatest = isScrolledNearLatest();
   zoomLevel.value = Math.max(-2, Math.min(2, next)) as ZoomLevel;
-  void nextTick(syncVisibleRange);
+  void nextTick(keepLatest ? scrollToLatest : syncVisibleRange);
 }
 
 function zoomOut(): void {
@@ -428,9 +466,60 @@ function resetZoom(): void {
   setZoomLevel(0);
 }
 
+function isScrolledNearLatest(): boolean {
+  const el = plotScrollRef.value;
+  if (!el) return true;
+  return el.scrollWidth - el.clientWidth - el.scrollLeft <= 8;
+}
+
+function observePlotViewport(): void {
+  const el = plotScrollRef.value;
+  plotResizeObserver?.disconnect();
+  plotResizeObserver = null;
+  if (!el || typeof ResizeObserver === "undefined") return;
+  plotResizeObserver = new ResizeObserver(() => {
+    measurePlotViewport(isScrolledNearLatest());
+  });
+  plotResizeObserver.observe(el);
+}
+
+function measurePlotViewport(keepLatest = false): void {
+  const changed = updatePlotViewportWidth();
+  if (changed) {
+    void nextTick(keepLatest ? scrollToLatest : syncVisibleRange);
+    return;
+  }
+  syncVisibleRange();
+}
+
+function scrollToLatest(): void {
+  updatePlotViewportWidth();
+  void nextTick(() => {
+    const el = plotScrollRef.value;
+    if (!el) {
+      syncVisibleRange();
+      return;
+    }
+    el.scrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    syncVisibleRange();
+  });
+}
+
+function updatePlotViewportWidth(): boolean {
+  const el = plotScrollRef.value;
+  if (!el) return false;
+  const nextWidth = Math.floor(el.clientWidth);
+  if (nextWidth > 0 && nextWidth !== plotViewportWidth.value) {
+    plotViewportWidth.value = nextWidth;
+    return true;
+  }
+  return false;
+}
+
 function syncVisibleRange(): void {
   const el = plotScrollRef.value;
   const total = chartLabels.value.length;
+  updatePlotViewportWidth();
   if (!el || total <= 1) {
     viewportStartIndex.value = 0;
     viewportEndIndex.value = Math.max(0, total - 1);
@@ -880,16 +969,26 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           >
             Fit
           </button>
+          <button
+            v-if="showRefreshControl"
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="loading"
+            aria-label="Refresh networth trend data"
+            @click="emit('refresh')"
+          >
+            {{ loading ? "Refreshing..." : "Refresh" }}
+          </button>
         </div>
       </div>
 
-      <div v-if="linePaths.length > 0" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+      <div v-if="linePaths.length > 0" class="-mx-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 sm:-mx-2 md:-mx-1">
         <div class="relative bg-slate-50 dark:bg-slate-950/40">
-          <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16">
+          <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16">
             <span
               v-for="tick in ticks"
               :key="`floating-y-label-${tick.y}`"
-              class="absolute left-2 -translate-y-1/2 rounded-sm px-0.5 text-[10px] leading-none text-slate-500/95 [text-shadow:0_1px_2px_rgba(15,23,42,0.75)] dark:text-slate-400/95"
+              class="absolute right-2 -translate-y-1/2 rounded-sm px-0.5 text-right text-[10px] leading-none text-slate-500/95 [text-shadow:0_1px_2px_rgba(15,23,42,0.75)] dark:text-slate-400/95"
               :style="{
                 top: `${(tick.y / chartHeight) * 100}%`,
                 filter: props.maskAmounts && isAmountAxis ? 'blur(6px)' : undefined,
@@ -901,8 +1000,8 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           <div ref="plotScrollRef" class="overflow-x-auto" @scroll="syncVisibleRange">
             <svg
               :viewBox="`0 0 ${plotWidth} ${chartHeight}`"
-              class="h-64 bg-slate-50 dark:bg-slate-950/40"
-              :style="{ width: `${plotWidth}px`, minWidth: `${plotWidth}px` }"
+              class="h-[320px] bg-slate-50 dark:bg-slate-950/40 md:h-[380px] xl:h-[420px]"
+              :style="{ width: svgWidthStyle, minWidth: svgWidthStyle }"
             >
               <g>
                 <line

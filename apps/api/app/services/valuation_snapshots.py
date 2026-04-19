@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
@@ -33,6 +34,15 @@ class SnapshotCollectResult:
     user_scopes_collected: int
     household_scopes_collected: int
     upserted_rows: int
+
+
+def _default_snapshot_date() -> date:
+    timezone_name = (settings.valuation_snapshot_timezone or "Asia/Seoul").strip() or "Asia/Seoul"
+    try:
+        timezone = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        timezone = UTC
+    return datetime.now(timezone).date()
 
 
 def _holding_effective_cost_basis(holding: Holding) -> tuple[Decimal, str]:
@@ -319,7 +329,7 @@ def collect_valuation_snapshots_batch(
     include_households: bool = True,
 ) -> SnapshotCollectResult:
     target_currency = (display_currency or "KRW").upper()
-    target_date = snapshot_date or datetime.now(UTC).date()
+    target_date = snapshot_date or _default_snapshot_date()
     user_scopes_collected = 0
     household_scopes_collected = 0
     upserted_rows = 0

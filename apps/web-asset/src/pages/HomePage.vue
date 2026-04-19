@@ -836,6 +836,14 @@ async function loadHomePortfolioTrend(): Promise<void> {
   }
 }
 
+async function refreshHomeNetworthTrend(): Promise<void> {
+  if (homeTrendMode.value === "PORTFOLIO") {
+    await loadHomePortfolioTrend();
+    return;
+  }
+  await liveDashboardData.refreshTrend();
+}
+
 function mapHomePortfolioRow(row: PortfolioTableRowOut): PortfolioStatusRow {
   return {
     id: row.id,
@@ -1894,6 +1902,7 @@ watch(
             :bucket="homeTrendBucket"
             :range-start-date="homeTrendRangeStartDate"
             :range-end-date="homeTrendRangeEndDate"
+            :show-refresh-control="true"
             @update:show-gross="liveTrendVisibility.gross = $event"
             @update:show-liabilities="liveTrendVisibility.liabilities = $event"
             @update:show-net="liveTrendVisibility.net = $event"
@@ -1902,6 +1911,7 @@ watch(
             @update:portfolio-key="homeTrendPortfolioKey = $event"
             @update:range="homeTrendRange = $event"
             @update:bucket="homeTrendBucket = $event"
+            @refresh="refreshHomeNetworthTrend"
           />
         </div>
 

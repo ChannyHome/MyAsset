@@ -76,42 +76,43 @@ const _hoisted_33 = { class: "ml-auto flex items-center gap-1" };
 const _hoisted_34 = ["disabled"];
 const _hoisted_35 = ["disabled"];
 const _hoisted_36 = ["disabled"];
-const _hoisted_37 = {
+const _hoisted_37 = ["disabled"];
+const _hoisted_38 = {
   key: 1,
-  class: "overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
+  class: "-mx-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 sm:-mx-2 md:-mx-1"
 };
-const _hoisted_38 = { class: "relative bg-slate-50 dark:bg-slate-950/40" };
-const _hoisted_39 = { class: "pointer-events-none absolute inset-y-0 left-0 z-10 w-16" };
-const _hoisted_40 = ["viewBox"];
-const _hoisted_41 = ["y1", "x2", "y2"];
-const _hoisted_42 = ["x1", "x2"];
-const _hoisted_43 = ["x", "y"];
-const _hoisted_44 = ["d", "stroke"];
-const _hoisted_45 = ["cx", "cy", "r", "fill", "onMouseenter", "onClick"];
-const _hoisted_46 = {
+const _hoisted_39 = { class: "relative bg-slate-50 dark:bg-slate-950/40" };
+const _hoisted_40 = { class: "pointer-events-none absolute inset-y-0 right-0 z-10 w-16" };
+const _hoisted_41 = ["viewBox"];
+const _hoisted_42 = ["y1", "x2", "y2"];
+const _hoisted_43 = ["x1", "x2"];
+const _hoisted_44 = ["x", "y"];
+const _hoisted_45 = ["d", "stroke"];
+const _hoisted_46 = ["cx", "cy", "r", "fill", "onMouseenter", "onClick"];
+const _hoisted_47 = {
   key: 2,
   class: "rounded-xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_47 = {
+const _hoisted_48 = {
   key: 3,
   class: "flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300"
 };
-const _hoisted_48 = {
+const _hoisted_49 = {
   key: 5,
   class: "grid grid-cols-1 gap-2 text-xs md:grid-cols-3"
 };
-const _hoisted_49 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_50 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
 const _hoisted_51 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_52 = {
+const _hoisted_52 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_53 = {
   key: 6,
   class: "text-[11px] text-slate-500 dark:text-slate-400"
 };
 const {computed,nextTick,onBeforeUnmount,onMounted,ref,watch} = await importShared('vue');
 
-const chartHeight = 240;
-const plotPaddingX = 56;
-const chartPaddingY = 56;
+const chartHeight = 320;
+const plotPaddingX = 52;
+const chartPaddingY = 62;
 const minPlotWidth = 560;
 const _sfc_main = /* @__PURE__ */ _defineComponent({
   __name: "NetworthTrendCard",
@@ -139,9 +140,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     bucket: { default: "DAY" },
     rangeStartDate: { default: null },
     rangeEndDate: { default: null },
-    showRangeBucketControls: { type: Boolean, default: true }
+    showRangeBucketControls: { type: Boolean, default: true },
+    showRefreshControl: { type: Boolean, default: false }
   },
-  emits: ["update:showGross", "update:showLiabilities", "update:showNet", "update:mode", "update:portfolioMetric", "update:portfolioKey", "update:range", "update:bucket"],
+  emits: ["update:showGross", "update:showLiabilities", "update:showNet", "update:mode", "update:portfolioMetric", "update:portfolioKey", "update:range", "update:bucket", "refresh"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit = __emit;
@@ -149,9 +151,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const expanded = ref(true);
     const infoOpen = ref(false);
     const plotScrollRef = ref(null);
+    const plotViewportWidth = ref(0);
     const viewportStartIndex = ref(0);
     const viewportEndIndex = ref(0);
     const zoomLevel = ref(0);
+    let plotResizeObserver = null;
     const zoomMultipliers = {
       [-2]: 0.65,
       [-1]: 0.82,
@@ -239,16 +243,30 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (labelsWithData.length > 0) return labelsWithData;
       return Array.from(dataLabels).sort();
     });
-    const basePointGap = computed(() => {
-      const total = Math.max(chartLabels.value.length, 2);
-      if (props.bucket === "DAY") {
-        const targetWidth = props.range === "1M" ? 520 : props.range === "3M" ? 620 : props.range === "6M" ? 1180 : 1800;
-        const minGap = props.range === "1M" ? 12 : props.range === "3M" ? 7 : 6;
-        const maxGap = props.range === "1M" ? 18 : props.range === "3M" ? 12 : 10;
-        return Math.max(minGap, Math.min(maxGap, targetWidth / Math.max(1, total - 1)));
+    function clampNumber(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+    function currentPlotViewportWidth() {
+      return Math.max(1, plotViewportWidth.value || minPlotWidth);
+    }
+    const svgWidthStyle = computed(() => plotViewportWidth.value > 0 ? `${plotWidth.value}px` : "100%");
+    const defaultVisiblePointSlots = computed(() => {
+      const viewportWidth = currentPlotViewportWidth();
+      const compact = viewportWidth < 760;
+      if (compact) {
+        if (props.bucket === "DAY") return props.range === "1M" ? 18 : 22;
+        if (props.bucket === "WEEK") return 16;
+        return 10;
       }
-      if (props.bucket === "WEEK") return 38;
-      return 58;
+      const usable = Math.max(1, viewportWidth - plotPaddingX * 2);
+      if (props.bucket === "DAY") return clampNumber(Math.floor(usable / 28) + 1, 24, 90);
+      if (props.bucket === "WEEK") return clampNumber(Math.floor(usable / 52) + 1, 14, 40);
+      return clampNumber(Math.floor(usable / 76) + 1, 8, 24);
+    });
+    const basePointGap = computed(() => {
+      const slots = Math.max(2, defaultVisiblePointSlots.value);
+      const usable = Math.max(1, currentPlotViewportWidth() - plotPaddingX * 2);
+      return Math.max(1, usable / Math.max(1, slots - 1));
     });
     const pointGap = computed(() => Math.max(4, basePointGap.value * zoomMultipliers[zoomLevel.value]));
     const pointRadius = computed(() => {
@@ -259,7 +277,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     });
     const plotWidth = computed(() => {
       const total = Math.max(chartLabels.value.length, 2);
-      return Math.max(minPlotWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
+      const viewportWidth = currentPlotViewportWidth();
+      return Math.max(viewportWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
     });
     const renderLines = computed(() => {
       if (props.mode === "PORTFOLIO") {
@@ -361,19 +380,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (typeof window !== "undefined" && props.storageKey) {
         window.localStorage.setItem(props.storageKey, value ? "1" : "0");
       }
-      void nextTick(syncVisibleRange);
+      void nextTick(value ? scrollToLatest : syncVisibleRange);
     });
     function handleResize() {
-      syncVisibleRange();
+      measurePlotViewport(true);
     }
     onMounted(() => {
       loadExpandedState();
-      void nextTick(syncVisibleRange);
+      void nextTick(() => {
+        observePlotViewport();
+        scrollToLatest();
+      });
       if (typeof window !== "undefined") {
         window.addEventListener("resize", handleResize);
       }
     });
     onBeforeUnmount(() => {
+      plotResizeObserver?.disconnect();
+      plotResizeObserver = null;
       if (typeof window !== "undefined") {
         window.removeEventListener("resize", handleResize);
       }
@@ -395,7 +419,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       () => {
         viewportStartIndex.value = 0;
         viewportEndIndex.value = 0;
-        void nextTick(syncVisibleRange);
+        void nextTick(scrollToLatest);
       }
     );
     watch(
@@ -404,9 +428,16 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         zoomLevel.value = 0;
       }
     );
+    watch(plotScrollRef, () => {
+      void nextTick(() => {
+        observePlotViewport();
+        measurePlotViewport(true);
+      });
+    });
     function setZoomLevel(next) {
+      const keepLatest = isScrolledNearLatest();
       zoomLevel.value = Math.max(-2, Math.min(2, next));
-      void nextTick(syncVisibleRange);
+      void nextTick(keepLatest ? scrollToLatest : syncVisibleRange);
     }
     function zoomOut() {
       setZoomLevel(zoomLevel.value - 1);
@@ -417,9 +448,55 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function resetZoom() {
       setZoomLevel(0);
     }
+    function isScrolledNearLatest() {
+      const el = plotScrollRef.value;
+      if (!el) return true;
+      return el.scrollWidth - el.clientWidth - el.scrollLeft <= 8;
+    }
+    function observePlotViewport() {
+      const el = plotScrollRef.value;
+      plotResizeObserver?.disconnect();
+      plotResizeObserver = null;
+      if (!el || typeof ResizeObserver === "undefined") return;
+      plotResizeObserver = new ResizeObserver(() => {
+        measurePlotViewport(isScrolledNearLatest());
+      });
+      plotResizeObserver.observe(el);
+    }
+    function measurePlotViewport(keepLatest = false) {
+      const changed = updatePlotViewportWidth();
+      if (changed) {
+        void nextTick(keepLatest ? scrollToLatest : syncVisibleRange);
+        return;
+      }
+      syncVisibleRange();
+    }
+    function scrollToLatest() {
+      updatePlotViewportWidth();
+      void nextTick(() => {
+        const el = plotScrollRef.value;
+        if (!el) {
+          syncVisibleRange();
+          return;
+        }
+        el.scrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+        syncVisibleRange();
+      });
+    }
+    function updatePlotViewportWidth() {
+      const el = plotScrollRef.value;
+      if (!el) return false;
+      const nextWidth = Math.floor(el.clientWidth);
+      if (nextWidth > 0 && nextWidth !== plotViewportWidth.value) {
+        plotViewportWidth.value = nextWidth;
+        return true;
+      }
+      return false;
+    }
     function syncVisibleRange() {
       const el = plotScrollRef.value;
       const total = chartLabels.value.length;
+      updatePlotViewportWidth();
       if (!el || total <= 1) {
         viewportStartIndex.value = 0;
         viewportEndIndex.value = Math.max(0, total - 1);
@@ -587,14 +664,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             }, _toDisplayString(expanded.value ? "Collapse" : "Expand"), 1)
           ])
         ]),
-        infoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_9, [..._cache[12] || (_cache[12] = [
+        infoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_9, [..._cache[13] || (_cache[13] = [
           _createElementVNode("p", null, "Networth Trend shows how the selected scope changed across valuation snapshots over time.", -1),
           _createElementVNode("p", { class: "mt-1" }, "Range is anchored to the latest matched snapshot, not today's calendar date.", -1),
           _createElementVNode("p", { class: "mt-1" }, "Day/Week/Month each use the last snapshot available inside that bucket.", -1),
           _createElementVNode("p", { class: "mt-1" }, "On mobile, the Y-axis stays fixed while the plot scrolls and rescales to the visible points.", -1)
         ])])) : _createCommentVNode("", true),
         !expanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_10, [
-          _cache[13] || (_cache[13] = _createElementVNode("p", { class: "font-medium text-slate-700 dark:text-slate-200" }, "Collapsed. Click Expand to preview the latest networth trend.", -1)),
+          _cache[14] || (_cache[14] = _createElementVNode("p", { class: "font-medium text-slate-700 dark:text-slate-200" }, "Collapsed. Click Expand to preview the latest networth trend.", -1)),
           _createElementVNode("p", {
             class: "mt-1",
             style: _normalizeStyle(props.maskAmounts && isAmountAxis.value ? { filter: "blur(6px)" } : void 0)
@@ -603,7 +680,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ])) : _createCommentVNode("", true),
         expanded.value && __props.showRangeBucketControls ? (_openBlock(), _createElementBlock("div", _hoisted_12, [
           _createElementVNode("div", _hoisted_13, [
-            _cache[14] || (_cache[14] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Range", -1)),
+            _cache[15] || (_cache[15] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Range", -1)),
             (_openBlock(), _createElementBlock(_Fragment, null, _renderList(rangeOptions, (item) => {
               return _createElementVNode("button", {
                 key: `trend-range-${item.key}`,
@@ -615,7 +692,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 onClick: ($event) => rangeModel.value = item.key
               }, _toDisplayString(item.label), 11, _hoisted_14);
             }), 64)),
-            _cache[15] || (_cache[15] = _createElementVNode("span", { class: "ml-2 mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
+            _cache[16] || (_cache[16] = _createElementVNode("span", { class: "ml-2 mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
             (_openBlock(), _createElementBlock(_Fragment, null, _renderList(bucketOptions, (item) => {
               return _createElementVNode("button", {
                 key: `trend-bucket-${item.key}`,
@@ -705,7 +782,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 class: "h-4 w-4 rounded",
                 onChange: _cache[9] || (_cache[9] = ($event) => setSummaryMetric("gross", $event.target.checked))
               }, null, 40, _hoisted_26),
-              _cache[16] || (_cache[16] = _createTextVNode(" Gross ", -1))
+              _cache[17] || (_cache[17] = _createTextVNode(" Gross ", -1))
             ]),
             _createElementVNode("label", _hoisted_27, [
               _createElementVNode("input", {
@@ -714,7 +791,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 class: "h-4 w-4 rounded",
                 onChange: _cache[10] || (_cache[10] = ($event) => setSummaryMetric("liabilities", $event.target.checked))
               }, null, 40, _hoisted_28),
-              _cache[17] || (_cache[17] = _createTextVNode(" Liabilities ", -1))
+              _cache[18] || (_cache[18] = _createTextVNode(" Liabilities ", -1))
             ]),
             _createElementVNode("label", _hoisted_29, [
               _createElementVNode("input", {
@@ -723,22 +800,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 class: "h-4 w-4 rounded",
                 onChange: _cache[11] || (_cache[11] = ($event) => setSummaryMetric("net", $event.target.checked))
               }, null, 40, _hoisted_30),
-              _cache[18] || (_cache[18] = _createTextVNode(" Net ", -1))
+              _cache[19] || (_cache[19] = _createTextVNode(" Net ", -1))
             ])
           ])) : _createCommentVNode("", true),
           _createElementVNode("div", _hoisted_31, [
             _createElementVNode("div", _hoisted_32, [
               _createElementVNode("p", null, [
-                _cache[19] || (_cache[19] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "X-axis:", -1)),
+                _cache[20] || (_cache[20] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "X-axis:", -1)),
                 _createTextVNode(" " + _toDisplayString(bucketModel.value === "DAY" ? "Snapshot date" : bucketModel.value === "WEEK" ? "Last snapshot in each week" : "Last snapshot in each month"), 1)
               ]),
               _createElementVNode("p", null, [
-                _cache[20] || (_cache[20] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Y-axis:", -1)),
+                _cache[21] || (_cache[21] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Y-axis:", -1)),
                 _createTextVNode(" " + _toDisplayString(modeModel.value === "SUMMARY" ? `Amount (${__props.currency})` : portfolioMetricModel.value === "RETURN" ? "Return (%)" : portfolioMetricModel.value === "CURRENT_VALUE" ? `Current Value (${__props.currency})` : portfolioMetricModel.value === "CURRENT_NET" ? `Current Net (${__props.currency})` : `Profit (${__props.currency})`), 1)
               ])
             ]),
             _createElementVNode("div", _hoisted_33, [
-              _cache[21] || (_cache[21] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400" }, "Zoom", -1)),
+              _cache[22] || (_cache[22] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400" }, "Zoom", -1)),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass([
@@ -768,16 +845,24 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 disabled: zoomLevel.value === 0,
                 "aria-label": "Reset networth chart zoom",
                 onClick: resetZoom
-              }, " Fit ", 10, _hoisted_36)
+              }, " Fit ", 10, _hoisted_36),
+              __props.showRefreshControl ? (_openBlock(), _createElementBlock("button", {
+                key: 0,
+                type: "button",
+                class: "rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+                disabled: __props.loading,
+                "aria-label": "Refresh networth trend data",
+                onClick: _cache[12] || (_cache[12] = ($event) => emit("refresh"))
+              }, _toDisplayString(__props.loading ? "Refreshing..." : "Refresh"), 9, _hoisted_37)) : _createCommentVNode("", true)
             ])
           ]),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_37, [
-            _createElementVNode("div", _hoisted_38, [
-              _createElementVNode("div", _hoisted_39, [
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_38, [
+            _createElementVNode("div", _hoisted_39, [
+              _createElementVNode("div", _hoisted_40, [
                 (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(ticks.value, (tick) => {
                   return _openBlock(), _createElementBlock("span", {
                     key: `floating-y-label-${tick.y}`,
-                    class: "absolute left-2 -translate-y-1/2 rounded-sm px-0.5 text-[10px] leading-none text-slate-500/95 [text-shadow:0_1px_2px_rgba(15,23,42,0.75)] dark:text-slate-400/95",
+                    class: "absolute right-2 -translate-y-1/2 rounded-sm px-0.5 text-right text-[10px] leading-none text-slate-500/95 [text-shadow:0_1px_2px_rgba(15,23,42,0.75)] dark:text-slate-400/95",
                     style: _normalizeStyle({
                       top: `${tick.y / chartHeight * 100}%`,
                       filter: props.maskAmounts && isAmountAxis.value ? "blur(6px)" : void 0
@@ -793,8 +878,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               }, [
                 (_openBlock(), _createElementBlock("svg", {
                   viewBox: `0 0 ${plotWidth.value} ${chartHeight}`,
-                  class: "h-64 bg-slate-50 dark:bg-slate-950/40",
-                  style: _normalizeStyle({ width: `${plotWidth.value}px`, minWidth: `${plotWidth.value}px` })
+                  class: "h-[320px] bg-slate-50 dark:bg-slate-950/40 md:h-[380px] xl:h-[420px]",
+                  style: _normalizeStyle({ width: svgWidthStyle.value, minWidth: svgWidthStyle.value })
                 }, [
                   _createElementVNode("g", null, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(ticks.value, (tick) => {
@@ -806,7 +891,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         y2: tick.y,
                         stroke: "rgba(148, 163, 184, 0.28)",
                         "stroke-width": "1"
-                      }, null, 8, _hoisted_41);
+                      }, null, 8, _hoisted_42);
                     }), 128))
                   ]),
                   _createElementVNode("g", null, [
@@ -819,7 +904,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         y2: chartHeight,
                         stroke: "rgba(148, 163, 184, 0.12)",
                         "stroke-width": "1"
-                      }, null, 8, _hoisted_42);
+                      }, null, 8, _hoisted_43);
                     }), 128)),
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(xTicks.value, (tick) => {
                       return _openBlock(), _createElementBlock("text", {
@@ -829,7 +914,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         "text-anchor": "middle",
                         "font-size": "10",
                         fill: "rgba(148, 163, 184, 0.95)"
-                      }, _toDisplayString(formatXAxisLabel(tick.label)), 9, _hoisted_43);
+                      }, _toDisplayString(formatXAxisLabel(tick.label)), 9, _hoisted_44);
                     }), 128))
                   ]),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(linePaths.value, (line) => {
@@ -841,7 +926,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         fill: "none",
                         stroke: line.color,
                         "stroke-width": "2.5"
-                      }, null, 8, _hoisted_44),
+                      }, null, 8, _hoisted_45),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(line.values, (value, idx) => {
                         return _withDirectives((_openBlock(), _createElementBlock("circle", {
                           key: `point-${line.key}-${idx}`,
@@ -852,17 +937,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           class: "cursor-pointer",
                           onMouseenter: ($event) => inspectPoint(line.label, chartLabels.value[idx] ?? "-", Number(value ?? 0)),
                           onClick: ($event) => inspectPoint(line.label, chartLabels.value[idx] ?? "-", Number(value ?? 0))
-                        }, null, 40, _hoisted_45)), [
+                        }, null, 40, _hoisted_46)), [
                           [_vShow, value != null]
                         ]);
                       }), 128))
                     ]);
                   }), 128))
-                ], 12, _hoisted_40))
+                ], 12, _hoisted_41))
               ], 544)
             ])
-          ])) : (_openBlock(), _createElementBlock("div", _hoisted_46, " Not enough points. ")),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_47, [
+          ])) : (_openBlock(), _createElementBlock("div", _hoisted_47, " Not enough points. ")),
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_48, [
             (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(linePaths.value, (line) => {
               return _openBlock(), _createElementBlock("span", {
                 key: `legend-${line.key}`,
@@ -881,9 +966,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             class: "text-xs text-slate-500 dark:text-slate-400",
             style: _normalizeStyle(props.maskAmounts && isAmountAxis.value ? { filter: "blur(6px)" } : void 0)
           }, _toDisplayString(inspectText.value || "Hover/click a point to inspect value."), 5)) : _createCommentVNode("", true),
-          modeModel.value === "SUMMARY" && linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_48, [
-            _createElementVNode("div", _hoisted_49, [
-              _cache[22] || (_cache[22] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+          modeModel.value === "SUMMARY" && linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_49, [
+            _createElementVNode("div", _hoisted_50, [
+              _cache[23] || (_cache[23] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-green-500" }),
                 _createTextVNode(" Gross ")
               ], -1)),
@@ -892,8 +977,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString(formatCurrency(lastPoint.value?.gross ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_50, [
-              _cache[23] || (_cache[23] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+            _createElementVNode("div", _hoisted_51, [
+              _cache[24] || (_cache[24] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-rose-500" }),
                 _createTextVNode(" Liabilities ")
               ], -1)),
@@ -902,8 +987,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString(formatCurrency(lastPoint.value?.liabilities ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_51, [
-              _cache[24] || (_cache[24] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+            _createElementVNode("div", _hoisted_52, [
+              _cache[25] || (_cache[25] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-sky-500" }),
                 _createTextVNode(" Net ")
               ], -1)),
@@ -913,7 +998,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               }, _toDisplayString(formatCurrency(lastPoint.value?.net ?? 0, __props.currency)), 5)
             ])
           ])) : _createCommentVNode("", true),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_52, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_53, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
         ])) : _createCommentVNode("", true)
       ]);
     };

@@ -3,7 +3,7 @@ import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime
 import { g as getCompositionSeries, a as getSummary, b as getNetworthSeries, c as getAllocation } from './ui-DfQNiIxJ.js';
 import { _ as _sfc_main$c } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CEV8-zqX.js';
 import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DRqt5y9P.js';
-import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CVmefxj-.js';
+import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-DAEwsHKS.js';
 import { u as useDashboardDataAdapter, _ as _sfc_main$3, a as _sfc_main$9, b as _sfc_main$a, c as _sfc_main$b, d as _sfc_main$d } from './useDashboardDataAdapter-Co3-MFt6.js';
 import { g as getMySettings, u as updateMySettings, a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
@@ -2689,6 +2689,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         homeTrendLoading.value = false;
       }
     }
+    async function refreshHomeNetworthTrend() {
+      if (homeTrendMode.value === "PORTFOLIO") {
+        await loadHomePortfolioTrend();
+        return;
+      }
+      await liveDashboardData.refreshTrend();
+    }
     function mapHomePortfolioRow(row) {
       return {
         id: row.id,
@@ -3590,6 +3597,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       bucket: homeTrendBucket.value,
                       "range-start-date": homeTrendRangeStartDate.value,
                       "range-end-date": homeTrendRangeEndDate.value,
+                      "show-refresh-control": true,
                       "onUpdate:showGross": _cache[5] || (_cache[5] = ($event) => liveTrendVisibility.gross = $event),
                       "onUpdate:showLiabilities": _cache[6] || (_cache[6] = ($event) => liveTrendVisibility.liabilities = $event),
                       "onUpdate:showNet": _cache[7] || (_cache[7] = ($event) => liveTrendVisibility.net = $event),
@@ -3597,7 +3605,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "onUpdate:portfolioMetric": _cache[9] || (_cache[9] = ($event) => homeTrendPortfolioMetric.value = $event),
                       "onUpdate:portfolioKey": _cache[10] || (_cache[10] = ($event) => homeTrendPortfolioKey.value = $event),
                       "onUpdate:range": _cache[11] || (_cache[11] = ($event) => homeTrendRange.value = $event),
-                      "onUpdate:bucket": _cache[12] || (_cache[12] = ($event) => homeTrendBucket.value = $event)
+                      "onUpdate:bucket": _cache[12] || (_cache[12] = ($event) => homeTrendBucket.value = $event),
+                      onRefresh: refreshHomeNetworthTrend
                     }, null, 8, ["subtitle", "currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "portfolio-lines", "portfolio-options", "portfolio-key", "range", "bucket", "range-start-date", "range-end-date"])
                   ]),
                   _createElementVNode("div", _hoisted_28, [
