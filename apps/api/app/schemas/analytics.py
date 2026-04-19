@@ -68,6 +68,10 @@ class AnalyticsNetworthSeriesOut(BaseModel):
     scope_id: int
     display_currency: str
     mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = "SUMMARY"
+    range: Literal["1M", "3M", "6M", "1Y"] | None = None
+    range_start_date: str | None = None
+    range_end_date: str | None = None
+    bucket: Literal["DAY", "WEEK", "MONTH"] = "DAY"
     points: list[AnalyticsNetworthSeriesPointOut]
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
 

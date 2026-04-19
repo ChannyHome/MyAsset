@@ -3,7 +3,7 @@ import { a as getSummary, c as getAllocation, b as getNetworthSeries, d as colle
 import { g as getHoldingsPerformance } from './holdings-D-iv7-uK.js';
 import { b as getLiabilities, c as getPortfolios, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
 import { _ as _sfc_main$1, a as _sfc_main$2, b as _sfc_main$3, c as _sfc_main$4 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DRqt5y9P.js';
-import { _ as _sfc_main$5 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Yn8JWYtk.js';
+import { _ as _sfc_main$5 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CVmefxj-.js';
 import { a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { f as formatDateTimeSeoul } from './datetime-D3NoeBy6.js';
 

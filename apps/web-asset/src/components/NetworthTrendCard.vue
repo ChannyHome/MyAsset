@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 type NetworthPoint = {
   label: string;
@@ -26,6 +26,9 @@ type PortfolioOption = {
 
 type TrendMode = "SUMMARY" | "PORTFOLIO";
 type PortfolioMetric = "CURRENT_VALUE" | "CURRENT_NET" | "PROFIT" | "RETURN";
+type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
+type NetworthTrendBucket = "DAY" | "WEEK" | "MONTH";
+type ZoomLevel = -2 | -1 | 0 | 1 | 2;
 
 const props = withDefaults(
   defineProps<{
@@ -48,6 +51,11 @@ const props = withDefaults(
     portfolioKey?: string;
     showPortfolioSelector?: boolean;
     storageKey?: string;
+    range?: NetworthTrendRange;
+    bucket?: NetworthTrendBucket;
+    rangeStartDate?: string | null;
+    rangeEndDate?: string | null;
+    showRangeBucketControls?: boolean;
   }>(),
   {
     title: "Networth Trend",
@@ -67,6 +75,11 @@ const props = withDefaults(
     portfolioKey: "ALL",
     showPortfolioSelector: true,
     storageKey: "",
+    range: "3M",
+    bucket: "DAY",
+    rangeStartDate: null,
+    rangeEndDate: null,
+    showRangeBucketControls: true,
   },
 );
 
@@ -77,6 +90,8 @@ const emit = defineEmits<{
   (e: "update:mode", value: TrendMode): void;
   (e: "update:portfolioMetric", value: PortfolioMetric): void;
   (e: "update:portfolioKey", value: string): void;
+  (e: "update:range", value: NetworthTrendRange): void;
+  (e: "update:bucket", value: NetworthTrendBucket): void;
 }>();
 
 type RenderLine = {
@@ -86,12 +101,38 @@ type RenderLine = {
   values: Array<number | null>;
 };
 
-const chartWidth = 760;
 const chartHeight = 240;
-const chartPadding = 56;
+const plotPaddingX = 56;
+const chartPaddingY = 56;
+const minPlotWidth = 560;
 const inspectText = ref("");
 const expanded = ref(true);
 const infoOpen = ref(false);
+const plotScrollRef = ref<HTMLDivElement | null>(null);
+const viewportStartIndex = ref(0);
+const viewportEndIndex = ref(0);
+const zoomLevel = ref<ZoomLevel>(0);
+
+const zoomMultipliers: Record<ZoomLevel, number> = {
+  [-2]: 0.65,
+  [-1]: 0.82,
+  [0]: 1,
+  [1]: 1.25,
+  [2]: 1.55,
+};
+
+const rangeOptions: Array<{ key: NetworthTrendRange; label: string }> = [
+  { key: "1M", label: "1M" },
+  { key: "3M", label: "3M" },
+  { key: "6M", label: "6M" },
+  { key: "1Y", label: "1Y" },
+];
+
+const bucketOptions: Array<{ key: NetworthTrendBucket; label: string }> = [
+  { key: "DAY", label: "Day" },
+  { key: "WEEK", label: "Week" },
+  { key: "MONTH", label: "Month" },
+];
 
 function loadExpandedState(): void {
   if (typeof window === "undefined" || !props.storageKey) return;
@@ -130,6 +171,16 @@ const portfolioKeyModel = computed({
   set: (value: string) => emit("update:portfolioKey", value),
 });
 
+const rangeModel = computed({
+  get: () => props.range,
+  set: (value: NetworthTrendRange) => emit("update:range", value),
+});
+
+const bucketModel = computed({
+  get: () => props.bucket,
+  set: (value: NetworthTrendBucket) => emit("update:bucket", value),
+});
+
 const portfolioPalette = [
   "#a78bfa",
   "#22c55e",
@@ -143,9 +194,61 @@ const portfolioPalette = [
   "#94a3b8",
 ];
 
+const isAmountAxis = computed(
+  () => props.mode === "SUMMARY" || (props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN"),
+);
+
+const summaryPointByLabel = computed(() => new Map(props.points.map((point) => [point.label, point])));
+
+const chartLabels = computed(() => {
+  const allLabels = props.points.map((point) => point.label);
+  if (props.mode !== "PORTFOLIO") return allLabels;
+
+  const dataLabels = new Set<string>();
+  for (const line of props.portfolioLines) {
+    for (const point of line.points) {
+      if (point.value != null && Number.isFinite(point.value)) {
+        dataLabels.add(point.snapshot_date);
+      }
+    }
+  }
+
+  const labelsWithData = allLabels.filter((label) => dataLabels.has(label));
+  if (labelsWithData.length > 0) return labelsWithData;
+
+  return Array.from(dataLabels).sort();
+});
+
+const basePointGap = computed(() => {
+  const total = Math.max(chartLabels.value.length, 2);
+  if (props.bucket === "DAY") {
+    const targetWidth =
+      props.range === "1M" ? 520 : props.range === "3M" ? 620 : props.range === "6M" ? 1180 : 1800;
+    const minGap = props.range === "1M" ? 12 : props.range === "3M" ? 7 : 6;
+    const maxGap = props.range === "1M" ? 18 : props.range === "3M" ? 12 : 10;
+    return Math.max(minGap, Math.min(maxGap, targetWidth / Math.max(1, total - 1)));
+  }
+  if (props.bucket === "WEEK") return 38;
+  return 58;
+});
+
+const pointGap = computed(() => Math.max(4, basePointGap.value * zoomMultipliers[zoomLevel.value]));
+
+const pointRadius = computed(() => {
+  const total = chartLabels.value.length;
+  if (props.bucket === "DAY" && total >= 90) return 2.4;
+  if (props.bucket === "DAY" && total >= 55) return 2.8;
+  return 3.5;
+});
+
+const plotWidth = computed(() => {
+  const total = Math.max(chartLabels.value.length, 2);
+  return Math.max(minPlotWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
+});
+
 const renderLines = computed<RenderLine[]>(() => {
   if (props.mode === "PORTFOLIO") {
-    const labels = props.points.map((item) => item.label);
+    const labels = chartLabels.value;
     return props.portfolioLines.map((line, index) => {
       const valueByLabel = new Map<string, number>();
       for (const point of line.points) {
@@ -161,12 +264,14 @@ const renderLines = computed<RenderLine[]>(() => {
   }
 
   const lines: RenderLine[] = [];
+  const labels = chartLabels.value;
+  const pointByLabel = summaryPointByLabel.value;
   if (props.showGross) {
     lines.push({
       key: "gross",
       label: "Gross",
       color: "#22c55e",
-      values: props.points.map((point) => point.gross),
+      values: labels.map((label) => pointByLabel.get(label)?.gross ?? null),
     });
   }
   if (props.showLiabilities) {
@@ -174,7 +279,7 @@ const renderLines = computed<RenderLine[]>(() => {
       key: "liabilities",
       label: "Liabilities",
       color: "#ef4444",
-      values: props.points.map((point) => point.liabilities),
+      values: labels.map((label) => pointByLabel.get(label)?.liabilities ?? null),
     });
   }
   if (props.showNet) {
@@ -182,27 +287,51 @@ const renderLines = computed<RenderLine[]>(() => {
       key: "net",
       label: "Net",
       color: "#0ea5e9",
-      values: props.points.map((point) => point.net),
+      values: labels.map((label) => pointByLabel.get(label)?.net ?? null),
     });
   }
   return lines;
 });
 
-const allValues = computed<[number, number]>(() => {
+const visibleIndexBounds = computed(() => {
+  const total = chartLabels.value.length;
+  if (total <= 0) return { start: 0, end: 0 };
+  if (viewportEndIndex.value <= viewportStartIndex.value && total > 1) {
+    return { start: 0, end: total - 1 };
+  }
+  const start = Math.max(0, Math.min(viewportStartIndex.value, total - 1));
+  const end = Math.max(start, Math.min(viewportEndIndex.value, total - 1));
+  return { start, end };
+});
+
+const scaledValues = computed<[number, number]>(() => {
+  const bounds = visibleIndexBounds.value;
   const rows = renderLines.value.flatMap((line) =>
-    line.values.filter((value): value is number => value != null && Number.isFinite(value)),
+    line.values
+      .slice(bounds.start, bounds.end + 1)
+      .filter((value): value is number => value != null && Number.isFinite(value)),
   );
   if (rows.length === 0) return [0, 1];
   const min = Math.min(...rows);
   const max = Math.max(...rows);
   if (min === max) {
-    return [min - 1, max + 1];
+    const padding = Math.max(Math.abs(min) * 0.1, isAmountAxis.value ? 1_000 : 1);
+    return [min - padding, max + padding];
   }
-  return [min, max];
+  const padding = Math.max((max - min) * 0.1, isAmountAxis.value ? 1_000 : 0.5);
+  return [min - padding, max + padding];
 });
 
-const firstPoint = computed(() => (props.points.length > 0 ? props.points[0] : null));
-const lastPoint = computed(() => (props.points.length > 0 ? props.points[props.points.length - 1] : null));
+const firstPoint = computed(() => {
+  const firstLabel = chartLabels.value[0];
+  if (firstLabel) return summaryPointByLabel.value.get(firstLabel) ?? null;
+  return props.points.length > 0 ? props.points[0] : null;
+});
+const lastPoint = computed(() => {
+  const lastLabel = chartLabels.value[chartLabels.value.length - 1];
+  if (lastLabel) return summaryPointByLabel.value.get(lastLabel) ?? null;
+  return props.points.length > 0 ? props.points[props.points.length - 1] : null;
+});
 
 const collapsedSummary = computed(() => {
   if (props.mode === "PORTFOLIO") {
@@ -214,32 +343,120 @@ const collapsedSummary = computed(() => {
           : props.portfolioMetric === "PROFIT"
             ? "Profit"
             : "Return";
-    return `Portfolio trend · ${metricLabel} · ${lastPoint.value?.label ?? "-"}`;
+    return `Portfolio trend - ${metricLabel} - ${lastPoint.value?.label ?? "-"}`;
   }
   if (!lastPoint.value) return "No trend data.";
-  return `Latest snapshot · Gross ${formatCurrency(lastPoint.value.gross, props.currency)} · Net ${formatCurrency(lastPoint.value.net, props.currency)}`;
+  return `Latest snapshot - Gross ${formatCurrency(lastPoint.value.gross, props.currency)} - Net ${formatCurrency(lastPoint.value.net, props.currency)}`;
+});
+
+const rangeMetaText = computed(() => {
+  const firstVisible = chartLabels.value[0] ?? null;
+  const lastVisible = chartLabels.value[chartLabels.value.length - 1] ?? null;
+  const start = props.mode === "PORTFOLIO" ? firstVisible : props.rangeStartDate ?? firstVisible;
+  const end = props.mode === "PORTFOLIO" ? lastVisible : props.rangeEndDate ?? lastVisible;
+  if (!start || !end) return "";
+  return `${formatXAxisLabel(start)} - ${formatXAxisLabel(end)}`;
 });
 
 watch(expanded, (value) => {
-  if (typeof window === "undefined" || !props.storageKey) return;
-  window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+  if (typeof window !== "undefined" && props.storageKey) {
+    window.localStorage.setItem(props.storageKey, value ? "1" : "0");
+  }
+  void nextTick(syncVisibleRange);
 });
+
+function handleResize(): void {
+  syncVisibleRange();
+}
 
 onMounted(() => {
   loadExpandedState();
+  void nextTick(syncVisibleRange);
+  if (typeof window !== "undefined") {
+    window.addEventListener("resize", handleResize);
+  }
 });
 
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", handleResize);
+  }
+});
+
+watch(
+  () => [
+    props.points.length,
+    props.bucket,
+    props.range,
+    props.mode,
+    chartLabels.value.length,
+    props.portfolioMetric,
+    props.portfolioKey,
+    props.portfolioLines.length,
+    props.showGross,
+    props.showLiabilities,
+    props.showNet,
+  ],
+  () => {
+    viewportStartIndex.value = 0;
+    viewportEndIndex.value = 0;
+    void nextTick(syncVisibleRange);
+  },
+);
+
+watch(
+  () => [props.range, props.bucket, props.mode, props.portfolioMetric, props.portfolioKey] as const,
+  () => {
+    zoomLevel.value = 0;
+  },
+);
+
+function setZoomLevel(next: number): void {
+  zoomLevel.value = Math.max(-2, Math.min(2, next)) as ZoomLevel;
+  void nextTick(syncVisibleRange);
+}
+
+function zoomOut(): void {
+  setZoomLevel(zoomLevel.value - 1);
+}
+
+function zoomIn(): void {
+  setZoomLevel(zoomLevel.value + 1);
+}
+
+function resetZoom(): void {
+  setZoomLevel(0);
+}
+
+function syncVisibleRange(): void {
+  const el = plotScrollRef.value;
+  const total = chartLabels.value.length;
+  if (!el || total <= 1) {
+    viewportStartIndex.value = 0;
+    viewportEndIndex.value = Math.max(0, total - 1);
+    return;
+  }
+  const usable = Math.max(1, plotWidth.value - plotPaddingX * 2);
+  const gap = usable / Math.max(1, total - 1);
+  const left = Math.max(0, el.scrollLeft - plotPaddingX);
+  const right = Math.max(0, el.scrollLeft + el.clientWidth - plotPaddingX);
+  const start = Math.max(0, Math.floor(left / gap) - 1);
+  const end = Math.min(total - 1, Math.ceil(right / gap) + 1);
+  viewportStartIndex.value = start;
+  viewportEndIndex.value = Math.max(start, end);
+}
+
 function toX(index: number, total: number): number {
-  if (total <= 1) return chartPadding;
-  const usable = chartWidth - chartPadding * 2;
-  return chartPadding + (usable * index) / (total - 1);
+  if (total <= 1) return plotPaddingX;
+  const usable = plotWidth.value - plotPaddingX * 2;
+  return plotPaddingX + (usable * index) / (total - 1);
 }
 
 function toY(value: number): number {
-  const [min, max] = allValues.value;
-  const usable = chartHeight - chartPadding * 2;
+  const [min, max] = scaledValues.value;
+  const usable = chartHeight - chartPaddingY * 2;
   const ratio = (value - min) / (max - min || 1);
-  return chartHeight - chartPadding - usable * ratio;
+  return chartHeight - chartPaddingY - usable * ratio;
 }
 
 function buildPath(values: Array<number | null>): string {
@@ -272,7 +489,7 @@ function setSummaryMetric(metric: "gross" | "liabilities" | "net", checked: bool
 }
 
 const ticks = computed(() => {
-  const [min, max] = allValues.value;
+  const [min, max] = scaledValues.value;
   const step = (max - min) / 3;
   return [0, 1, 2, 3].map((index) => {
     const value = min + step * index;
@@ -284,31 +501,33 @@ const ticks = computed(() => {
 });
 
 const xTicks = computed(() => {
-  const total = props.points.length;
+  const total = chartLabels.value.length;
   if (total <= 1) return [];
-  const raw = [
-    0,
-    Math.floor((total - 1) * 0.25),
-    Math.floor((total - 1) * 0.5),
-    Math.floor((total - 1) * 0.75),
-    total - 1,
-  ];
-  const unique = Array.from(new Set(raw)).filter((index) => index >= 0 && index < total);
-  return unique.map((index) => ({
+  let step = 1;
+  if (props.bucket === "DAY") {
+    step = total > 40 ? 7 : Math.max(1, Math.ceil(total / 6));
+  } else if (props.bucket === "WEEK") {
+    step = Math.max(1, Math.ceil(total / 8));
+  }
+  const indexes: number[] = [];
+  for (let index = 0; index < total; index += step) {
+    indexes.push(index);
+  }
+  if (indexes[indexes.length - 1] !== total - 1) indexes.push(total - 1);
+  return Array.from(new Set(indexes)).map((index) => ({
     index,
     x: toX(index, total),
-    label: props.points[index]?.label ?? "",
+    label: chartLabels.value[index] ?? "",
   }));
 });
 
 function pointX(index: number): number {
-  return toX(index, props.points.length);
+  return toX(index, chartLabels.value.length);
 }
 
 function formatAxisValue(value: number): string {
-  const isAmountAxis = props.mode === "SUMMARY" || (props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN");
-  if (props.maskAmounts && isAmountAxis) {
-    return "•••";
+  if (props.maskAmounts && isAmountAxis.value) {
+    return "***";
   }
   if (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") {
     return `${value.toFixed(1)}%`;
@@ -355,13 +574,21 @@ function formatPercent(value: number): string {
 function formatXAxisLabel(label: string): string {
   const normalized = (label || "").trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    return normalized.slice(5);
+    const [year = "", month = "", day = ""] = normalized.split("-");
+    if (props.bucket === "MONTH") {
+      return props.range === "1Y" ? `${year.slice(2)}.${Number(month)}` : `${Number(month)}월`;
+    }
+    return `${Number(month)}/${Number(day)}`;
+  }
+  if (/^\d{4}-\d{2}$/.test(normalized)) {
+    const [year = "", month = ""] = normalized.split("-");
+    return props.range === "1Y" ? `${year.slice(2)}.${Number(month)}` : `${Number(month)}월`;
   }
   return normalized;
 }
 
 function inspectPoint(lineLabel: string, pointLabel: string, value: number): void {
-  inspectText.value = `${lineLabel} · ${pointLabel || "-"} · ${
+  inspectText.value = `${lineLabel} - ${pointLabel || "-"} - ${
     props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN"
       ? formatPercent(value)
       : formatCurrency(value, props.currency)
@@ -406,7 +633,9 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
     >
       <p>Networth Trend shows how the selected scope changed across valuation snapshots over time.</p>
-      <p class="mt-1">Summary compares Gross, Liabilities, and Net. Portfolio mode lets us inspect a single metric across portfolios.</p>
+      <p class="mt-1">Range is anchored to the latest matched snapshot, not today's calendar date.</p>
+      <p class="mt-1">Day/Week/Month each use the last snapshot available inside that bucket.</p>
+      <p class="mt-1">On mobile, the Y-axis stays fixed while the plot scrolls and rescales to the visible points.</p>
     </div>
 
     <div
@@ -414,22 +643,53 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
     >
       <p class="font-medium text-slate-700 dark:text-slate-200">Collapsed. Click Expand to preview the latest networth trend.</p>
-      <p
-        class="mt-1"
-        :style="
-          props.maskAmounts && (modeModel !== 'PORTFOLIO' || portfolioMetricModel !== 'RETURN')
-            ? { filter: 'blur(6px)' }
-            : undefined
-        "
-      >
+      <p class="mt-1" :style="props.maskAmounts && isAmountAxis ? { filter: 'blur(6px)' } : undefined">
         {{ collapsedSummary }}
       </p>
-      <p v-if="firstPoint && lastPoint" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Range: {{ firstPoint.label }} -> {{ lastPoint.label }}
+      <p v-if="chartLabels.length > 0" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Range: {{ rangeMetaText || `${firstPoint?.label ?? '-'} -> ${lastPoint?.label ?? '-'}` }}
       </p>
     </div>
 
-    <div v-else-if="showModeToggle" class="mt-3 flex flex-wrap items-center gap-2">
+    <div v-if="expanded && showRangeBucketControls" class="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-3 dark:border-slate-700 dark:bg-slate-950/30">
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Range</span>
+        <button
+          v-for="item in rangeOptions"
+          :key="`trend-range-${item.key}`"
+          type="button"
+          class="rounded-lg border px-3 py-1.5 font-semibold transition-colors"
+          :class="
+            rangeModel === item.key
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="rangeModel = item.key"
+        >
+          {{ item.label }}
+        </button>
+        <span class="ml-2 mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Bucket</span>
+        <button
+          v-for="item in bucketOptions"
+          :key="`trend-bucket-${item.key}`"
+          type="button"
+          class="rounded-lg border px-3 py-1.5 font-semibold transition-colors"
+          :class="
+            bucketModel === item.key
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="bucketModel = item.key"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+      <p v-if="rangeMetaText" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+        Range anchor: latest snapshot - {{ rangeMetaText }}
+      </p>
+    </div>
+
+    <div v-if="expanded && showModeToggle" class="mt-3 flex flex-wrap items-center gap-2">
       <button
         type="button"
         class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
@@ -454,7 +714,7 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       >
         Portfolio
       </button>
-      <div v-if="modeModel === 'PORTFOLIO'" class="flex items-center gap-2">
+      <div v-if="modeModel === 'PORTFOLIO'" class="flex flex-wrap items-center gap-2">
         <button
           type="button"
           class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
@@ -521,7 +781,7 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
     <div v-else-if="expanded && error" class="mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
       {{ error }}
     </div>
-    <div v-else-if="expanded && points.length <= 1" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+    <div v-else-if="expanded && chartLabels.length <= 1" class="mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300">
       Need at least 2 snapshot points to draw trend line.
     </div>
     <div v-else-if="expanded" class="mt-3 space-y-3">
@@ -555,91 +815,148 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
         </label>
       </div>
 
-      <div class="grid gap-1 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-        <p>
-          <span class="font-semibold text-slate-700 dark:text-slate-200">X-axis:</span>
-          Snapshot date (valuation history)
-        </p>
-        <p>
-          <span class="font-semibold text-slate-700 dark:text-slate-200">Y-axis:</span>
-          {{
-            modeModel === "SUMMARY"
-              ? `Amount (${currency})`
-              : portfolioMetricModel === "RETURN"
-                ? "Return (%)"
-                : portfolioMetricModel === "CURRENT_VALUE"
-                  ? `Current Value (${currency})`
-                  : portfolioMetricModel === "CURRENT_NET"
-                    ? `Current Net (${currency})`
-                    : `Profit (${currency})`
-          }}
-        </p>
+      <div class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+        <div class="grid gap-1">
+          <p>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">X-axis:</span>
+            {{ bucketModel === "DAY" ? "Snapshot date" : bucketModel === "WEEK" ? "Last snapshot in each week" : "Last snapshot in each month" }}
+          </p>
+          <p>
+            <span class="font-semibold text-slate-700 dark:text-slate-200">Y-axis:</span>
+            {{
+              modeModel === "SUMMARY"
+                ? `Amount (${currency})`
+                : portfolioMetricModel === "RETURN"
+                  ? "Return (%)"
+                  : portfolioMetricModel === "CURRENT_VALUE"
+                    ? `Current Value (${currency})`
+                    : portfolioMetricModel === "CURRENT_NET"
+                      ? `Current Net (${currency})`
+                      : `Profit (${currency})`
+            }}
+          </p>
+        </div>
+        <div class="ml-auto flex items-center gap-1">
+          <span class="mr-1 font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Zoom</span>
+          <button
+            type="button"
+            class="rounded-lg border px-2 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            :class="
+              zoomLevel <= -2
+                ? 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-500'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+            "
+            :disabled="zoomLevel <= -2"
+            aria-label="Zoom out networth chart"
+            @click="zoomOut"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-2 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            :class="
+              zoomLevel >= 2
+                ? 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-500'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+            "
+            :disabled="zoomLevel >= 2"
+            aria-label="Zoom in networth chart"
+            @click="zoomIn"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            :class="
+              zoomLevel === 0
+                ? 'border-slate-300 text-slate-500 dark:border-slate-700 dark:text-slate-500'
+                : 'border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-200 dark:hover:bg-indigo-950/40'
+            "
+            :disabled="zoomLevel === 0"
+            aria-label="Reset networth chart zoom"
+            @click="resetZoom"
+          >
+            Fit
+          </button>
+        </div>
       </div>
 
-      <div v-if="linePaths.length > 0" class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-        <svg :viewBox="`0 0 ${chartWidth} ${chartHeight}`" class="h-64 w-full min-w-[560px] bg-slate-50 dark:bg-slate-950/40">
-          <g>
-            <line
+      <div v-if="linePaths.length > 0" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+        <div class="relative bg-slate-50 dark:bg-slate-950/40">
+          <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16">
+            <span
               v-for="tick in ticks"
-              :key="`tick-${tick.y}`"
-              x1="0"
-              :y1="tick.y"
-              :x2="chartWidth"
-              :y2="tick.y"
-              stroke="rgba(148, 163, 184, 0.28)"
-              stroke-width="1"
-            />
-            <text
-              v-for="tick in ticks"
-              :key="`tick-label-${tick.y}`"
-              x="6"
-              :y="tick.y - 2"
-              text-anchor="start"
-              font-size="10"
-              fill="rgba(148, 163, 184, 0.95)"
+              :key="`floating-y-label-${tick.y}`"
+              class="absolute left-2 -translate-y-1/2 rounded-sm px-0.5 text-[10px] leading-none text-slate-500/95 [text-shadow:0_1px_2px_rgba(15,23,42,0.75)] dark:text-slate-400/95"
+              :style="{
+                top: `${(tick.y / chartHeight) * 100}%`,
+                filter: props.maskAmounts && isAmountAxis ? 'blur(6px)' : undefined,
+              }"
             >
               {{ formatAxisValue(tick.value) }}
-            </text>
-          </g>
-          <g>
-            <line
-              v-for="tick in xTicks"
-              :key="`x-grid-${tick.index}`"
-              :x1="tick.x"
-              y1="0"
-              :x2="tick.x"
-              :y2="chartHeight"
-              stroke="rgba(148, 163, 184, 0.12)"
-              stroke-width="1"
-            />
-            <text
-              v-for="tick in xTicks"
-              :key="`x-label-${tick.index}`"
-              :x="tick.x"
-              :y="chartHeight - 4"
-              text-anchor="middle"
-              font-size="10"
-              fill="rgba(148, 163, 184, 0.95)"
+            </span>
+          </div>
+          <div ref="plotScrollRef" class="overflow-x-auto" @scroll="syncVisibleRange">
+            <svg
+              :viewBox="`0 0 ${plotWidth} ${chartHeight}`"
+              class="h-64 bg-slate-50 dark:bg-slate-950/40"
+              :style="{ width: `${plotWidth}px`, minWidth: `${plotWidth}px` }"
             >
-              {{ formatXAxisLabel(tick.label) }}
-            </text>
-          </g>
-          <g v-for="line in linePaths" :key="`line-${line.key}`">
-            <path :d="line.path" fill="none" :stroke="line.color" stroke-width="2.5" />
-            <circle
-              v-for="(value, idx) in line.values"
-              :key="`point-${line.key}-${idx}`"
-              v-show="value != null"
-              :cx="pointX(idx)"
-              :cy="toY(Number(value ?? 0))"
-              r="3.5"
-              :fill="line.color"
-              class="cursor-pointer"
-              @mouseenter="inspectPoint(line.label, points[idx]?.label ?? '-', Number(value ?? 0))"
-              @click="inspectPoint(line.label, points[idx]?.label ?? '-', Number(value ?? 0))"
-            />
-          </g>
-        </svg>
+              <g>
+                <line
+                  v-for="tick in ticks"
+                  :key="`tick-${tick.y}`"
+                  x1="0"
+                  :y1="tick.y"
+                  :x2="plotWidth"
+                  :y2="tick.y"
+                  stroke="rgba(148, 163, 184, 0.28)"
+                  stroke-width="1"
+                />
+              </g>
+              <g>
+                <line
+                  v-for="tick in xTicks"
+                  :key="`x-grid-${tick.index}`"
+                  :x1="tick.x"
+                  y1="0"
+                  :x2="tick.x"
+                  :y2="chartHeight"
+                  stroke="rgba(148, 163, 184, 0.12)"
+                  stroke-width="1"
+                />
+                <text
+                  v-for="tick in xTicks"
+                  :key="`x-label-${tick.index}`"
+                  :x="tick.x"
+                  :y="chartHeight - 4"
+                  text-anchor="middle"
+                  font-size="10"
+                  fill="rgba(148, 163, 184, 0.95)"
+                >
+                  {{ formatXAxisLabel(tick.label) }}
+                </text>
+              </g>
+              <g v-for="line in linePaths" :key="`line-${line.key}`">
+                <path :d="line.path" fill="none" :stroke="line.color" stroke-width="2.5" />
+                <circle
+                  v-for="(value, idx) in line.values"
+                  :key="`point-${line.key}-${idx}`"
+                  v-show="value != null"
+                  :cx="pointX(idx)"
+                  :cy="toY(Number(value ?? 0))"
+                  :r="pointRadius"
+                  :fill="line.color"
+                  class="cursor-pointer"
+                  @mouseenter="inspectPoint(line.label, chartLabels[idx] ?? '-', Number(value ?? 0))"
+                  @click="inspectPoint(line.label, chartLabels[idx] ?? '-', Number(value ?? 0))"
+                />
+              </g>
+            </svg>
+          </div>
+        </div>
       </div>
       <div v-else class="rounded-xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         Not enough points.
@@ -654,7 +971,7 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       <p
         v-if="linePaths.length > 0"
         class="text-xs text-slate-500 dark:text-slate-400"
-        :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined"
+        :style="props.maskAmounts && isAmountAxis ? { filter: 'blur(6px)' } : undefined"
       >
         {{ inspectText || "Hover/click a point to inspect value." }}
       </p>
@@ -690,7 +1007,7 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       </div>
 
       <p v-if="linePaths.length > 0" class="text-[11px] text-slate-500 dark:text-slate-400">
-        Range: {{ firstPoint?.label ?? "-" }} -> {{ lastPoint?.label ?? "-" }}
+        Range: {{ rangeMetaText || `${firstPoint?.label ?? '-'} -> ${lastPoint?.label ?? '-'}` }}
       </p>
     </div>
   </article>

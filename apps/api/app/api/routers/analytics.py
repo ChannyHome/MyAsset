@@ -43,6 +43,38 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 AllocationTarget = Literal["GROSS", "LIABILITIES", "NET", "HOLDINGS"]
 AllocationGroupBy = Literal["PORTFOLIO", "ASSET_CLASS", "ASSET", "LIABILITY_TYPE"]
 SeriesBucket = Literal["DAY", "WEEK", "MONTH"]
+SeriesRange = Literal["1M", "3M", "6M", "1Y"]
+
+
+def _subtract_months(value: date, months: int) -> date:
+    month_index = value.month - 1 - months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    days_in_month = [
+        31,
+        29 if year % 400 == 0 or (year % 4 == 0 and year % 100 != 0) else 28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ][month - 1]
+    return date(year, month, min(value.day, days_in_month))
+
+
+def _range_start_date(anchor: date, range_value: str) -> date:
+    if range_value == "1M":
+        return _subtract_months(anchor, 1)
+    if range_value == "3M":
+        return _subtract_months(anchor, 3)
+    if range_value == "6M":
+        return _subtract_months(anchor, 6)
+    return _subtract_months(anchor, 12)
 
 
 def _resolve_scope_user_ids(
@@ -556,6 +588,7 @@ def get_networth_series(
     portfolio_metric: Literal["RETURN", "PROFIT", "CURRENT", "CURRENT_NET"] = Query(default="RETURN"),
     portfolio_id: int | None = Query(default=None, ge=1),
     bucket: SeriesBucket = Query(default="DAY"),
+    range_: SeriesRange | None = Query(default=None, alias="range"),
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
@@ -568,6 +601,7 @@ def get_networth_series(
     )
     target_currency = (display_currency or "KRW").upper()
     normalized_bucket = (bucket or "DAY").upper()
+    normalized_range = range_.upper() if range_ else None
     normalized_mode = (mode or "SUMMARY").upper()
     normalized_portfolio_metric = (portfolio_metric or "RETURN").upper()
     if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN"}:
@@ -575,23 +609,57 @@ def get_networth_series(
     if normalized_portfolio_metric not in {"RETURN", "PROFIT", "CURRENT", "CURRENT_NET"}:
         raise HTTPException(status_code=400, detail="portfolio_metric must be RETURN | PROFIT | CURRENT | CURRENT_NET")
 
-    stmt = (
-        select(ValuationSnapshot)
-        .where(
-            ValuationSnapshot.scope_type == normalized_scope_type,
-            ValuationSnapshot.scope_id == normalized_scope_id,
-            ValuationSnapshot.display_currency == target_currency,
-        )
-        .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
-        .limit(max(limit * 4, limit))
+    base_filters = (
+        ValuationSnapshot.scope_type == normalized_scope_type,
+        ValuationSnapshot.scope_id == normalized_scope_id,
+        ValuationSnapshot.display_currency == target_currency,
     )
-    snapshots = list(reversed(list(db.scalars(stmt).all())))
+
+    range_start: date | None = None
+    range_end: date | None = None
+
+    if normalized_range is not None:
+        latest_snapshot = db.scalar(
+            select(ValuationSnapshot)
+            .where(*base_filters)
+            .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
+        )
+        if latest_snapshot is None:
+            snapshots = []
+        else:
+            range_end = latest_snapshot.snapshot_date
+            range_start = _range_start_date(range_end, normalized_range)
+            snapshots = list(
+                db.scalars(
+                    select(ValuationSnapshot)
+                    .where(
+                        *base_filters,
+                        ValuationSnapshot.snapshot_date >= range_start,
+                        ValuationSnapshot.snapshot_date <= range_end,
+                    )
+                    .order_by(ValuationSnapshot.snapshot_date.asc(), ValuationSnapshot.id.asc())
+                ).all()
+            )
+    else:
+        stmt = (
+            select(ValuationSnapshot)
+            .where(*base_filters)
+            .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
+            .limit(max(limit * 4, limit))
+        )
+        snapshots = list(reversed(list(db.scalars(stmt).all())))
 
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
 
     if snapshots:
         if normalized_bucket == "DAY":
-            selected = snapshots[-limit:]
+            day_map: dict[str, ValuationSnapshot] = {}
+            for row in snapshots:
+                day_map[row.snapshot_date.isoformat()] = row
+            selected_keys = list(day_map.keys())
+            if normalized_range is None:
+                selected_keys = selected_keys[-limit:]
+            selected = [day_map[key] for key in selected_keys]
             labels = [row.snapshot_date.isoformat() for row in selected]
         else:
             bucket_map: dict[str, ValuationSnapshot] = {}
@@ -602,8 +670,11 @@ def get_networth_series(
                 else:
                     key = f"{row.snapshot_date.year}-{row.snapshot_date.month:02d}"
                 bucket_map[key] = row
-            labels = list(bucket_map.keys())[-limit:]
-            selected = [bucket_map[key] for key in labels]
+            selected_keys = list(bucket_map.keys())
+            if normalized_range is None:
+                selected_keys = selected_keys[-limit:]
+            selected = [bucket_map[key] for key in selected_keys]
+            labels = [row.snapshot_date.isoformat() for row in selected]
 
         points = [
             AnalyticsNetworthSeriesPointOut(
@@ -712,6 +783,10 @@ def get_networth_series(
         scope_id=normalized_scope_id,
         display_currency=target_currency,
         mode=normalized_mode,  # type: ignore[arg-type]
+        range=normalized_range,  # type: ignore[arg-type]
+        range_start_date=range_start.isoformat() if range_start else None,
+        range_end_date=range_end.isoformat() if range_end else None,
+        bucket=normalized_bucket,  # type: ignore[arg-type]
         points=points,
         portfolio_lines=portfolio_lines,
     )

@@ -72,9 +72,16 @@ export type AnalyticsNetworthSeriesOut = {
   scope_id: number;
   display_currency: string;
   mode: "SUMMARY" | "PORTFOLIO_RETURN";
+  range: NetworthTrendRange | null;
+  range_start_date: string | null;
+  range_end_date: string | null;
+  bucket: NetworthTrendBucket;
   points: AnalyticsNetworthSeriesPointOut[];
   portfolio_lines: AnalyticsNetworthSeriesLineOut[];
 };
+
+export type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
+export type NetworthTrendBucket = "DAY" | "WEEK" | "MONTH";
 
 export type AnalyticsCompositionChartKind = "AMOUNT" | "ALLOCATION";
 export type AnalyticsCompositionTab = "GROSS_COMPOSITION" | "CAPITAL_STRUCTURE" | "LIABILITY_BREAKDOWN";
@@ -244,7 +251,8 @@ export type NetworthSeriesQuery = {
   mode?: "SUMMARY" | "PORTFOLIO_RETURN";
   portfolio_metric?: "RETURN" | "PROFIT" | "CURRENT" | "CURRENT_NET";
   portfolio_id?: number;
-  bucket?: "DAY" | "WEEK" | "MONTH";
+  bucket?: NetworthTrendBucket;
+  range?: NetworthTrendRange;
   limit?: number;
 };
 
