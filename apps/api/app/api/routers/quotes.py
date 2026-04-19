@@ -13,6 +13,7 @@ from app.models.latest_quote import LatestQuote
 from app.schemas.quote import (
     FxRateLatestOut,
     ManualQuoteUpsertIn,
+    QuoteSchedulerStatusOut,
     QuoteLatestOut,
     QuoteUpdateJobStartOut,
     QuoteUpdateJobStatusOut,
@@ -28,6 +29,7 @@ from app.services.quote_updater import (
     refresh_quote_for_asset_id,
     refresh_usd_krw_rate,
 )
+from app.tasks.quotes_scheduler import get_quote_scheduler_status
 from app.services.user_seed import SeedUser
 
 router = APIRouter(prefix="/quotes", tags=["quotes"])
@@ -145,6 +147,13 @@ def get_quote_update_job_status(
         fx_rate=fx_rate,
         fx_error=job.fx_error,
     )
+
+
+@router.get("/scheduler/status", response_model=QuoteSchedulerStatusOut)
+def get_scheduler_status(
+    _current_user: SeedUser = Depends(require_min_role("MAINTAINER")),
+) -> QuoteSchedulerStatusOut:
+    return QuoteSchedulerStatusOut(**get_quote_scheduler_status())
 
 
 @router.post("/fx/usd-krw/test", response_model=FxRateLatestOut)

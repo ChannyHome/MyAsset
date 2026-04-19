@@ -33,7 +33,12 @@ import { getLiabilitiesTable, type LiabilityTableRowOut } from "../api/liabiliti
 import { getPortfoliosTable, type PortfolioTableRowOut } from "../api/portfolios";
 import { getReleaseNotes, type ReleaseNoteOut } from "../api/releaseNotes";
 import { getMe, type AuthMeOut } from "../api/auth";
-import { getQuoteUpdateJobStatus, updateQuotesNow } from "../api/quotes";
+import {
+  getQuoteSchedulerStatus,
+  getQuoteUpdateJobStatus,
+  updateQuotesNow,
+  type QuoteSchedulerStatusOut,
+} from "../api/quotes";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import {
   useDashboardDataAdapter,
@@ -207,6 +212,8 @@ const quoteUpdateLastProcessed = ref(-1);
 const quoteUpdateLastResultStatus = ref<"COMPLETED" | "FAILED" | "">("");
 const quoteUpdateLastFinishedAt = ref("");
 const quoteUpdateLastSummary = ref("");
+const quoteSchedulerStatus = ref<QuoteSchedulerStatusOut | null>(null);
+const quoteSchedulerStatusError = ref("");
 const homeActionToast = ref<{ kind: "INFO" | "SUCCESS" | "ERROR"; message: string } | null>(null);
 const livePortfolioKey = ref("ALL");
 const homePortfolioKey = ref("ALL");
@@ -295,7 +302,32 @@ const quoteUpdateLastResultLabel = computed(() => {
   if (!quoteUpdateLastFinishedAt.value) return "";
   const status = quoteUpdateLastResultStatus.value || "COMPLETED";
   const summary = quoteUpdateLastSummary.value || "-";
-  return `Last run: ${quoteUpdateLastFinishedAt.value} · ${status} · ${summary}`;
+  return `Manual last run: ${quoteUpdateLastFinishedAt.value} · ${status} · ${summary}`;
+});
+
+const quoteSchedulerStatusLabel = computed(() => {
+  if (!canManageQuoteUpdates.value) return "";
+  if (quoteSchedulerStatusError.value) return `Auto scheduler: ${quoteSchedulerStatusError.value}`;
+  const status = quoteSchedulerStatus.value;
+  if (!status) return "";
+  if (!status.enabled) return "Auto scheduler: disabled";
+  if (!status.running) return "Auto scheduler: stopped";
+
+  const nextRun = formatDateTime(status.next_run_at);
+  const lastSuccess = formatDateTime(status.last_success_at);
+  const suffix = status.job_running ? " · running now" : "";
+  return `Auto scheduler: next ${nextRun || "-"} · last success ${lastSuccess || "-"}${suffix}`;
+});
+
+const quoteSchedulerMissedLabel = computed(() => {
+  if (!canManageQuoteUpdates.value || !quoteSchedulerStatus.value) return "";
+  const missed = Number(quoteSchedulerStatus.value.missed_count || 0);
+  const maxInstanceMissed = Number(quoteSchedulerStatus.value.max_instances_missed_count || 0);
+  const failure = Number(quoteSchedulerStatus.value.failure_count || 0);
+  const parts = [`Missed: ${missed}`];
+  if (maxInstanceMissed > 0) parts.push(`Overlap skipped: ${maxInstanceMissed}`);
+  if (failure > 0) parts.push(`Failures: ${failure}`);
+  return parts.join(" · ");
 });
 
 const livePortfolioId = computed<number | undefined>(() => {
@@ -581,6 +613,7 @@ async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promi
       quoteUpdateLastSummary.value = `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`;
       saveQuoteUpdateMeta();
       showHomeActionToast("SUCCESS", "Quote update completed. Refreshing Home data...");
+      void refreshQuoteSchedulerStatus();
       await loadHomeData();
       return;
     }
@@ -593,6 +626,7 @@ async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promi
       quoteUpdateLastFinishedAt.value = formatDateTime(result.finished_at || new Date().toISOString());
       quoteUpdateLastSummary.value = lastError || "Quote update job failed";
       saveQuoteUpdateMeta();
+      void refreshQuoteSchedulerStatus();
       showHomeActionToast("ERROR", lastError || "Quote update job failed.");
       return;
     }
@@ -604,6 +638,7 @@ async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promi
       quoteUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
       quoteUpdateLastSummary.value = "Polling timed out";
       saveQuoteUpdateMeta();
+      void refreshQuoteSchedulerStatus();
       showHomeActionToast("ERROR", "Quote update polling timed out.");
       return;
     }
@@ -618,6 +653,7 @@ async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promi
     quoteUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
     quoteUpdateLastSummary.value = getErrorMessage(error);
     saveQuoteUpdateMeta();
+    void refreshQuoteSchedulerStatus();
     showHomeActionToast("ERROR", getErrorMessage(error));
   }
 }
@@ -638,11 +674,29 @@ async function runHomeUpdateQuotesNow(): Promise<void> {
     quoteUpdatePolling.value = true;
     quoteUpdateStatus.value = "RUNNING";
     showHomeActionToast("INFO", `Quote update started (${quoteUpdateProgressText.value})`);
+    void refreshQuoteSchedulerStatus();
     void pollHomeQuoteUpdateJob(job.job_id, Date.now());
   } catch (error) {
     clearQuoteUpdatePolling();
     quoteUpdateStatus.value = "FAILED";
+    void refreshQuoteSchedulerStatus();
     showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
+async function refreshQuoteSchedulerStatus(): Promise<void> {
+  if (!canManageQuoteUpdates.value) {
+    quoteSchedulerStatus.value = null;
+    quoteSchedulerStatusError.value = "";
+    return;
+  }
+
+  try {
+    quoteSchedulerStatus.value = await getQuoteSchedulerStatus();
+    quoteSchedulerStatusError.value = "";
+  } catch (error) {
+    quoteSchedulerStatus.value = null;
+    quoteSchedulerStatusError.value = getErrorMessage(error);
   }
 }
 
@@ -686,6 +740,7 @@ async function loadHomeData() {
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
     me.value = meOut;
+    void refreshQuoteSchedulerStatus();
     if (
       homeTrendPortfolioKey.value !== "ALL" &&
       !portfoliosOut.items.some((item) => String(item.id) === homeTrendPortfolioKey.value)
@@ -1699,12 +1754,20 @@ watch(
               >
                 {{ exportingImage ? "Exporting..." : "Export PNG" }}
               </button>
-              <p
-                v-if="canManageQuoteUpdates && quoteUpdateLastResultLabel"
-                class="w-full text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
+              <div
+                v-if="canManageQuoteUpdates && (quoteUpdateLastResultLabel || quoteSchedulerStatusLabel)"
+                class="w-full space-y-0.5 text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
               >
-                {{ quoteUpdateLastResultLabel }}
-              </p>
+                <p v-if="quoteUpdateLastResultLabel">
+                  {{ quoteUpdateLastResultLabel }}
+                </p>
+                <p v-if="quoteSchedulerStatusLabel">
+                  {{ quoteSchedulerStatusLabel }}
+                </p>
+                <p v-if="quoteSchedulerMissedLabel" class="text-slate-400 dark:text-slate-500">
+                  {{ quoteSchedulerMissedLabel }}
+                </p>
+              </div>
             </div>
           </div>
         </div>

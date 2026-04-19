@@ -52,6 +52,37 @@ export type QuoteUpdateJobStatusOut = {
   fx_error: string | null;
 };
 
+export type QuoteSchedulerStatusOut = {
+  enabled: boolean;
+  running: boolean;
+  job_id: string;
+  interval_minutes: number | null;
+  misfire_grace_seconds: number | null;
+  coalesce: boolean;
+  max_instances: number;
+  job_running: boolean;
+  next_run_at: string | null;
+  last_event: string | null;
+  last_started_at: string | null;
+  last_finished_at: string | null;
+  last_duration_seconds: number | null;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  last_error: string | null;
+  last_summary: Record<string, unknown> | null;
+  last_fx_updated: boolean | null;
+  last_fx_error: string | null;
+  last_snapshot_collected: boolean | null;
+  last_snapshot_error: string | null;
+  run_count: number;
+  success_count: number;
+  failure_count: number;
+  missed_count: number;
+  max_instances_missed_count: number;
+  last_missed_at: string | null;
+  last_missed_scheduled_run_at: string | null;
+};
+
 export async function getLatestQuotes(): Promise<QuoteLatestOut[]> {
   const { data } = await http.get<QuoteLatestOut[]>("/quotes/latest");
   return data;
@@ -64,6 +95,11 @@ export async function updateQuotesNow(): Promise<QuoteUpdateJobStartOut> {
 
 export async function getQuoteUpdateJobStatus(jobId: string): Promise<QuoteUpdateJobStatusOut> {
   const { data } = await http.get<QuoteUpdateJobStatusOut>(`/quotes/update-jobs/${jobId}`);
+  return data;
+}
+
+export async function getQuoteSchedulerStatus(): Promise<QuoteSchedulerStatusOut> {
+  const { data } = await http.get<QuoteSchedulerStatusOut>("/quotes/scheduler/status");
   return data;
 }
 

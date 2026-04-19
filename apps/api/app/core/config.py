@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     quote_auto_update_enabled: bool = False
     quote_update_interval_minutes: int = 10
+    quote_scheduler_misfire_grace_seconds: int = 3600
     quote_provider: str = "yfinance"
     fx_strict_mode: bool = False
     fx_stale_minutes: int = 30

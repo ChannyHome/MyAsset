@@ -8,7 +8,7 @@ import { u as useDashboardDataAdapter, _ as _sfc_main$3, a as _sfc_main$9, b as 
 import { g as getMySettings, u as updateMySettings, a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
 import { g as getLiabilitiesTable, a as getPortfoliosTable } from './portfolios-r6VxmkS0.js';
-import { u as updateQuotesNow, g as getMe, a as getReleaseNotes, b as getQuoteUpdateJobStatus } from './quotes-OIhGiauY.js';
+import { u as updateQuotesNow, g as getQuoteSchedulerStatus, a as getMe, b as getReleaseNotes, c as getQuoteUpdateJobStatus } from './quotes-C-ii5Ef2.js';
 
 async function getMyGoalTarget(params) {
   const { data } = await http.get("/users/me/goal-target", { params });
@@ -125,9 +125,9 @@ const _hoisted_59$2 = {
 const _hoisted_60$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
 const _hoisted_61$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
 const _hoisted_62$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_63$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_64$1 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
-const _hoisted_65$1 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_63$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_64$2 = { class: "rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800" };
+const _hoisted_65$2 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
 const {computed: computed$2,onMounted: onMounted$2,reactive: reactive$2,ref: ref$2,watch: watch$2} = await importShared('vue');
 const gaugeViewBox = "0 0 360 240";
 const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
@@ -753,11 +753,11 @@ const _sfc_main$2 = /* @__PURE__ */ _defineComponent$2({
                     ]),
                     _createElementVNode$2("div", _hoisted_62$2, [
                       _cache[25] || (_cache[25] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "연수익률", -1)),
-                      _createElementVNode$2("p", _hoisted_63$1, _toDisplayString$2(target.value?.configured ? formatPercent(annualReturnInputValue.value) : "-"), 1)
+                      _createElementVNode$2("p", _hoisted_63$2, _toDisplayString$2(target.value?.configured ? formatPercent(annualReturnInputValue.value) : "-"), 1)
                     ]),
-                    _createElementVNode$2("div", _hoisted_64$1, [
+                    _createElementVNode$2("div", _hoisted_64$2, [
                       _cache[26] || (_cache[26] = _createElementVNode$2("p", { class: "text-[11px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400" }, "월투자금액", -1)),
-                      _createElementVNode$2("p", _hoisted_65$1, [
+                      _createElementVNode$2("p", _hoisted_65$2, [
                         _createElementVNode$2("span", {
                           style: _normalizeStyle$2(amountMaskStyle())
                         }, _toDisplayString$2(target.value?.configured ? formatCurrency(toNumber(target.value?.monthly_invest_amount), __props.displayCurrency) : "-"), 5)
@@ -900,9 +900,9 @@ const _hoisted_59$1 = { class: "font-semibold" };
 const _hoisted_60$1 = { class: "mt-3 flex flex-wrap gap-2" };
 const _hoisted_61$1 = ["onMouseenter", "onFocus"];
 const _hoisted_62$1 = { class: "font-semibold" };
-const _hoisted_63 = { class: "text-rose-200" };
-const _hoisted_64 = ["onMouseenter", "onFocus"];
-const _hoisted_65 = { class: "font-semibold" };
+const _hoisted_63$1 = { class: "text-rose-200" };
+const _hoisted_64$1 = ["onMouseenter", "onFocus"];
+const _hoisted_65$1 = { class: "font-semibold" };
 const _hoisted_66 = {
   key: 1,
   class: "inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
@@ -1725,7 +1725,7 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                             }, null, 4),
                             _createElementVNode$1("span", _hoisted_62$1, _toDisplayString$1(item.label), 1),
                             _createElementVNode$1("span", null, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
-                            _createElementVNode$1("span", _hoisted_63, "+" + _toDisplayString$1(item.excessPct.toFixed(1)) + "%p", 1)
+                            _createElementVNode$1("span", _hoisted_63$1, "+" + _toDisplayString$1(item.excessPct.toFixed(1)) + "%p", 1)
                           ], 42, _hoisted_61$1);
                         }), 128)),
                         (_openBlock$1(true), _createElementBlock$1(_Fragment$1, null, _renderList$1(rebalancingDraft.value.nearLimit, (item) => {
@@ -1742,10 +1742,10 @@ const _sfc_main$1 = /* @__PURE__ */ _defineComponent$1({
                               class: "h-2.5 w-2.5 rounded-full",
                               style: _normalizeStyle$1({ backgroundColor: item.color })
                             }, null, 4),
-                            _createElementVNode$1("span", _hoisted_65, _toDisplayString$1(item.label), 1),
+                            _createElementVNode$1("span", _hoisted_65$1, _toDisplayString$1(item.label), 1),
                             _createElementVNode$1("span", null, _toDisplayString$1(formatPercent(item.ratioPct)), 1),
                             _cache[26] || (_cache[26] = _createElementVNode$1("span", { class: "text-amber-200" }, "near limit", -1))
-                          ], 42, _hoisted_64);
+                          ], 42, _hoisted_64$1);
                         }), 128))
                       ], 64)) : (_openBlock$1(), _createElementBlock$1("span", _hoisted_66, " No asset currently exceeds the draft " + _toDisplayString$1(rebalancingDraft.value.thresholdPct.toFixed(0)) + "% threshold. ", 1))
                     ]),
@@ -1928,81 +1928,87 @@ const _hoisted_20 = ["disabled"];
 const _hoisted_21 = ["disabled"];
 const _hoisted_22 = {
   key: 2,
-  class: "w-full text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
+  class: "w-full space-y-0.5 text-[11px] text-slate-500 dark:text-slate-400 sm:text-right"
 };
-const _hoisted_23 = { class: "xl:col-span-2" };
-const _hoisted_24 = { class: "xl:col-span-2" };
-const _hoisted_25 = { class: "xl:col-span-2" };
+const _hoisted_23 = { key: 0 };
+const _hoisted_24 = { key: 1 };
+const _hoisted_25 = {
+  key: 2,
+  class: "text-slate-400 dark:text-slate-500"
+};
 const _hoisted_26 = { class: "xl:col-span-2" };
-const _hoisted_27 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_28 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_29 = {
+const _hoisted_27 = { class: "xl:col-span-2" };
+const _hoisted_28 = { class: "xl:col-span-2" };
+const _hoisted_29 = { class: "xl:col-span-2" };
+const _hoisted_30 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_31 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_32 = {
   key: 0,
   class: "mt-4 space-y-4"
 };
-const _hoisted_30 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_31 = {
+const _hoisted_33 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_34 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_32 = {
+const _hoisted_35 = {
   key: 1,
   class: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3"
 };
-const _hoisted_33 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_34 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_35 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_36 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_37 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
-const _hoisted_38 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
-const _hoisted_39 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_40 = {
+const _hoisted_36 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_37 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_38 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_39 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_40 = { class: "mt-1 text-[11px] text-slate-500 dark:text-slate-400" };
+const _hoisted_41 = { class: "grid grid-cols-1 gap-4 xl:grid-cols-2" };
+const _hoisted_42 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_43 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_41 = {
+const _hoisted_44 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_42 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_43 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_44 = { class: "text-xs font-normal text-slate-500" };
-const _hoisted_45 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_46 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_47 = {
+const _hoisted_45 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_46 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_47 = { class: "text-xs font-normal text-slate-500" };
+const _hoisted_48 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_49 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_50 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_48 = {
+const _hoisted_51 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_49 = { class: "flex items-center justify-between gap-2" };
-const _hoisted_50 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_51 = { class: "text-xs text-slate-500" };
-const _hoisted_52 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_53 = {
+const _hoisted_52 = { class: "flex items-center justify-between gap-2" };
+const _hoisted_53 = { class: "truncate text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_54 = { class: "text-xs text-slate-500" };
+const _hoisted_55 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_56 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
-const _hoisted_54 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
-const _hoisted_55 = { class: "flex flex-wrap items-start justify-between gap-3" };
-const _hoisted_56 = {
+const _hoisted_57 = { class: "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" };
+const _hoisted_58 = { class: "flex flex-wrap items-start justify-between gap-3" };
+const _hoisted_59 = {
   key: 0,
   class: "mt-4"
 };
-const _hoisted_57 = {
+const _hoisted_60 = {
   key: 0,
   class: "rounded-xl bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_58 = {
+const _hoisted_61 = {
   key: 1,
   class: "space-y-2"
 };
-const _hoisted_59 = { class: "text-xs text-slate-500 dark:text-slate-400" };
-const _hoisted_60 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
-const _hoisted_61 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
-const _hoisted_62 = {
+const _hoisted_62 = { class: "text-xs text-slate-500 dark:text-slate-400" };
+const _hoisted_63 = { class: "mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100" };
+const _hoisted_64 = { class: "mt-1 text-xs text-slate-600 dark:text-slate-300" };
+const _hoisted_65 = {
   key: 1,
   class: "mt-3 text-xs text-slate-500 dark:text-slate-400"
 };
@@ -2126,6 +2132,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const quoteUpdateLastResultStatus = ref("");
     const quoteUpdateLastFinishedAt = ref("");
     const quoteUpdateLastSummary = ref("");
+    const quoteSchedulerStatus = ref(null);
+    const quoteSchedulerStatusError = ref("");
     const homeActionToast = ref(null);
     const livePortfolioKey = ref("ALL");
     const homePortfolioKey = ref("ALL");
@@ -2209,7 +2217,29 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (!quoteUpdateLastFinishedAt.value) return "";
       const status = quoteUpdateLastResultStatus.value || "COMPLETED";
       const summary2 = quoteUpdateLastSummary.value || "-";
-      return `Last run: ${quoteUpdateLastFinishedAt.value} · ${status} · ${summary2}`;
+      return `Manual last run: ${quoteUpdateLastFinishedAt.value} · ${status} · ${summary2}`;
+    });
+    const quoteSchedulerStatusLabel = computed(() => {
+      if (!canManageQuoteUpdates.value) return "";
+      if (quoteSchedulerStatusError.value) return `Auto scheduler: ${quoteSchedulerStatusError.value}`;
+      const status = quoteSchedulerStatus.value;
+      if (!status) return "";
+      if (!status.enabled) return "Auto scheduler: disabled";
+      if (!status.running) return "Auto scheduler: stopped";
+      const nextRun = formatDateTime(status.next_run_at);
+      const lastSuccess = formatDateTime(status.last_success_at);
+      const suffix = status.job_running ? " · running now" : "";
+      return `Auto scheduler: next ${nextRun || "-"} · last success ${lastSuccess || "-"}${suffix}`;
+    });
+    const quoteSchedulerMissedLabel = computed(() => {
+      if (!canManageQuoteUpdates.value || !quoteSchedulerStatus.value) return "";
+      const missed = Number(quoteSchedulerStatus.value.missed_count || 0);
+      const maxInstanceMissed = Number(quoteSchedulerStatus.value.max_instances_missed_count || 0);
+      const failure = Number(quoteSchedulerStatus.value.failure_count || 0);
+      const parts = [`Missed: ${missed}`];
+      if (maxInstanceMissed > 0) parts.push(`Overlap skipped: ${maxInstanceMissed}`);
+      if (failure > 0) parts.push(`Failures: ${failure}`);
+      return parts.join(" · ");
     });
     const livePortfolioId = computed(() => {
       if (livePortfolioKey.value === "ALL") return void 0;
@@ -2458,6 +2488,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           quoteUpdateLastSummary.value = `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`;
           saveQuoteUpdateMeta();
           showHomeActionToast("SUCCESS", "Quote update completed. Refreshing Home data...");
+          void refreshQuoteSchedulerStatus();
           await loadHomeData();
           return;
         }
@@ -2469,6 +2500,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           quoteUpdateLastFinishedAt.value = formatDateTime(result.finished_at || (/* @__PURE__ */ new Date()).toISOString());
           quoteUpdateLastSummary.value = lastError || "Quote update job failed";
           saveQuoteUpdateMeta();
+          void refreshQuoteSchedulerStatus();
           showHomeActionToast("ERROR", lastError || "Quote update job failed.");
           return;
         }
@@ -2479,6 +2511,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           quoteUpdateLastFinishedAt.value = formatDateTime((/* @__PURE__ */ new Date()).toISOString());
           quoteUpdateLastSummary.value = "Polling timed out";
           saveQuoteUpdateMeta();
+          void refreshQuoteSchedulerStatus();
           showHomeActionToast("ERROR", "Quote update polling timed out.");
           return;
         }
@@ -2492,6 +2525,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         quoteUpdateLastFinishedAt.value = formatDateTime((/* @__PURE__ */ new Date()).toISOString());
         quoteUpdateLastSummary.value = getErrorMessage(error);
         saveQuoteUpdateMeta();
+        void refreshQuoteSchedulerStatus();
         showHomeActionToast("ERROR", getErrorMessage(error));
       }
     }
@@ -2510,11 +2544,27 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         quoteUpdatePolling.value = true;
         quoteUpdateStatus.value = "RUNNING";
         showHomeActionToast("INFO", `Quote update started (${quoteUpdateProgressText.value})`);
+        void refreshQuoteSchedulerStatus();
         void pollHomeQuoteUpdateJob(job.job_id, Date.now());
       } catch (error) {
         clearQuoteUpdatePolling();
         quoteUpdateStatus.value = "FAILED";
+        void refreshQuoteSchedulerStatus();
         showHomeActionToast("ERROR", getErrorMessage(error));
+      }
+    }
+    async function refreshQuoteSchedulerStatus() {
+      if (!canManageQuoteUpdates.value) {
+        quoteSchedulerStatus.value = null;
+        quoteSchedulerStatusError.value = "";
+        return;
+      }
+      try {
+        quoteSchedulerStatus.value = await getQuoteSchedulerStatus();
+        quoteSchedulerStatusError.value = "";
+      } catch (error) {
+        quoteSchedulerStatus.value = null;
+        quoteSchedulerStatusError.value = getErrorMessage(error);
       }
     }
     async function loadHomeData() {
@@ -2556,6 +2606,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         liabilities.value = liabilitiesOut.items;
         portfolios.value = portfoliosOut.items;
         me.value = meOut;
+        void refreshQuoteSchedulerStatus();
         if (homeTrendPortfolioKey.value !== "ALL" && !portfoliosOut.items.some((item) => String(item.id) === homeTrendPortfolioKey.value)) {
           homeTrendPortfolioKey.value = "ALL";
         }
@@ -3418,7 +3469,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         disabled: exportingImage.value || loading.value || !liveDashboardExpanded.value,
                         onClick: exportLiveDashboardImage
                       }, _toDisplayString(exportingImage.value ? "Exporting..." : "Export PNG"), 9, _hoisted_21),
-                      canManageQuoteUpdates.value && quoteUpdateLastResultLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_22, _toDisplayString(quoteUpdateLastResultLabel.value), 1)) : _createCommentVNode("", true)
+                      canManageQuoteUpdates.value && (quoteUpdateLastResultLabel.value || quoteSchedulerStatusLabel.value) ? (_openBlock(), _createElementBlock("div", _hoisted_22, [
+                        quoteUpdateLastResultLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_23, _toDisplayString(quoteUpdateLastResultLabel.value), 1)) : _createCommentVNode("", true),
+                        quoteSchedulerStatusLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_24, _toDisplayString(quoteSchedulerStatusLabel.value), 1)) : _createCommentVNode("", true),
+                        quoteSchedulerMissedLabel.value ? (_openBlock(), _createElementBlock("p", _hoisted_25, _toDisplayString(quoteSchedulerMissedLabel.value), 1)) : _createCommentVNode("", true)
+                      ])) : _createCommentVNode("", true)
                     ])
                   ])
                 ])
@@ -3429,7 +3484,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   ref: liveDashboardRef,
                   class: "grid grid-cols-1 gap-3 xl:grid-cols-2"
                 }, [
-                  _createElementVNode("div", _hoisted_23, [
+                  _createElementVNode("div", _hoisted_26, [
                     liveKpiTarget.value === "SUMMARY" ? (_openBlock(), _createBlock(_sfc_main$4, {
                       key: 0,
                       title: "KPI Summary",
@@ -3480,7 +3535,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     loading: dashboardTreemapLoading.value,
                     error: dashboardTreemapError.value
                   }, null, 8, ["title", "subtitle", "currency", "items", "mask-amounts", "loading", "error"]),
-                  _createElementVNode("div", _hoisted_24, [
+                  _createElementVNode("div", _hoisted_27, [
                     _createVNode(_sfc_main$8, {
                       title: "Networth Trend",
                       subtitle: "valuation_snapshots | bucket=DAY",
@@ -3506,7 +3561,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "onUpdate:portfolioKey": _cache[10] || (_cache[10] = ($event) => homeTrendPortfolioKey.value = $event)
                     }, null, 8, ["currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "portfolio-lines", "portfolio-options", "portfolio-key"])
                   ]),
-                  _createElementVNode("div", _hoisted_25, [
+                  _createElementVNode("div", _hoisted_28, [
                     _createVNode(_sfc_main$1, {
                       title: "Amount Breakdown",
                       description: "Actual amount changes over time, including total size and component movement.",
@@ -3519,7 +3574,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "storage-key-prefix": "myasset:home:amount-breakdown"
                     }, null, 8, ["display-currency", "scope-type", "scope-id", "amount-mask", "portfolio-options"])
                   ]),
-                  _createElementVNode("div", _hoisted_26, [
+                  _createElementVNode("div", _hoisted_29, [
                     _createVNode(_sfc_main$1, {
                       title: "Allocation Trend",
                       description: "100% normalized composition changes over time, separated from total size.",
@@ -3654,8 +3709,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[31] || (_cache[31] = ($event) => onHomeCardDrop("REPORT_PANEL", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createElementVNode("article", _hoisted_27, [
-              _createElementVNode("div", _hoisted_28, [
+            _createElementVNode("article", _hoisted_30, [
+              _createElementVNode("div", _hoisted_31, [
                 _cache[44] || (_cache[44] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Report Panel"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, " Gross/Liabilities/Net plus Top cards grouped together. ")
@@ -3666,7 +3721,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   onClick: toggleReportPanel
                 }, _toDisplayString(reportPanelExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
-              reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_29, [
+              reportPanelExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_32, [
                 _createVNode(_sfc_main$c, {
                   "display-currency": summaryDisplayCurrency.value,
                   "gross-assets-total": grossAssetsTotal.value,
@@ -3682,27 +3737,27 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   liabilities: liabilities.value,
                   "mask-amounts": liveMaskAmounts.value
                 }, null, 8, ["display-currency", "gross-assets-total", "liabilities-total", "net-assets-total", "invested-principal-total", "principal-minus-debt-total", "principal-return-pct", "net-assets-return-pct", "principal-profit-total", "net-assets-profit-total", "portfolios", "liabilities", "mask-amounts"]),
-                _createElementVNode("article", _hoisted_30, [
+                _createElementVNode("article", _hoisted_33, [
                   _cache[49] || (_cache[49] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                     _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Portfolios"),
                     _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By gross assets")
                   ], -1)),
-                  topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_31, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_32, [
+                  topPortfolios.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_34, " No portfolio data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_35, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topPortfolios.value, (item) => {
                       return _openBlock(), _createElementBlock("li", {
                         key: item.id,
                         class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                       }, [
-                        _createElementVNode("div", _hoisted_33, [
-                          _createElementVNode("p", _hoisted_34, [
+                        _createElementVNode("div", _hoisted_36, [
+                          _createElementVNode("p", _hoisted_37, [
                             _createTextVNode(_toDisplayString(item.name) + " ", 1),
-                            _createElementVNode("span", _hoisted_35, _toDisplayString(item.type), 1)
+                            _createElementVNode("span", _hoisted_38, _toDisplayString(item.type), 1)
                           ]),
                           _createElementVNode("p", {
                             class: _normalizeClass(["text-xs font-semibold", item.total_return_pct == null ? "text-slate-500" : toNumber(item.total_return_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                           }, _toDisplayString(formatPercent(item.total_return_pct == null ? null : toNumber(item.total_return_pct))), 3)
                         ]),
-                        _createElementVNode("div", _hoisted_36, [
+                        _createElementVNode("div", _hoisted_39, [
                           _cache[45] || (_cache[45] = _createTextVNode(" Gross ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
@@ -3715,7 +3770,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                             item.base_currency || summaryDisplayCurrency.value
                           )), 5)
                         ]),
-                        _createElementVNode("div", _hoisted_37, [
+                        _createElementVNode("div", _hoisted_40, [
                           _cache[47] || (_cache[47] = _createTextVNode(" Net ", -1)),
                           _createElementVNode("span", {
                             style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
@@ -3732,28 +3787,28 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     }), 128))
                   ]))
                 ]),
-                _createElementVNode("div", _hoisted_38, [
-                  _createElementVNode("article", _hoisted_39, [
+                _createElementVNode("div", _hoisted_41, [
+                  _createElementVNode("article", _hoisted_42, [
                     _cache[51] || (_cache[51] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Holdings"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By evaluated amount")
                     ], -1)),
-                    topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_40, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_41, [
+                    topHoldings.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_43, " No holdings data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_44, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topHoldings.value, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: item.holding_id,
                           class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                         }, [
-                          _createElementVNode("div", _hoisted_42, [
-                            _createElementVNode("p", _hoisted_43, [
+                          _createElementVNode("div", _hoisted_45, [
+                            _createElementVNode("p", _hoisted_46, [
                               _createTextVNode(_toDisplayString(item.asset_name) + " ", 1),
-                              _createElementVNode("span", _hoisted_44, _toDisplayString(item.asset_symbol || "-"), 1)
+                              _createElementVNode("span", _hoisted_47, _toDisplayString(item.asset_symbol || "-"), 1)
                             ]),
                             _createElementVNode("p", {
                               class: _normalizeClass(["text-xs font-semibold", toNumber(item.pnl_pct) >= 0 ? "text-emerald-600" : "text-rose-500"])
                             }, _toDisplayString(formatPercent(toNumber(item.pnl_pct))), 3)
                           ]),
-                          _createElementVNode("div", _hoisted_45, [
+                          _createElementVNode("div", _hoisted_48, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatOptionalCurrency(item.current_price, item.current_price_currency || summaryDisplayCurrency.value)), 5),
@@ -3766,22 +3821,22 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       }), 128))
                     ]))
                   ]),
-                  _createElementVNode("article", _hoisted_46, [
+                  _createElementVNode("article", _hoisted_49, [
                     _cache[52] || (_cache[52] = _createElementVNode("div", { class: "mb-4 flex items-center justify-between" }, [
                       _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Top Liabilities"),
                       _createElementVNode("span", { class: "text-xs text-slate-500 dark:text-slate-400" }, "By outstanding balance")
                     ], -1)),
-                    topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_47, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_48, [
+                    topLiabilities.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_50, " No liabilities data. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_51, [
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(topLiabilities.value, (item) => {
                         return _openBlock(), _createElementBlock("li", {
                           key: item.id,
                           class: "rounded-xl border border-slate-200 p-3 dark:border-slate-700"
                         }, [
-                          _createElementVNode("div", _hoisted_49, [
-                            _createElementVNode("p", _hoisted_50, _toDisplayString(item.name), 1),
-                            _createElementVNode("p", _hoisted_51, _toDisplayString(item.liability_type), 1)
-                          ]),
                           _createElementVNode("div", _hoisted_52, [
+                            _createElementVNode("p", _hoisted_53, _toDisplayString(item.name), 1),
+                            _createElementVNode("p", _hoisted_54, _toDisplayString(item.liability_type), 1)
+                          ]),
+                          _createElementVNode("div", _hoisted_55, [
                             _createElementVNode("span", {
                               style: _normalizeStyle(liveMaskAmounts.value ? { filter: "blur(6px)" } : void 0)
                             }, _toDisplayString(formatCurrency(toNumber(item.outstanding_balance), item.currency || summaryDisplayCurrency.value)), 5)
@@ -3791,7 +3846,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                     ]))
                   ])
                 ])
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_53, [..._cache[53] || (_cache[53] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_56, [..._cache[53] || (_cache[53] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to preview report cards. ", -1)
@@ -3826,8 +3881,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             onDrop: _cache[35] || (_cache[35] = ($event) => onHomeCardDrop("RELEASE_NOTES", $event)),
             onDragend: onHomeCardDragEnd
           }, [
-            _createElementVNode("article", _hoisted_54, [
-              _createElementVNode("div", _hoisted_55, [
+            _createElementVNode("article", _hoisted_57, [
+              _createElementVNode("div", _hoisted_58, [
                 _cache[54] || (_cache[54] = _createElementVNode("div", null, [
                   _createElementVNode("h2", { class: "text-base font-semibold text-slate-900 dark:text-slate-100" }, "Release Notes"),
                   _createElementVNode("p", { class: "mt-1 text-xs text-slate-500 dark:text-slate-400" }, "Latest first")
@@ -3838,20 +3893,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                   onClick: toggleReleaseNotesPanel
                 }, _toDisplayString(releaseNotesExpanded.value ? "Collapse" : "Expand"), 1)
               ]),
-              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_56, [
-                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_57, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_58, [
+              releaseNotesExpanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_59, [
+                releaseNoteItems.value.length === 0 ? (_openBlock(), _createElementBlock("div", _hoisted_60, " No release notes yet. ")) : (_openBlock(), _createElementBlock("ul", _hoisted_61, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(releaseNoteItems.value, (note) => {
                     return _openBlock(), _createElementBlock("li", {
                       key: note.id,
                       class: "rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
                     }, [
-                      _createElementVNode("p", _hoisted_59, _toDisplayString(formatDateTime(note.releasedAt)), 1),
-                      _createElementVNode("p", _hoisted_60, _toDisplayString(note.title), 1),
-                      _createElementVNode("p", _hoisted_61, _toDisplayString(note.summary), 1)
+                      _createElementVNode("p", _hoisted_62, _toDisplayString(formatDateTime(note.releasedAt)), 1),
+                      _createElementVNode("p", _hoisted_63, _toDisplayString(note.title), 1),
+                      _createElementVNode("p", _hoisted_64, _toDisplayString(note.summary), 1)
                     ]);
                   }), 128))
                 ]))
-              ])) : (_openBlock(), _createElementBlock("p", _hoisted_62, [..._cache[55] || (_cache[55] = [
+              ])) : (_openBlock(), _createElementBlock("p", _hoisted_65, [..._cache[55] || (_cache[55] = [
                 _createTextVNode(" Collapsed. Click ", -1),
                 _createElementVNode("span", { class: "font-semibold" }, "Expand", -1),
                 _createTextVNode(" to view release notes. ", -1)

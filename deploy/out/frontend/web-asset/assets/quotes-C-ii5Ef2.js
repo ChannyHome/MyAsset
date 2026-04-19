@@ -30,6 +30,10 @@ async function getQuoteUpdateJobStatus(jobId) {
   const { data } = await http.get(`/quotes/update-jobs/${jobId}`);
   return data;
 }
+async function getQuoteSchedulerStatus() {
+  const { data } = await http.get("/quotes/scheduler/status");
+  return data;
+}
 async function testQuoteForAsset(assetId) {
   const { data } = await http.post(`/quotes/test/${assetId}`);
   return data;
@@ -43,4 +47,4 @@ async function getLatestUsdKrwFxRate() {
   return data;
 }
 
-export { getReleaseNotes as a, getQuoteUpdateJobStatus as b, createReleaseNote as c, updateReleaseNote as d, getLatestUsdKrwFxRate as e, upsertManualQuote as f, getMe as g, unpublishReleaseNote as h, testQuoteForAsset as t, updateQuotesNow as u };
+export { getMe as a, getReleaseNotes as b, getQuoteUpdateJobStatus as c, createReleaseNote as d, updateReleaseNote as e, getLatestUsdKrwFxRate as f, getQuoteSchedulerStatus as g, upsertManualQuote as h, unpublishReleaseNote as i, testQuoteForAsset as t, updateQuotesNow as u };
