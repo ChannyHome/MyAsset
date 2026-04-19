@@ -13,6 +13,13 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_session_maker
 from app.services.app_settings import get_quote_interval_minutes
+from app.services.quote_scheduler_runs import (
+    get_quote_run_status_snapshot,
+    mark_stale_started_quote_runs,
+    record_quote_run_event,
+    record_quote_run_finished,
+    record_quote_run_started,
+)
 from app.services.quote_updater import refresh_quotes_for_supported_assets, refresh_usd_krw_rate
 from app.services.valuation_snapshots import collect_valuation_snapshots_batch
 
@@ -100,6 +107,23 @@ def get_quote_scheduler_status() -> dict[str, Any]:
     status["enabled"] = bool(settings.quote_auto_update_enabled)
     status["running"] = bool(_scheduler is not None and _scheduler.running)
     status["next_run_at"] = _get_next_run_at()
+    session_maker = get_session_maker()
+    db: Session = session_maker()
+    try:
+        persisted = get_quote_run_status_snapshot(db, run_type="AUTO")
+        for key, value in persisted.items():
+            if key in {"run_count", "success_count", "failure_count", "missed_count", "max_instances_missed_count"}:
+                status[key] = max(int(status.get(key) or 0), int(value or 0))
+                continue
+            current = status.get(key)
+            should_replace = current is None or (isinstance(current, str) and current in {"IDLE", "SCHEDULED", "STOPPED"})
+            if value is not None and should_replace:
+                status[key] = value
+    except SQLAlchemyError:
+        db.rollback()
+        _logger.exception("Failed to load persisted quote scheduler status")
+    finally:
+        db.close()
     return status
 
 
@@ -117,6 +141,21 @@ def _handle_scheduler_event(event: JobEvent) -> None:
             last_missed_at=now,
             last_missed_scheduled_run_at=scheduled,
         )
+        session_maker = get_session_maker()
+        db: Session = session_maker()
+        try:
+            record_quote_run_event(
+                db,
+                run_type="AUTO",
+                status="MISSED",
+                scheduled_run_at=scheduled,
+                error_message="Scheduled quote job run was missed.",
+            )
+        except SQLAlchemyError:
+            db.rollback()
+            _logger.exception("Failed to persist quote scheduler missed event")
+        finally:
+            db.close()
         _logger.warning("Quote scheduler missed run scheduled_at=%s", scheduled)
         return
 
@@ -129,6 +168,21 @@ def _handle_scheduler_event(event: JobEvent) -> None:
             last_missed_at=now,
             last_missed_scheduled_run_at=scheduled,
         )
+        session_maker = get_session_maker()
+        db: Session = session_maker()
+        try:
+            record_quote_run_event(
+                db,
+                run_type="AUTO",
+                status="MAX_INSTANCES",
+                scheduled_run_at=scheduled,
+                error_message="Scheduled quote job run was skipped because a previous run was still active.",
+            )
+        except SQLAlchemyError:
+            db.rollback()
+            _logger.exception("Failed to persist quote scheduler max-instances event")
+        finally:
+            db.close()
         _logger.warning("Quote scheduler skipped run because previous run is still active scheduled_at=%s", scheduled)
         return
 
@@ -161,7 +215,15 @@ def _run_quote_job() -> None:
     fx_error: str | None = None
     snapshot_collected = False
     snapshot_error: str | None = None
+    persisted_run_id: int | None = None
     try:
+        try:
+            persisted_run = record_quote_run_started(db, run_type="AUTO", started_at=started_at)
+            persisted_run_id = persisted_run.id
+        except SQLAlchemyError:
+            db.rollback()
+            _logger.exception("Failed to persist quote scheduler start")
+
         summary = refresh_quotes_for_supported_assets(db)
         summary_payload = {
             "updated_count": summary.updated_count,
@@ -188,6 +250,24 @@ def _run_quote_job() -> None:
         finished_at = _now_utc()
         has_warning = bool((summary_payload or {}).get("failed_count") or fx_error or snapshot_error)
         status = "COMPLETED_WITH_WARNINGS" if has_warning else "COMPLETED"
+        try:
+            record_quote_run_finished(
+                db,
+                run_id=persisted_run_id,
+                run_type="AUTO",
+                status=status,
+                started_at=started_at,
+                finished_at=finished_at,
+                summary=summary_payload,
+                fx_updated=fx_updated,
+                fx_error=fx_error,
+                snapshot_collected=snapshot_collected,
+                snapshot_error=snapshot_error,
+            )
+        except SQLAlchemyError:
+            db.rollback()
+            _logger.exception("Failed to persist quote scheduler finish")
+
         _increment_state("success_count")
         _set_state(
             job_running=False,
@@ -212,6 +292,25 @@ def _run_quote_job() -> None:
     except Exception as exc:
         db.rollback()
         finished_at = _now_utc()
+        try:
+            record_quote_run_finished(
+                db,
+                run_id=persisted_run_id,
+                run_type="AUTO",
+                status="FAILED",
+                started_at=started_at,
+                finished_at=finished_at,
+                summary=summary_payload,
+                fx_updated=fx_updated,
+                fx_error=fx_error,
+                snapshot_collected=snapshot_collected,
+                snapshot_error=snapshot_error,
+                error_message=str(exc),
+            )
+        except SQLAlchemyError:
+            db.rollback()
+            _logger.exception("Failed to persist quote scheduler failure")
+
         _increment_state("failure_count")
         _set_state(
             job_running=False,
@@ -255,6 +354,22 @@ def start_quote_scheduler() -> None:
 
     interval = _get_interval_minutes()
     misfire_grace_seconds = _get_misfire_grace_seconds()
+    session_maker = get_session_maker()
+    db: Session = session_maker()
+    try:
+        stale_count = mark_stale_started_quote_runs(
+            db,
+            run_type="AUTO",
+            error_message="API process restarted before the scheduled quote job finished.",
+        )
+        if stale_count:
+            _logger.warning("Marked %s stale quote scheduler runs as failed", stale_count)
+    except SQLAlchemyError:
+        db.rollback()
+        _logger.exception("Failed to mark stale quote scheduler runs")
+    finally:
+        db.close()
+
     _scheduler = BackgroundScheduler(timezone="UTC")
     _scheduler.add_listener(
         _handle_scheduler_event,

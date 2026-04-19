@@ -13,6 +13,7 @@ from app.models.liability import Liability
 from app.models.portfolio import Portfolio
 from app.models.portfolio_cash_account import PortfolioCashAccount
 from app.models.release_note import ReleaseNote
+from app.models.quote_scheduler_run import QuoteSchedulerRun
 from app.models.snapshot import (
     SnapshotHoldingRow,
     SnapshotLiabilityRow,
@@ -41,6 +42,7 @@ __all__ = [
     "Portfolio",
     "PortfolioCashAccount",
     "ReleaseNote",
+    "QuoteSchedulerRun",
     "SnapshotSet",
     "SnapshotPortfolioRow",
     "SnapshotHoldingRow",

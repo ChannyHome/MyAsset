@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from app.core.config import settings
 from app.core.db import get_session_maker
+from app.services.quote_scheduler_runs import record_quote_run_finished, record_quote_run_started
 from app.services.quote_updater import (
     count_supported_auto_assets,
     refresh_quotes_for_supported_assets,
@@ -102,16 +103,29 @@ def get_active_quote_update_job() -> QuoteUpdateJobState | None:
 
 
 def run_quote_update_job(job_id: str) -> None:
+    started_at = datetime.now(UTC).replace(tzinfo=None)
     with _jobs_lock:
         state = _jobs.get(job_id)
         if state is None:
             return
         state.status = "RUNNING"
-        state.started_at = datetime.now(UTC).replace(tzinfo=None)
+        state.started_at = started_at
         state.finished_at = None
 
     session = get_session_maker()()
+    persisted_run_id: int | None = None
+    summary_payload: dict[str, object] | None = None
+    fx_updated = False
+    fx_error: str | None = None
+    snapshot_collected = False
+    snapshot_error: str | None = None
     try:
+        try:
+            persisted_run = record_quote_run_started(session, run_type="MANUAL", started_at=started_at)
+            persisted_run_id = persisted_run.id
+        except Exception:
+            session.rollback()
+
         def on_progress(processed: int, total: int, summary) -> None:
             with _jobs_lock:
                 current = _jobs.get(job_id)
@@ -125,9 +139,15 @@ def run_quote_update_job(job_id: str) -> None:
                 current.errors = list(summary.errors)
 
         summary = refresh_quotes_for_supported_assets(session, on_progress=on_progress)
+        summary_payload = {
+            "updated_count": summary.updated_count,
+            "skipped_count": summary.skipped_count,
+            "failed_count": summary.failed_count,
+            "errors": list(summary.errors),
+        }
         fx_row, fx_error = refresh_usd_krw_rate(session)
+        fx_updated = fx_row is not None
         snapshot_result = None
-        snapshot_error = None
         if settings.valuation_snapshot_auto_collect_enabled:
             try:
                 snapshot_result = collect_valuation_snapshots_batch(
@@ -140,6 +160,30 @@ def run_quote_update_job(job_id: str) -> None:
                 session.rollback()
                 snapshot_error = str(exc)
 
+        if snapshot_result is not None:
+            snapshot_collected = True
+        persisted_status = (
+            "COMPLETED_WITH_WARNINGS"
+            if summary.failed_count > 0 or fx_error or snapshot_error
+            else "COMPLETED"
+        )
+        try:
+            record_quote_run_finished(
+                session,
+                run_id=persisted_run_id,
+                run_type="MANUAL",
+                status=persisted_status,
+                started_at=started_at,
+                finished_at=datetime.now(UTC).replace(tzinfo=None),
+                summary=summary_payload,
+                fx_updated=fx_updated,
+                fx_error=fx_error,
+                snapshot_collected=snapshot_collected,
+                snapshot_error=snapshot_error,
+            )
+        except Exception:
+            session.rollback()
+
         with _jobs_lock:
             current = _jobs.get(job_id)
             if current is None:
@@ -150,7 +194,7 @@ def run_quote_update_job(job_id: str) -> None:
             current.skipped_count = summary.skipped_count
             current.failed_count = summary.failed_count
             current.errors = list(summary.errors)
-            current.fx_updated = fx_row is not None
+            current.fx_updated = fx_updated
             current.fx_error = fx_error
             if fx_row is not None:
                 current.fx_base_currency = fx_row.base_currency
@@ -169,6 +213,23 @@ def run_quote_update_job(job_id: str) -> None:
             current.status = "COMPLETED"
             current.finished_at = datetime.now(UTC).replace(tzinfo=None)
     except Exception as exc:
+        try:
+            record_quote_run_finished(
+                session,
+                run_id=persisted_run_id,
+                run_type="MANUAL",
+                status="FAILED",
+                started_at=started_at,
+                finished_at=datetime.now(UTC).replace(tzinfo=None),
+                summary=summary_payload,
+                fx_updated=fx_updated,
+                fx_error=fx_error,
+                snapshot_collected=snapshot_collected,
+                snapshot_error=snapshot_error,
+                error_message=str(exc),
+            )
+        except Exception:
+            session.rollback()
         with _jobs_lock:
             current = _jobs.get(job_id)
             if current is None:
