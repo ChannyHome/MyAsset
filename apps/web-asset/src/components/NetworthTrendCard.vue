@@ -24,11 +24,35 @@ type PortfolioOption = {
   label: string;
 };
 
-type TrendMode = "SUMMARY" | "PORTFOLIO";
+type TrendMode = "SUMMARY" | "PORTFOLIO" | "ASSET";
 type PortfolioMetric = "CURRENT_VALUE" | "CURRENT_NET" | "PROFIT" | "RETURN";
+type AssetMetric = "CURRENT_VALUE" | "PROFIT" | "RETURN";
 type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
 type NetworthTrendBucket = "DAY" | "WEEK" | "MONTH";
 type ZoomLevel = -2 | -1 | 0 | 1 | 2;
+
+type AssetMover = {
+  key: string;
+  label: string;
+  current_value: number;
+  baseline_value: number;
+  delta_value: number;
+  current_profit: number;
+  baseline_profit: number;
+  delta_profit: number;
+  current_return_pct: number | null;
+  baseline_return_pct: number | null;
+  delta_return_pct: number | null;
+  current_cost_basis: number;
+  baseline_cost_basis: number;
+  delta_cost_basis: number;
+  status: "NEW" | "REMOVED" | null;
+};
+
+type AssetMovers = {
+  top_gainers: AssetMover[];
+  top_losers: AssetMover[];
+};
 
 const props = withDefaults(
   defineProps<{
@@ -45,10 +69,15 @@ const props = withDefaults(
     showVisibilityControls?: boolean;
     mode?: TrendMode;
     portfolioMetric?: PortfolioMetric;
+    assetMetric?: AssetMetric;
     showModeToggle?: boolean;
     portfolioLines?: NetworthSeriesLine[];
+    assetLines?: NetworthSeriesLine[];
     portfolioOptions?: PortfolioOption[];
+    assetOptions?: PortfolioOption[];
     portfolioKey?: string;
+    assetKey?: string;
+    assetMovers?: AssetMovers | null;
     showPortfolioSelector?: boolean;
     storageKey?: string;
     range?: NetworthTrendRange;
@@ -70,10 +99,15 @@ const props = withDefaults(
     showVisibilityControls: true,
     mode: "SUMMARY",
     portfolioMetric: "RETURN",
+    assetMetric: "CURRENT_VALUE",
     showModeToggle: true,
     portfolioLines: () => [],
+    assetLines: () => [],
     portfolioOptions: () => [],
+    assetOptions: () => [],
     portfolioKey: "ALL",
+    assetKey: "TOP_MOVERS",
+    assetMovers: null,
     showPortfolioSelector: true,
     storageKey: "",
     range: "3M",
@@ -91,7 +125,9 @@ const emit = defineEmits<{
   (e: "update:showNet", value: boolean): void;
   (e: "update:mode", value: TrendMode): void;
   (e: "update:portfolioMetric", value: PortfolioMetric): void;
+  (e: "update:assetMetric", value: AssetMetric): void;
   (e: "update:portfolioKey", value: string): void;
+  (e: "update:assetKey", value: string): void;
   (e: "update:range", value: NetworthTrendRange): void;
   (e: "update:bucket", value: NetworthTrendBucket): void;
   (e: "refresh"): void;
@@ -171,9 +207,19 @@ const portfolioMetricModel = computed({
   set: (value: PortfolioMetric) => emit("update:portfolioMetric", value),
 });
 
+const assetMetricModel = computed({
+  get: () => props.assetMetric,
+  set: (value: AssetMetric) => emit("update:assetMetric", value),
+});
+
 const portfolioKeyModel = computed({
   get: () => props.portfolioKey,
   set: (value: string) => emit("update:portfolioKey", value),
+});
+
+const assetKeyModel = computed({
+  get: () => props.assetKey,
+  set: (value: string) => emit("update:assetKey", value),
 });
 
 const rangeModel = computed({
@@ -200,17 +246,21 @@ const portfolioPalette = [
 ];
 
 const isAmountAxis = computed(
-  () => props.mode === "SUMMARY" || (props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN"),
+  () =>
+    props.mode === "SUMMARY" ||
+    (props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN") ||
+    (props.mode === "ASSET" && props.assetMetric !== "RETURN"),
 );
 
 const summaryPointByLabel = computed(() => new Map(props.points.map((point) => [point.label, point])));
 
 const chartLabels = computed(() => {
   const allLabels = props.points.map((point) => point.label);
-  if (props.mode !== "PORTFOLIO") return allLabels;
+  if (props.mode === "SUMMARY") return allLabels;
 
   const dataLabels = new Set<string>();
-  for (const line of props.portfolioLines) {
+  const lines = props.mode === "ASSET" ? props.assetLines : props.portfolioLines;
+  for (const line of lines) {
     for (const point of line.points) {
       if (point.value != null && Number.isFinite(point.value)) {
         dataLabels.add(point.snapshot_date);
@@ -272,9 +322,10 @@ const plotWidth = computed(() => {
 });
 
 const renderLines = computed<RenderLine[]>(() => {
-  if (props.mode === "PORTFOLIO") {
+  if (props.mode === "PORTFOLIO" || props.mode === "ASSET") {
     const labels = chartLabels.value;
-    return props.portfolioLines.map((line, index) => {
+    const lines = props.mode === "ASSET" ? props.assetLines : props.portfolioLines;
+    return lines.map((line, index) => {
       const valueByLabel = new Map<string, number>();
       for (const point of line.points) {
         valueByLabel.set(point.snapshot_date, point.value);
@@ -359,16 +410,22 @@ const lastPoint = computed(() => {
 });
 
 const collapsedSummary = computed(() => {
-  if (props.mode === "PORTFOLIO") {
+  if (props.mode === "PORTFOLIO" || props.mode === "ASSET") {
     const metricLabel =
-      props.portfolioMetric === "CURRENT_VALUE"
+      props.mode === "ASSET"
+        ? props.assetMetric === "CURRENT_VALUE"
+          ? "Current Value"
+          : props.assetMetric === "PROFIT"
+            ? "Profit"
+            : "Return"
+        : props.portfolioMetric === "CURRENT_VALUE"
         ? "Current Value"
         : props.portfolioMetric === "CURRENT_NET"
           ? "Current Net"
           : props.portfolioMetric === "PROFIT"
             ? "Profit"
             : "Return";
-    return `Portfolio trend - ${metricLabel} - ${lastPoint.value?.label ?? "-"}`;
+    return `${props.mode === "ASSET" ? "Asset" : "Portfolio"} trend - ${metricLabel} - ${lastPoint.value?.label ?? "-"}`;
   }
   if (!lastPoint.value) return "No trend data.";
   return `Latest snapshot - Gross ${formatCurrency(lastPoint.value.gross, props.currency)} - Net ${formatCurrency(lastPoint.value.net, props.currency)}`;
@@ -377,8 +434,8 @@ const collapsedSummary = computed(() => {
 const rangeMetaText = computed(() => {
   const firstVisible = chartLabels.value[0] ?? null;
   const lastVisible = chartLabels.value[chartLabels.value.length - 1] ?? null;
-  const start = props.mode === "PORTFOLIO" ? firstVisible : props.rangeStartDate ?? firstVisible;
-  const end = props.mode === "PORTFOLIO" ? lastVisible : props.rangeEndDate ?? lastVisible;
+  const start = props.mode === "PORTFOLIO" || props.mode === "ASSET" ? firstVisible : props.rangeStartDate ?? firstVisible;
+  const end = props.mode === "PORTFOLIO" || props.mode === "ASSET" ? lastVisible : props.rangeEndDate ?? lastVisible;
   if (!start || !end) return "";
   return `${formatXAxisLabel(start)} - ${formatXAxisLabel(end)}`;
 });
@@ -421,8 +478,11 @@ watch(
     props.mode,
     chartLabels.value.length,
     props.portfolioMetric,
+    props.assetMetric,
     props.portfolioKey,
+    props.assetKey,
     props.portfolioLines.length,
+    props.assetLines.length,
     props.showGross,
     props.showLiabilities,
     props.showNet,
@@ -435,7 +495,7 @@ watch(
 );
 
 watch(
-  () => [props.range, props.bucket, props.mode, props.portfolioMetric, props.portfolioKey] as const,
+  () => [props.range, props.bucket, props.mode, props.portfolioMetric, props.assetMetric, props.portfolioKey, props.assetKey] as const,
   () => {
     zoomLevel.value = 0;
   },
@@ -618,7 +678,7 @@ function formatAxisValue(value: number): string {
   if (props.maskAmounts && isAmountAxis.value) {
     return "***";
   }
-  if (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") {
+  if ((props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") || (props.mode === "ASSET" && props.assetMetric === "RETURN")) {
     return `${value.toFixed(1)}%`;
   }
   if ((props.currency || "KRW").toUpperCase() === "KRW") {
@@ -660,6 +720,40 @@ function formatPercent(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+function currentMetricLabel(): string {
+  if (props.mode === "SUMMARY") return `Amount (${props.currency})`;
+  if (props.mode === "ASSET") {
+    if (props.assetMetric === "RETURN") return "Return (%)";
+    if (props.assetMetric === "PROFIT") return `Profit (${props.currency})`;
+    return `Current Value (${props.currency})`;
+  }
+  if (props.portfolioMetric === "RETURN") return "Return (%)";
+  if (props.portfolioMetric === "CURRENT_VALUE") return `Current Value (${props.currency})`;
+  if (props.portfolioMetric === "CURRENT_NET") return `Current Net (${props.currency})`;
+  return `Profit (${props.currency})`;
+}
+
+function formatSignedCurrency(value: number): string {
+  if (props.maskAmounts) return "***";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${formatCurrency(value, props.currency)}`;
+}
+
+function formatSignedNumber(value: number | null): string {
+  if (value == null || !Number.isFinite(value)) return "-";
+  return formatPercent(value);
+}
+
+function moverRankText(mover: AssetMover): string {
+  if (props.assetMetric === "RETURN") return `Return Δ ${formatSignedNumber(mover.delta_return_pct)}`;
+  if (props.assetMetric === "PROFIT") return `Profit Δ ${formatSignedCurrency(mover.delta_profit)}`;
+  return `Current Δ ${formatSignedCurrency(mover.delta_value)}`;
+}
+
+function setAssetFromMover(key: string): void {
+  emit("update:assetKey", key);
+}
+
 function formatXAxisLabel(label: string): string {
   const normalized = (label || "").trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
@@ -678,7 +772,7 @@ function formatXAxisLabel(label: string): string {
 
 function inspectPoint(lineLabel: string, pointLabel: string, value: number): void {
   inspectText.value = `${lineLabel} - ${pointLabel || "-"} - ${
-    props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN"
+    (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") || (props.mode === "ASSET" && props.assetMetric === "RETURN")
       ? formatPercent(value)
       : formatCurrency(value, props.currency)
   }`;
@@ -803,6 +897,18 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
       >
         Portfolio
       </button>
+      <button
+        type="button"
+        class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+        :class="
+          modeModel === 'ASSET'
+            ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+            : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+        "
+        @click="modeModel = 'ASSET'"
+      >
+        Asset
+      </button>
       <div v-if="modeModel === 'PORTFOLIO'" class="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -853,12 +959,60 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           Return
         </button>
       </div>
+      <div v-if="modeModel === 'ASSET'" class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            assetMetricModel === 'CURRENT_VALUE'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="assetMetricModel = 'CURRENT_VALUE'"
+        >
+          Current Value
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            assetMetricModel === 'PROFIT'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="assetMetricModel = 'PROFIT'"
+        >
+          Profit
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+          :class="
+            assetMetricModel === 'RETURN'
+              ? 'border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
+              : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
+          "
+          @click="assetMetricModel = 'RETURN'"
+        >
+          Return
+        </button>
+      </div>
       <select
-        v-if="modeModel === 'PORTFOLIO' && showPortfolioSelector"
+        v-if="(modeModel === 'PORTFOLIO' || modeModel === 'ASSET') && showPortfolioSelector"
         v-model="portfolioKeyModel"
         class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
       >
         <option v-for="item in portfolioOptions" :key="`trend-portfolio-${item.key}`" :value="item.key">
+          {{ item.label }}
+        </option>
+      </select>
+      <select
+        v-if="modeModel === 'ASSET'"
+        v-model="assetKeyModel"
+        class="min-w-[180px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+      >
+        <option value="TOP_MOVERS">Top movers</option>
+        <option v-for="item in assetOptions" :key="`trend-asset-${item.key}`" :value="item.key">
           {{ item.label }}
         </option>
       </select>
@@ -912,17 +1066,10 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           </p>
           <p>
             <span class="font-semibold text-slate-700 dark:text-slate-200">Y-axis:</span>
-            {{
-              modeModel === "SUMMARY"
-                ? `Amount (${currency})`
-                : portfolioMetricModel === "RETURN"
-                  ? "Return (%)"
-                  : portfolioMetricModel === "CURRENT_VALUE"
-                    ? `Current Value (${currency})`
-                    : portfolioMetricModel === "CURRENT_NET"
-                      ? `Current Net (${currency})`
-                      : `Profit (${currency})`
-            }}
+            {{ currentMetricLabel() }}
+          </p>
+          <p v-if="modeModel === 'ASSET'" class="text-[11px] text-slate-500 dark:text-slate-400">
+            Current Value Δ includes price movement and quantity/cost basis changes. Use Profit or Return to focus on performance.
           </p>
         </div>
         <div class="ml-auto flex items-center gap-1">
@@ -1102,6 +1249,76 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           <p class="mt-1 text-slate-600 dark:text-slate-300" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             {{ formatCurrency(lastPoint?.net ?? 0, currency) }}
           </p>
+        </div>
+      </div>
+
+      <div v-if="modeModel === 'ASSET' && assetMovers" class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="font-semibold text-slate-800 dark:text-slate-100">Top Asset Movers</p>
+            <p class="mt-0.5 text-slate-500 dark:text-slate-400">
+              Cost basis Δ helps separate added capital from actual profit movement.
+            </p>
+          </div>
+          <span class="rounded-full border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/50 dark:text-amber-200">
+            {{ assetKeyModel === "TOP_MOVERS" ? "Top movers" : "Selected asset" }}
+          </span>
+        </div>
+        <div class="mt-3 grid gap-3 lg:grid-cols-2">
+          <div>
+            <p class="mb-2 font-semibold uppercase tracking-[0.18em] text-emerald-500">Top Gainers</p>
+            <div v-if="assetMovers.top_gainers.length > 0" class="grid gap-2">
+              <button
+                v-for="mover in assetMovers.top_gainers"
+                :key="`asset-gainer-${mover.key}`"
+                type="button"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                @click="setAssetFromMover(mover.key)"
+              >
+                <p class="flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+                  <span>{{ mover.label }}</span>
+                  <span v-if="mover.status" class="rounded-full border border-emerald-300 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-600 dark:text-emerald-200">
+                    {{ mover.status }}
+                  </span>
+                </p>
+                <p class="mt-1 text-emerald-600 dark:text-emerald-300">{{ moverRankText(mover) }}</p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Profit Δ {{ formatSignedCurrency(mover.delta_profit) }} · Return Δ {{ formatSignedNumber(mover.delta_return_pct) }}
+                </p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Cost basis Δ {{ formatSignedCurrency(mover.delta_cost_basis) }}
+                </p>
+              </button>
+            </div>
+            <p v-else class="rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400">No gainers in this range.</p>
+          </div>
+          <div>
+            <p class="mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500">Top Losers</p>
+            <div v-if="assetMovers.top_losers.length > 0" class="grid gap-2">
+              <button
+                v-for="mover in assetMovers.top_losers"
+                :key="`asset-loser-${mover.key}`"
+                type="button"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-rose-300 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-rose-700 dark:hover:bg-rose-950/30"
+                @click="setAssetFromMover(mover.key)"
+              >
+                <p class="flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+                  <span>{{ mover.label }}</span>
+                  <span v-if="mover.status" class="rounded-full border border-rose-300 px-1.5 py-0.5 text-[10px] text-rose-700 dark:border-rose-600 dark:text-rose-200">
+                    {{ mover.status }}
+                  </span>
+                </p>
+                <p class="mt-1 text-rose-600 dark:text-rose-300">{{ moverRankText(mover) }}</p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Profit Δ {{ formatSignedCurrency(mover.delta_profit) }} · Return Δ {{ formatSignedNumber(mover.delta_return_pct) }}
+                </p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Cost basis Δ {{ formatSignedCurrency(mover.delta_cost_basis) }}
+                </p>
+              </button>
+            </div>
+            <p v-else class="rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400">No losers in this range.</p>
+          </div>
         </div>
       </div>
 

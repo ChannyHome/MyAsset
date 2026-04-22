@@ -67,17 +67,48 @@ export type AnalyticsNetworthSeriesLineOut = {
   points: AnalyticsNetworthSeriesLinePointOut[];
 };
 
+export type AnalyticsNetworthSeriesOptionOut = {
+  key: string;
+  label: string;
+};
+
+export type AnalyticsNetworthSeriesAssetMoverOut = {
+  key: string;
+  label: string;
+  current_value: string | number;
+  baseline_value: string | number;
+  delta_value: string | number;
+  current_profit: string | number;
+  baseline_profit: string | number;
+  delta_profit: string | number;
+  current_return_pct: string | number | null;
+  baseline_return_pct: string | number | null;
+  delta_return_pct: string | number | null;
+  current_cost_basis: string | number;
+  baseline_cost_basis: string | number;
+  delta_cost_basis: string | number;
+  status: "NEW" | "REMOVED" | null;
+};
+
+export type AnalyticsNetworthSeriesAssetMoversOut = {
+  top_gainers: AnalyticsNetworthSeriesAssetMoverOut[];
+  top_losers: AnalyticsNetworthSeriesAssetMoverOut[];
+};
+
 export type AnalyticsNetworthSeriesOut = {
   scope_type: string;
   scope_id: number;
   display_currency: string;
-  mode: "SUMMARY" | "PORTFOLIO_RETURN";
+  mode: "SUMMARY" | "PORTFOLIO_RETURN" | "ASSET_TREND";
   range: NetworthTrendRange | null;
   range_start_date: string | null;
   range_end_date: string | null;
   bucket: NetworthTrendBucket;
   points: AnalyticsNetworthSeriesPointOut[];
   portfolio_lines: AnalyticsNetworthSeriesLineOut[];
+  asset_lines: AnalyticsNetworthSeriesLineOut[];
+  asset_options: AnalyticsNetworthSeriesOptionOut[];
+  asset_movers: AnalyticsNetworthSeriesAssetMoversOut | null;
 };
 
 export type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
@@ -248,9 +279,12 @@ export type NetworthSeriesQuery = {
   scope_type?: "USER" | "HOUSEHOLD";
   scope_id?: number;
   display_currency?: "KRW" | "USD";
-  mode?: "SUMMARY" | "PORTFOLIO_RETURN";
+  mode?: "SUMMARY" | "PORTFOLIO_RETURN" | "ASSET_TREND";
   portfolio_metric?: "RETURN" | "PROFIT" | "CURRENT" | "CURRENT_NET";
+  asset_metric?: "CURRENT" | "PROFIT" | "RETURN";
+  asset_key?: string;
   portfolio_id?: number;
+  top_n?: number;
   bucket?: NetworthTrendBucket;
   range?: NetworthTrendRange;
   limit?: number;

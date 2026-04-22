@@ -63,17 +63,48 @@ class AnalyticsNetworthSeriesLineOut(BaseModel):
     points: list[AnalyticsNetworthSeriesLinePointOut]
 
 
+class AnalyticsNetworthSeriesOptionOut(BaseModel):
+    key: str
+    label: str
+
+
+class AnalyticsNetworthSeriesAssetMoverOut(BaseModel):
+    key: str
+    label: str
+    current_value: Decimal
+    baseline_value: Decimal
+    delta_value: Decimal
+    current_profit: Decimal
+    baseline_profit: Decimal
+    delta_profit: Decimal
+    current_return_pct: Decimal | None = None
+    baseline_return_pct: Decimal | None = None
+    delta_return_pct: Decimal | None = None
+    current_cost_basis: Decimal
+    baseline_cost_basis: Decimal
+    delta_cost_basis: Decimal
+    status: Literal["NEW", "REMOVED"] | None = None
+
+
+class AnalyticsNetworthSeriesAssetMoversOut(BaseModel):
+    top_gainers: list[AnalyticsNetworthSeriesAssetMoverOut] = []
+    top_losers: list[AnalyticsNetworthSeriesAssetMoverOut] = []
+
+
 class AnalyticsNetworthSeriesOut(BaseModel):
     scope_type: str
     scope_id: int
     display_currency: str
-    mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = "SUMMARY"
+    mode: Literal["SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"] = "SUMMARY"
     range: Literal["1M", "3M", "6M", "1Y"] | None = None
     range_start_date: str | None = None
     range_end_date: str | None = None
     bucket: Literal["DAY", "WEEK", "MONTH"] = "DAY"
     points: list[AnalyticsNetworthSeriesPointOut]
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    asset_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    asset_options: list[AnalyticsNetworthSeriesOptionOut] = []
+    asset_movers: AnalyticsNetworthSeriesAssetMoversOut | None = None
 
 
 class AnalyticsCompositionLegendItemOut(BaseModel):

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Literal
@@ -16,14 +17,17 @@ from app.models.holding import Holding
 from app.models.latest_quote import LatestQuote
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
-from app.models.valuation_snapshot import ValuationSnapshot, ValuationSnapshotPortfolioRow
+from app.models.valuation_snapshot import ValuationSnapshot, ValuationSnapshotHoldingRow, ValuationSnapshotPortfolioRow
 from app.schemas.analytics import (
     AnalyticsAllocationItemOut,
     AnalyticsAllocationOut,
     AnalyticsCompositionSeriesOut,
     AnalyticsGoalProgressOut,
+    AnalyticsNetworthSeriesAssetMoverOut,
+    AnalyticsNetworthSeriesAssetMoversOut,
     AnalyticsNetworthSeriesLineOut,
     AnalyticsNetworthSeriesLinePointOut,
+    AnalyticsNetworthSeriesOptionOut,
     AnalyticsNetworthSeriesOut,
     AnalyticsNetworthSeriesPointOut,
     AnalyticsQuickInsightOut,
@@ -44,6 +48,13 @@ AllocationTarget = Literal["GROSS", "LIABILITIES", "NET", "HOLDINGS"]
 AllocationGroupBy = Literal["PORTFOLIO", "ASSET_CLASS", "ASSET", "LIABILITY_TYPE"]
 SeriesBucket = Literal["DAY", "WEEK", "MONTH"]
 SeriesRange = Literal["1M", "3M", "6M", "1Y"]
+
+
+@dataclass
+class AssetTrendMetric:
+    current_value: Decimal = Decimal("0")
+    profit: Decimal = Decimal("0")
+    cost_basis: Decimal = Decimal("0")
 
 
 def _subtract_months(value: date, months: int) -> date:
@@ -75,6 +86,194 @@ def _range_start_date(anchor: date, range_value: str) -> date:
     if range_value == "6M":
         return _subtract_months(anchor, 6)
     return _subtract_months(anchor, 12)
+
+
+def _asset_series_key(asset_id: int | None, asset_name: str, symbol: str | None) -> str:
+    if asset_id is not None:
+        return f"asset:{asset_id}"
+    normalized_symbol = (symbol or "").strip().upper()
+    if normalized_symbol:
+        return f"asset-symbol:{normalized_symbol}"
+    normalized_name = " ".join((asset_name or "Unknown").strip().lower().split())
+    return f"asset-name:{normalized_name}"
+
+
+def _asset_series_label(asset_name: str, symbol: str | None) -> str:
+    name = (asset_name or "Unknown").strip() or "Unknown"
+    normalized_symbol = (symbol or "").strip()
+    if normalized_symbol and normalized_symbol.lower() not in name.lower():
+        return f"{name} ({normalized_symbol})"
+    return name
+
+
+def _asset_return_pct(metric: AssetTrendMetric) -> Decimal | None:
+    if metric.cost_basis <= 0:
+        return None
+    return (metric.profit / metric.cost_basis) * Decimal("100")
+
+
+def _asset_metric_value(metric: AssetTrendMetric, asset_metric: str) -> Decimal | None:
+    if asset_metric == "PROFIT":
+        return metric.profit
+    if asset_metric == "RETURN":
+        return _asset_return_pct(metric)
+    return metric.current_value
+
+
+def _build_asset_trend_series(
+    db: Session,
+    selected: list[ValuationSnapshot],
+    labels: list[str],
+    asset_metric: str,
+    asset_key: str,
+    portfolio_id: int | None,
+    top_n: int,
+) -> tuple[
+    list[AnalyticsNetworthSeriesLineOut],
+    list[AnalyticsNetworthSeriesOptionOut],
+    AnalyticsNetworthSeriesAssetMoversOut,
+]:
+    selected_ids = [row.id for row in selected]
+    if not selected_ids:
+        return [], [], AnalyticsNetworthSeriesAssetMoversOut()
+
+    label_by_snapshot_id = {row.id: labels[idx] for idx, row in enumerate(selected)}
+    stmt = select(ValuationSnapshotHoldingRow).where(ValuationSnapshotHoldingRow.valuation_snapshot_id.in_(selected_ids))
+    if portfolio_id is not None:
+        stmt = stmt.where(ValuationSnapshotHoldingRow.portfolio_id == portfolio_id)
+
+    rows = list(db.scalars(stmt).all())
+    metric_by_key: dict[str, defaultdict[str, AssetTrendMetric]] = defaultdict(lambda: defaultdict(AssetTrendMetric))
+    label_by_key: dict[str, str] = {}
+    overall_value_by_key: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
+
+    for row in rows:
+        snapshot_label = label_by_snapshot_id.get(row.valuation_snapshot_id)
+        if snapshot_label is None:
+            continue
+        key = _asset_series_key(row.asset_id, row.asset_name, row.symbol)
+        label_by_key[key] = _asset_series_label(row.asset_name, row.symbol)
+        metric = metric_by_key[key][snapshot_label]
+        metric.current_value += Decimal(row.evaluated_amount)
+        metric.profit += Decimal(row.profit_total)
+        metric.cost_basis += Decimal(row.cost_basis_total)
+        overall_value_by_key[key] += Decimal(row.evaluated_amount)
+
+    if not metric_by_key:
+        return [], [], AnalyticsNetworthSeriesAssetMoversOut()
+
+    latest_label = labels[-1] if labels else ""
+    baseline_label = labels[0] if labels else ""
+
+    def metric_at(key: str, label: str) -> AssetTrendMetric:
+        return metric_by_key.get(key, {}).get(label, AssetTrendMetric())
+
+    options = [
+        AnalyticsNetworthSeriesOptionOut(key=key, label=label_by_key[key])
+        for key in sorted(
+            metric_by_key.keys(),
+            key=lambda item: (
+                metric_at(item, latest_label).current_value,
+                overall_value_by_key[item],
+                label_by_key.get(item, ""),
+            ),
+            reverse=True,
+        )
+    ]
+
+    ranked_movers: list[tuple[Decimal, AnalyticsNetworthSeriesAssetMoverOut]] = []
+    for key in metric_by_key:
+        current = metric_at(key, latest_label)
+        baseline = metric_at(key, baseline_label)
+        current_return = _asset_return_pct(current)
+        baseline_return = _asset_return_pct(baseline)
+        delta_return = (
+            current_return - baseline_return
+            if current_return is not None and baseline_return is not None
+            else None
+        )
+        delta_value = current.current_value - baseline.current_value
+        delta_profit = current.profit - baseline.profit
+        delta_cost_basis = current.cost_basis - baseline.cost_basis
+        if current.current_value <= 0 and baseline.current_value <= 0:
+            continue
+        status = None
+        if baseline.current_value <= 0 < current.current_value:
+            status = "NEW"
+        elif current.current_value <= 0 < baseline.current_value:
+            status = "REMOVED"
+
+        mover = AnalyticsNetworthSeriesAssetMoverOut(
+            key=key,
+            label=label_by_key[key],
+            current_value=current.current_value,
+            baseline_value=baseline.current_value,
+            delta_value=delta_value,
+            current_profit=current.profit,
+            baseline_profit=baseline.profit,
+            delta_profit=delta_profit,
+            current_return_pct=current_return,
+            baseline_return_pct=baseline_return,
+            delta_return_pct=delta_return,
+            current_cost_basis=current.cost_basis,
+            baseline_cost_basis=baseline.cost_basis,
+            delta_cost_basis=delta_cost_basis,
+            status=status,
+        )
+        if asset_metric == "PROFIT":
+            rank_delta = delta_profit
+        elif asset_metric == "RETURN":
+            rank_delta = delta_return if delta_return is not None else Decimal("0")
+        else:
+            rank_delta = delta_value
+        ranked_movers.append((rank_delta, mover))
+
+    gainers = [item for item in ranked_movers if item[0] > 0]
+    losers = [item for item in ranked_movers if item[0] < 0]
+    gainers.sort(key=lambda item: (item[0], item[1].label), reverse=True)
+    losers.sort(key=lambda item: (item[0], item[1].label))
+    movers = AnalyticsNetworthSeriesAssetMoversOut(
+        top_gainers=[item[1] for item in gainers[:3]],
+        top_losers=[item[1] for item in losers[:3]],
+    )
+
+    normalized_asset_key = (asset_key or "TOP_MOVERS").strip() or "TOP_MOVERS"
+    if normalized_asset_key.upper() == "TOP_MOVERS":
+        absolute_ranked = sorted(
+            ranked_movers,
+            key=lambda item: (abs(item[0]), item[1].label),
+            reverse=True,
+        )
+        selected_asset_keys = [item[1].key for item in absolute_ranked if item[0] != 0][:top_n]
+        if not selected_asset_keys:
+            selected_asset_keys = [option.key for option in options[:top_n]]
+    else:
+        selected_asset_keys = [normalized_asset_key] if normalized_asset_key in metric_by_key else []
+
+    asset_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    for key in selected_asset_keys:
+        value_map = metric_by_key.get(key)
+        if not value_map:
+            continue
+        points = []
+        for label in labels:
+            metric = value_map.get(label)
+            if metric is None:
+                continue
+            value = _asset_metric_value(metric, asset_metric)
+            if value is None:
+                continue
+            points.append(AnalyticsNetworthSeriesLinePointOut(snapshot_date=label, value=value))
+        if points:
+            asset_lines.append(
+                AnalyticsNetworthSeriesLineOut(
+                    key=key,
+                    label=label_by_key.get(key, key),
+                    points=points,
+                )
+            )
+
+    return asset_lines, options, movers
 
 
 def _resolve_scope_user_ids(
@@ -584,9 +783,12 @@ def get_networth_series(
     scope_type: str | None = None,
     scope_id: int | None = None,
     display_currency: str = "KRW",
-    mode: Literal["SUMMARY", "PORTFOLIO_RETURN"] = Query(default="SUMMARY"),
+    mode: Literal["SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"] = Query(default="SUMMARY"),
     portfolio_metric: Literal["RETURN", "PROFIT", "CURRENT", "CURRENT_NET"] = Query(default="RETURN"),
+    asset_metric: Literal["CURRENT", "PROFIT", "RETURN"] = Query(default="CURRENT"),
+    asset_key: str = Query(default="TOP_MOVERS"),
     portfolio_id: int | None = Query(default=None, ge=1),
+    top_n: int = Query(default=5, ge=1, le=10),
     bucket: SeriesBucket = Query(default="DAY"),
     range_: SeriesRange | None = Query(default=None, alias="range"),
     limit: int = Query(default=90, ge=1, le=365),
@@ -604,10 +806,14 @@ def get_networth_series(
     normalized_range = range_.upper() if range_ else None
     normalized_mode = (mode or "SUMMARY").upper()
     normalized_portfolio_metric = (portfolio_metric or "RETURN").upper()
-    if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN"}:
-        raise HTTPException(status_code=400, detail="mode must be SUMMARY | PORTFOLIO_RETURN")
+    normalized_asset_metric = (asset_metric or "CURRENT").upper()
+    normalized_asset_key = (asset_key or "TOP_MOVERS").strip() or "TOP_MOVERS"
+    if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"}:
+        raise HTTPException(status_code=400, detail="mode must be SUMMARY | PORTFOLIO_RETURN | ASSET_TREND")
     if normalized_portfolio_metric not in {"RETURN", "PROFIT", "CURRENT", "CURRENT_NET"}:
         raise HTTPException(status_code=400, detail="portfolio_metric must be RETURN | PROFIT | CURRENT | CURRENT_NET")
+    if normalized_asset_metric not in {"CURRENT", "PROFIT", "RETURN"}:
+        raise HTTPException(status_code=400, detail="asset_metric must be CURRENT | PROFIT | RETURN")
 
     base_filters = (
         ValuationSnapshot.scope_type == normalized_scope_type,
@@ -650,6 +856,9 @@ def get_networth_series(
         snapshots = list(reversed(list(db.scalars(stmt).all())))
 
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    asset_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    asset_options: list[AnalyticsNetworthSeriesOptionOut] = []
+    asset_movers: AnalyticsNetworthSeriesAssetMoversOut | None = None
 
     if snapshots:
         if normalized_bucket == "DAY":
@@ -750,6 +959,16 @@ def get_networth_series(
                         key=lambda line: latest_map.get(line.key, Decimal("0")),
                         reverse=True,
                     )
+        elif normalized_mode == "ASSET_TREND":
+            asset_lines, asset_options, asset_movers = _build_asset_trend_series(
+                db=db,
+                selected=selected,
+                labels=labels,
+                asset_metric=normalized_asset_metric,
+                asset_key=normalized_asset_key,
+                portfolio_id=portfolio_id,
+                top_n=top_n,
+            )
     else:
         try:
             values = calculate_summary_values(
@@ -789,6 +1008,9 @@ def get_networth_series(
         bucket=normalized_bucket,  # type: ignore[arg-type]
         points=points,
         portfolio_lines=portfolio_lines,
+        asset_lines=asset_lines,
+        asset_options=asset_options,
+        asset_movers=asset_movers,
     )
 
 

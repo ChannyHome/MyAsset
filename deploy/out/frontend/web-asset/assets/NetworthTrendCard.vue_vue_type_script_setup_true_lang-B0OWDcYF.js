@@ -43,69 +43,119 @@ const _hoisted_18 = {
   key: 0,
   class: "flex flex-wrap items-center gap-2"
 };
-const _hoisted_19 = ["value"];
-const _hoisted_20 = {
+const _hoisted_19 = {
+  key: 1,
+  class: "flex flex-wrap items-center gap-2"
+};
+const _hoisted_20 = ["value"];
+const _hoisted_21 = ["value"];
+const _hoisted_22 = {
   key: 4,
   class: "mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_21 = {
+const _hoisted_23 = {
   key: 5,
   class: "mt-3 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-200"
 };
-const _hoisted_22 = {
+const _hoisted_24 = {
   key: 6,
   class: "mt-3 rounded-xl bg-slate-100 p-3 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_23 = {
+const _hoisted_25 = {
   key: 7,
   class: "mt-3 space-y-3"
 };
-const _hoisted_24 = {
+const _hoisted_26 = {
   key: 0,
   class: "flex flex-wrap items-center gap-4 text-xs"
 };
-const _hoisted_25 = { class: "inline-flex items-center gap-2" };
-const _hoisted_26 = ["checked"];
 const _hoisted_27 = { class: "inline-flex items-center gap-2" };
 const _hoisted_28 = ["checked"];
 const _hoisted_29 = { class: "inline-flex items-center gap-2" };
 const _hoisted_30 = ["checked"];
-const _hoisted_31 = { class: "flex flex-col gap-3 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between" };
-const _hoisted_32 = { class: "grid gap-1" };
-const _hoisted_33 = { class: "ml-auto flex items-center gap-1" };
-const _hoisted_34 = ["disabled"];
-const _hoisted_35 = ["disabled"];
-const _hoisted_36 = ["disabled"];
+const _hoisted_31 = { class: "inline-flex items-center gap-2" };
+const _hoisted_32 = ["checked"];
+const _hoisted_33 = { class: "flex flex-col gap-3 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between" };
+const _hoisted_34 = { class: "grid gap-1" };
+const _hoisted_35 = {
+  key: 0,
+  class: "text-[11px] text-slate-500 dark:text-slate-400"
+};
+const _hoisted_36 = { class: "ml-auto flex items-center gap-1" };
 const _hoisted_37 = ["disabled"];
-const _hoisted_38 = {
+const _hoisted_38 = ["disabled"];
+const _hoisted_39 = ["disabled"];
+const _hoisted_40 = ["disabled"];
+const _hoisted_41 = {
   key: 1,
   class: "-mx-3 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 sm:-mx-2 md:-mx-1"
 };
-const _hoisted_39 = { class: "relative bg-slate-50 dark:bg-slate-950/40" };
-const _hoisted_40 = { class: "pointer-events-none absolute inset-y-0 right-0 z-10 w-16" };
-const _hoisted_41 = ["viewBox"];
-const _hoisted_42 = ["y1", "x2", "y2"];
-const _hoisted_43 = ["x1", "x2"];
-const _hoisted_44 = ["x", "y"];
-const _hoisted_45 = ["d", "stroke"];
-const _hoisted_46 = ["cx", "cy", "r", "fill", "onMouseenter", "onClick"];
-const _hoisted_47 = {
+const _hoisted_42 = { class: "relative bg-slate-50 dark:bg-slate-950/40" };
+const _hoisted_43 = { class: "pointer-events-none absolute inset-y-0 right-0 z-10 w-16" };
+const _hoisted_44 = ["viewBox"];
+const _hoisted_45 = ["y1", "x2", "y2"];
+const _hoisted_46 = ["x1", "x2"];
+const _hoisted_47 = ["x", "y"];
+const _hoisted_48 = ["d", "stroke"];
+const _hoisted_49 = ["cx", "cy", "r", "fill", "onMouseenter", "onClick"];
+const _hoisted_50 = {
   key: 2,
   class: "rounded-xl border border-slate-200 bg-slate-100 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
 };
-const _hoisted_48 = {
+const _hoisted_51 = {
   key: 3,
   class: "flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-300"
 };
-const _hoisted_49 = {
+const _hoisted_52 = {
   key: 5,
   class: "grid grid-cols-1 gap-2 text-xs md:grid-cols-3"
 };
-const _hoisted_50 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_51 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_52 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
-const _hoisted_53 = {
+const _hoisted_53 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_54 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_55 = { class: "rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800" };
+const _hoisted_56 = {
   key: 6,
+  class: "rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40"
+};
+const _hoisted_57 = { class: "flex flex-wrap items-center justify-between gap-2" };
+const _hoisted_58 = { class: "rounded-full border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/50 dark:text-amber-200" };
+const _hoisted_59 = { class: "mt-3 grid gap-3 lg:grid-cols-2" };
+const _hoisted_60 = {
+  key: 0,
+  class: "grid gap-2"
+};
+const _hoisted_61 = ["onClick"];
+const _hoisted_62 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
+const _hoisted_63 = {
+  key: 0,
+  class: "rounded-full border border-emerald-300 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-600 dark:text-emerald-200"
+};
+const _hoisted_64 = { class: "mt-1 text-emerald-600 dark:text-emerald-300" };
+const _hoisted_65 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_66 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_67 = {
+  key: 1,
+  class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+};
+const _hoisted_68 = {
+  key: 0,
+  class: "grid gap-2"
+};
+const _hoisted_69 = ["onClick"];
+const _hoisted_70 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
+const _hoisted_71 = {
+  key: 0,
+  class: "rounded-full border border-rose-300 px-1.5 py-0.5 text-[10px] text-rose-700 dark:border-rose-600 dark:text-rose-200"
+};
+const _hoisted_72 = { class: "mt-1 text-rose-600 dark:text-rose-300" };
+const _hoisted_73 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_74 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_75 = {
+  key: 1,
+  class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+};
+const _hoisted_76 = {
+  key: 7,
   class: "text-[11px] text-slate-500 dark:text-slate-400"
 };
 const {computed,nextTick,onBeforeUnmount,onMounted,ref,watch} = await importShared('vue');
@@ -130,10 +180,15 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     showVisibilityControls: { type: Boolean, default: true },
     mode: { default: "SUMMARY" },
     portfolioMetric: { default: "RETURN" },
+    assetMetric: { default: "CURRENT_VALUE" },
     showModeToggle: { type: Boolean, default: true },
     portfolioLines: { default: () => [] },
+    assetLines: { default: () => [] },
     portfolioOptions: { default: () => [] },
+    assetOptions: { default: () => [] },
     portfolioKey: { default: "ALL" },
+    assetKey: { default: "TOP_MOVERS" },
+    assetMovers: { default: null },
     showPortfolioSelector: { type: Boolean, default: true },
     storageKey: { default: "" },
     range: { default: "3M" },
@@ -143,7 +198,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     showRangeBucketControls: { type: Boolean, default: true },
     showRefreshControl: { type: Boolean, default: false }
   },
-  emits: ["update:showGross", "update:showLiabilities", "update:showNet", "update:mode", "update:portfolioMetric", "update:portfolioKey", "update:range", "update:bucket", "refresh"],
+  emits: ["update:showGross", "update:showLiabilities", "update:showNet", "update:mode", "update:portfolioMetric", "update:assetMetric", "update:portfolioKey", "update:assetKey", "update:range", "update:bucket", "refresh"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit = __emit;
@@ -200,9 +255,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       get: () => props.portfolioMetric,
       set: (value) => emit("update:portfolioMetric", value)
     });
+    const assetMetricModel = computed({
+      get: () => props.assetMetric,
+      set: (value) => emit("update:assetMetric", value)
+    });
     const portfolioKeyModel = computed({
       get: () => props.portfolioKey,
       set: (value) => emit("update:portfolioKey", value)
+    });
+    const assetKeyModel = computed({
+      get: () => props.assetKey,
+      set: (value) => emit("update:assetKey", value)
     });
     const rangeModel = computed({
       get: () => props.range,
@@ -225,14 +288,15 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       "#94a3b8"
     ];
     const isAmountAxis = computed(
-      () => props.mode === "SUMMARY" || props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN"
+      () => props.mode === "SUMMARY" || props.mode === "PORTFOLIO" && props.portfolioMetric !== "RETURN" || props.mode === "ASSET" && props.assetMetric !== "RETURN"
     );
     const summaryPointByLabel = computed(() => new Map(props.points.map((point) => [point.label, point])));
     const chartLabels = computed(() => {
       const allLabels = props.points.map((point) => point.label);
-      if (props.mode !== "PORTFOLIO") return allLabels;
+      if (props.mode === "SUMMARY") return allLabels;
       const dataLabels = /* @__PURE__ */ new Set();
-      for (const line of props.portfolioLines) {
+      const lines = props.mode === "ASSET" ? props.assetLines : props.portfolioLines;
+      for (const line of lines) {
         for (const point of line.points) {
           if (point.value != null && Number.isFinite(point.value)) {
             dataLabels.add(point.snapshot_date);
@@ -281,9 +345,10 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return Math.max(viewportWidth, plotPaddingX * 2 + (total - 1) * pointGap.value);
     });
     const renderLines = computed(() => {
-      if (props.mode === "PORTFOLIO") {
+      if (props.mode === "PORTFOLIO" || props.mode === "ASSET") {
         const labels2 = chartLabels.value;
-        return props.portfolioLines.map((line, index) => {
+        const lines2 = props.mode === "ASSET" ? props.assetLines : props.portfolioLines;
+        return lines2.map((line, index) => {
           const valueByLabel = /* @__PURE__ */ new Map();
           for (const point of line.points) {
             valueByLabel.set(point.snapshot_date, point.value);
@@ -361,9 +426,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return props.points.length > 0 ? props.points[props.points.length - 1] : null;
     });
     const collapsedSummary = computed(() => {
-      if (props.mode === "PORTFOLIO") {
-        const metricLabel = props.portfolioMetric === "CURRENT_VALUE" ? "Current Value" : props.portfolioMetric === "CURRENT_NET" ? "Current Net" : props.portfolioMetric === "PROFIT" ? "Profit" : "Return";
-        return `Portfolio trend - ${metricLabel} - ${lastPoint.value?.label ?? "-"}`;
+      if (props.mode === "PORTFOLIO" || props.mode === "ASSET") {
+        const metricLabel = props.mode === "ASSET" ? props.assetMetric === "CURRENT_VALUE" ? "Current Value" : props.assetMetric === "PROFIT" ? "Profit" : "Return" : props.portfolioMetric === "CURRENT_VALUE" ? "Current Value" : props.portfolioMetric === "CURRENT_NET" ? "Current Net" : props.portfolioMetric === "PROFIT" ? "Profit" : "Return";
+        return `${props.mode === "ASSET" ? "Asset" : "Portfolio"} trend - ${metricLabel} - ${lastPoint.value?.label ?? "-"}`;
       }
       if (!lastPoint.value) return "No trend data.";
       return `Latest snapshot - Gross ${formatCurrency(lastPoint.value.gross, props.currency)} - Net ${formatCurrency(lastPoint.value.net, props.currency)}`;
@@ -371,8 +436,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const rangeMetaText = computed(() => {
       const firstVisible = chartLabels.value[0] ?? null;
       const lastVisible = chartLabels.value[chartLabels.value.length - 1] ?? null;
-      const start = props.mode === "PORTFOLIO" ? firstVisible : props.rangeStartDate ?? firstVisible;
-      const end = props.mode === "PORTFOLIO" ? lastVisible : props.rangeEndDate ?? lastVisible;
+      const start = props.mode === "PORTFOLIO" || props.mode === "ASSET" ? firstVisible : props.rangeStartDate ?? firstVisible;
+      const end = props.mode === "PORTFOLIO" || props.mode === "ASSET" ? lastVisible : props.rangeEndDate ?? lastVisible;
       if (!start || !end) return "";
       return `${formatXAxisLabel(start)} - ${formatXAxisLabel(end)}`;
     });
@@ -410,8 +475,11 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         props.mode,
         chartLabels.value.length,
         props.portfolioMetric,
+        props.assetMetric,
         props.portfolioKey,
+        props.assetKey,
         props.portfolioLines.length,
+        props.assetLines.length,
         props.showGross,
         props.showLiabilities,
         props.showNet
@@ -423,7 +491,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
     );
     watch(
-      () => [props.range, props.bucket, props.mode, props.portfolioMetric, props.portfolioKey],
+      () => [props.range, props.bucket, props.mode, props.portfolioMetric, props.assetMetric, props.portfolioKey, props.assetKey],
       () => {
         zoomLevel.value = 0;
       }
@@ -586,7 +654,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (props.maskAmounts && isAmountAxis.value) {
         return "***";
       }
-      if (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN") {
+      if (props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN" || props.mode === "ASSET" && props.assetMetric === "RETURN") {
         return `${value.toFixed(1)}%`;
       }
       if ((props.currency || "KRW").toUpperCase() === "KRW") {
@@ -621,6 +689,35 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     function formatPercent(value) {
       return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
     }
+    function currentMetricLabel() {
+      if (props.mode === "SUMMARY") return `Amount (${props.currency})`;
+      if (props.mode === "ASSET") {
+        if (props.assetMetric === "RETURN") return "Return (%)";
+        if (props.assetMetric === "PROFIT") return `Profit (${props.currency})`;
+        return `Current Value (${props.currency})`;
+      }
+      if (props.portfolioMetric === "RETURN") return "Return (%)";
+      if (props.portfolioMetric === "CURRENT_VALUE") return `Current Value (${props.currency})`;
+      if (props.portfolioMetric === "CURRENT_NET") return `Current Net (${props.currency})`;
+      return `Profit (${props.currency})`;
+    }
+    function formatSignedCurrency(value) {
+      if (props.maskAmounts) return "***";
+      const sign = value > 0 ? "+" : "";
+      return `${sign}${formatCurrency(value, props.currency)}`;
+    }
+    function formatSignedNumber(value) {
+      if (value == null || !Number.isFinite(value)) return "-";
+      return formatPercent(value);
+    }
+    function moverRankText(mover) {
+      if (props.assetMetric === "RETURN") return `Return Δ ${formatSignedNumber(mover.delta_return_pct)}`;
+      if (props.assetMetric === "PROFIT") return `Profit Δ ${formatSignedCurrency(mover.delta_profit)}`;
+      return `Current Δ ${formatSignedCurrency(mover.delta_value)}`;
+    }
+    function setAssetFromMover(key) {
+      emit("update:assetKey", key);
+    }
     function formatXAxisLabel(label) {
       const normalized = (label || "").trim();
       if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
@@ -637,7 +734,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       return normalized;
     }
     function inspectPoint(lineLabel, pointLabel, value) {
-      inspectText.value = `${lineLabel} - ${pointLabel || "-"} - ${props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN" ? formatPercent(value) : formatCurrency(value, props.currency)}`;
+      inspectText.value = `${lineLabel} - ${pointLabel || "-"} - ${props.mode === "PORTFOLIO" && props.portfolioMetric === "RETURN" || props.mode === "ASSET" && props.assetMetric === "RETURN" ? formatPercent(value) : formatCurrency(value, props.currency)}`;
     }
     return (_ctx, _cache) => {
       return _openBlock(), _createElementBlock("article", _hoisted_1, [
@@ -664,14 +761,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             }, _toDisplayString(expanded.value ? "Collapse" : "Expand"), 1)
           ])
         ]),
-        infoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_9, [..._cache[13] || (_cache[13] = [
+        infoOpen.value ? (_openBlock(), _createElementBlock("div", _hoisted_9, [..._cache[18] || (_cache[18] = [
           _createElementVNode("p", null, "Networth Trend shows how the selected scope changed across valuation snapshots over time.", -1),
           _createElementVNode("p", { class: "mt-1" }, "Range is anchored to the latest matched snapshot, not today's calendar date.", -1),
           _createElementVNode("p", { class: "mt-1" }, "Day/Week/Month each use the last snapshot available inside that bucket.", -1),
           _createElementVNode("p", { class: "mt-1" }, "On mobile, the Y-axis stays fixed while the plot scrolls and rescales to the visible points.", -1)
         ])])) : _createCommentVNode("", true),
         !expanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_10, [
-          _cache[14] || (_cache[14] = _createElementVNode("p", { class: "font-medium text-slate-700 dark:text-slate-200" }, "Collapsed. Click Expand to preview the latest networth trend.", -1)),
+          _cache[19] || (_cache[19] = _createElementVNode("p", { class: "font-medium text-slate-700 dark:text-slate-200" }, "Collapsed. Click Expand to preview the latest networth trend.", -1)),
           _createElementVNode("p", {
             class: "mt-1",
             style: _normalizeStyle(props.maskAmounts && isAmountAxis.value ? { filter: "blur(6px)" } : void 0)
@@ -680,7 +777,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         ])) : _createCommentVNode("", true),
         expanded.value && __props.showRangeBucketControls ? (_openBlock(), _createElementBlock("div", _hoisted_12, [
           _createElementVNode("div", _hoisted_13, [
-            _cache[15] || (_cache[15] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Range", -1)),
+            _cache[20] || (_cache[20] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Range", -1)),
             (_openBlock(), _createElementBlock(_Fragment, null, _renderList(rangeOptions, (item) => {
               return _createElementVNode("button", {
                 key: `trend-range-${item.key}`,
@@ -692,7 +789,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 onClick: ($event) => rangeModel.value = item.key
               }, _toDisplayString(item.label), 11, _hoisted_14);
             }), 64)),
-            _cache[16] || (_cache[16] = _createElementVNode("span", { class: "ml-2 mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
+            _cache[21] || (_cache[21] = _createElementVNode("span", { class: "ml-2 mr-1 font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400" }, "Bucket", -1)),
             (_openBlock(), _createElementBlock(_Fragment, null, _renderList(bucketOptions, (item) => {
               return _createElementVNode("button", {
                 key: `trend-bucket-${item.key}`,
@@ -724,6 +821,14 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             ]),
             onClick: _cache[3] || (_cache[3] = ($event) => modeModel.value = "PORTFOLIO")
           }, " Portfolio ", 2),
+          _createElementVNode("button", {
+            type: "button",
+            class: _normalizeClass([
+              "rounded-lg border px-3 py-1.5 text-xs font-semibold",
+              modeModel.value === "ASSET" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            ]),
+            onClick: _cache[4] || (_cache[4] = ($event) => modeModel.value = "ASSET")
+          }, " Asset ", 2),
           modeModel.value === "PORTFOLIO" ? (_openBlock(), _createElementBlock("div", _hoisted_18, [
             _createElementVNode("button", {
               type: "button",
@@ -731,7 +836,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                 portfolioMetricModel.value === "CURRENT_VALUE" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               ]),
-              onClick: _cache[4] || (_cache[4] = ($event) => portfolioMetricModel.value = "CURRENT_VALUE")
+              onClick: _cache[5] || (_cache[5] = ($event) => portfolioMetricModel.value = "CURRENT_VALUE")
             }, " Current Value ", 2),
             _createElementVNode("button", {
               type: "button",
@@ -739,7 +844,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                 portfolioMetricModel.value === "CURRENT_NET" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               ]),
-              onClick: _cache[5] || (_cache[5] = ($event) => portfolioMetricModel.value = "CURRENT_NET")
+              onClick: _cache[6] || (_cache[6] = ($event) => portfolioMetricModel.value = "CURRENT_NET")
             }, " Current Net ", 2),
             _createElementVNode("button", {
               type: "button",
@@ -747,7 +852,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                 portfolioMetricModel.value === "PROFIT" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               ]),
-              onClick: _cache[6] || (_cache[6] = ($event) => portfolioMetricModel.value = "PROFIT")
+              onClick: _cache[7] || (_cache[7] = ($event) => portfolioMetricModel.value = "PROFIT")
             }, " Profit ", 2),
             _createElementVNode("button", {
               type: "button",
@@ -755,67 +860,109 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 "rounded-lg border px-3 py-1.5 text-xs font-semibold",
                 portfolioMetricModel.value === "RETURN" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               ]),
-              onClick: _cache[7] || (_cache[7] = ($event) => portfolioMetricModel.value = "RETURN")
+              onClick: _cache[8] || (_cache[8] = ($event) => portfolioMetricModel.value = "RETURN")
             }, " Return ", 2)
           ])) : _createCommentVNode("", true),
-          modeModel.value === "PORTFOLIO" && __props.showPortfolioSelector ? _withDirectives((_openBlock(), _createElementBlock("select", {
-            key: 1,
-            "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => portfolioKeyModel.value = $event),
+          modeModel.value === "ASSET" ? (_openBlock(), _createElementBlock("div", _hoisted_19, [
+            _createElementVNode("button", {
+              type: "button",
+              class: _normalizeClass([
+                "rounded-lg border px-3 py-1.5 text-xs font-semibold",
+                assetMetricModel.value === "CURRENT_VALUE" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              ]),
+              onClick: _cache[9] || (_cache[9] = ($event) => assetMetricModel.value = "CURRENT_VALUE")
+            }, " Current Value ", 2),
+            _createElementVNode("button", {
+              type: "button",
+              class: _normalizeClass([
+                "rounded-lg border px-3 py-1.5 text-xs font-semibold",
+                assetMetricModel.value === "PROFIT" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              ]),
+              onClick: _cache[10] || (_cache[10] = ($event) => assetMetricModel.value = "PROFIT")
+            }, " Profit ", 2),
+            _createElementVNode("button", {
+              type: "button",
+              class: _normalizeClass([
+                "rounded-lg border px-3 py-1.5 text-xs font-semibold",
+                assetMetricModel.value === "RETURN" ? "border-indigo-400 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200" : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              ]),
+              onClick: _cache[11] || (_cache[11] = ($event) => assetMetricModel.value = "RETURN")
+            }, " Return ", 2)
+          ])) : _createCommentVNode("", true),
+          (modeModel.value === "PORTFOLIO" || modeModel.value === "ASSET") && __props.showPortfolioSelector ? _withDirectives((_openBlock(), _createElementBlock("select", {
+            key: 2,
+            "onUpdate:modelValue": _cache[12] || (_cache[12] = ($event) => portfolioKeyModel.value = $event),
             class: "rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
           }, [
             (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.portfolioOptions, (item) => {
               return _openBlock(), _createElementBlock("option", {
                 key: `trend-portfolio-${item.key}`,
                 value: item.key
-              }, _toDisplayString(item.label), 9, _hoisted_19);
+              }, _toDisplayString(item.label), 9, _hoisted_20);
             }), 128))
           ], 512)), [
             [_vModelSelect, portfolioKeyModel.value]
+          ]) : _createCommentVNode("", true),
+          modeModel.value === "ASSET" ? _withDirectives((_openBlock(), _createElementBlock("select", {
+            key: 3,
+            "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => assetKeyModel.value = $event),
+            class: "min-w-[180px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          }, [
+            _cache[22] || (_cache[22] = _createElementVNode("option", { value: "TOP_MOVERS" }, "Top movers", -1)),
+            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.assetOptions, (item) => {
+              return _openBlock(), _createElementBlock("option", {
+                key: `trend-asset-${item.key}`,
+                value: item.key
+              }, _toDisplayString(item.label), 9, _hoisted_21);
+            }), 128))
+          ], 512)), [
+            [_vModelSelect, assetKeyModel.value]
           ]) : _createCommentVNode("", true)
         ])) : _createCommentVNode("", true),
-        expanded.value && __props.loading ? (_openBlock(), _createElementBlock("div", _hoisted_20, " Loading trend... ")) : expanded.value && __props.error ? (_openBlock(), _createElementBlock("div", _hoisted_21, _toDisplayString(__props.error), 1)) : expanded.value && chartLabels.value.length <= 1 ? (_openBlock(), _createElementBlock("div", _hoisted_22, " Need at least 2 snapshot points to draw trend line. ")) : expanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_23, [
-          modeModel.value === "SUMMARY" && __props.showVisibilityControls ? (_openBlock(), _createElementBlock("div", _hoisted_24, [
-            _createElementVNode("label", _hoisted_25, [
+        expanded.value && __props.loading ? (_openBlock(), _createElementBlock("div", _hoisted_22, " Loading trend... ")) : expanded.value && __props.error ? (_openBlock(), _createElementBlock("div", _hoisted_23, _toDisplayString(__props.error), 1)) : expanded.value && chartLabels.value.length <= 1 ? (_openBlock(), _createElementBlock("div", _hoisted_24, " Need at least 2 snapshot points to draw trend line. ")) : expanded.value ? (_openBlock(), _createElementBlock("div", _hoisted_25, [
+          modeModel.value === "SUMMARY" && __props.showVisibilityControls ? (_openBlock(), _createElementBlock("div", _hoisted_26, [
+            _createElementVNode("label", _hoisted_27, [
               _createElementVNode("input", {
                 checked: showGrossModel.value,
                 type: "checkbox",
                 class: "h-4 w-4 rounded",
-                onChange: _cache[9] || (_cache[9] = ($event) => setSummaryMetric("gross", $event.target.checked))
-              }, null, 40, _hoisted_26),
-              _cache[17] || (_cache[17] = _createTextVNode(" Gross ", -1))
+                onChange: _cache[14] || (_cache[14] = ($event) => setSummaryMetric("gross", $event.target.checked))
+              }, null, 40, _hoisted_28),
+              _cache[23] || (_cache[23] = _createTextVNode(" Gross ", -1))
             ]),
-            _createElementVNode("label", _hoisted_27, [
+            _createElementVNode("label", _hoisted_29, [
               _createElementVNode("input", {
                 checked: showLiabilitiesModel.value,
                 type: "checkbox",
                 class: "h-4 w-4 rounded",
-                onChange: _cache[10] || (_cache[10] = ($event) => setSummaryMetric("liabilities", $event.target.checked))
-              }, null, 40, _hoisted_28),
-              _cache[18] || (_cache[18] = _createTextVNode(" Liabilities ", -1))
+                onChange: _cache[15] || (_cache[15] = ($event) => setSummaryMetric("liabilities", $event.target.checked))
+              }, null, 40, _hoisted_30),
+              _cache[24] || (_cache[24] = _createTextVNode(" Liabilities ", -1))
             ]),
-            _createElementVNode("label", _hoisted_29, [
+            _createElementVNode("label", _hoisted_31, [
               _createElementVNode("input", {
                 checked: showNetModel.value,
                 type: "checkbox",
                 class: "h-4 w-4 rounded",
-                onChange: _cache[11] || (_cache[11] = ($event) => setSummaryMetric("net", $event.target.checked))
-              }, null, 40, _hoisted_30),
-              _cache[19] || (_cache[19] = _createTextVNode(" Net ", -1))
+                onChange: _cache[16] || (_cache[16] = ($event) => setSummaryMetric("net", $event.target.checked))
+              }, null, 40, _hoisted_32),
+              _cache[25] || (_cache[25] = _createTextVNode(" Net ", -1))
             ])
           ])) : _createCommentVNode("", true),
-          _createElementVNode("div", _hoisted_31, [
-            _createElementVNode("div", _hoisted_32, [
+          _createElementVNode("div", _hoisted_33, [
+            _createElementVNode("div", _hoisted_34, [
               _createElementVNode("p", null, [
-                _cache[20] || (_cache[20] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "X-axis:", -1)),
+                _cache[26] || (_cache[26] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "X-axis:", -1)),
                 _createTextVNode(" " + _toDisplayString(bucketModel.value === "DAY" ? "Snapshot date" : bucketModel.value === "WEEK" ? "Last snapshot in each week" : "Last snapshot in each month"), 1)
               ]),
               _createElementVNode("p", null, [
-                _cache[21] || (_cache[21] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Y-axis:", -1)),
-                _createTextVNode(" " + _toDisplayString(modeModel.value === "SUMMARY" ? `Amount (${__props.currency})` : portfolioMetricModel.value === "RETURN" ? "Return (%)" : portfolioMetricModel.value === "CURRENT_VALUE" ? `Current Value (${__props.currency})` : portfolioMetricModel.value === "CURRENT_NET" ? `Current Net (${__props.currency})` : `Profit (${__props.currency})`), 1)
-              ])
+                _cache[27] || (_cache[27] = _createElementVNode("span", { class: "font-semibold text-slate-700 dark:text-slate-200" }, "Y-axis:", -1)),
+                _createTextVNode(" " + _toDisplayString(currentMetricLabel()), 1)
+              ]),
+              modeModel.value === "ASSET" ? (_openBlock(), _createElementBlock("p", _hoisted_35, " Current Value Δ includes price movement and quantity/cost basis changes. Use Profit or Return to focus on performance. ")) : _createCommentVNode("", true)
             ]),
-            _createElementVNode("div", _hoisted_33, [
-              _cache[22] || (_cache[22] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400" }, "Zoom", -1)),
+            _createElementVNode("div", _hoisted_36, [
+              _cache[28] || (_cache[28] = _createElementVNode("span", { class: "mr-1 font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400" }, "Zoom", -1)),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass([
@@ -825,7 +972,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 disabled: zoomLevel.value <= -2,
                 "aria-label": "Zoom out networth chart",
                 onClick: zoomOut
-              }, " - ", 10, _hoisted_34),
+              }, " - ", 10, _hoisted_37),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass([
@@ -835,7 +982,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 disabled: zoomLevel.value >= 2,
                 "aria-label": "Zoom in networth chart",
                 onClick: zoomIn
-              }, " + ", 10, _hoisted_35),
+              }, " + ", 10, _hoisted_38),
               _createElementVNode("button", {
                 type: "button",
                 class: _normalizeClass([
@@ -845,20 +992,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 disabled: zoomLevel.value === 0,
                 "aria-label": "Reset networth chart zoom",
                 onClick: resetZoom
-              }, " Fit ", 10, _hoisted_36),
+              }, " Fit ", 10, _hoisted_39),
               __props.showRefreshControl ? (_openBlock(), _createElementBlock("button", {
                 key: 0,
                 type: "button",
                 class: "rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
                 disabled: __props.loading,
                 "aria-label": "Refresh networth trend data",
-                onClick: _cache[12] || (_cache[12] = ($event) => emit("refresh"))
-              }, _toDisplayString(__props.loading ? "Refreshing..." : "Refresh"), 9, _hoisted_37)) : _createCommentVNode("", true)
+                onClick: _cache[17] || (_cache[17] = ($event) => emit("refresh"))
+              }, _toDisplayString(__props.loading ? "Refreshing..." : "Refresh"), 9, _hoisted_40)) : _createCommentVNode("", true)
             ])
           ]),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_38, [
-            _createElementVNode("div", _hoisted_39, [
-              _createElementVNode("div", _hoisted_40, [
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_41, [
+            _createElementVNode("div", _hoisted_42, [
+              _createElementVNode("div", _hoisted_43, [
                 (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(ticks.value, (tick) => {
                   return _openBlock(), _createElementBlock("span", {
                     key: `floating-y-label-${tick.y}`,
@@ -891,7 +1038,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         y2: tick.y,
                         stroke: "rgba(148, 163, 184, 0.28)",
                         "stroke-width": "1"
-                      }, null, 8, _hoisted_42);
+                      }, null, 8, _hoisted_45);
                     }), 128))
                   ]),
                   _createElementVNode("g", null, [
@@ -904,7 +1051,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         y2: chartHeight,
                         stroke: "rgba(148, 163, 184, 0.12)",
                         "stroke-width": "1"
-                      }, null, 8, _hoisted_43);
+                      }, null, 8, _hoisted_46);
                     }), 128)),
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(xTicks.value, (tick) => {
                       return _openBlock(), _createElementBlock("text", {
@@ -914,7 +1061,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         "text-anchor": "middle",
                         "font-size": "10",
                         fill: "rgba(148, 163, 184, 0.95)"
-                      }, _toDisplayString(formatXAxisLabel(tick.label)), 9, _hoisted_44);
+                      }, _toDisplayString(formatXAxisLabel(tick.label)), 9, _hoisted_47);
                     }), 128))
                   ]),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(linePaths.value, (line) => {
@@ -926,7 +1073,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                         fill: "none",
                         stroke: line.color,
                         "stroke-width": "2.5"
-                      }, null, 8, _hoisted_45),
+                      }, null, 8, _hoisted_48),
                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(line.values, (value, idx) => {
                         return _withDirectives((_openBlock(), _createElementBlock("circle", {
                           key: `point-${line.key}-${idx}`,
@@ -937,17 +1084,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                           class: "cursor-pointer",
                           onMouseenter: ($event) => inspectPoint(line.label, chartLabels.value[idx] ?? "-", Number(value ?? 0)),
                           onClick: ($event) => inspectPoint(line.label, chartLabels.value[idx] ?? "-", Number(value ?? 0))
-                        }, null, 40, _hoisted_46)), [
+                        }, null, 40, _hoisted_49)), [
                           [_vShow, value != null]
                         ]);
                       }), 128))
                     ]);
                   }), 128))
-                ], 12, _hoisted_41))
+                ], 12, _hoisted_44))
               ], 544)
             ])
-          ])) : (_openBlock(), _createElementBlock("div", _hoisted_47, " Not enough points. ")),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_48, [
+          ])) : (_openBlock(), _createElementBlock("div", _hoisted_50, " Not enough points. ")),
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_51, [
             (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(linePaths.value, (line) => {
               return _openBlock(), _createElementBlock("span", {
                 key: `legend-${line.key}`,
@@ -966,9 +1113,9 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
             class: "text-xs text-slate-500 dark:text-slate-400",
             style: _normalizeStyle(props.maskAmounts && isAmountAxis.value ? { filter: "blur(6px)" } : void 0)
           }, _toDisplayString(inspectText.value || "Hover/click a point to inspect value."), 5)) : _createCommentVNode("", true),
-          modeModel.value === "SUMMARY" && linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_49, [
-            _createElementVNode("div", _hoisted_50, [
-              _cache[23] || (_cache[23] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+          modeModel.value === "SUMMARY" && linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_52, [
+            _createElementVNode("div", _hoisted_53, [
+              _cache[29] || (_cache[29] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-green-500" }),
                 _createTextVNode(" Gross ")
               ], -1)),
@@ -977,8 +1124,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString(formatCurrency(lastPoint.value?.gross ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_51, [
-              _cache[24] || (_cache[24] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+            _createElementVNode("div", _hoisted_54, [
+              _cache[30] || (_cache[30] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-rose-500" }),
                 _createTextVNode(" Liabilities ")
               ], -1)),
@@ -987,8 +1134,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                 style: _normalizeStyle(props.maskAmounts ? { filter: "blur(6px)" } : void 0)
               }, _toDisplayString(formatCurrency(lastPoint.value?.liabilities ?? 0, __props.currency)), 5)
             ]),
-            _createElementVNode("div", _hoisted_52, [
-              _cache[25] || (_cache[25] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
+            _createElementVNode("div", _hoisted_55, [
+              _cache[31] || (_cache[31] = _createElementVNode("p", { class: "flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-200" }, [
                 _createElementVNode("span", { class: "h-2.5 w-2.5 rounded-full bg-sky-500" }),
                 _createTextVNode(" Net ")
               ], -1)),
@@ -998,7 +1145,60 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               }, _toDisplayString(formatCurrency(lastPoint.value?.net ?? 0, __props.currency)), 5)
             ])
           ])) : _createCommentVNode("", true),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_53, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
+          modeModel.value === "ASSET" && __props.assetMovers ? (_openBlock(), _createElementBlock("div", _hoisted_56, [
+            _createElementVNode("div", _hoisted_57, [
+              _cache[32] || (_cache[32] = _createElementVNode("div", null, [
+                _createElementVNode("p", { class: "font-semibold text-slate-800 dark:text-slate-100" }, "Top Asset Movers"),
+                _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, " Cost basis Δ helps separate added capital from actual profit movement. ")
+              ], -1)),
+              _createElementVNode("span", _hoisted_58, _toDisplayString(assetKeyModel.value === "TOP_MOVERS" ? "Top movers" : "Selected asset"), 1)
+            ]),
+            _createElementVNode("div", _hoisted_59, [
+              _createElementVNode("div", null, [
+                _cache[33] || (_cache[33] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-emerald-500" }, "Top Gainers", -1)),
+                __props.assetMovers.top_gainers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.assetMovers.top_gainers, (mover) => {
+                    return _openBlock(), _createElementBlock("button", {
+                      key: `asset-gainer-${mover.key}`,
+                      type: "button",
+                      class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30",
+                      onClick: ($event) => setAssetFromMover(mover.key)
+                    }, [
+                      _createElementVNode("p", _hoisted_62, [
+                        _createElementVNode("span", null, _toDisplayString(mover.label), 1),
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_63, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
+                      ]),
+                      _createElementVNode("p", _hoisted_64, _toDisplayString(moverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_65, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
+                      _createElementVNode("p", _hoisted_66, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
+                    ], 8, _hoisted_61);
+                  }), 128))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_67, "No gainers in this range."))
+              ]),
+              _createElementVNode("div", null, [
+                _cache[34] || (_cache[34] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500" }, "Top Losers", -1)),
+                __props.assetMovers.top_losers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_68, [
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.assetMovers.top_losers, (mover) => {
+                    return _openBlock(), _createElementBlock("button", {
+                      key: `asset-loser-${mover.key}`,
+                      type: "button",
+                      class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-rose-300 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-rose-700 dark:hover:bg-rose-950/30",
+                      onClick: ($event) => setAssetFromMover(mover.key)
+                    }, [
+                      _createElementVNode("p", _hoisted_70, [
+                        _createElementVNode("span", null, _toDisplayString(mover.label), 1),
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_71, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
+                      ]),
+                      _createElementVNode("p", _hoisted_72, _toDisplayString(moverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_73, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
+                      _createElementVNode("p", _hoisted_74, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
+                    ], 8, _hoisted_69);
+                  }), 128))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_75, "No losers in this range."))
+              ])
+            ])
+          ])) : _createCommentVNode("", true),
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_76, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
         ])) : _createCommentVNode("", true)
       ]);
     };
