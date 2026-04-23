@@ -91,6 +91,44 @@ class AnalyticsNetworthSeriesAssetMoversOut(BaseModel):
     top_losers: list[AnalyticsNetworthSeriesAssetMoverOut] = []
 
 
+class AnalyticsNetworthSeriesPortfolioMoverOut(BaseModel):
+    portfolio_id: int | None = None
+    portfolio_name: str
+    portfolio_type: str | None = None
+    current_value: Decimal
+    baseline_value: Decimal
+    delta_value: Decimal
+    current_net: Decimal
+    baseline_net: Decimal
+    delta_net: Decimal
+    current_liabilities: Decimal
+    baseline_liabilities: Decimal
+    delta_liabilities: Decimal
+    current_invested: Decimal
+    baseline_invested: Decimal
+    delta_invested: Decimal
+    current_profit: Decimal
+    baseline_profit: Decimal
+    delta_profit: Decimal
+    current_return_pct: Decimal | None = None
+    baseline_return_pct: Decimal | None = None
+    delta_return_pct: Decimal | None = None
+    driver_type: Literal[
+        "CAPITAL_LED",
+        "PERFORMANCE_LED",
+        "WITHDRAWAL_LED",
+        "LIABILITY_LED",
+        "MIXED",
+        "NEUTRAL",
+    ]
+    status: Literal["NEW", "REMOVED"] | None = None
+
+
+class AnalyticsNetworthSeriesPortfolioMoversOut(BaseModel):
+    top_gainers: list[AnalyticsNetworthSeriesPortfolioMoverOut] = []
+    top_losers: list[AnalyticsNetworthSeriesPortfolioMoverOut] = []
+
+
 class AnalyticsNetworthSeriesOut(BaseModel):
     scope_type: str
     scope_id: int
@@ -105,6 +143,7 @@ class AnalyticsNetworthSeriesOut(BaseModel):
     asset_lines: list[AnalyticsNetworthSeriesLineOut] = []
     asset_options: list[AnalyticsNetworthSeriesOptionOut] = []
     asset_movers: AnalyticsNetworthSeriesAssetMoversOut | None = None
+    portfolio_movers: AnalyticsNetworthSeriesPortfolioMoversOut | None = None
 
 
 class AnalyticsCompositionLegendItemOut(BaseModel):

@@ -95,6 +95,37 @@ export type AnalyticsNetworthSeriesAssetMoversOut = {
   top_losers: AnalyticsNetworthSeriesAssetMoverOut[];
 };
 
+export type AnalyticsNetworthSeriesPortfolioMoverOut = {
+  portfolio_id: number | null;
+  portfolio_name: string;
+  portfolio_type: string | null;
+  current_value: string | number;
+  baseline_value: string | number;
+  delta_value: string | number;
+  current_net: string | number;
+  baseline_net: string | number;
+  delta_net: string | number;
+  current_liabilities: string | number;
+  baseline_liabilities: string | number;
+  delta_liabilities: string | number;
+  current_invested: string | number;
+  baseline_invested: string | number;
+  delta_invested: string | number;
+  current_profit: string | number;
+  baseline_profit: string | number;
+  delta_profit: string | number;
+  current_return_pct: string | number | null;
+  baseline_return_pct: string | number | null;
+  delta_return_pct: string | number | null;
+  driver_type: "CAPITAL_LED" | "PERFORMANCE_LED" | "WITHDRAWAL_LED" | "LIABILITY_LED" | "MIXED" | "NEUTRAL";
+  status: "NEW" | "REMOVED" | null;
+};
+
+export type AnalyticsNetworthSeriesPortfolioMoversOut = {
+  top_gainers: AnalyticsNetworthSeriesPortfolioMoverOut[];
+  top_losers: AnalyticsNetworthSeriesPortfolioMoverOut[];
+};
+
 export type AnalyticsNetworthSeriesOut = {
   scope_type: string;
   scope_id: number;
@@ -109,6 +140,7 @@ export type AnalyticsNetworthSeriesOut = {
   asset_lines: AnalyticsNetworthSeriesLineOut[];
   asset_options: AnalyticsNetworthSeriesOptionOut[];
   asset_movers: AnalyticsNetworthSeriesAssetMoversOut | null;
+  portfolio_movers: AnalyticsNetworthSeriesPortfolioMoversOut | null;
 };
 
 export type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
@@ -281,6 +313,7 @@ export type NetworthSeriesQuery = {
   display_currency?: "KRW" | "USD";
   mode?: "SUMMARY" | "PORTFOLIO_RETURN" | "ASSET_TREND";
   portfolio_metric?: "RETURN" | "PROFIT" | "CURRENT" | "CURRENT_NET";
+  portfolio_mover_basis?: "GROSS" | "NET" | "LIABILITIES";
   asset_metric?: "CURRENT" | "PROFIT" | "RETURN";
   asset_key?: string;
   portfolio_id?: number;

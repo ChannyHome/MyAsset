@@ -118,44 +118,93 @@ const _hoisted_56 = {
   class: "rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40"
 };
 const _hoisted_57 = { class: "flex flex-wrap items-center justify-between gap-2" };
-const _hoisted_58 = { class: "rounded-full border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/50 dark:text-amber-200" };
+const _hoisted_58 = { class: "rounded-full border border-indigo-300 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:border-indigo-500/50 dark:text-indigo-200" };
 const _hoisted_59 = { class: "mt-3 grid gap-3 lg:grid-cols-2" };
 const _hoisted_60 = {
   key: 0,
   class: "grid gap-2"
 };
-const _hoisted_61 = ["onClick"];
+const _hoisted_61 = ["disabled", "onClick"];
 const _hoisted_62 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
 const _hoisted_63 = {
   key: 0,
+  class: "rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_64 = {
+  key: 1,
   class: "rounded-full border border-emerald-300 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-600 dark:text-emerald-200"
 };
-const _hoisted_64 = { class: "mt-1 text-emerald-600 dark:text-emerald-300" };
-const _hoisted_65 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_65 = { class: "mt-1 text-emerald-600 dark:text-emerald-300" };
 const _hoisted_66 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
-const _hoisted_67 = {
+const _hoisted_67 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_68 = {
   key: 1,
   class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
 };
-const _hoisted_68 = {
+const _hoisted_69 = {
   key: 0,
   class: "grid gap-2"
 };
-const _hoisted_69 = ["onClick"];
-const _hoisted_70 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
-const _hoisted_71 = {
+const _hoisted_70 = ["disabled", "onClick"];
+const _hoisted_71 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
+const _hoisted_72 = {
   key: 0,
+  class: "rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+};
+const _hoisted_73 = {
+  key: 1,
   class: "rounded-full border border-rose-300 px-1.5 py-0.5 text-[10px] text-rose-700 dark:border-rose-600 dark:text-rose-200"
 };
-const _hoisted_72 = { class: "mt-1 text-rose-600 dark:text-rose-300" };
-const _hoisted_73 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
-const _hoisted_74 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
-const _hoisted_75 = {
+const _hoisted_74 = { class: "mt-1 text-rose-600 dark:text-rose-300" };
+const _hoisted_75 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_76 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_77 = {
   key: 1,
   class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
 };
-const _hoisted_76 = {
+const _hoisted_78 = {
   key: 7,
+  class: "rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40"
+};
+const _hoisted_79 = { class: "flex flex-wrap items-center justify-between gap-2" };
+const _hoisted_80 = { class: "rounded-full border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:border-amber-500/50 dark:text-amber-200" };
+const _hoisted_81 = { class: "mt-3 grid gap-3 lg:grid-cols-2" };
+const _hoisted_82 = {
+  key: 0,
+  class: "grid gap-2"
+};
+const _hoisted_83 = ["onClick"];
+const _hoisted_84 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
+const _hoisted_85 = {
+  key: 0,
+  class: "rounded-full border border-emerald-300 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-600 dark:text-emerald-200"
+};
+const _hoisted_86 = { class: "mt-1 text-emerald-600 dark:text-emerald-300" };
+const _hoisted_87 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_88 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_89 = {
+  key: 1,
+  class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+};
+const _hoisted_90 = {
+  key: 0,
+  class: "grid gap-2"
+};
+const _hoisted_91 = ["onClick"];
+const _hoisted_92 = { class: "flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100" };
+const _hoisted_93 = {
+  key: 0,
+  class: "rounded-full border border-rose-300 px-1.5 py-0.5 text-[10px] text-rose-700 dark:border-rose-600 dark:text-rose-200"
+};
+const _hoisted_94 = { class: "mt-1 text-rose-600 dark:text-rose-300" };
+const _hoisted_95 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_96 = { class: "mt-1 text-slate-500 dark:text-slate-400" };
+const _hoisted_97 = {
+  key: 1,
+  class: "rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400"
+};
+const _hoisted_98 = {
+  key: 8,
   class: "text-[11px] text-slate-500 dark:text-slate-400"
 };
 const {computed,nextTick,onBeforeUnmount,onMounted,ref,watch} = await importShared('vue');
@@ -188,6 +237,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     assetOptions: { default: () => [] },
     portfolioKey: { default: "ALL" },
     assetKey: { default: "TOP_MOVERS" },
+    portfolioMovers: { default: null },
+    portfolioMoverBasis: { default: "GROSS" },
     assetMovers: { default: null },
     showPortfolioSelector: { type: Boolean, default: true },
     storageKey: { default: "" },
@@ -715,6 +766,39 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       if (props.assetMetric === "PROFIT") return `Profit Δ ${formatSignedCurrency(mover.delta_profit)}`;
       return `Current Δ ${formatSignedCurrency(mover.delta_value)}`;
     }
+    function portfolioMoverRankText(mover) {
+      if (props.portfolioMoverBasis === "NET") return `Net Δ ${formatSignedCurrency(mover.delta_net)}`;
+      if (props.portfolioMoverBasis === "LIABILITIES") return `Liabilities Δ ${formatSignedCurrency(mover.delta_liabilities)}`;
+      return `Gross Δ ${formatSignedCurrency(mover.delta_value)}`;
+    }
+    function portfolioDriverLabel(driver) {
+      if (driver === "CAPITAL_LED") return "Capital-led";
+      if (driver === "PERFORMANCE_LED") return "Performance-led";
+      if (driver === "WITHDRAWAL_LED") return "Withdrawal-led";
+      if (driver === "LIABILITY_LED") return "Liability-led";
+      if (driver === "NEUTRAL") return "Neutral";
+      return "Mixed";
+    }
+    function portfolioDriverClass(driver) {
+      if (driver === "CAPITAL_LED") {
+        return "border-sky-300 text-sky-700 dark:border-sky-600 dark:text-sky-200";
+      }
+      if (driver === "PERFORMANCE_LED") {
+        return "border-emerald-300 text-emerald-700 dark:border-emerald-600 dark:text-emerald-200";
+      }
+      if (driver === "WITHDRAWAL_LED") {
+        return "border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-200";
+      }
+      if (driver === "LIABILITY_LED") {
+        return "border-rose-300 text-rose-700 dark:border-rose-600 dark:text-rose-200";
+      }
+      return "border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300";
+    }
+    function setPortfolioFromMover(portfolioId) {
+      if (portfolioId == null) return;
+      emit("update:portfolioKey", String(portfolioId));
+      emit("update:mode", "PORTFOLIO");
+    }
     function setAssetFromMover(key) {
       emit("update:assetKey", key);
     }
@@ -1145,18 +1229,81 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
               }, _toDisplayString(formatCurrency(lastPoint.value?.net ?? 0, __props.currency)), 5)
             ])
           ])) : _createCommentVNode("", true),
-          modeModel.value === "ASSET" && __props.assetMovers ? (_openBlock(), _createElementBlock("div", _hoisted_56, [
+          modeModel.value === "SUMMARY" && __props.portfolioMovers ? (_openBlock(), _createElementBlock("div", _hoisted_56, [
             _createElementVNode("div", _hoisted_57, [
               _cache[32] || (_cache[32] = _createElementVNode("div", null, [
-                _createElementVNode("p", { class: "font-semibold text-slate-800 dark:text-slate-100" }, "Top Asset Movers"),
-                _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, " Cost basis Δ helps separate added capital from actual profit movement. ")
+                _createElementVNode("p", { class: "font-semibold text-slate-800 dark:text-slate-100" }, "Top Portfolio Movers"),
+                _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, " Invested Δ helps separate added capital from actual profit movement. ")
               ], -1)),
-              _createElementVNode("span", _hoisted_58, _toDisplayString(assetKeyModel.value === "TOP_MOVERS" ? "Top movers" : "Selected asset"), 1)
+              _createElementVNode("span", _hoisted_58, " Basis: " + _toDisplayString(__props.portfolioMoverBasis), 1)
             ]),
             _createElementVNode("div", _hoisted_59, [
               _createElementVNode("div", null, [
                 _cache[33] || (_cache[33] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-emerald-500" }, "Top Gainers", -1)),
-                __props.assetMovers.top_gainers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
+                __props.portfolioMovers.top_gainers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_60, [
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.portfolioMovers.top_gainers, (mover) => {
+                    return _openBlock(), _createElementBlock("button", {
+                      key: `portfolio-gainer-${mover.portfolio_id ?? mover.portfolio_name}`,
+                      type: "button",
+                      class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30",
+                      disabled: mover.portfolio_id == null,
+                      onClick: ($event) => setPortfolioFromMover(mover.portfolio_id)
+                    }, [
+                      _createElementVNode("p", _hoisted_62, [
+                        _createElementVNode("span", null, _toDisplayString(mover.portfolio_name), 1),
+                        mover.portfolio_type ? (_openBlock(), _createElementBlock("span", _hoisted_63, _toDisplayString(mover.portfolio_type), 1)) : _createCommentVNode("", true),
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_64, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true),
+                        _createElementVNode("span", {
+                          class: _normalizeClass(["rounded-full border px-1.5 py-0.5 text-[10px]", portfolioDriverClass(mover.driver_type)])
+                        }, _toDisplayString(portfolioDriverLabel(mover.driver_type)), 3)
+                      ]),
+                      _createElementVNode("p", _hoisted_65, _toDisplayString(portfolioMoverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_66, " Invested Δ " + _toDisplayString(formatSignedCurrency(mover.delta_invested)) + " · Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)), 1),
+                      _createElementVNode("p", _hoisted_67, " Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)) + " · Liabilities Δ " + _toDisplayString(formatSignedCurrency(mover.delta_liabilities)), 1)
+                    ], 8, _hoisted_61);
+                  }), 128))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_68, "No portfolio gainers in this range."))
+              ]),
+              _createElementVNode("div", null, [
+                _cache[34] || (_cache[34] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500" }, "Top Losers", -1)),
+                __props.portfolioMovers.top_losers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_69, [
+                  (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.portfolioMovers.top_losers, (mover) => {
+                    return _openBlock(), _createElementBlock("button", {
+                      key: `portfolio-loser-${mover.portfolio_id ?? mover.portfolio_name}`,
+                      type: "button",
+                      class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-rose-700 dark:hover:bg-rose-950/30",
+                      disabled: mover.portfolio_id == null,
+                      onClick: ($event) => setPortfolioFromMover(mover.portfolio_id)
+                    }, [
+                      _createElementVNode("p", _hoisted_71, [
+                        _createElementVNode("span", null, _toDisplayString(mover.portfolio_name), 1),
+                        mover.portfolio_type ? (_openBlock(), _createElementBlock("span", _hoisted_72, _toDisplayString(mover.portfolio_type), 1)) : _createCommentVNode("", true),
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_73, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true),
+                        _createElementVNode("span", {
+                          class: _normalizeClass(["rounded-full border px-1.5 py-0.5 text-[10px]", portfolioDriverClass(mover.driver_type)])
+                        }, _toDisplayString(portfolioDriverLabel(mover.driver_type)), 3)
+                      ]),
+                      _createElementVNode("p", _hoisted_74, _toDisplayString(portfolioMoverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_75, " Invested Δ " + _toDisplayString(formatSignedCurrency(mover.delta_invested)) + " · Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)), 1),
+                      _createElementVNode("p", _hoisted_76, " Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)) + " · Liabilities Δ " + _toDisplayString(formatSignedCurrency(mover.delta_liabilities)), 1)
+                    ], 8, _hoisted_70);
+                  }), 128))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_77, "No portfolio losers in this range."))
+              ])
+            ])
+          ])) : _createCommentVNode("", true),
+          modeModel.value === "ASSET" && __props.assetMovers ? (_openBlock(), _createElementBlock("div", _hoisted_78, [
+            _createElementVNode("div", _hoisted_79, [
+              _cache[35] || (_cache[35] = _createElementVNode("div", null, [
+                _createElementVNode("p", { class: "font-semibold text-slate-800 dark:text-slate-100" }, "Top Asset Movers"),
+                _createElementVNode("p", { class: "mt-0.5 text-slate-500 dark:text-slate-400" }, " Cost basis Δ helps separate added capital from actual profit movement. ")
+              ], -1)),
+              _createElementVNode("span", _hoisted_80, _toDisplayString(assetKeyModel.value === "TOP_MOVERS" ? "Top movers" : "Selected asset"), 1)
+            ]),
+            _createElementVNode("div", _hoisted_81, [
+              _createElementVNode("div", null, [
+                _cache[36] || (_cache[36] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-emerald-500" }, "Top Gainers", -1)),
+                __props.assetMovers.top_gainers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_82, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.assetMovers.top_gainers, (mover) => {
                     return _openBlock(), _createElementBlock("button", {
                       key: `asset-gainer-${mover.key}`,
@@ -1164,20 +1311,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30",
                       onClick: ($event) => setAssetFromMover(mover.key)
                     }, [
-                      _createElementVNode("p", _hoisted_62, [
+                      _createElementVNode("p", _hoisted_84, [
                         _createElementVNode("span", null, _toDisplayString(mover.label), 1),
-                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_63, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_85, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
                       ]),
-                      _createElementVNode("p", _hoisted_64, _toDisplayString(moverRankText(mover)), 1),
-                      _createElementVNode("p", _hoisted_65, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
-                      _createElementVNode("p", _hoisted_66, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
-                    ], 8, _hoisted_61);
+                      _createElementVNode("p", _hoisted_86, _toDisplayString(moverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_87, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
+                      _createElementVNode("p", _hoisted_88, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
+                    ], 8, _hoisted_83);
                   }), 128))
-                ])) : (_openBlock(), _createElementBlock("p", _hoisted_67, "No gainers in this range."))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_89, "No gainers in this range."))
               ]),
               _createElementVNode("div", null, [
-                _cache[34] || (_cache[34] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500" }, "Top Losers", -1)),
-                __props.assetMovers.top_losers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_68, [
+                _cache[37] || (_cache[37] = _createElementVNode("p", { class: "mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500" }, "Top Losers", -1)),
+                __props.assetMovers.top_losers.length > 0 ? (_openBlock(), _createElementBlock("div", _hoisted_90, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(__props.assetMovers.top_losers, (mover) => {
                     return _openBlock(), _createElementBlock("button", {
                       key: `asset-loser-${mover.key}`,
@@ -1185,20 +1332,20 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-rose-300 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-rose-700 dark:hover:bg-rose-950/30",
                       onClick: ($event) => setAssetFromMover(mover.key)
                     }, [
-                      _createElementVNode("p", _hoisted_70, [
+                      _createElementVNode("p", _hoisted_92, [
                         _createElementVNode("span", null, _toDisplayString(mover.label), 1),
-                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_71, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
+                        mover.status ? (_openBlock(), _createElementBlock("span", _hoisted_93, _toDisplayString(mover.status), 1)) : _createCommentVNode("", true)
                       ]),
-                      _createElementVNode("p", _hoisted_72, _toDisplayString(moverRankText(mover)), 1),
-                      _createElementVNode("p", _hoisted_73, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
-                      _createElementVNode("p", _hoisted_74, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
-                    ], 8, _hoisted_69);
+                      _createElementVNode("p", _hoisted_94, _toDisplayString(moverRankText(mover)), 1),
+                      _createElementVNode("p", _hoisted_95, " Profit Δ " + _toDisplayString(formatSignedCurrency(mover.delta_profit)) + " · Return Δ " + _toDisplayString(formatSignedNumber(mover.delta_return_pct)), 1),
+                      _createElementVNode("p", _hoisted_96, " Cost basis Δ " + _toDisplayString(formatSignedCurrency(mover.delta_cost_basis)), 1)
+                    ], 8, _hoisted_91);
                   }), 128))
-                ])) : (_openBlock(), _createElementBlock("p", _hoisted_75, "No losers in this range."))
+                ])) : (_openBlock(), _createElementBlock("p", _hoisted_97, "No losers in this range."))
               ])
             ])
           ])) : _createCommentVNode("", true),
-          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_76, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
+          linePaths.value.length > 0 ? (_openBlock(), _createElementBlock("p", _hoisted_98, " Range: " + _toDisplayString(rangeMetaText.value || `${firstPoint.value?.label ?? "-"} -> ${lastPoint.value?.label ?? "-"}`), 1)) : _createCommentVNode("", true)
         ])) : _createCommentVNode("", true)
       ]);
     };

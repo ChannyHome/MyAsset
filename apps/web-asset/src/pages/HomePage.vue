@@ -85,6 +85,35 @@ type HomeTrendAssetMovers = {
   top_gainers: HomeTrendAssetMover[];
   top_losers: HomeTrendAssetMover[];
 };
+type HomeTrendPortfolioMover = {
+  portfolio_id: number | null;
+  portfolio_name: string;
+  portfolio_type: string | null;
+  current_value: number;
+  baseline_value: number;
+  delta_value: number;
+  current_net: number;
+  baseline_net: number;
+  delta_net: number;
+  current_liabilities: number;
+  baseline_liabilities: number;
+  delta_liabilities: number;
+  current_invested: number;
+  baseline_invested: number;
+  delta_invested: number;
+  current_profit: number;
+  baseline_profit: number;
+  delta_profit: number;
+  current_return_pct: number | null;
+  baseline_return_pct: number | null;
+  delta_return_pct: number | null;
+  driver_type: "CAPITAL_LED" | "PERFORMANCE_LED" | "WITHDRAWAL_LED" | "LIABILITY_LED" | "MIXED" | "NEUTRAL";
+  status: "NEW" | "REMOVED" | null;
+};
+type HomeTrendPortfolioMovers = {
+  top_gainers: HomeTrendPortfolioMover[];
+  top_losers: HomeTrendPortfolioMover[];
+};
 type HomeCardKey =
   | "LIVE_DASHBOARD"
   | "GOAL_PROGRESS"
@@ -243,6 +272,7 @@ const liveTrendVisibility = reactive({
 const homeTrendPortfolioKey = ref("ALL");
 const homePortfolioTrendPoints = ref<Array<{ label: string; gross: number; liabilities: number; net: number }>>([]);
 const homeTrendPortfolioLines = ref<HomeTrendLine[]>([]);
+const homeTrendPortfolioMovers = ref<HomeTrendPortfolioMovers | null>(null);
 const homeTrendAssetLines = ref<HomeTrendLine[]>([]);
 const homeTrendAssetOptions = ref<Array<{ key: string; label: string }>>([]);
 const homeTrendAssetKey = ref("TOP_MOVERS");
@@ -401,6 +431,13 @@ const homeTrendPortfolioId = computed<number | undefined>(() => {
   return Number.isFinite(parsed) ? parsed : undefined;
 });
 
+const homeTrendPortfolioMoverBasis = computed<"GROSS" | "NET" | "LIABILITIES">(() => {
+  if (liveTrendVisibility.gross) return "GROSS";
+  if (liveTrendVisibility.net) return "NET";
+  if (liveTrendVisibility.liabilities) return "LIABILITIES";
+  return "GROSS";
+});
+
 const homePortfolioId = computed<number | undefined>(() => {
   if (homePortfolioKey.value === "ALL") return undefined;
   const parsed = Number(homePortfolioKey.value);
@@ -515,11 +552,18 @@ const liveDashboardData = useDashboardDataAdapter({
     const normalizedCurrency = targetCurrency === "USD" ? "USD" : "KRW";
     const out = await getNetworthSeries({
       display_currency: normalizedCurrency,
+      portfolio_mover_basis: homeTrendPortfolioMoverBasis.value,
       bucket: homeTrendBucket.value,
       range: homeTrendRange.value,
     });
     homeTrendRangeStartDate.value = out.range_start_date;
     homeTrendRangeEndDate.value = out.range_end_date;
+    homeTrendPortfolioMovers.value = out.portfolio_movers
+      ? {
+          top_gainers: (out.portfolio_movers.top_gainers || []).map(mapHomeTrendPortfolioMover),
+          top_losers: (out.portfolio_movers.top_losers || []).map(mapHomeTrendPortfolioMover),
+        }
+      : null;
     return out.points.map((point) => ({
       label: point.snapshot_date,
       gross: toNumber(point.gross_assets_total),
@@ -881,6 +925,58 @@ function mapHomeTrendLine(line: { key: string; label: string; points: Array<{ sn
       snapshot_date: point.snapshot_date,
       value: toNumber(point.value),
     })),
+  };
+}
+
+function mapHomeTrendPortfolioMover(mover: {
+  portfolio_id: number | null;
+  portfolio_name: string;
+  portfolio_type: string | null;
+  current_value: string | number;
+  baseline_value: string | number;
+  delta_value: string | number;
+  current_net: string | number;
+  baseline_net: string | number;
+  delta_net: string | number;
+  current_liabilities: string | number;
+  baseline_liabilities: string | number;
+  delta_liabilities: string | number;
+  current_invested: string | number;
+  baseline_invested: string | number;
+  delta_invested: string | number;
+  current_profit: string | number;
+  baseline_profit: string | number;
+  delta_profit: string | number;
+  current_return_pct: string | number | null;
+  baseline_return_pct: string | number | null;
+  delta_return_pct: string | number | null;
+  driver_type: HomeTrendPortfolioMover["driver_type"];
+  status: "NEW" | "REMOVED" | null;
+}): HomeTrendPortfolioMover {
+  return {
+    portfolio_id: mover.portfolio_id,
+    portfolio_name: mover.portfolio_name,
+    portfolio_type: mover.portfolio_type,
+    current_value: toNumber(mover.current_value),
+    baseline_value: toNumber(mover.baseline_value),
+    delta_value: toNumber(mover.delta_value),
+    current_net: toNumber(mover.current_net),
+    baseline_net: toNumber(mover.baseline_net),
+    delta_net: toNumber(mover.delta_net),
+    current_liabilities: toNumber(mover.current_liabilities),
+    baseline_liabilities: toNumber(mover.baseline_liabilities),
+    delta_liabilities: toNumber(mover.delta_liabilities),
+    current_invested: toNumber(mover.current_invested),
+    baseline_invested: toNumber(mover.baseline_invested),
+    delta_invested: toNumber(mover.delta_invested),
+    current_profit: toNumber(mover.current_profit),
+    baseline_profit: toNumber(mover.baseline_profit),
+    delta_profit: toNumber(mover.delta_profit),
+    current_return_pct: toNullableNumber(mover.current_return_pct),
+    baseline_return_pct: toNullableNumber(mover.baseline_return_pct),
+    delta_return_pct: toNullableNumber(mover.delta_return_pct),
+    driver_type: mover.driver_type,
+    status: mover.status,
   };
 }
 
@@ -1577,6 +1673,14 @@ watch(
 );
 
 watch(
+  () => [liveTrendVisibility.gross, liveTrendVisibility.net, liveTrendVisibility.liabilities] as const,
+  () => {
+    if (!summary.value || homeTrendMode.value !== "SUMMARY") return;
+    void liveDashboardData.refreshTrend();
+  },
+);
+
+watch(
   () => [
     homeTrendMode.value,
     homeTrendPortfolioMetric.value,
@@ -2050,6 +2154,8 @@ watch(
             :asset-options="homeTrendAssetOptions"
             :portfolio-key="homeTrendPortfolioKey"
             :asset-key="homeTrendAssetKey"
+            :portfolio-movers="homeTrendPortfolioMovers"
+            :portfolio-mover-basis="homeTrendPortfolioMoverBasis"
             :asset-movers="homeTrendAssetMovers"
             :range="homeTrendRange"
             :bucket="homeTrendBucket"

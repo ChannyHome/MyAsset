@@ -54,6 +54,39 @@ type AssetMovers = {
   top_losers: AssetMover[];
 };
 
+type PortfolioMoverBasis = "GROSS" | "NET" | "LIABILITIES";
+
+type PortfolioMover = {
+  portfolio_id: number | null;
+  portfolio_name: string;
+  portfolio_type: string | null;
+  current_value: number;
+  baseline_value: number;
+  delta_value: number;
+  current_net: number;
+  baseline_net: number;
+  delta_net: number;
+  current_liabilities: number;
+  baseline_liabilities: number;
+  delta_liabilities: number;
+  current_invested: number;
+  baseline_invested: number;
+  delta_invested: number;
+  current_profit: number;
+  baseline_profit: number;
+  delta_profit: number;
+  current_return_pct: number | null;
+  baseline_return_pct: number | null;
+  delta_return_pct: number | null;
+  driver_type: "CAPITAL_LED" | "PERFORMANCE_LED" | "WITHDRAWAL_LED" | "LIABILITY_LED" | "MIXED" | "NEUTRAL";
+  status: "NEW" | "REMOVED" | null;
+};
+
+type PortfolioMovers = {
+  top_gainers: PortfolioMover[];
+  top_losers: PortfolioMover[];
+};
+
 const props = withDefaults(
   defineProps<{
     title?: string;
@@ -77,6 +110,8 @@ const props = withDefaults(
     assetOptions?: PortfolioOption[];
     portfolioKey?: string;
     assetKey?: string;
+    portfolioMovers?: PortfolioMovers | null;
+    portfolioMoverBasis?: PortfolioMoverBasis;
     assetMovers?: AssetMovers | null;
     showPortfolioSelector?: boolean;
     storageKey?: string;
@@ -107,6 +142,8 @@ const props = withDefaults(
     assetOptions: () => [],
     portfolioKey: "ALL",
     assetKey: "TOP_MOVERS",
+    portfolioMovers: null,
+    portfolioMoverBasis: "GROSS",
     assetMovers: null,
     showPortfolioSelector: true,
     storageKey: "",
@@ -662,7 +699,17 @@ const xTicks = computed(() => {
   for (let index = 0; index < total; index += step) {
     indexes.push(index);
   }
-  if (indexes[indexes.length - 1] !== total - 1) indexes.push(total - 1);
+  const latestIndex = total - 1;
+  if (indexes[indexes.length - 1] !== latestIndex) {
+    const previousIndex = indexes[indexes.length - 1] ?? 0;
+    const latestX = toX(latestIndex, total);
+    const previousX = toX(previousIndex, total);
+    if (latestX - previousX < 54) {
+      indexes[indexes.length - 1] = latestIndex;
+    } else {
+      indexes.push(latestIndex);
+    }
+  }
   return Array.from(new Set(indexes)).map((index) => ({
     index,
     x: toX(index, total),
@@ -748,6 +795,43 @@ function moverRankText(mover: AssetMover): string {
   if (props.assetMetric === "RETURN") return `Return Δ ${formatSignedNumber(mover.delta_return_pct)}`;
   if (props.assetMetric === "PROFIT") return `Profit Δ ${formatSignedCurrency(mover.delta_profit)}`;
   return `Current Δ ${formatSignedCurrency(mover.delta_value)}`;
+}
+
+function portfolioMoverRankText(mover: PortfolioMover): string {
+  if (props.portfolioMoverBasis === "NET") return `Net Δ ${formatSignedCurrency(mover.delta_net)}`;
+  if (props.portfolioMoverBasis === "LIABILITIES") return `Liabilities Δ ${formatSignedCurrency(mover.delta_liabilities)}`;
+  return `Gross Δ ${formatSignedCurrency(mover.delta_value)}`;
+}
+
+function portfolioDriverLabel(driver: PortfolioMover["driver_type"]): string {
+  if (driver === "CAPITAL_LED") return "Capital-led";
+  if (driver === "PERFORMANCE_LED") return "Performance-led";
+  if (driver === "WITHDRAWAL_LED") return "Withdrawal-led";
+  if (driver === "LIABILITY_LED") return "Liability-led";
+  if (driver === "NEUTRAL") return "Neutral";
+  return "Mixed";
+}
+
+function portfolioDriverClass(driver: PortfolioMover["driver_type"]): string {
+  if (driver === "CAPITAL_LED") {
+    return "border-sky-300 text-sky-700 dark:border-sky-600 dark:text-sky-200";
+  }
+  if (driver === "PERFORMANCE_LED") {
+    return "border-emerald-300 text-emerald-700 dark:border-emerald-600 dark:text-emerald-200";
+  }
+  if (driver === "WITHDRAWAL_LED") {
+    return "border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-200";
+  }
+  if (driver === "LIABILITY_LED") {
+    return "border-rose-300 text-rose-700 dark:border-rose-600 dark:text-rose-200";
+  }
+  return "border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-300";
+}
+
+function setPortfolioFromMover(portfolioId: number | null): void {
+  if (portfolioId == null) return;
+  emit("update:portfolioKey", String(portfolioId));
+  emit("update:mode", "PORTFOLIO");
 }
 
 function setAssetFromMover(key: string): void {
@@ -1249,6 +1333,90 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
           <p class="mt-1 text-slate-600 dark:text-slate-300" :style="props.maskAmounts ? { filter: 'blur(6px)' } : undefined">
             {{ formatCurrency(lastPoint?.net ?? 0, currency) }}
           </p>
+        </div>
+      </div>
+
+      <div v-if="modeModel === 'SUMMARY' && portfolioMovers" class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-700 dark:bg-slate-900/40">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="font-semibold text-slate-800 dark:text-slate-100">Top Portfolio Movers</p>
+            <p class="mt-0.5 text-slate-500 dark:text-slate-400">
+              Invested Δ helps separate added capital from actual profit movement.
+            </p>
+          </div>
+          <span class="rounded-full border border-indigo-300 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:border-indigo-500/50 dark:text-indigo-200">
+            Basis: {{ portfolioMoverBasis }}
+          </span>
+        </div>
+        <div class="mt-3 grid gap-3 lg:grid-cols-2">
+          <div>
+            <p class="mb-2 font-semibold uppercase tracking-[0.18em] text-emerald-500">Top Gainers</p>
+            <div v-if="portfolioMovers.top_gainers.length > 0" class="grid gap-2">
+              <button
+                v-for="mover in portfolioMovers.top_gainers"
+                :key="`portfolio-gainer-${mover.portfolio_id ?? mover.portfolio_name}`"
+                type="button"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                :disabled="mover.portfolio_id == null"
+                @click="setPortfolioFromMover(mover.portfolio_id)"
+              >
+                <p class="flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+                  <span>{{ mover.portfolio_name }}</span>
+                  <span v-if="mover.portfolio_type" class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                    {{ mover.portfolio_type }}
+                  </span>
+                  <span v-if="mover.status" class="rounded-full border border-emerald-300 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-600 dark:text-emerald-200">
+                    {{ mover.status }}
+                  </span>
+                  <span class="rounded-full border px-1.5 py-0.5 text-[10px]" :class="portfolioDriverClass(mover.driver_type)">
+                    {{ portfolioDriverLabel(mover.driver_type) }}
+                  </span>
+                </p>
+                <p class="mt-1 text-emerald-600 dark:text-emerald-300">{{ portfolioMoverRankText(mover) }}</p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Invested Δ {{ formatSignedCurrency(mover.delta_invested) }} · Profit Δ {{ formatSignedCurrency(mover.delta_profit) }}
+                </p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Return Δ {{ formatSignedNumber(mover.delta_return_pct) }} · Liabilities Δ {{ formatSignedCurrency(mover.delta_liabilities) }}
+                </p>
+              </button>
+            </div>
+            <p v-else class="rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400">No portfolio gainers in this range.</p>
+          </div>
+          <div>
+            <p class="mb-2 font-semibold uppercase tracking-[0.18em] text-rose-500">Top Losers</p>
+            <div v-if="portfolioMovers.top_losers.length > 0" class="grid gap-2">
+              <button
+                v-for="mover in portfolioMovers.top_losers"
+                :key="`portfolio-loser-${mover.portfolio_id ?? mover.portfolio_name}`"
+                type="button"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-left transition-colors hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-rose-700 dark:hover:bg-rose-950/30"
+                :disabled="mover.portfolio_id == null"
+                @click="setPortfolioFromMover(mover.portfolio_id)"
+              >
+                <p class="flex flex-wrap items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
+                  <span>{{ mover.portfolio_name }}</span>
+                  <span v-if="mover.portfolio_type" class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                    {{ mover.portfolio_type }}
+                  </span>
+                  <span v-if="mover.status" class="rounded-full border border-rose-300 px-1.5 py-0.5 text-[10px] text-rose-700 dark:border-rose-600 dark:text-rose-200">
+                    {{ mover.status }}
+                  </span>
+                  <span class="rounded-full border px-1.5 py-0.5 text-[10px]" :class="portfolioDriverClass(mover.driver_type)">
+                    {{ portfolioDriverLabel(mover.driver_type) }}
+                  </span>
+                </p>
+                <p class="mt-1 text-rose-600 dark:text-rose-300">{{ portfolioMoverRankText(mover) }}</p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Invested Δ {{ formatSignedCurrency(mover.delta_invested) }} · Profit Δ {{ formatSignedCurrency(mover.delta_profit) }}
+                </p>
+                <p class="mt-1 text-slate-500 dark:text-slate-400">
+                  Return Δ {{ formatSignedNumber(mover.delta_return_pct) }} · Liabilities Δ {{ formatSignedCurrency(mover.delta_liabilities) }}
+                </p>
+              </button>
+            </div>
+            <p v-else class="rounded-lg border border-slate-200 px-3 py-2 text-slate-500 dark:border-slate-700 dark:text-slate-400">No portfolio losers in this range.</p>
+          </div>
         </div>
       </div>
 

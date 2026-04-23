@@ -3,7 +3,7 @@ import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime
 import { g as getCompositionSeries, a as getSummary, b as getNetworthSeries, c as getAllocation } from './ui-DfQNiIxJ.js';
 import { _ as _sfc_main$c } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CEV8-zqX.js';
 import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DRqt5y9P.js';
-import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-B0OWDcYF.js';
+import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Ul7gX1mh.js';
 import { u as useDashboardDataAdapter, _ as _sfc_main$3, a as _sfc_main$9, b as _sfc_main$a, c as _sfc_main$b, d as _sfc_main$d } from './useDashboardDataAdapter-Co3-MFt6.js';
 import { g as getMySettings, u as updateMySettings, a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';
@@ -2136,6 +2136,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
     const homeTrendPortfolioKey = ref("ALL");
     const homePortfolioTrendPoints = ref([]);
     const homeTrendPortfolioLines = ref([]);
+    const homeTrendPortfolioMovers = ref(null);
     const homeTrendAssetLines = ref([]);
     const homeTrendAssetOptions = ref([]);
     const homeTrendAssetKey = ref("TOP_MOVERS");
@@ -2281,6 +2282,12 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       const parsed = Number(homeTrendPortfolioKey.value);
       return Number.isFinite(parsed) ? parsed : void 0;
     });
+    const homeTrendPortfolioMoverBasis = computed(() => {
+      if (liveTrendVisibility.gross) return "GROSS";
+      if (liveTrendVisibility.net) return "NET";
+      if (liveTrendVisibility.liabilities) return "LIABILITIES";
+      return "GROSS";
+    });
     const homePortfolioId = computed(() => {
       if (homePortfolioKey.value === "ALL") return void 0;
       const parsed = Number(homePortfolioKey.value);
@@ -2385,11 +2392,16 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
         const normalizedCurrency = targetCurrency === "USD" ? "USD" : "KRW";
         const out = await getNetworthSeries({
           display_currency: normalizedCurrency,
+          portfolio_mover_basis: homeTrendPortfolioMoverBasis.value,
           bucket: homeTrendBucket.value,
           range: homeTrendRange.value
         });
         homeTrendRangeStartDate.value = out.range_start_date;
         homeTrendRangeEndDate.value = out.range_end_date;
+        homeTrendPortfolioMovers.value = out.portfolio_movers ? {
+          top_gainers: (out.portfolio_movers.top_gainers || []).map(mapHomeTrendPortfolioMover),
+          top_losers: (out.portfolio_movers.top_losers || []).map(mapHomeTrendPortfolioMover)
+        } : null;
         return out.points.map((point) => ({
           label: point.snapshot_date,
           gross: toNumber(point.gross_assets_total),
@@ -2710,6 +2722,33 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
           snapshot_date: point.snapshot_date,
           value: toNumber(point.value)
         }))
+      };
+    }
+    function mapHomeTrendPortfolioMover(mover) {
+      return {
+        portfolio_id: mover.portfolio_id,
+        portfolio_name: mover.portfolio_name,
+        portfolio_type: mover.portfolio_type,
+        current_value: toNumber(mover.current_value),
+        baseline_value: toNumber(mover.baseline_value),
+        delta_value: toNumber(mover.delta_value),
+        current_net: toNumber(mover.current_net),
+        baseline_net: toNumber(mover.baseline_net),
+        delta_net: toNumber(mover.delta_net),
+        current_liabilities: toNumber(mover.current_liabilities),
+        baseline_liabilities: toNumber(mover.baseline_liabilities),
+        delta_liabilities: toNumber(mover.delta_liabilities),
+        current_invested: toNumber(mover.current_invested),
+        baseline_invested: toNumber(mover.baseline_invested),
+        delta_invested: toNumber(mover.delta_invested),
+        current_profit: toNumber(mover.current_profit),
+        baseline_profit: toNumber(mover.baseline_profit),
+        delta_profit: toNumber(mover.delta_profit),
+        current_return_pct: toNullableNumber(mover.current_return_pct),
+        baseline_return_pct: toNullableNumber(mover.baseline_return_pct),
+        delta_return_pct: toNullableNumber(mover.delta_return_pct),
+        driver_type: mover.driver_type,
+        status: mover.status
       };
     }
     async function loadHomeAssetTrend() {
@@ -3312,6 +3351,13 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       }
     );
     watch(
+      () => [liveTrendVisibility.gross, liveTrendVisibility.net, liveTrendVisibility.liabilities],
+      () => {
+        if (!summary.value || homeTrendMode.value !== "SUMMARY") return;
+        void liveDashboardData.refreshTrend();
+      }
+    );
+    watch(
       () => [
         homeTrendMode.value,
         homeTrendPortfolioMetric.value,
@@ -3712,6 +3758,8 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "asset-options": homeTrendAssetOptions.value,
                       "portfolio-key": homeTrendPortfolioKey.value,
                       "asset-key": homeTrendAssetKey.value,
+                      "portfolio-movers": homeTrendPortfolioMovers.value,
+                      "portfolio-mover-basis": homeTrendPortfolioMoverBasis.value,
                       "asset-movers": homeTrendAssetMovers.value,
                       range: homeTrendRange.value,
                       bucket: homeTrendBucket.value,
@@ -3729,7 +3777,7 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
                       "onUpdate:range": _cache[13] || (_cache[13] = ($event) => homeTrendRange.value = $event),
                       "onUpdate:bucket": _cache[14] || (_cache[14] = ($event) => homeTrendBucket.value = $event),
                       onRefresh: refreshHomeNetworthTrend
-                    }, null, 8, ["subtitle", "currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "asset-metric", "portfolio-lines", "asset-lines", "portfolio-options", "asset-options", "portfolio-key", "asset-key", "asset-movers", "range", "bucket", "range-start-date", "range-end-date"])
+                    }, null, 8, ["subtitle", "currency", "points", "mask-amounts", "loading", "error", "show-gross", "show-liabilities", "show-net", "mode", "portfolio-metric", "asset-metric", "portfolio-lines", "asset-lines", "portfolio-options", "asset-options", "portfolio-key", "asset-key", "portfolio-movers", "portfolio-mover-basis", "asset-movers", "range", "bucket", "range-start-date", "range-end-date"])
                   ]),
                   _createElementVNode("div", _hoisted_28, [
                     _createVNode(_sfc_main$1, {

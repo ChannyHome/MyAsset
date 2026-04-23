@@ -1,11 +1,11 @@
 ﻿{
-    "pid":  42296,
-    "started_at":  "2026-04-22T22:17:24",
+    "pid":  5516,
+    "started_at":  "2026-04-22T22:44:04",
     "script":  "C:\\Users\\pigun\\Desktop\\CK\\2026\\26_Repos\\MyAsset\\run-api.ps1",
     "mode":  "manual-or-direct-run-api",
     "port":  8000,
     "health_url":  "http://127.0.0.1:8000/api/v1/health",
     "stdout_log":  "",
     "stderr_log":  "",
-    "worker_pid":  51544
+    "worker_pid":  58252
 }

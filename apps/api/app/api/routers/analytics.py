@@ -28,6 +28,8 @@ from app.schemas.analytics import (
     AnalyticsNetworthSeriesLineOut,
     AnalyticsNetworthSeriesLinePointOut,
     AnalyticsNetworthSeriesOptionOut,
+    AnalyticsNetworthSeriesPortfolioMoverOut,
+    AnalyticsNetworthSeriesPortfolioMoversOut,
     AnalyticsNetworthSeriesOut,
     AnalyticsNetworthSeriesPointOut,
     AnalyticsQuickInsightOut,
@@ -48,6 +50,7 @@ AllocationTarget = Literal["GROSS", "LIABILITIES", "NET", "HOLDINGS"]
 AllocationGroupBy = Literal["PORTFOLIO", "ASSET_CLASS", "ASSET", "LIABILITY_TYPE"]
 SeriesBucket = Literal["DAY", "WEEK", "MONTH"]
 SeriesRange = Literal["1M", "3M", "6M", "1Y"]
+PortfolioMoverBasis = Literal["GROSS", "NET", "LIABILITIES"]
 
 
 @dataclass
@@ -55,6 +58,20 @@ class AssetTrendMetric:
     current_value: Decimal = Decimal("0")
     profit: Decimal = Decimal("0")
     cost_basis: Decimal = Decimal("0")
+
+
+@dataclass
+class PortfolioMoverMetric:
+    portfolio_id: int | None = None
+    portfolio_name: str = "Unknown"
+    portfolio_type: str | None = None
+    gross: Decimal = Decimal("0")
+    net: Decimal = Decimal("0")
+    liabilities: Decimal = Decimal("0")
+    invested: Decimal = Decimal("0")
+    profit: Decimal = Decimal("0")
+    return_pct: Decimal | None = None
+    has_row: bool = False
 
 
 def _subtract_months(value: date, months: int) -> date:
@@ -274,6 +291,168 @@ def _build_asset_trend_series(
             )
 
     return asset_lines, options, movers
+
+
+def _portfolio_mover_key(row: ValuationSnapshotPortfolioRow) -> str:
+    if row.portfolio_id is not None:
+        return f"portfolio:{row.portfolio_id}"
+    normalized_name = " ".join((row.portfolio_name or "Unknown").strip().lower().split())
+    normalized_type = (row.portfolio_type or "").strip().lower()
+    return f"portfolio-name:{normalized_type}:{normalized_name}"
+
+
+def _classify_portfolio_driver(
+    basis: str,
+    delta_rank: Decimal,
+    delta_invested: Decimal,
+    delta_profit: Decimal,
+    delta_liabilities: Decimal,
+) -> str:
+    material_floor = Decimal("1")
+    if abs(delta_rank) <= material_floor and abs(delta_invested) <= material_floor and abs(delta_profit) <= material_floor:
+        return "NEUTRAL"
+
+    if delta_invested < 0 and abs(delta_invested) >= max(abs(delta_profit), material_floor) * Decimal("1.2"):
+        return "WITHDRAWAL_LED"
+
+    if basis == "NET" and abs(delta_liabilities) >= max(abs(delta_profit), abs(delta_invested), material_floor) * Decimal("1.2"):
+        return "LIABILITY_LED"
+
+    if delta_invested > 0 and abs(delta_invested) >= max(abs(delta_profit), material_floor) * Decimal("1.5"):
+        return "CAPITAL_LED"
+
+    if abs(delta_profit) >= max(abs(delta_invested), material_floor) * Decimal("1.5"):
+        return "PERFORMANCE_LED"
+
+    return "MIXED"
+
+
+def _build_portfolio_movers(
+    db: Session,
+    selected: list[ValuationSnapshot],
+    basis: str,
+) -> AnalyticsNetworthSeriesPortfolioMoversOut:
+    if len(selected) < 2:
+        return AnalyticsNetworthSeriesPortfolioMoversOut()
+
+    baseline_snapshot = selected[0]
+    current_snapshot = selected[-1]
+    target_snapshot_ids = {baseline_snapshot.id, current_snapshot.id}
+    rows = list(
+        db.scalars(
+            select(ValuationSnapshotPortfolioRow).where(
+                ValuationSnapshotPortfolioRow.valuation_snapshot_id.in_(target_snapshot_ids)
+            )
+        ).all()
+    )
+    if not rows:
+        return AnalyticsNetworthSeriesPortfolioMoversOut()
+
+    metrics_by_key: dict[str, dict[int, PortfolioMoverMetric]] = defaultdict(dict)
+    label_order: dict[str, str] = {}
+
+    for row in rows:
+        key = _portfolio_mover_key(row)
+        label_order[key] = row.portfolio_name
+        metric = metrics_by_key[key].get(row.valuation_snapshot_id)
+        if metric is None:
+            metric = PortfolioMoverMetric(
+                portfolio_id=row.portfolio_id,
+                portfolio_name=row.portfolio_name,
+                portfolio_type=row.portfolio_type,
+                has_row=True,
+            )
+            metrics_by_key[key][row.valuation_snapshot_id] = metric
+
+        metric.gross += Decimal(row.gross_assets_total)
+        metric.net += Decimal(row.net_assets_total)
+        metric.liabilities += Decimal(row.liabilities_total)
+        metric.invested += Decimal(row.net_contribution_total)
+        metric.profit += Decimal(row.portfolio_profit_total)
+        metric.return_pct = Decimal(row.return_pct) if row.return_pct is not None else metric.return_pct
+
+    ranked_movers: list[tuple[Decimal, AnalyticsNetworthSeriesPortfolioMoverOut]] = []
+
+    for key, by_snapshot in metrics_by_key.items():
+        current = by_snapshot.get(current_snapshot.id, PortfolioMoverMetric(portfolio_name=label_order.get(key, "Unknown")))
+        baseline = by_snapshot.get(
+            baseline_snapshot.id,
+            PortfolioMoverMetric(
+                portfolio_id=current.portfolio_id,
+                portfolio_name=current.portfolio_name,
+                portfolio_type=current.portfolio_type,
+            ),
+        )
+        if not current.has_row and baseline.has_row:
+            current = PortfolioMoverMetric(
+                portfolio_id=baseline.portfolio_id,
+                portfolio_name=baseline.portfolio_name,
+                portfolio_type=baseline.portfolio_type,
+            )
+
+        delta_value = current.gross - baseline.gross
+        delta_net = current.net - baseline.net
+        delta_liabilities = current.liabilities - baseline.liabilities
+        delta_invested = current.invested - baseline.invested
+        delta_profit = current.profit - baseline.profit
+        delta_return = (
+            current.return_pct - baseline.return_pct
+            if current.return_pct is not None and baseline.return_pct is not None
+            else None
+        )
+
+        status = None
+        if not baseline.has_row and current.has_row:
+            status = "NEW"
+        elif baseline.has_row and not current.has_row:
+            status = "REMOVED"
+
+        portfolio_name = current.portfolio_name if current.has_row else baseline.portfolio_name
+        portfolio_type = current.portfolio_type if current.has_row else baseline.portfolio_type
+        portfolio_id = current.portfolio_id if current.has_row else baseline.portfolio_id
+        rank_delta = delta_value if basis == "GROSS" else delta_net if basis == "NET" else delta_liabilities
+
+        mover = AnalyticsNetworthSeriesPortfolioMoverOut(
+            portfolio_id=portfolio_id,
+            portfolio_name=portfolio_name,
+            portfolio_type=portfolio_type,
+            current_value=current.gross,
+            baseline_value=baseline.gross,
+            delta_value=delta_value,
+            current_net=current.net,
+            baseline_net=baseline.net,
+            delta_net=delta_net,
+            current_liabilities=current.liabilities,
+            baseline_liabilities=baseline.liabilities,
+            delta_liabilities=delta_liabilities,
+            current_invested=current.invested,
+            baseline_invested=baseline.invested,
+            delta_invested=delta_invested,
+            current_profit=current.profit,
+            baseline_profit=baseline.profit,
+            delta_profit=delta_profit,
+            current_return_pct=current.return_pct,
+            baseline_return_pct=baseline.return_pct,
+            delta_return_pct=delta_return,
+            driver_type=_classify_portfolio_driver(
+                basis=basis,
+                delta_rank=rank_delta,
+                delta_invested=delta_invested,
+                delta_profit=delta_profit,
+                delta_liabilities=delta_liabilities,
+            ),
+            status=status,
+        )
+        ranked_movers.append((rank_delta, mover))
+
+    gainers = [item for item in ranked_movers if item[0] > 0]
+    losers = [item for item in ranked_movers if item[0] < 0]
+    gainers.sort(key=lambda item: (item[0], item[1].portfolio_name), reverse=True)
+    losers.sort(key=lambda item: (item[0], item[1].portfolio_name))
+    return AnalyticsNetworthSeriesPortfolioMoversOut(
+        top_gainers=[item[1] for item in gainers[:3]],
+        top_losers=[item[1] for item in losers[:3]],
+    )
 
 
 def _resolve_scope_user_ids(
@@ -785,6 +964,7 @@ def get_networth_series(
     display_currency: str = "KRW",
     mode: Literal["SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"] = Query(default="SUMMARY"),
     portfolio_metric: Literal["RETURN", "PROFIT", "CURRENT", "CURRENT_NET"] = Query(default="RETURN"),
+    portfolio_mover_basis: PortfolioMoverBasis = Query(default="GROSS"),
     asset_metric: Literal["CURRENT", "PROFIT", "RETURN"] = Query(default="CURRENT"),
     asset_key: str = Query(default="TOP_MOVERS"),
     portfolio_id: int | None = Query(default=None, ge=1),
@@ -806,12 +986,15 @@ def get_networth_series(
     normalized_range = range_.upper() if range_ else None
     normalized_mode = (mode or "SUMMARY").upper()
     normalized_portfolio_metric = (portfolio_metric or "RETURN").upper()
+    normalized_portfolio_mover_basis = (portfolio_mover_basis or "GROSS").upper()
     normalized_asset_metric = (asset_metric or "CURRENT").upper()
     normalized_asset_key = (asset_key or "TOP_MOVERS").strip() or "TOP_MOVERS"
     if normalized_mode not in {"SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"}:
         raise HTTPException(status_code=400, detail="mode must be SUMMARY | PORTFOLIO_RETURN | ASSET_TREND")
     if normalized_portfolio_metric not in {"RETURN", "PROFIT", "CURRENT", "CURRENT_NET"}:
         raise HTTPException(status_code=400, detail="portfolio_metric must be RETURN | PROFIT | CURRENT | CURRENT_NET")
+    if normalized_portfolio_mover_basis not in {"GROSS", "NET", "LIABILITIES"}:
+        raise HTTPException(status_code=400, detail="portfolio_mover_basis must be GROSS | NET | LIABILITIES")
     if normalized_asset_metric not in {"CURRENT", "PROFIT", "RETURN"}:
         raise HTTPException(status_code=400, detail="asset_metric must be CURRENT | PROFIT | RETURN")
 
@@ -856,6 +1039,7 @@ def get_networth_series(
         snapshots = list(reversed(list(db.scalars(stmt).all())))
 
     portfolio_lines: list[AnalyticsNetworthSeriesLineOut] = []
+    portfolio_movers: AnalyticsNetworthSeriesPortfolioMoversOut | None = None
     asset_lines: list[AnalyticsNetworthSeriesLineOut] = []
     asset_options: list[AnalyticsNetworthSeriesOptionOut] = []
     asset_movers: AnalyticsNetworthSeriesAssetMoversOut | None = None
@@ -897,7 +1081,13 @@ def get_networth_series(
             for idx, row in enumerate(selected)
         ]
 
-        if normalized_mode == "PORTFOLIO_RETURN":
+        if normalized_mode == "SUMMARY":
+            portfolio_movers = _build_portfolio_movers(
+                db=db,
+                selected=selected,
+                basis=normalized_portfolio_mover_basis,
+            )
+        elif normalized_mode == "PORTFOLIO_RETURN":
             selected_ids = [row.id for row in selected]
             label_by_snapshot_id = {row.id: labels[idx] for idx, row in enumerate(selected)}
             if selected_ids:
@@ -1011,6 +1201,7 @@ def get_networth_series(
         asset_lines=asset_lines,
         asset_options=asset_options,
         asset_movers=asset_movers,
+        portfolio_movers=portfolio_movers,
     )
 
 
