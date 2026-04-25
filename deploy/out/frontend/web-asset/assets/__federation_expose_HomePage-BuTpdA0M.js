@@ -3,7 +3,7 @@ import { h as http, f as formatDateTimeSeoul, A as AxiosError } from './datetime
 import { g as getCompositionSeries, a as getSummary, b as getNetworthSeries, c as getAllocation } from './ui-DfQNiIxJ.js';
 import { _ as _sfc_main$c } from './KpiBreakdownCards.vue_vue_type_script_setup_true_lang-CEV8-zqX.js';
 import { _ as _sfc_main$4, a as _sfc_main$5, b as _sfc_main$6, c as _sfc_main$7 } from './KpiPortfolioSummaryCard.vue_vue_type_script_setup_true_lang-DRqt5y9P.js';
-import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-Ul7gX1mh.js';
+import { _ as _sfc_main$8 } from './NetworthTrendCard.vue_vue_type_script_setup_true_lang-CSj39Ngr.js';
 import { u as useDashboardDataAdapter, _ as _sfc_main$3, a as _sfc_main$9, b as _sfc_main$a, c as _sfc_main$b, d as _sfc_main$d } from './useDashboardDataAdapter-Co3-MFt6.js';
 import { g as getMySettings, u as updateMySettings, a as useDisplayCurrency } from './useDisplayCurrency-g6ibn5zl.js';
 import { g as getHoldingsPerformance, a as getHoldingsTable } from './holdings-D-iv7-uK.js';

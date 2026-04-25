@@ -349,6 +349,16 @@ const canManageReleaseNotes = computed(() => me.value?.role === "ADMIN");
 const canHardEdit = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageEntityHistory = computed(() => canHardEdit.value);
 const isBusy = computed(() => loading.data || loading.action || loading.confirm);
+const normalizedSecretProvider = computed(() => normalizeUpper(secretForm.provider));
+const secretKeyNameHint = computed(() => {
+  if (normalizedSecretProvider.value === "DATA_GO_KR") {
+    return "Expected key name: SERVICE_KEY. Use Description for display text like '국토교통부_아파트 매매 실거래가 상세 자료'.";
+  }
+  if (normalizedSecretProvider.value === "OPENAI") {
+    return "Expected key name: API_KEY. Use Description for human-friendly notes.";
+  }
+  return "Key Name is the internal lookup key used by app logic. Put human-friendly labels in Description.";
+});
 const selectedAssetForQuote = computed(() => assets.value.find((item) => String(item.id) === manualQuoteForm.asset_id) ?? null);
 const assetClassOptions = ["STOCK", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING", "BOND", "ETC"] as const;
 const quoteModeOptions = ["AUTO", "MANUAL"] as const;
@@ -2196,7 +2206,9 @@ onBeforeUnmount(() => {
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Secrets Vault (Admin)</h2>
-          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Manage exchange/broker/bank/API credentials by provider+key. List values are masked.</p>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Manage exchange/broker/bank/API credentials by provider+key. Key Name is the internal lookup key, and Description is the human-readable label.
+          </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <button
@@ -2241,6 +2253,9 @@ onBeforeUnmount(() => {
               placeholder="e.g. SERVICE_KEY / ACCESS_TOKEN"
               class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm uppercase dark:border-slate-700 dark:bg-slate-950"
             />
+            <span class="mt-1 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+              {{ secretKeyNameHint }}
+            </span>
           </label>
           <label class="text-xs md:col-span-2"
             >Secret Value {{ secretForm.id ? "(leave blank to keep current value)" : "" }}
@@ -2278,12 +2293,13 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="mt-3 overflow-x-auto">
-          <table class="w-full min-w-[980px] text-left text-xs leading-tight">
+          <table class="w-full min-w-[1180px] text-left text-xs leading-tight">
             <thead class="bg-slate-50 dark:bg-slate-800">
               <tr>
                 <th class="px-2 py-1.5 whitespace-nowrap">ID</th>
                 <th class="px-2 py-1.5 whitespace-nowrap">Provider</th>
-                <th class="px-2 py-1.5 whitespace-nowrap">Key</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Key Name</th>
+                <th class="px-2 py-1.5 whitespace-nowrap">Description</th>
                 <th class="px-2 py-1.5 whitespace-nowrap">Masked</th>
                 <th class="px-2 py-1.5 whitespace-nowrap">Active</th>
                 <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
@@ -2295,6 +2311,9 @@ onBeforeUnmount(() => {
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ item.id }}</td>
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ item.provider }}</td>
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ item.key_name }}</td>
+                <td class="px-2 py-1.5 max-w-[320px] whitespace-normal break-words text-slate-600 dark:text-slate-300">
+                  {{ item.description || "-" }}
+                </td>
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ item.masked_value }}</td>
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_active ? "Y" : "N" }}</td>
                 <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.updated_at) }}</td>
@@ -2320,7 +2339,7 @@ onBeforeUnmount(() => {
                 </td>
               </tr>
               <tr v-if="appSecrets.length === 0">
-                <td colspan="7" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No secrets registered</td>
+                <td colspan="8" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No secrets registered</td>
               </tr>
             </tbody>
           </table>

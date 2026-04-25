@@ -691,7 +691,17 @@ const _sfc_main = /* @__PURE__ */ _defineComponent({
       for (let index = 0; index < total; index += step) {
         indexes.push(index);
       }
-      if (indexes[indexes.length - 1] !== total - 1) indexes.push(total - 1);
+      const latestIndex = total - 1;
+      if (indexes[indexes.length - 1] !== latestIndex) {
+        const previousIndex = indexes[indexes.length - 1] ?? 0;
+        const latestX = toX(latestIndex, total);
+        const previousX = toX(previousIndex, total);
+        if (latestX - previousX < 54) {
+          indexes[indexes.length - 1] = latestIndex;
+        } else {
+          indexes.push(latestIndex);
+        }
+      }
       return Array.from(new Set(indexes)).map((index) => ({
         index,
         x: toX(index, total),
