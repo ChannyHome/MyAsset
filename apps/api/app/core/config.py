@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     alpha_vantage_api_key: str = ""
     alpha_vantage_timeout_seconds: float = 20.0
 
+    dividend_auto_update_enabled: bool = True
+    dividend_update_interval_hours: int = 24
+    dividend_scheduler_misfire_grace_seconds: int = 3600
+
     app_secrets_master_key: str = ""
 
     openai_enabled: bool = True

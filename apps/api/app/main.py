@@ -25,6 +25,7 @@ from app.api.routers.trades import router as trades_router
 from app.api.routers.user_settings import router as user_settings_router
 from app.api.routers.valuation_snapshots import router as valuation_snapshots_router
 from app.core.config import settings
+from app.tasks.dividends_scheduler import start_dividend_scheduler, stop_dividend_scheduler
 from app.tasks.quotes_scheduler import start_quote_scheduler, stop_quote_scheduler
 
 
@@ -66,9 +67,11 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def on_startup() -> None:
         start_quote_scheduler()
+        start_dividend_scheduler()
 
     @app.on_event("shutdown")
     def on_shutdown() -> None:
+        stop_dividend_scheduler()
         stop_quote_scheduler()
 
     return app

@@ -26,6 +26,16 @@ from app.models.valuation_snapshot import (
 )
 from app.models.transaction import Transaction
 from app.models.entity_change_log import EntityChangeLog
+from app.models.dividend import (
+    AssetDividendEvent,
+    AssetDividendSetting,
+    AssetProviderIdentifier,
+    DividendReceipt,
+    DividendSnapshot,
+    DividendSnapshotAssetRow,
+    DividendSnapshotPortfolioRow,
+    DividendUpdateRun,
+)
 
 __all__ = [
     "Base",
@@ -55,4 +65,12 @@ __all__ = [
     "ValuationSnapshotLiabilityRow",
     "Transaction",
     "EntityChangeLog",
+    "AssetProviderIdentifier",
+    "AssetDividendSetting",
+    "AssetDividendEvent",
+    "DividendReceipt",
+    "DividendSnapshot",
+    "DividendSnapshotAssetRow",
+    "DividendSnapshotPortfolioRow",
+    "DividendUpdateRun",
 ]

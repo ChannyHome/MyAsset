@@ -20,6 +20,7 @@ import DashboardPanelContainer from "../components/DashboardPanelContainer.vue";
 import PortfolioStatusTableCard from "../components/PortfolioStatusTableCard.vue";
 import HoldingsStatusTableCard from "../components/HoldingsStatusTableCard.vue";
 import LiabilitiesStatusTableCard from "../components/LiabilitiesStatusTableCard.vue";
+import DividendIncomeTableCard from "../components/DividendIncomeTableCard.vue";
 import QuickInsightPanel from "../components/QuickInsightPanel.vue";
 import GoalProgressForecastCard from "../components/GoalProgressForecastCard.vue";
 import CompositionStackedCard from "../components/CompositionStackedCard.vue";
@@ -41,6 +42,16 @@ import {
   updateQuotesNow,
   type QuoteSchedulerStatusOut,
 } from "../api/quotes";
+import {
+  createDividendReceipt,
+  getDividendSchedulerStatus,
+  getDividendTable,
+  getDividendUpdateJobStatus,
+  updateDividendsNow,
+  type DividendReceiptCreateIn,
+  type DividendSchedulerStatusOut,
+  type DividendTableOut,
+} from "../api/dividends";
 import { useDisplayCurrency } from "../composables/useDisplayCurrency";
 import {
   useDashboardDataAdapter,
@@ -54,9 +65,12 @@ const LIVE_TREND_PREF_STORAGE_KEY = "myasset:home:live-trend-pref";
 const LIVE_PORTFOLIO_NET_BASIS_STORAGE_KEY = "myasset:home:portfolio-net-basis";
 const HOME_TABLE_SECTION_STORAGE_KEY = "myasset:home:table-sections";
 const HOME_QUOTE_UPDATE_META_STORAGE_KEY = "myasset:home:quote-update-meta";
+const HOME_DIVIDEND_UPDATE_META_STORAGE_KEY = "myasset:home:dividend-update-meta";
 const HOME_CARD_ORDER_STORAGE_KEY = "myasset:home:card-order";
 const HOME_QUOTE_UPDATE_POLL_MS = 1500;
 const HOME_QUOTE_UPDATE_POLL_TIMEOUT_MS = 180000;
+const HOME_DIVIDEND_UPDATE_POLL_MS = 2000;
+const HOME_DIVIDEND_UPDATE_POLL_TIMEOUT_MS = 300000;
 const HOME_TREND_ASSET_TOP_N = 5;
 
 type HomePortfolioSortKey = "portfolio" | "current" | "invested_principal" | "portfolio_profit" | "return";
@@ -120,6 +134,7 @@ type HomeCardKey =
   | "PORTFOLIOS_TABLE"
   | "HOLDINGS_TABLE"
   | "LIABILITIES_TABLE"
+  | "DIVIDENDS_TABLE"
   | "REPORT_PANEL"
   | "QUICK_INSIGHT"
   | "RELEASE_NOTES";
@@ -277,6 +292,7 @@ const liveDashboardExpanded = ref(false);
 const homePortfoliosExpanded = ref(false);
 const homeHoldingsExpanded = ref(false);
 const homeLiabilitiesExpanded = ref(false);
+const homeDividendsExpanded = ref(false);
 const reportPanelExpanded = ref(false);
 const releaseNotesExpanded = ref(false);
 const exportingImage = ref(false);
@@ -320,6 +336,19 @@ const quoteUpdateLastFinishedAt = ref("");
 const quoteUpdateLastSummary = ref("");
 const quoteSchedulerStatus = ref<QuoteSchedulerStatusOut | null>(null);
 const quoteSchedulerStatusError = ref("");
+const dividendTableData = ref<DividendTableOut | null>(null);
+const dividendUpdateJobId = ref("");
+const dividendUpdateStatus = ref<"IDLE" | "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED">("IDLE");
+const dividendUpdatePolling = ref(false);
+const dividendUpdateProcessed = ref(0);
+const dividendUpdateTotal = ref(0);
+const dividendUpdateLastProcessed = ref(-1);
+const dividendUpdateLastResultStatus = ref<"COMPLETED" | "FAILED" | "">("");
+const dividendUpdateLastFinishedAt = ref("");
+const dividendUpdateLastSummary = ref("");
+const dividendSchedulerStatus = ref<DividendSchedulerStatusOut | null>(null);
+const dividendSchedulerStatusError = ref("");
+const dividendReceiptSaving = ref(false);
 const homeActionToast = ref<{ kind: "INFO" | "SUCCESS" | "ERROR"; message: string } | null>(null);
 const livePortfolioKey = ref("ALL");
 const homePortfolioKey = ref("ALL");
@@ -332,6 +361,7 @@ let homeHoldingSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let homeLiabilitySearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let homeActionToastTimer: ReturnType<typeof setTimeout> | null = null;
 let quoteUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
+let dividendUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
 const homePortfolioTable = reactive({
   page: 1,
   pageSize: 10,
@@ -366,6 +396,7 @@ const DEFAULT_HOME_CARD_ORDER: HomeCardKey[] = [
   "PORTFOLIOS_TABLE",
   "HOLDINGS_TABLE",
   "LIABILITIES_TABLE",
+  "DIVIDENDS_TABLE",
   "REPORT_PANEL",
   "QUICK_INSIGHT",
   "RELEASE_NOTES",
@@ -431,6 +462,46 @@ const quoteSchedulerMissedLabel = computed(() => {
   const maxInstanceMissed = Number(quoteSchedulerStatus.value.max_instances_missed_count || 0);
   const failure = Number(quoteSchedulerStatus.value.failure_count || 0);
   const parts = [`Missed: ${missed}`];
+  if (maxInstanceMissed > 0) parts.push(`Overlap skipped: ${maxInstanceMissed}`);
+  if (failure > 0) parts.push(`Failures: ${failure}`);
+  return parts.join(" · ");
+});
+
+const canManageDividendUpdates = computed(() => canManageQuoteUpdates.value);
+
+const dividendUpdateProgressText = computed(() => {
+  const total = Number(dividendUpdateTotal.value || 0);
+  const processed = Number(dividendUpdateProcessed.value || 0);
+  if (total <= 0) return "0/0";
+  return `${processed}/${total}`;
+});
+
+const dividendUpdateLastResultLabel = computed(() => {
+  if (!dividendUpdateLastFinishedAt.value) return "";
+  const status = dividendUpdateLastResultStatus.value || "COMPLETED";
+  const summary = dividendUpdateLastSummary.value || "-";
+  return `Manual dividend update: ${dividendUpdateLastFinishedAt.value} · ${status} · ${summary}`;
+});
+
+const dividendSchedulerStatusLabel = computed(() => {
+  if (!canManageDividendUpdates.value) return "";
+  if (dividendSchedulerStatusError.value) return `Dividend scheduler: ${dividendSchedulerStatusError.value}`;
+  const status = dividendSchedulerStatus.value;
+  if (!status) return "";
+  if (!status.enabled) return "Dividend scheduler: disabled";
+  if (!status.running) return "Dividend scheduler: stopped";
+  const nextRun = formatDateTime(status.next_run_at);
+  const lastSuccess = formatDateTime(status.last_success_at);
+  const suffix = status.job_running ? " · running now" : "";
+  return `Dividend scheduler: every ${status.interval_hours ?? "-"}h · next ${nextRun || "-"} · last success ${lastSuccess || "-"}${suffix}`;
+});
+
+const dividendSchedulerMissedLabel = computed(() => {
+  if (!canManageDividendUpdates.value || !dividendSchedulerStatus.value) return "";
+  const missed = Number(dividendSchedulerStatus.value.missed_count || 0);
+  const maxInstanceMissed = Number(dividendSchedulerStatus.value.max_instances_missed_count || 0);
+  const failure = Number(dividendSchedulerStatus.value.failure_count || 0);
+  const parts = [`Dividend missed: ${missed}`];
   if (maxInstanceMissed > 0) parts.push(`Overlap skipped: ${maxInstanceMissed}`);
   if (failure > 0) parts.push(`Failures: ${failure}`);
   return parts.join(" · ");
@@ -706,12 +777,50 @@ function loadQuoteUpdateMeta(): void {
   }
 }
 
+function saveDividendUpdateMeta(): void {
+  if (typeof window === "undefined") return;
+  const payload = {
+    status: dividendUpdateLastResultStatus.value,
+    finishedAt: dividendUpdateLastFinishedAt.value,
+    summary: dividendUpdateLastSummary.value,
+  };
+  window.localStorage.setItem(HOME_DIVIDEND_UPDATE_META_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadDividendUpdateMeta(): void {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem(HOME_DIVIDEND_UPDATE_META_STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw) as Partial<{ status: string; finishedAt: string; summary: string }>;
+    if (parsed.status === "COMPLETED" || parsed.status === "FAILED") {
+      dividendUpdateLastResultStatus.value = parsed.status;
+    }
+    if (typeof parsed.finishedAt === "string") {
+      dividendUpdateLastFinishedAt.value = parsed.finishedAt;
+    }
+    if (typeof parsed.summary === "string") {
+      dividendUpdateLastSummary.value = parsed.summary;
+    }
+  } catch {
+    // ignore malformed storage values
+  }
+}
+
 function clearQuoteUpdatePolling(): void {
   if (quoteUpdatePollTimer) {
     clearTimeout(quoteUpdatePollTimer);
     quoteUpdatePollTimer = null;
   }
   quoteUpdatePolling.value = false;
+}
+
+function clearDividendUpdatePolling(): void {
+  if (dividendUpdatePollTimer) {
+    clearTimeout(dividendUpdatePollTimer);
+    dividendUpdatePollTimer = null;
+  }
+  dividendUpdatePolling.value = false;
 }
 
 async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
@@ -780,6 +889,72 @@ async function pollHomeQuoteUpdateJob(jobId: string, startedAtMs: number): Promi
   }
 }
 
+async function pollHomeDividendUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
+  try {
+    const result = await getDividendUpdateJobStatus(jobId);
+    const normalizedStatus = String(result.status || "").toUpperCase();
+    dividendUpdateStatus.value = normalizedStatus === "FAILED" ? "FAILED" : normalizedStatus === "COMPLETED" ? "COMPLETED" : "RUNNING";
+    dividendUpdateProcessed.value = Number(result.processed_assets || 0);
+    dividendUpdateTotal.value = Number(result.total_assets || 0);
+
+    if (dividendUpdateProcessed.value !== dividendUpdateLastProcessed.value) {
+      dividendUpdateLastProcessed.value = dividendUpdateProcessed.value;
+      showHomeActionToast("INFO", `Dividend update running... ${dividendUpdateProgressText.value}`);
+    }
+
+    if (normalizedStatus === "COMPLETED") {
+      clearDividendUpdatePolling();
+      dividendUpdateStatus.value = "COMPLETED";
+      dividendUpdateLastResultStatus.value = "COMPLETED";
+      dividendUpdateLastFinishedAt.value = formatDateTime(result.finished_at || new Date().toISOString());
+      dividendUpdateLastSummary.value = `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}, snapshots=${result.snapshot_user_scopes}`;
+      saveDividendUpdateMeta();
+      showHomeActionToast("SUCCESS", "Dividend update completed. Refreshing Dividend Income Table...");
+      void refreshDividendSchedulerStatus();
+      await loadHomeDividendTable();
+      return;
+    }
+
+    if (normalizedStatus === "FAILED") {
+      clearDividendUpdatePolling();
+      dividendUpdateStatus.value = "FAILED";
+      const lastError = Array.isArray(result.errors) && result.errors.length > 0 ? String(result.errors[result.errors.length - 1]) : "";
+      dividendUpdateLastResultStatus.value = "FAILED";
+      dividendUpdateLastFinishedAt.value = formatDateTime(result.finished_at || new Date().toISOString());
+      dividendUpdateLastSummary.value = lastError || result.snapshot_error || "Dividend update job failed";
+      saveDividendUpdateMeta();
+      void refreshDividendSchedulerStatus();
+      showHomeActionToast("ERROR", lastError || result.snapshot_error || "Dividend update job failed.");
+      return;
+    }
+
+    if (Date.now() - startedAtMs > HOME_DIVIDEND_UPDATE_POLL_TIMEOUT_MS) {
+      clearDividendUpdatePolling();
+      dividendUpdateStatus.value = "FAILED";
+      dividendUpdateLastResultStatus.value = "FAILED";
+      dividendUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
+      dividendUpdateLastSummary.value = "Polling timed out";
+      saveDividendUpdateMeta();
+      void refreshDividendSchedulerStatus();
+      showHomeActionToast("ERROR", "Dividend update polling timed out.");
+      return;
+    }
+
+    dividendUpdatePollTimer = setTimeout(() => {
+      void pollHomeDividendUpdateJob(jobId, startedAtMs);
+    }, HOME_DIVIDEND_UPDATE_POLL_MS);
+  } catch (error) {
+    clearDividendUpdatePolling();
+    dividendUpdateStatus.value = "FAILED";
+    dividendUpdateLastResultStatus.value = "FAILED";
+    dividendUpdateLastFinishedAt.value = formatDateTime(new Date().toISOString());
+    dividendUpdateLastSummary.value = getErrorMessage(error);
+    saveDividendUpdateMeta();
+    void refreshDividendSchedulerStatus();
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
 async function runHomeUpdateQuotesNow(): Promise<void> {
   if (!canManageQuoteUpdates.value || quoteUpdatePolling.value || loading.value) {
     return;
@@ -806,6 +981,32 @@ async function runHomeUpdateQuotesNow(): Promise<void> {
   }
 }
 
+async function runHomeUpdateDividendsNow(): Promise<void> {
+  if (!canManageDividendUpdates.value || dividendUpdatePolling.value || loading.value) {
+    return;
+  }
+  dividendUpdateStatus.value = "QUEUED";
+  dividendUpdateProcessed.value = 0;
+  dividendUpdateTotal.value = 0;
+  dividendUpdateLastProcessed.value = -1;
+
+  try {
+    const job = await updateDividendsNow();
+    dividendUpdateJobId.value = job.job_id;
+    dividendUpdateTotal.value = Number(job.total_assets || 0);
+    dividendUpdatePolling.value = true;
+    dividendUpdateStatus.value = "RUNNING";
+    showHomeActionToast("INFO", `Dividend update started (${dividendUpdateProgressText.value})`);
+    void refreshDividendSchedulerStatus();
+    void pollHomeDividendUpdateJob(job.job_id, Date.now());
+  } catch (error) {
+    clearDividendUpdatePolling();
+    dividendUpdateStatus.value = "FAILED";
+    void refreshDividendSchedulerStatus();
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
 async function refreshQuoteSchedulerStatus(): Promise<void> {
   if (!canManageQuoteUpdates.value) {
     quoteSchedulerStatus.value = null;
@@ -822,16 +1023,34 @@ async function refreshQuoteSchedulerStatus(): Promise<void> {
   }
 }
 
+async function refreshDividendSchedulerStatus(): Promise<void> {
+  if (!canManageDividendUpdates.value) {
+    dividendSchedulerStatus.value = null;
+    dividendSchedulerStatusError.value = "";
+    return;
+  }
+
+  try {
+    dividendSchedulerStatus.value = await getDividendSchedulerStatus();
+    dividendSchedulerStatusError.value = "";
+  } catch (error) {
+    dividendSchedulerStatus.value = null;
+    dividendSchedulerStatusError.value = getErrorMessage(error);
+  }
+}
+
 async function loadHomeData() {
   loading.value = true;
   errorMessage.value = "";
   try {
     const mePromise = getMe().catch(() => null);
+    const dividendPromise = getDividendTable({ display_currency: displayCurrency.value }).catch(() => null);
     const [
       summaryOut,
       holdingsOut,
       liabilitiesOut,
       portfoliosOut,
+      dividendOut,
       meOut,
     ] = await Promise.all([
       getSummary({ display_currency: displayCurrency.value }),
@@ -854,6 +1073,7 @@ async function loadHomeData() {
         include_hidden: false,
         include_excluded: false,
       }),
+      dividendPromise,
       mePromise,
     ]);
 
@@ -861,8 +1081,10 @@ async function loadHomeData() {
     holdings.value = holdingsOut;
     liabilities.value = liabilitiesOut.items;
     portfolios.value = portfoliosOut.items;
+    dividendTableData.value = dividendOut;
     me.value = meOut;
     void refreshQuoteSchedulerStatus();
+    void refreshDividendSchedulerStatus();
     if (
       homeTrendPortfolioKey.value !== "ALL" &&
       !portfoliosOut.items.some((item) => String(item.id) === homeTrendPortfolioKey.value)
@@ -891,6 +1113,9 @@ async function loadHomeData() {
     }
     if (homeLiabilitiesExpanded.value) {
       void loadHomeLiabilityTable();
+    }
+    if (homeDividendsExpanded.value) {
+      void loadHomeDividendTable();
     }
     if (homeTrendMode.value === "PORTFOLIO") {
       void loadHomePortfolioTrend();
@@ -1187,7 +1412,7 @@ function loadHomeTableSectionState(): void {
   try {
     const parsed = JSON.parse(raw) as Partial<
       Record<
-        "live_dashboard" | "report_panel" | "release_notes" | "portfolios" | "holdings" | "liabilities",
+        "live_dashboard" | "report_panel" | "release_notes" | "portfolios" | "holdings" | "liabilities" | "dividends",
         boolean
       >
     >;
@@ -1197,6 +1422,7 @@ function loadHomeTableSectionState(): void {
     if (typeof parsed.portfolios === "boolean") homePortfoliosExpanded.value = parsed.portfolios;
     if (typeof parsed.holdings === "boolean") homeHoldingsExpanded.value = parsed.holdings;
     if (typeof parsed.liabilities === "boolean") homeLiabilitiesExpanded.value = parsed.liabilities;
+    if (typeof parsed.dividends === "boolean") homeDividendsExpanded.value = parsed.dividends;
   } catch {
     // ignore malformed storage values
   }
@@ -1211,6 +1437,7 @@ function saveHomeTableSectionState(): void {
     portfolios: homePortfoliosExpanded.value,
     holdings: homeHoldingsExpanded.value,
     liabilities: homeLiabilitiesExpanded.value,
+    dividends: homeDividendsExpanded.value,
   };
   window.localStorage.setItem(HOME_TABLE_SECTION_STORAGE_KEY, JSON.stringify(payload));
 }
@@ -1225,6 +1452,7 @@ function normalizeHomeCardOrder(value: unknown): HomeCardKey[] {
         || item === "PORTFOLIOS_TABLE"
         || item === "HOLDINGS_TABLE"
         || item === "LIABILITIES_TABLE"
+        || item === "DIVIDENDS_TABLE"
         || item === "REPORT_PANEL"
         || item === "QUICK_INSIGHT"
         || item === "RELEASE_NOTES")
@@ -1353,6 +1581,28 @@ async function loadHomeLiabilityTable(): Promise<void> {
     homeLiabilityTable.total = out.total;
   } finally {
     homeLiabilityTable.loading = false;
+  }
+}
+
+async function loadHomeDividendTable(): Promise<void> {
+  try {
+    dividendTableData.value = await getDividendTable({ display_currency: displayCurrency.value });
+  } catch (error) {
+    dividendTableData.value = null;
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  }
+}
+
+async function saveHomeDividendReceipt(payload: DividendReceiptCreateIn): Promise<void> {
+  dividendReceiptSaving.value = true;
+  try {
+    await createDividendReceipt(payload);
+    showHomeActionToast("SUCCESS", "Received dividend saved.");
+    await loadHomeDividendTable();
+  } catch (error) {
+    showHomeActionToast("ERROR", getErrorMessage(error));
+  } finally {
+    dividendReceiptSaving.value = false;
   }
 }
 
@@ -1646,6 +1896,7 @@ onMounted(async () => {
       homeTrendRange.value = getDefaultTrendRange();
     }
     loadQuoteUpdateMeta();
+    loadDividendUpdateMeta();
     loadHomeTableSectionState();
     restoreHomeCardOrder();
   }
@@ -1659,6 +1910,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   clearQuoteUpdatePolling();
+  clearDividendUpdatePolling();
   if (homeActionToastTimer) {
     clearTimeout(homeActionToastTimer);
     homeActionToastTimer = null;
@@ -1772,28 +2024,31 @@ watch(
     liveDashboardExpanded.value,
     reportPanelExpanded.value,
     releaseNotesExpanded.value,
-    homePortfoliosExpanded.value,
-    homeHoldingsExpanded.value,
-    homeLiabilitiesExpanded.value,
-  ],
+	    homePortfoliosExpanded.value,
+	    homeHoldingsExpanded.value,
+	    homeLiabilitiesExpanded.value,
+	    homeDividendsExpanded.value,
+	  ],
   (
     [
       _nextLiveDashboard,
       _nextReportPanel,
       _nextReleaseNotes,
-      nextPortfolios,
-      nextHoldings,
-      nextLiabilities,
-    ],
+	      nextPortfolios,
+	      nextHoldings,
+	      nextLiabilities,
+	      nextDividends,
+	    ],
     [
       _prevLiveDashboard,
       _prevReportPanel,
       _prevReleaseNotes,
-      prevPortfolios,
-      prevHoldings,
-      prevLiabilities,
-    ],
-  ) => {
+	      prevPortfolios,
+	      prevHoldings,
+	      prevLiabilities,
+	      prevDividends,
+	    ],
+	  ) => {
     saveHomeTableSectionState();
     if (nextPortfolios && !prevPortfolios) {
       void loadHomePortfolioTable();
@@ -1801,11 +2056,14 @@ watch(
     if (nextHoldings && !prevHoldings) {
       void loadHomeHoldingTable();
     }
-    if (nextLiabilities && !prevLiabilities) {
-      void loadHomeLiabilityTable();
-    }
-  },
-);
+	    if (nextLiabilities && !prevLiabilities) {
+	      void loadHomeLiabilityTable();
+	    }
+	    if (nextDividends && !prevDividends) {
+	      void loadHomeDividendTable();
+	    }
+	  },
+	);
 
 watch(
   homeCardOrder,
@@ -1820,19 +2078,22 @@ watch(
   () => homePortfolioKey.value,
   () => {
     homePortfolioTable.page = 1;
-    homeHoldingTable.page = 1;
-    homeLiabilityTable.page = 1;
+	    homeHoldingTable.page = 1;
+	    homeLiabilityTable.page = 1;
     if (homePortfoliosExpanded.value) {
       void loadHomePortfolioTable();
     }
     if (homeHoldingsExpanded.value) {
       void loadHomeHoldingTable();
     }
-    if (homeLiabilitiesExpanded.value) {
-      void loadHomeLiabilityTable();
-    }
-  },
-);
+	    if (homeLiabilitiesExpanded.value) {
+	      void loadHomeLiabilityTable();
+	    }
+	    if (homeDividendsExpanded.value) {
+	      void loadHomeDividendTable();
+	    }
+	  },
+	);
 
 watch(
   () => [
@@ -1872,9 +2133,17 @@ watch(
     homeLiabilityTable.q,
     displayCurrency.value,
   ],
+	  () => {
+	    if (!homeLiabilitiesExpanded.value) return;
+	    void loadHomeLiabilityTable();
+	  },
+	);
+
+watch(
+  () => displayCurrency.value,
   () => {
-    if (!homeLiabilitiesExpanded.value) return;
-    void loadHomeLiabilityTable();
+    if (!homeDividendsExpanded.value) return;
+    void loadHomeDividendTable();
   },
 );
 
@@ -2379,6 +2648,36 @@ watch(
       @sort="toggleHomeLiabilitySort"
       @set-page="homeLiabilityTable.page = $event"
       @update:search-term="homeLiabilitySearchTerm = $event"
+        />
+      </div>
+
+      <div
+        class="rounded-2xl"
+        :class="homeCardDraggingKey === 'DIVIDENDS_TABLE' ? 'ring-2 ring-indigo-400/70' : ''"
+        draggable="true"
+        :style="{ order: getHomeCardOrder('DIVIDENDS_TABLE') }"
+        @dragstart="onHomeCardDragStart('DIVIDENDS_TABLE', $event)"
+        @dragover="onHomeCardDragOver"
+        @drop="onHomeCardDrop('DIVIDENDS_TABLE', $event)"
+        @dragend="onHomeCardDragEnd"
+      >
+        <DividendIncomeTableCard
+          title="Dividend Income Table"
+          subtitle="Expected annual dividend / received YTD / tax / yield"
+          :expanded="homeDividendsExpanded"
+          :loading="loading"
+          :table="dividendTableData"
+          :mask-amounts="liveMaskAmounts"
+          :can-update="canManageDividendUpdates"
+          :update-running="dividendUpdatePolling"
+          :update-progress-text="dividendUpdateProgressText"
+          :last-result-label="dividendUpdateLastResultLabel"
+          :scheduler-status-label="dividendSchedulerStatusLabel"
+          :scheduler-missed-label="dividendSchedulerMissedLabel"
+          :receipt-saving="dividendReceiptSaving"
+          @toggle="homeDividendsExpanded = !homeDividendsExpanded"
+          @update-now="runHomeUpdateDividendsNow"
+          @create-receipt="saveHomeDividendReceipt"
         />
       </div>
 

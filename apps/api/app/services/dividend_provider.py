@@ -6,10 +6,12 @@ from typing import Any
 from urllib.parse import unquote
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.asset import Asset
+from app.models.dividend import AssetProviderIdentifier
 from app.schemas.dividend import DividendEventOut, DividendLookupOut
 from app.services.secret_vault import resolve_secret_value
 
@@ -120,6 +122,22 @@ def _sort_key(event: DividendEventOut) -> tuple[date, str]:
     fallback = date.min
     event_date = event.payment_date or event.ex_dividend_date or event.record_date or event.dividend_base_date or fallback
     return event_date, event.provider_event_id
+
+
+def _asset_provider_identifier_map(db: Session, *, asset_id: int, provider: str) -> dict[str, str]:
+    rows = db.scalars(
+        select(AssetProviderIdentifier).where(
+            AssetProviderIdentifier.asset_id == asset_id,
+            AssetProviderIdentifier.provider == provider,
+        )
+    ).all()
+    values: dict[str, str] = {}
+    for row in rows:
+        key = str(row.identifier_type or "").upper().strip()
+        value = str(row.identifier_value or "").strip()
+        if key and value and key not in values:
+            values[key] = value
+    return values
 
 
 def _extract_data_go_kr_items(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], int, dict[str, Any]]:
@@ -375,11 +393,25 @@ def fetch_dividends_for_asset(
         raise DividendProviderError("Dividend provider lookup supports STOCK assets only", status_code=400)
 
     if currency == "KRW" or exchange_code in {"KRX", "KOSPI", "KOSDAQ", "KR"}:
+        identifiers = _asset_provider_identifier_map(db, asset_id=asset.id, provider=DATA_GO_KR_PROVIDER)
         result = fetch_data_go_kr_stock_dividends(
             db,
-            stock_name=str(meta.get("stckIssuCmpyNm") or meta.get("stock_name") or asset.name),
-            crno=str(meta.get("crno") or "").strip() or None,
-            isin_code=str(meta.get("isinCd") or meta.get("isin_code") or "").strip() or None,
+            stock_name=str(
+                identifiers.get("STOCK_NAME")
+                or identifiers.get("STCK_ISSU_CMPY_NM")
+                or meta.get("stckIssuCmpyNm")
+                or meta.get("stock_name")
+                or asset.name
+            ),
+            crno=str(identifiers.get("CRNO") or meta.get("crno") or "").strip() or None,
+            isin_code=str(
+                identifiers.get("ISIN")
+                or identifiers.get("ISIN_CODE")
+                or meta.get("isinCd")
+                or meta.get("isin_code")
+                or ""
+            ).strip()
+            or None,
             year=year,
             tax_rate_pct=tax_rate_pct or Decimal("15.4"),
             page_size=100,
@@ -392,10 +424,16 @@ def fetch_dividends_for_asset(
         return result
 
     if not asset.symbol:
-        raise DividendProviderError("US dividend lookup requires asset symbol", status_code=400)
+        identifiers = _asset_provider_identifier_map(db, asset_id=asset.id, provider=ALPHA_VANTAGE_PROVIDER)
+        symbol = identifiers.get("SYMBOL")
+        if not symbol:
+            raise DividendProviderError("US dividend lookup requires asset symbol", status_code=400)
+    else:
+        identifiers = _asset_provider_identifier_map(db, asset_id=asset.id, provider=ALPHA_VANTAGE_PROVIDER)
+        symbol = identifiers.get("SYMBOL") or asset.symbol
     result = fetch_alpha_vantage_stock_dividends(
         db,
-        symbol=asset.symbol,
+        symbol=symbol,
         year=year,
         tax_rate_pct=tax_rate_pct or Decimal("15"),
     )
@@ -403,4 +441,3 @@ def fetch_dividends_for_asset(
     result.asset_name = asset.name
     result.display_name = f"{asset.name} ({asset.symbol})" if asset.symbol else asset.name
     return result
-
