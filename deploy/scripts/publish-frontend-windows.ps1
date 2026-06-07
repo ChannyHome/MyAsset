@@ -3,6 +3,8 @@ param(
     [string]$RemoteAssetUrl = "/web-asset/assets/remoteEntry.js",
     [string]$NginxRoot = "C:\nginx",
     [string]$BuildOutDir = "deploy/out/frontend",
+    [string]$NginxHealthUrl = "http://127.0.0.1/",
+    [int]$NginxHealthTimeoutSeconds = 10,
     [switch]$InstallDependencies,
     [switch]$SkipBuild,
     [switch]$SkipDeploy,
@@ -24,6 +26,53 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $buildScript = Join-Path $PSScriptRoot "build-frontend.ps1"
 $deployScript = Join-Path $PSScriptRoot "deploy-frontend-windows.ps1"
 $nginxExe = Join-Path $NginxRoot "nginx.exe"
+
+function Get-NginxProcesses {
+    $expectedPath = $null
+    try {
+        $expectedPath = (Resolve-Path $nginxExe).Path
+    }
+    catch {
+        $expectedPath = $nginxExe
+    }
+
+    @(Get-Process -Name "nginx" -ErrorAction SilentlyContinue | Where-Object {
+        try {
+            -not $_.Path -or ($_.Path -ieq $expectedPath)
+        }
+        catch {
+            $true
+        }
+    })
+}
+
+function Wait-NginxReady {
+    param(
+        [string]$Url,
+        [int]$TimeoutSeconds
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    do {
+        $processes = Get-NginxProcesses
+        if ($processes.Count -gt 0) {
+            try {
+                $response = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 2
+                if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+                    return $true
+                }
+            }
+            catch {
+                Start-Sleep -Milliseconds 500
+            }
+        }
+        else {
+            Start-Sleep -Milliseconds 500
+        }
+    } while ((Get-Date) -lt $deadline)
+
+    return $false
+}
 
 Write-Host "[publish] repo root: $repoRoot"
 
@@ -66,20 +115,26 @@ try {
         throw "nginx config test failed."
     }
 
-    Write-Host "[publish] reloading nginx"
-    & $nginxExe -s reload
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "nginx reload returned non-zero exit code. Trying first-start mode."
-        & $nginxExe
+    $nginxProcesses = Get-NginxProcesses
+    if ($nginxProcesses.Count -gt 0) {
+        Write-Host "[publish] nginx is running. reloading nginx"
+        & $nginxExe -s reload
         if ($LASTEXITCODE -ne 0) {
-            throw "nginx reload/start failed."
+            throw "nginx reload failed."
         }
-        Write-Host "[publish] nginx started"
-    }
-    else {
         Write-Host "[publish] nginx reloaded"
     }
+    else {
+        Write-Host "[publish] nginx is not running. starting nginx"
+        Start-Process -FilePath $nginxExe -WorkingDirectory $NginxRoot -WindowStyle Hidden | Out-Null
+        Write-Host "[publish] nginx start requested"
+    }
+
+    if (-not (Wait-NginxReady -Url $NginxHealthUrl -TimeoutSeconds $NginxHealthTimeoutSeconds)) {
+        throw "nginx did not become ready within $NginxHealthTimeoutSeconds seconds: $NginxHealthUrl"
+    }
+
+    Write-Host "[publish] nginx ready: $NginxHealthUrl"
 }
 finally {
     Pop-Location
@@ -89,3 +144,4 @@ Write-Host "[done] frontend publish completed"
 Write-Host "  - ApiBaseUrl: $ApiBaseUrl"
 Write-Host "  - RemoteAssetUrl: $RemoteAssetUrl"
 Write-Host "  - NginxRoot: $NginxRoot"
+Write-Host "  - NginxHealthUrl: $NginxHealthUrl"
