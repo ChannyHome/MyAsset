@@ -202,8 +202,12 @@ cython_debug/
 .cursorindexingignore
 
 # MyAsset local runtime artifacts
+.runtime/
 apps/api/logs/
 apps/api/*.db
+
+# Generated deployment artifacts
+deploy/out/
 
 # Marimo
 marimo/_static/
