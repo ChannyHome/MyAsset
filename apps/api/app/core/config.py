@@ -29,9 +29,15 @@ class Settings(BaseSettings):
     data_go_kr_apartment_trade_url: str = (
         "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
     )
+    data_go_kr_stock_dividend_url: str = (
+        "https://apis.data.go.kr/1160100/GetStocDiviInfoService_V2/getDiviInfo_V2"
+    )
     data_go_kr_timeout_seconds: float = 10.0
     data_go_kr_rows_per_call: int = 1000
     data_go_kr_lookback_months: int = 6
+
+    alpha_vantage_api_key: str = ""
+    alpha_vantage_timeout_seconds: float = 20.0
 
     app_secrets_master_key: str = ""
 

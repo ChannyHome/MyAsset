@@ -11,6 +11,7 @@ from app.api.routers.analytics import router as analytics_router
 from app.api.routers.assets import router as assets_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.chat import router as chat_router
+from app.api.routers.dividends import router as dividends_router
 from app.api.routers.goal_targets import router as goal_targets_router
 from app.api.routers.health import router as health_router
 from app.api.routers.holdings import router as holdings_router
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(holdings_router, prefix=settings.api_v1_prefix)
     app.include_router(liabilities_router, prefix=settings.api_v1_prefix)
     app.include_router(quotes_router, prefix=settings.api_v1_prefix)
+    app.include_router(dividends_router, prefix=settings.api_v1_prefix)
     app.include_router(release_notes_router, prefix=settings.api_v1_prefix)
     app.include_router(settings_router, prefix=settings.api_v1_prefix)
     app.include_router(user_settings_router, prefix=settings.api_v1_prefix)
