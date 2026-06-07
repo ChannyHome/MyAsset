@@ -8,15 +8,10 @@ import {
   type QuickInsightPeriod,
   type QuickInsightPreset,
 } from "../api/analytics";
-import {
-  getSnapshotPreviewQuickInsight,
-  getSnapshotQuickInsight,
-  type SnapshotCsvPreviewOut,
-} from "../api/snapshots";
 import { formatDateTimeSeoul } from "../utils/datetime";
 
 type DisplayCurrency = "KRW" | "USD";
-type SourceMode = "LIVE" | "SNAPSHOT" | "CSV_PREVIEW";
+type SourceMode = "LIVE";
 type Severity = "positive" | "negative" | "neutral";
 type CompareHintState = "pending" | "exact" | "nearest" | "missing";
 
@@ -41,8 +36,6 @@ const props = withDefaults(
     allowCustomCompare?: boolean;
     scopeType?: "USER" | "HOUSEHOLD";
     scopeId?: number | null;
-    snapshotId?: number | null;
-    previewPayload?: SnapshotCsvPreviewOut | null;
   }>(),
   {
     title: "Quick Insight",
@@ -51,8 +44,6 @@ const props = withDefaults(
     allowCustomCompare: false,
     scopeType: "USER",
     scopeId: null,
-    snapshotId: null,
-    previewPayload: null,
   },
 );
 
@@ -369,48 +360,23 @@ async function loadQuickInsight(): Promise<void> {
   loading.value = true;
   errorMessage.value = "";
   try {
-    if (props.sourceMode === "LIVE") {
-      if (isCustomMode.value) {
-        quickInsight.value = await getQuickInsight({
-          scope_type: props.scopeType,
-          scope_id: props.scopeId ?? undefined,
-          display_currency: props.displayCurrency,
-          mode: "CUSTOM",
-          current_date: currentDate.value,
-          compare_date: compareDate.value,
-        });
-        return;
-      }
+    if (isCustomMode.value) {
       quickInsight.value = await getQuickInsight({
         scope_type: props.scopeType,
         scope_id: props.scopeId ?? undefined,
         display_currency: props.displayCurrency,
-        mode: "PRESET",
-        preset: period.value as QuickInsightPreset,
+        mode: "CUSTOM",
+        current_date: currentDate.value,
+        compare_date: compareDate.value,
       });
       return;
     }
-
-    if (props.sourceMode === "SNAPSHOT") {
-      if (!props.snapshotId) {
-        quickInsight.value = null;
-        return;
-      }
-      quickInsight.value = await getSnapshotQuickInsight(props.snapshotId, {
-        display_currency: props.displayCurrency,
-        period: (period.value === "CUSTOM" ? "1D" : period.value) as QuickInsightPreset,
-      });
-      return;
-    }
-
-    if (!props.previewPayload) {
-      quickInsight.value = null;
-      return;
-    }
-
-    quickInsight.value = await getSnapshotPreviewQuickInsight(props.previewPayload, {
+    quickInsight.value = await getQuickInsight({
+      scope_type: props.scopeType,
+      scope_id: props.scopeId ?? undefined,
       display_currency: props.displayCurrency,
-      period: (period.value === "CUSTOM" ? "1D" : period.value) as QuickInsightPreset,
+      mode: "PRESET",
+      preset: period.value as QuickInsightPreset,
     });
   } catch (error) {
     quickInsight.value = null;
@@ -421,10 +387,10 @@ async function loadQuickInsight(): Promise<void> {
 }
 
 watch(
-  () => [props.sourceMode, props.displayCurrency, props.scopeType, props.scopeId, props.snapshotId, props.previewPayload, period.value],
+  () => [props.sourceMode, props.displayCurrency, props.scopeType, props.scopeId, period.value],
   (_next, previous) => {
-    const previousPeriod = Array.isArray(previous) ? previous[6] : undefined;
-    if (props.sourceMode === "LIVE" && customCompareEnabled.value && period.value === "CUSTOM" && previousPeriod !== undefined && previousPeriod !== "CUSTOM") {
+    const previousPeriod = Array.isArray(previous) ? previous[4] : undefined;
+    if (customCompareEnabled.value && period.value === "CUSTOM" && previousPeriod !== undefined && previousPeriod !== "CUSTOM") {
       return;
     }
     void loadQuickInsight();
@@ -703,7 +669,7 @@ async function resetCustomCompareAndApply(): Promise<void> {
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
           <span>Current as_of: {{ formatDateTime(quickInsight.current_as_of) }}</span>
           <span v-if="quickInsight.compare_mode">Mode: {{ compareModeLabel }}</span>
-          <template v-if="props.sourceMode === 'LIVE' && quickInsight.compare_mode">
+          <template v-if="quickInsight.compare_mode">
             <span>Requested current: {{ quickInsight.requested_current_date || "-" }}</span>
             <span>Matched current snapshot: {{ quickInsight.matched_current_snapshot_date || "-" }}</span>
             <span>Requested compare: {{ quickInsight.requested_compare_date || "-" }}</span>

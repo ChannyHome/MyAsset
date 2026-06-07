@@ -134,7 +134,7 @@ class AnalyticsNetworthSeriesOut(BaseModel):
     scope_id: int
     display_currency: str
     mode: Literal["SUMMARY", "PORTFOLIO_RETURN", "ASSET_TREND"] = "SUMMARY"
-    range: Literal["1M", "3M", "6M", "1Y"] | None = None
+    range: Literal["1M", "3M", "6M", "1Y", "CUSTOM"] | None = None
     range_start_date: str | None = None
     range_end_date: str | None = None
     bucket: Literal["DAY", "WEEK", "MONTH"] = "DAY"

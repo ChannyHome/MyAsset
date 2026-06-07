@@ -14,12 +14,6 @@ from app.models.portfolio import Portfolio
 from app.models.portfolio_cash_account import PortfolioCashAccount
 from app.models.release_note import ReleaseNote
 from app.models.quote_scheduler_run import QuoteSchedulerRun
-from app.models.snapshot import (
-    SnapshotHoldingRow,
-    SnapshotLiabilityRow,
-    SnapshotPortfolioRow,
-    SnapshotSet,
-)
 from app.models.user import User
 from app.models.fx_rate import FxRate
 from app.models.goal_target import GoalTarget
@@ -43,10 +37,6 @@ __all__ = [
     "PortfolioCashAccount",
     "ReleaseNote",
     "QuoteSchedulerRun",
-    "SnapshotSet",
-    "SnapshotPortfolioRow",
-    "SnapshotHoldingRow",
-    "SnapshotLiabilityRow",
     "Asset",
     "AssetQuote",
     "LatestQuote",

@@ -15,7 +15,6 @@ from app.models.holding import Holding
 from app.models.household import HouseholdMember
 from app.models.liability import Liability
 from app.models.portfolio import Portfolio
-from app.models.snapshot import SnapshotSet
 from app.models.user import User
 from app.models.valuation_snapshot import ValuationSnapshot
 from app.schemas.chat import (
@@ -409,12 +408,16 @@ def _liability_overview_tool(
     return ToolBundle(traces=[trace], cards=[card], prompt_sections=[f"[liability_overview]\n{card.data}"])
 
 
-def _latest_snapshots(db: Session, *, owner_user_id: int, limit: int) -> list[SnapshotSet]:
+def _latest_snapshots(db: Session, *, owner_user_id: int, limit: int) -> list[ValuationSnapshot]:
     return list(
         db.scalars(
-            select(SnapshotSet)
-            .where(SnapshotSet.owner_user_id == owner_user_id)
-            .order_by(SnapshotSet.captured_at.desc(), SnapshotSet.id.desc())
+            select(ValuationSnapshot)
+            .where(
+                ValuationSnapshot.scope_type == "USER",
+                ValuationSnapshot.scope_id == owner_user_id,
+                ValuationSnapshot.display_currency == "KRW",
+            )
+            .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
             .limit(limit)
         ).all()
     )
@@ -427,22 +430,22 @@ def _snapshot_summary_tool(db: Session, *, current_user: User) -> ToolBundle:
     data = [
         {
             "snapshot_id": row.id,
-            "name": row.name,
-            "captured_at": row.captured_at.isoformat(),
-            "gross_assets_krw": str(row.gross_assets_krw),
-            "liabilities_krw": str(row.liabilities_krw),
-            "net_assets_krw": str(row.net_assets_krw),
+            "snapshot_date": row.snapshot_date.isoformat(),
+            "as_of": row.as_of.isoformat(),
+            "gross_assets_krw": str(row.assets_total),
+            "liabilities_krw": str(row.liabilities_total),
+            "net_assets_krw": str(row.net_worth_total),
         }
         for row in snapshots
     ]
     card = ChatSourceCard(
-        title="Recent snapshots",
-        as_of=snapshots[0].captured_at,
+        title="Recent valuation snapshots",
+        as_of=snapshots[0].as_of,
         scope=f"USER:{current_user.id}",
-        summary=f"Loaded {len(data)} recent snapshots",
+        summary=f"Loaded {len(data)} recent valuation snapshots",
         data={"snapshots": data},
     )
-    trace = ChatToolTrace(tool_name="snapshot_summary", summary="Loaded recent snapshots", payload={"count": len(data)})
+    trace = ChatToolTrace(tool_name="snapshot_summary", summary="Loaded recent valuation snapshots", payload={"count": len(data)})
     return ToolBundle(traces=[trace], cards=[card], prompt_sections=[f"[snapshot_summary]\n{card.data}"])
 
 

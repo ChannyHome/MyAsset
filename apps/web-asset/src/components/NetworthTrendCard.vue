@@ -27,7 +27,7 @@ type PortfolioOption = {
 type TrendMode = "SUMMARY" | "PORTFOLIO" | "ASSET";
 type PortfolioMetric = "CURRENT_VALUE" | "CURRENT_NET" | "PROFIT" | "RETURN";
 type AssetMetric = "CURRENT_VALUE" | "PROFIT" | "RETURN";
-type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
+type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y" | "CUSTOM";
 type NetworthTrendBucket = "DAY" | "WEEK" | "MONTH";
 type ZoomLevel = -2 | -1 | 0 | 1 | 2;
 
@@ -119,6 +119,8 @@ const props = withDefaults(
     bucket?: NetworthTrendBucket;
     rangeStartDate?: string | null;
     rangeEndDate?: string | null;
+    customStartDate?: string | null;
+    customEndDate?: string | null;
     showRangeBucketControls?: boolean;
     showRefreshControl?: boolean;
   }>(),
@@ -151,6 +153,8 @@ const props = withDefaults(
     bucket: "DAY",
     rangeStartDate: null,
     rangeEndDate: null,
+    customStartDate: null,
+    customEndDate: null,
     showRangeBucketControls: true,
     showRefreshControl: false,
   },
@@ -167,6 +171,10 @@ const emit = defineEmits<{
   (e: "update:assetKey", value: string): void;
   (e: "update:range", value: NetworthTrendRange): void;
   (e: "update:bucket", value: NetworthTrendBucket): void;
+  (e: "update:customStartDate", value: string): void;
+  (e: "update:customEndDate", value: string): void;
+  (e: "applyCustomRange"): void;
+  (e: "resetCustomRange"): void;
   (e: "refresh"): void;
 }>();
 
@@ -204,6 +212,7 @@ const rangeOptions: Array<{ key: NetworthTrendRange; label: string }> = [
   { key: "3M", label: "3M" },
   { key: "6M", label: "6M" },
   { key: "1Y", label: "1Y" },
+  { key: "CUSTOM", label: "Custom" },
 ];
 
 const bucketOptions: Array<{ key: NetworthTrendBucket; label: string }> = [
@@ -267,6 +276,16 @@ const rangeModel = computed({
 const bucketModel = computed({
   get: () => props.bucket,
   set: (value: NetworthTrendBucket) => emit("update:bucket", value),
+});
+
+const customStartDateModel = computed({
+  get: () => props.customStartDate || "",
+  set: (value: string) => emit("update:customStartDate", value),
+});
+
+const customEndDateModel = computed({
+  get: () => props.customEndDate || "",
+  set: (value: string) => emit("update:customEndDate", value),
 });
 
 const portfolioPalette = [
@@ -952,8 +971,32 @@ function inspectPoint(lineLabel: string, pointLabel: string, value: number): voi
         </button>
       </div>
       <p v-if="rangeMetaText" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-        Range anchor: latest snapshot - {{ rangeMetaText }}
+        Range anchor: {{ rangeModel === "CUSTOM" ? "custom" : "latest snapshot" }} - {{ rangeMetaText }}
       </p>
+      <div v-if="rangeModel === 'CUSTOM'" class="mt-3 grid gap-2 rounded-lg border border-slate-200 bg-white/60 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/40 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
+        <label class="grid gap-1">
+          <span class="font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Start date</span>
+          <input v-model="customStartDateModel" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-950" />
+        </label>
+        <label class="grid gap-1">
+          <span class="font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">End date</span>
+          <input v-model="customEndDateModel" type="date" class="rounded-lg border border-slate-300 bg-white px-2 py-1.5 dark:border-slate-700 dark:bg-slate-950" />
+        </label>
+        <button
+          type="button"
+          class="rounded-lg border border-indigo-400 bg-indigo-100 px-3 py-1.5 font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+          @click="emit('applyCustomRange')"
+        >
+          Apply
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200"
+          @click="emit('resetCustomRange')"
+        >
+          Reset to Latest
+        </button>
+      </div>
     </div>
 
     <div v-if="expanded && showModeToggle" class="mt-3 flex flex-wrap items-center gap-2">

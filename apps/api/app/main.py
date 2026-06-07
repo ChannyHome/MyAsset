@@ -20,9 +20,9 @@ from app.api.routers.portfolios import router as portfolios_router
 from app.api.routers.quotes import router as quotes_router
 from app.api.routers.release_notes import router as release_notes_router
 from app.api.routers.settings import router as settings_router
-from app.api.routers.snapshots import router as snapshots_router
 from app.api.routers.trades import router as trades_router
 from app.api.routers.user_settings import router as user_settings_router
+from app.api.routers.valuation_snapshots import router as valuation_snapshots_router
 from app.core.config import settings
 from app.tasks.quotes_scheduler import start_quote_scheduler, stop_quote_scheduler
 
@@ -57,7 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(user_settings_router, prefix=settings.api_v1_prefix)
     app.include_router(goal_targets_router, prefix=settings.api_v1_prefix)
     app.include_router(trades_router, prefix=settings.api_v1_prefix)
-    app.include_router(snapshots_router, prefix=settings.api_v1_prefix)
+    app.include_router(valuation_snapshots_router, prefix=settings.api_v1_prefix)
     app.include_router(analytics_router, prefix=settings.api_v1_prefix)
     app.include_router(chat_router, prefix=settings.api_v1_prefix)
 

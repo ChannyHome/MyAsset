@@ -49,7 +49,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 AllocationTarget = Literal["GROSS", "LIABILITIES", "NET", "HOLDINGS"]
 AllocationGroupBy = Literal["PORTFOLIO", "ASSET_CLASS", "ASSET", "LIABILITY_TYPE"]
 SeriesBucket = Literal["DAY", "WEEK", "MONTH"]
-SeriesRange = Literal["1M", "3M", "6M", "1Y"]
+SeriesRange = Literal["1M", "3M", "6M", "1Y", "CUSTOM"]
 PortfolioMoverBasis = Literal["GROSS", "NET", "LIABILITIES"]
 
 
@@ -971,6 +971,9 @@ def get_networth_series(
     top_n: int = Query(default=5, ge=1, le=10),
     bucket: SeriesBucket = Query(default="DAY"),
     range_: SeriesRange | None = Query(default=None, alias="range"),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+    anchor_snapshot_id: int | None = Query(default=None, ge=1),
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
     current_user: SeedUser = Depends(get_current_user),
@@ -1008,16 +1011,37 @@ def get_networth_series(
     range_end: date | None = None
 
     if normalized_range is not None:
-        latest_snapshot = db.scalar(
-            select(ValuationSnapshot)
-            .where(*base_filters)
-            .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
-        )
-        if latest_snapshot is None:
+        anchor_snapshot: ValuationSnapshot | None = None
+        if anchor_snapshot_id is not None:
+            anchor_snapshot = db.scalar(
+                select(ValuationSnapshot).where(
+                    ValuationSnapshot.id == anchor_snapshot_id,
+                    *base_filters,
+                )
+            )
+            if anchor_snapshot is None:
+                raise HTTPException(status_code=404, detail="Anchor valuation snapshot not found")
+        if anchor_snapshot is None:
+            anchor_snapshot = db.scalar(
+                select(ValuationSnapshot)
+                .where(*base_filters)
+                .order_by(ValuationSnapshot.snapshot_date.desc(), ValuationSnapshot.id.desc())
+            )
+        if anchor_snapshot is None:
             snapshots = []
         else:
-            range_end = latest_snapshot.snapshot_date
-            range_start = _range_start_date(range_end, normalized_range)
+            if normalized_range == "CUSTOM":
+                if start_date is None or end_date is None:
+                    raise HTTPException(status_code=400, detail="start_date and end_date are required for CUSTOM range")
+                if start_date > end_date:
+                    raise HTTPException(status_code=400, detail="start_date cannot be later than end_date")
+                range_start = start_date
+                range_end = end_date
+            else:
+                range_end = anchor_snapshot.snapshot_date if end_date is None else min(end_date, anchor_snapshot.snapshot_date)
+                range_start = _range_start_date(range_end, normalized_range) if start_date is None else start_date
+                if range_start > range_end:
+                    raise HTTPException(status_code=400, detail="start_date cannot be later than end_date")
             snapshots = list(
                 db.scalars(
                     select(ValuationSnapshot)

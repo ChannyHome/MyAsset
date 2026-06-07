@@ -143,7 +143,7 @@ export type AnalyticsNetworthSeriesOut = {
   portfolio_movers: AnalyticsNetworthSeriesPortfolioMoversOut | null;
 };
 
-export type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y";
+export type NetworthTrendRange = "1M" | "3M" | "6M" | "1Y" | "CUSTOM";
 export type NetworthTrendBucket = "DAY" | "WEEK" | "MONTH";
 
 export type AnalyticsCompositionChartKind = "AMOUNT" | "ALLOCATION";
@@ -320,6 +320,9 @@ export type NetworthSeriesQuery = {
   top_n?: number;
   bucket?: NetworthTrendBucket;
   range?: NetworthTrendRange;
+  start_date?: string;
+  end_date?: string;
+  anchor_snapshot_id?: number;
   limit?: number;
 };
 

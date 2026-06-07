@@ -210,6 +210,34 @@ function getDefaultTrendRange(): NetworthTrendRange {
   return window.matchMedia("(max-width: 768px)").matches ? "1M" : "3M";
 }
 
+function todayDateString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function oneMonthBeforeDateString(baseDate: string): string {
+  const date = baseDate ? new Date(`${baseDate}T00:00:00`) : new Date();
+  date.setMonth(date.getMonth() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function ensureHomeTrendCustomDates(): void {
+  const end = homeTrendCustomEndDate.value || homeTrendRangeEndDate.value || todayDateString();
+  homeTrendCustomEndDate.value = end;
+  homeTrendCustomStartDate.value = homeTrendCustomStartDate.value || homeTrendRangeStartDate.value || oneMonthBeforeDateString(end);
+}
+
+function homeTrendRangeQuery() {
+  if (homeTrendRange.value !== "CUSTOM") {
+    return { range: homeTrendRange.value };
+  }
+  ensureHomeTrendCustomDates();
+  return {
+    range: homeTrendRange.value,
+    start_date: homeTrendCustomStartDate.value,
+    end_date: homeTrendCustomEndDate.value,
+  };
+}
+
 function toHomePortfolioSortBy(key: HomePortfolioSortKey) {
   if (key === "portfolio") return "name" as const;
   if (key === "current") return "gross_assets_total" as const;
@@ -264,6 +292,8 @@ const homeTrendRange = ref<NetworthTrendRange>("3M");
 const homeTrendBucket = ref<NetworthTrendBucket>("DAY");
 const homeTrendRangeStartDate = ref<string | null>(null);
 const homeTrendRangeEndDate = ref<string | null>(null);
+const homeTrendCustomStartDate = ref("");
+const homeTrendCustomEndDate = ref("");
 const liveTrendVisibility = reactive({
   gross: true,
   liabilities: true,
@@ -550,12 +580,12 @@ const liveDashboardData = useDashboardDataAdapter({
   },
   loadTrend: async (targetCurrency) => {
     const normalizedCurrency = targetCurrency === "USD" ? "USD" : "KRW";
-    const out = await getNetworthSeries({
-      display_currency: normalizedCurrency,
-      portfolio_mover_basis: homeTrendPortfolioMoverBasis.value,
-      bucket: homeTrendBucket.value,
-      range: homeTrendRange.value,
-    });
+	    const out = await getNetworthSeries({
+	      display_currency: normalizedCurrency,
+	      portfolio_mover_basis: homeTrendPortfolioMoverBasis.value,
+	      bucket: homeTrendBucket.value,
+	      ...homeTrendRangeQuery(),
+	    });
     homeTrendRangeStartDate.value = out.range_start_date;
     homeTrendRangeEndDate.value = out.range_end_date;
     homeTrendPortfolioMovers.value = out.portfolio_movers
@@ -888,10 +918,10 @@ async function loadHomePortfolioTrend(): Promise<void> {
           : homeTrendPortfolioMetric.value === "CURRENT_NET"
             ? "CURRENT_NET"
             : homeTrendPortfolioMetric.value,
-      portfolio_id: homeTrendPortfolioId.value,
-      bucket: homeTrendBucket.value,
-      range: homeTrendRange.value,
-    });
+	      portfolio_id: homeTrendPortfolioId.value,
+	      bucket: homeTrendBucket.value,
+	      ...homeTrendRangeQuery(),
+	    });
     homeTrendRangeStartDate.value = out.range_start_date;
     homeTrendRangeEndDate.value = out.range_end_date;
     homePortfolioTrendPoints.value = out.points.map((point) => ({
@@ -993,10 +1023,10 @@ async function loadHomeAssetTrend(): Promise<void> {
           : homeTrendAssetMetric.value,
       asset_key: homeTrendAssetKey.value,
       portfolio_id: homeTrendPortfolioId.value,
-      top_n: HOME_TREND_ASSET_TOP_N,
-      bucket: homeTrendBucket.value,
-      range: homeTrendRange.value,
-    });
+	      top_n: HOME_TREND_ASSET_TOP_N,
+	      bucket: homeTrendBucket.value,
+	      ...homeTrendRangeQuery(),
+	    });
     homeTrendRangeStartDate.value = out.range_start_date;
     homeTrendRangeEndDate.value = out.range_end_date;
     homePortfolioTrendPoints.value = out.points.map((point) => ({
@@ -1066,6 +1096,19 @@ async function refreshHomeNetworthTrend(): Promise<void> {
     return;
   }
   await liveDashboardData.refreshTrend();
+}
+
+async function applyHomeTrendCustomRange(): Promise<void> {
+  homeTrendRange.value = "CUSTOM";
+  ensureHomeTrendCustomDates();
+  await refreshHomeNetworthTrend();
+}
+
+async function resetHomeTrendCustomRange(): Promise<void> {
+  homeTrendCustomEndDate.value = homeTrendRangeEndDate.value || todayDateString();
+  homeTrendCustomStartDate.value = oneMonthBeforeDateString(homeTrendCustomEndDate.value);
+  homeTrendRange.value = getDefaultTrendRange();
+  await refreshHomeNetworthTrend();
 }
 
 function mapHomePortfolioRow(row: PortfolioTableRowOut): PortfolioStatusRow {
@@ -1553,10 +1596,12 @@ onMounted(async () => {
           portfolioMetric: "CURRENT_VALUE" | "CURRENT_NET" | "RETURN" | "PROFIT";
           assetMetric: "CURRENT_VALUE" | "RETURN" | "PROFIT";
           portfolioKey: string;
-          assetKey: string;
-          range: NetworthTrendRange;
-          bucket: NetworthTrendBucket;
-        }>;
+	          assetKey: string;
+	          range: NetworthTrendRange;
+	          bucket: NetworthTrendBucket;
+	          customStartDate: string;
+	          customEndDate: string;
+	        }>;
         if (typeof parsed.gross === "boolean") liveTrendVisibility.gross = parsed.gross;
         if (typeof parsed.liabilities === "boolean") liveTrendVisibility.liabilities = parsed.liabilities;
         if (typeof parsed.net === "boolean") liveTrendVisibility.net = parsed.net;
@@ -1582,8 +1627,14 @@ onMounted(async () => {
         if (typeof parsed.assetKey === "string" && parsed.assetKey.length > 0) {
           homeTrendAssetKey.value = parsed.assetKey;
         }
-        if (parsed.range === "1M" || parsed.range === "3M" || parsed.range === "6M" || parsed.range === "1Y") {
+        if (parsed.range === "1M" || parsed.range === "3M" || parsed.range === "6M" || parsed.range === "1Y" || parsed.range === "CUSTOM") {
           homeTrendRange.value = parsed.range;
+        }
+        if (typeof parsed.customStartDate === "string") {
+          homeTrendCustomStartDate.value = parsed.customStartDate;
+        }
+        if (typeof parsed.customEndDate === "string") {
+          homeTrendCustomEndDate.value = parsed.customEndDate;
         }
         if (parsed.bucket === "DAY" || parsed.bucket === "WEEK" || parsed.bucket === "MONTH") {
           homeTrendBucket.value = parsed.bucket;
@@ -1660,17 +1711,19 @@ watch(
       homeTrendAssetMetric.value,
       homeTrendPortfolioKey.value,
       homeTrendAssetKey.value,
-      homeTrendRange.value,
-      homeTrendBucket.value,
-    ] as const,
-  ([gross, liabilities, net, mode, portfolioMetric, assetMetric, portfolioKey, assetKey, range, bucket]) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      LIVE_TREND_PREF_STORAGE_KEY,
-      JSON.stringify({ gross, liabilities, net, mode, portfolioMetric, assetMetric, portfolioKey, assetKey, range, bucket }),
-    );
-  },
-);
+	      homeTrendRange.value,
+	      homeTrendBucket.value,
+	      homeTrendCustomStartDate.value,
+	      homeTrendCustomEndDate.value,
+	    ] as const,
+	  ([gross, liabilities, net, mode, portfolioMetric, assetMetric, portfolioKey, assetKey, range, bucket, customStartDate, customEndDate]) => {
+	    if (typeof window === "undefined") return;
+	    window.localStorage.setItem(
+	      LIVE_TREND_PREF_STORAGE_KEY,
+	      JSON.stringify({ gross, liabilities, net, mode, portfolioMetric, assetMetric, portfolioKey, assetKey, range, bucket, customStartDate, customEndDate }),
+	    );
+	  },
+	);
 
 watch(
   () => [liveTrendVisibility.gross, liveTrendVisibility.net, liveTrendVisibility.liabilities] as const,
@@ -2161,6 +2214,8 @@ watch(
             :bucket="homeTrendBucket"
             :range-start-date="homeTrendRangeStartDate"
             :range-end-date="homeTrendRangeEndDate"
+            :custom-start-date="homeTrendCustomStartDate"
+            :custom-end-date="homeTrendCustomEndDate"
             :show-refresh-control="true"
             @update:show-gross="liveTrendVisibility.gross = $event"
             @update:show-liabilities="liveTrendVisibility.liabilities = $event"
@@ -2172,6 +2227,10 @@ watch(
             @update:asset-key="homeTrendAssetKey = $event"
             @update:range="homeTrendRange = $event"
             @update:bucket="homeTrendBucket = $event"
+            @update:custom-start-date="homeTrendCustomStartDate = $event"
+            @update:custom-end-date="homeTrendCustomEndDate = $event"
+            @apply-custom-range="applyHomeTrendCustomRange"
+            @reset-custom-range="resetHomeTrendCustomRange"
             @refresh="refreshHomeNetworthTrend"
           />
         </div>
