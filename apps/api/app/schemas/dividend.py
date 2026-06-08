@@ -119,6 +119,24 @@ class AssetProviderIdentifierOut(AssetProviderIdentifierIn):
     updated_at: datetime
 
 
+class AssetDividendSettingUpdateIn(BaseModel):
+    is_enabled: bool = True
+    tax_rate_pct: Decimal | None = Field(default=None, ge=0, le=100)
+    tax_country: str | None = Field(default=None, max_length=10)
+    dividend_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    manual_annual_dividend_per_share: Decimal | None = Field(default=None, ge=0)
+    manual_frequency: str | None = Field(default=None, max_length=30)
+    payment_months: list[int] = Field(default_factory=list)
+    note: str | None = None
+
+
+class AssetDividendSettingOut(AssetDividendSettingUpdateIn):
+    id: int
+    asset_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class DividendReceiptCreateIn(BaseModel):
     portfolio_id: int
     asset_id: int | None = None
@@ -194,8 +212,15 @@ class DividendTableRowOut(BaseModel):
     asset_id: int | None
     asset_name: str
     symbol: str | None = None
+    income_kind: str = "DIVIDEND"
     quantity: Decimal
     currency: str
+    confirmed_annual_gross: Decimal = Decimal("0")
+    confirmed_annual_tax: Decimal = Decimal("0")
+    confirmed_annual_net: Decimal = Decimal("0")
+    estimated_annual_gross: Decimal = Decimal("0")
+    estimated_annual_tax: Decimal = Decimal("0")
+    estimated_annual_net: Decimal = Decimal("0")
     expected_annual_gross: Decimal
     expected_annual_tax: Decimal
     expected_annual_net: Decimal
@@ -204,7 +229,13 @@ class DividendTableRowOut(BaseModel):
     received_ytd_net: Decimal
     dividend_yield_pct: Decimal | None = None
     tax_rate_pct: Decimal | None = None
+    tax_profile: str | None = None
     payment_months: list[int] = Field(default_factory=list)
+    estimate_method: str | None = None
+    confidence: str | None = None
+    missing_reason: str | None = None
+    confirmed_event_count: int = 0
+    estimated_event_count: int = 0
     status: str
 
 
@@ -216,3 +247,98 @@ class DividendTableOut(BaseModel):
     rows: list[DividendTableRowOut]
     portfolio_rows: list[dict] = Field(default_factory=list)
     as_of: datetime | None = None
+
+
+class DividendStatusRowOut(BaseModel):
+    portfolio_id: int | None = None
+    portfolio_name: str
+    asset_id: int | None = None
+    asset_name: str
+    symbol: str | None = None
+    income_kind: str = "DIVIDEND"
+    asset_currency: str | None = None
+    quantity: Decimal
+    dividend_currency: str | None = None
+    expected_annual_gross: Decimal
+    expected_annual_tax: Decimal
+    expected_annual_net: Decimal
+    received_ytd_gross: Decimal
+    received_ytd_tax: Decimal
+    received_ytd_net: Decimal
+    dividend_yield_pct: Decimal | None = None
+    tax_rate_pct: Decimal | None = None
+    tax_profile: str | None = None
+    payment_months: list[int] = Field(default_factory=list)
+    estimate_method: str | None = None
+    confidence: str | None = None
+    missing_reason: str | None = None
+    confirmed_event_count: int = 0
+    estimated_event_count: int = 0
+    status: str
+    source: str
+    provider_identifiers: list[AssetProviderIdentifierOut] = Field(default_factory=list)
+    identifier_summary: str | None = None
+    event_count: int = 0
+    last_event_date: date | None = None
+    last_updated_at: datetime | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class DividendStatusSummaryOut(BaseModel):
+    configured: bool
+    display_currency: str
+    dividend_year: int
+    snapshot: DividendSnapshotSummaryOut | None = None
+    expected_annual_gross: Decimal = Decimal("0")
+    expected_annual_tax: Decimal = Decimal("0")
+    expected_annual_net: Decimal = Decimal("0")
+    received_ytd_gross: Decimal = Decimal("0")
+    received_ytd_tax: Decimal = Decimal("0")
+    received_ytd_net: Decimal = Decimal("0")
+    total_assets: int = 0
+    covered_assets: int = 0
+    missing_identifier_assets: int = 0
+    no_event_assets: int = 0
+    disabled_assets: int = 0
+    as_of: datetime | None = None
+
+
+class DividendStatusOut(BaseModel):
+    summary: DividendStatusSummaryOut
+    scheduler: DividendSchedulerStatusOut | None = None
+    rows: list[DividendStatusRowOut]
+
+
+class DividendUpdateRunOut(BaseModel):
+    id: int
+    run_type: str
+    status: str
+    scheduled_run_at: datetime | None = None
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration_seconds: Decimal | None = None
+    total_assets: int
+    processed_assets: int
+    updated_count: int
+    skipped_count: int
+    failed_count: int
+    errors: list[str] = Field(default_factory=list)
+    snapshot_collected: bool
+    snapshot_error: str | None = None
+    error_message: str | None = None
+    created_at: datetime
+
+
+class DividendUpdateRunPageOut(BaseModel):
+    items: list[DividendUpdateRunOut]
+    total: int
+
+
+class AssetDividendHistoryOut(BaseModel):
+    asset_id: int
+    asset_name: str
+    symbol: str | None = None
+    setting: AssetDividendSettingOut | None = None
+    identifiers: list[AssetProviderIdentifierOut] = Field(default_factory=list)
+    events: list[DividendEventOut] = Field(default_factory=list)
+    receipts: list[DividendReceiptOut] = Field(default_factory=list)

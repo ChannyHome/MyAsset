@@ -27,9 +27,13 @@ const emit = defineEmits<{
 
 type DividendViewMode = "EXPECTED" | "RECEIVED" | "BOTH";
 type DividendAmountBasis = "GROSS" | "NET";
+type DividendKindFilter = "ALL" | "DIVIDEND" | "DISTRIBUTION";
+type DividendExpectedMode = "FORECAST" | "CONFIRMED";
 
 const viewMode = ref<DividendViewMode>("EXPECTED");
 const amountBasis = ref<DividendAmountBasis>("NET");
+const kindFilter = ref<DividendKindFilter>("ALL");
+const expectedMode = ref<DividendExpectedMode>("FORECAST");
 const showReceiptForm = ref(false);
 
 const receiptForm = reactive({
@@ -46,6 +50,9 @@ const receiptForm = reactive({
 });
 
 const rows = computed(() => props.table?.rows ?? []);
+const filteredRows = computed(() =>
+  rows.value.filter((row) => kindFilter.value === "ALL" || (row.income_kind || "DIVIDEND") === kindFilter.value),
+);
 const snapshot = computed(() => props.table?.snapshot ?? null);
 const displayCurrency = computed(() => props.table?.display_currency || "KRW");
 const dividendYear = computed(() => props.table?.dividend_year ?? new Date().getFullYear());
@@ -76,26 +83,32 @@ const assetOptions = computed(() => {
 });
 
 const sortedRows = computed(() => {
-  const valueKey =
-    viewMode.value === "RECEIVED"
-      ? amountBasis.value === "GROSS"
-        ? "received_ytd_gross"
-        : "received_ytd_net"
-      : amountBasis.value === "GROSS"
-        ? "expected_annual_gross"
-        : "expected_annual_net";
-  return [...rows.value].sort((a, b) => toNumber(b[valueKey]) - toNumber(a[valueKey]));
+  return [...filteredRows.value].sort((a, b) => {
+    const aValue = viewMode.value === "RECEIVED" ? rowReceivedAmount(a) : rowExpectedAmount(a);
+    const bValue = viewMode.value === "RECEIVED" ? rowReceivedAmount(b) : rowExpectedAmount(b);
+    return bValue - aValue;
+  });
 });
 
-const expectedTotal = computed(() =>
-  amountBasis.value === "GROSS" ? toNumber(snapshot.value?.expected_annual_gross) : toNumber(snapshot.value?.expected_annual_net),
-);
-const receivedTotal = computed(() =>
-  amountBasis.value === "GROSS" ? toNumber(snapshot.value?.received_ytd_gross) : toNumber(snapshot.value?.received_ytd_net),
-);
-const taxTotal = computed(() =>
-  viewMode.value === "RECEIVED" ? toNumber(snapshot.value?.received_ytd_tax) : toNumber(snapshot.value?.expected_annual_tax),
-);
+const expectedTotal = computed(() => filteredRows.value.reduce((total, row) => total + rowExpectedAmount(row), 0));
+const confirmedTotal = computed(() => filteredRows.value.reduce((total, row) => total + rowConfirmedAmount(row), 0));
+const estimatedTotal = computed(() => filteredRows.value.reduce((total, row) => total + rowEstimatedAmount(row), 0));
+const receivedTotal = computed(() => filteredRows.value.reduce((total, row) => total + rowReceivedAmount(row), 0));
+const taxTotal = computed(() => {
+  if (viewMode.value === "RECEIVED") {
+    return filteredRows.value.reduce((total, row) => total + toNumber(row.received_ytd_tax), 0);
+  }
+  return filteredRows.value.reduce(
+    (total, row) =>
+      total +
+      (expectedMode.value === "CONFIRMED"
+        ? amountBasis.value === "GROSS"
+          ? toNumber(row.confirmed_annual_tax)
+          : toNumber(row.confirmed_annual_tax)
+        : toNumber(row.expected_annual_tax)),
+    0,
+  );
+});
 
 function toNumber(value: unknown): number {
   if (value == null || value === "") return 0;
@@ -129,11 +142,30 @@ function paymentMonthLabel(months: number[]): string {
 }
 
 function rowExpectedAmount(row: DividendTableRowOut): number {
+  if (expectedMode.value === "CONFIRMED") {
+    return rowConfirmedAmount(row);
+  }
   return amountBasis.value === "GROSS" ? toNumber(row.expected_annual_gross) : toNumber(row.expected_annual_net);
+}
+
+function rowConfirmedAmount(row: DividendTableRowOut): number {
+  return amountBasis.value === "GROSS" ? toNumber(row.confirmed_annual_gross) : toNumber(row.confirmed_annual_net);
+}
+
+function rowEstimatedAmount(row: DividendTableRowOut): number {
+  return amountBasis.value === "GROSS" ? toNumber(row.estimated_annual_gross) : toNumber(row.estimated_annual_net);
 }
 
 function rowReceivedAmount(row: DividendTableRowOut): number {
   return amountBasis.value === "GROSS" ? toNumber(row.received_ytd_gross) : toNumber(row.received_ytd_net);
+}
+
+function kindLabel(kind: string | null | undefined): string {
+  return kind === "DISTRIBUTION" ? "Distribution" : "Dividend";
+}
+
+function statusHint(row: DividendTableRowOut): string {
+  return row.missing_reason || row.estimate_method || row.status || "-";
 }
 
 function beginReceiptForm(): void {
@@ -205,11 +237,23 @@ function submitReceipt(): void {
     </div>
 
     <template v-if="expanded">
-      <div class="mt-3 grid gap-2 md:grid-cols-3">
+      <div class="mt-3 grid gap-2 md:grid-cols-5">
         <div class="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/80">
           <p class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Expected Annual</p>
           <p class="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100" :style="maskStyle">
             {{ formatCurrency(expectedTotal) }}
+          </p>
+        </div>
+        <div class="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/80">
+          <p class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Confirmed</p>
+          <p class="mt-1 text-lg font-bold text-emerald-700 dark:text-emerald-300" :style="maskStyle">
+            {{ formatCurrency(confirmedTotal) }}
+          </p>
+        </div>
+        <div class="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/80">
+          <p class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Estimated</p>
+          <p class="mt-1 text-lg font-bold text-amber-700 dark:text-amber-300" :style="maskStyle">
+            {{ formatCurrency(estimatedTotal) }}
           </p>
         </div>
         <div class="rounded-xl bg-slate-100 p-3 dark:bg-slate-800/80">
@@ -227,6 +271,17 @@ function submitReceipt(): void {
       </div>
 
       <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Type</span>
+        <button
+          v-for="kind in ['ALL', 'DIVIDEND', 'DISTRIBUTION']"
+          :key="kind"
+          type="button"
+          class="rounded-xl border px-3 py-1.5 text-xs font-semibold transition"
+          :class="kindFilter === kind ? 'border-amber-400 bg-amber-600/15 text-amber-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+          @click="kindFilter = kind as DividendKindFilter"
+        >
+          {{ kind === "ALL" ? "All" : kind === "DIVIDEND" ? "Dividend" : "Distribution" }}
+        </button>
         <span class="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">View</span>
         <button
           v-for="mode in ['EXPECTED', 'RECEIVED', 'BOTH']"
@@ -248,6 +303,17 @@ function submitReceipt(): void {
           @click="amountBasis = basis as DividendAmountBasis"
         >
           {{ basis === "GROSS" ? "Gross" : "Net" }}
+        </button>
+        <span class="ml-0 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 md:ml-3">Estimate</span>
+        <button
+          v-for="mode in ['FORECAST', 'CONFIRMED']"
+          :key="mode"
+          type="button"
+          class="rounded-xl border px-3 py-1.5 text-xs font-semibold transition"
+          :class="expectedMode === mode ? 'border-sky-400 bg-sky-600/15 text-sky-200' : 'border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'"
+          @click="expectedMode = mode as DividendExpectedMode"
+        >
+          {{ mode === "FORECAST" ? "Forecast" : "Confirmed only" }}
         </button>
       </div>
 
@@ -312,34 +378,47 @@ function submitReceipt(): void {
       </form>
 
       <div class="mt-3 overflow-auto rounded-xl border border-slate-200 dark:border-slate-700">
-        <table class="min-w-[1180px] text-xs">
+        <table class="min-w-[1560px] text-xs">
           <thead class="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               <th class="px-3 py-2 text-left">Portfolio</th>
               <th class="px-3 py-2 text-left">Asset</th>
+              <th class="px-3 py-2 text-left">Type</th>
               <th class="px-3 py-2 text-right">Quantity</th>
               <th class="px-3 py-2 text-left">Currency</th>
+              <th class="px-3 py-2 text-left">Tax Profile</th>
+              <th v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right">Confirmed</th>
+              <th v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right">Estimated</th>
               <th v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right">Expected Annual</th>
               <th v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right">Expected Tax</th>
               <th v-if="viewMode !== 'EXPECTED'" class="px-3 py-2 text-right">Received YTD</th>
               <th v-if="viewMode !== 'EXPECTED'" class="px-3 py-2 text-right">Received Tax</th>
               <th class="px-3 py-2 text-right">Yield</th>
               <th class="px-3 py-2 text-left">Payment Months</th>
+              <th class="px-3 py-2 text-left">Confidence</th>
               <th class="px-3 py-2 text-left">Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="loading"><td colspan="11" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">Loading dividends...</td></tr>
-            <tr v-else-if="!isConfigured"><td colspan="11" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No dividend snapshot yet. Click Update Dividend Now.</td></tr>
-            <tr v-else-if="sortedRows.length === 0"><td colspan="11" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No dividend rows.</td></tr>
+            <tr v-if="loading"><td colspan="16" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">Loading dividends...</td></tr>
+            <tr v-else-if="!isConfigured"><td colspan="16" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No dividend snapshot yet. Click Update Dividend Now.</td></tr>
+            <tr v-else-if="sortedRows.length === 0"><td colspan="16" class="px-3 py-4 text-center text-slate-500 dark:text-slate-400">No dividend rows.</td></tr>
             <tr v-for="row in sortedRows" :key="`${row.portfolio_id}-${row.asset_id}-${row.asset_name}`" class="border-t border-slate-200 dark:border-slate-800">
               <td class="px-3 py-2 font-semibold">{{ row.portfolio_name }}</td>
               <td class="px-3 py-2">
                 <span class="font-semibold">{{ row.asset_name }}</span>
                 <span v-if="row.symbol" class="ml-1 text-slate-500 dark:text-slate-400">({{ row.symbol }})</span>
               </td>
+              <td class="px-3 py-2">
+                <span class="rounded-full border px-2 py-0.5 text-[0.65rem] font-bold uppercase" :class="row.income_kind === 'DISTRIBUTION' ? 'border-amber-400/50 text-amber-300' : 'border-emerald-400/50 text-emerald-300'">
+                  {{ kindLabel(row.income_kind) }}
+                </span>
+              </td>
               <td class="px-3 py-2 text-right">{{ formatQuantity(row.quantity) }}</td>
               <td class="px-3 py-2">{{ row.currency }}</td>
+              <td class="px-3 py-2">{{ row.tax_profile || "-" }}</td>
+              <td v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right font-semibold text-emerald-700 dark:text-emerald-300" :style="maskStyle">{{ formatCurrency(rowConfirmedAmount(row)) }}</td>
+              <td v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right font-semibold text-amber-700 dark:text-amber-300" :style="maskStyle">{{ formatCurrency(rowEstimatedAmount(row)) }}</td>
               <td v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right font-semibold" :style="maskStyle">{{ formatCurrency(rowExpectedAmount(row)) }}</td>
               <td v-if="viewMode !== 'RECEIVED'" class="px-3 py-2 text-right text-rose-600 dark:text-rose-300" :style="maskStyle">{{ formatCurrency(row.expected_annual_tax) }}</td>
               <td v-if="viewMode !== 'EXPECTED'" class="px-3 py-2 text-right font-semibold" :style="maskStyle">{{ formatCurrency(rowReceivedAmount(row)) }}</td>
@@ -348,8 +427,16 @@ function submitReceipt(): void {
               <td class="px-3 py-2">{{ paymentMonthLabel(row.payment_months) }}</td>
               <td class="px-3 py-2">
                 <span class="rounded-full border border-slate-300 px-2 py-0.5 text-[0.65rem] font-bold uppercase text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                  {{ row.confidence || "-" }}
+                </span>
+              </td>
+              <td class="px-3 py-2">
+                <span class="rounded-full border border-slate-300 px-2 py-0.5 text-[0.65rem] font-bold uppercase text-slate-600 dark:border-slate-700 dark:text-slate-300">
                   {{ row.status }}
                 </span>
+                <p v-if="statusHint(row) !== row.status" class="mt-1 max-w-[220px] truncate text-[0.65rem] text-slate-500 dark:text-slate-400" :title="statusHint(row)">
+                  {{ statusHint(row) }}
+                </p>
               </td>
             </tr>
           </tbody>

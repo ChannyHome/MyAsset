@@ -2663,7 +2663,7 @@ watch(
       >
         <DividendIncomeTableCard
           title="Dividend Income Table"
-          subtitle="Expected annual dividend / received YTD / tax / yield"
+          subtitle="Expected dividends and ETF distributions by asset and portfolio."
           :expanded="homeDividendsExpanded"
           :loading="loading"
           :table="dividendTableData"

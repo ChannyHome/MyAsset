@@ -121,8 +121,15 @@ export type DividendTableRowOut = {
   asset_id: number | null;
   asset_name: string;
   symbol: string | null;
+  income_kind: "DIVIDEND" | "DISTRIBUTION" | string;
   quantity: string | number;
   currency: string;
+  confirmed_annual_gross: string | number;
+  confirmed_annual_tax: string | number;
+  confirmed_annual_net: string | number;
+  estimated_annual_gross: string | number;
+  estimated_annual_tax: string | number;
+  estimated_annual_net: string | number;
   expected_annual_gross: string | number;
   expected_annual_tax: string | number;
   expected_annual_net: string | number;
@@ -131,7 +138,13 @@ export type DividendTableRowOut = {
   received_ytd_net: string | number;
   dividend_yield_pct: string | number | null;
   tax_rate_pct: string | number | null;
+  tax_profile: string | null;
   payment_months: number[];
+  estimate_method: string | null;
+  confidence: string | null;
+  missing_reason: string | null;
+  confirmed_event_count: number;
+  estimated_event_count: number;
   status: string;
 };
 
@@ -181,6 +194,140 @@ export type DividendReceiptOut = {
   updated_at: string;
 };
 
+export type AssetProviderIdentifierOut = {
+  id: number;
+  asset_id: number;
+  provider: string;
+  identifier_type: string;
+  identifier_value: string;
+  market: string | null;
+  is_primary: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssetProviderIdentifierIn = {
+  asset_id: number;
+  provider: string;
+  identifier_type: string;
+  identifier_value: string;
+  market?: string | null;
+  is_primary?: boolean;
+};
+
+export type AssetDividendSettingUpdateIn = {
+  is_enabled: boolean;
+  tax_rate_pct?: string | number | null;
+  tax_country?: string | null;
+  dividend_currency?: string | null;
+  manual_annual_dividend_per_share?: string | number | null;
+  manual_frequency?: string | null;
+  payment_months?: number[];
+  note?: string | null;
+};
+
+export type AssetDividendSettingOut = AssetDividendSettingUpdateIn & {
+  id: number;
+  asset_id: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DividendStatusRowOut = {
+  portfolio_id: number | null;
+  portfolio_name: string;
+  asset_id: number | null;
+  asset_name: string;
+  symbol: string | null;
+  income_kind: "DIVIDEND" | "DISTRIBUTION" | string;
+  asset_currency: string | null;
+  quantity: string | number;
+  dividend_currency: string | null;
+  expected_annual_gross: string | number;
+  expected_annual_tax: string | number;
+  expected_annual_net: string | number;
+  received_ytd_gross: string | number;
+  received_ytd_tax: string | number;
+  received_ytd_net: string | number;
+  dividend_yield_pct: string | number | null;
+  tax_rate_pct: string | number | null;
+  tax_profile: string | null;
+  payment_months: number[];
+  estimate_method: string | null;
+  confidence: string | null;
+  missing_reason: string | null;
+  confirmed_event_count: number;
+  estimated_event_count: number;
+  status: string;
+  source: string;
+  provider_identifiers: AssetProviderIdentifierOut[];
+  identifier_summary: string | null;
+  event_count: number;
+  last_event_date: string | null;
+  last_updated_at: string | null;
+  warnings: string[];
+};
+
+export type DividendStatusSummaryOut = {
+  configured: boolean;
+  display_currency: string;
+  dividend_year: number;
+  snapshot: DividendSnapshotSummaryOut | null;
+  expected_annual_gross: string | number;
+  expected_annual_tax: string | number;
+  expected_annual_net: string | number;
+  received_ytd_gross: string | number;
+  received_ytd_tax: string | number;
+  received_ytd_net: string | number;
+  total_assets: number;
+  covered_assets: number;
+  missing_identifier_assets: number;
+  no_event_assets: number;
+  disabled_assets: number;
+  as_of: string | null;
+};
+
+export type DividendStatusOut = {
+  summary: DividendStatusSummaryOut;
+  scheduler: DividendSchedulerStatusOut | null;
+  rows: DividendStatusRowOut[];
+};
+
+export type DividendUpdateRunOut = {
+  id: number;
+  run_type: string;
+  status: string;
+  scheduled_run_at: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_seconds: string | number | null;
+  total_assets: number;
+  processed_assets: number;
+  updated_count: number;
+  skipped_count: number;
+  failed_count: number;
+  errors: string[];
+  snapshot_collected: boolean;
+  snapshot_error: string | null;
+  error_message: string | null;
+  created_at: string;
+};
+
+export type DividendUpdateRunPageOut = {
+  items: DividendUpdateRunOut[];
+  total: number;
+};
+
+export type AssetDividendHistoryOut = {
+  asset_id: number;
+  asset_name: string;
+  symbol: string | null;
+  setting: AssetDividendSettingOut | null;
+  identifiers: AssetProviderIdentifierOut[];
+  events: DividendEventOut[];
+  receipts: DividendReceiptOut[];
+};
+
 export type DataGoKrDividendQuery = {
   stock_name?: string;
   crno?: string;
@@ -222,6 +369,11 @@ export async function getAssetDividendEvents(assetId: number, query: AssetDivide
   return data;
 }
 
+export async function refreshAssetDividends(assetId: number, query: AssetDividendQuery = {}): Promise<DividendLookupOut> {
+  const { data } = await http.post<DividendLookupOut>(`/dividends/assets/${assetId}/refresh`, null, { params: query });
+  return data;
+}
+
 export async function updateDividendsNow(): Promise<DividendUpdateJobStartOut> {
   const { data } = await http.post<DividendUpdateJobStartOut>("/dividends/update-now");
   return data;
@@ -234,6 +386,40 @@ export async function getDividendUpdateJobStatus(jobId: string): Promise<Dividen
 
 export async function getDividendSchedulerStatus(): Promise<DividendSchedulerStatusOut> {
   const { data } = await http.get<DividendSchedulerStatusOut>("/dividends/scheduler/status");
+  return data;
+}
+
+export async function getDividendStatus(params: { display_currency?: string; year?: number } = {}): Promise<DividendStatusOut> {
+  const { data } = await http.get<DividendStatusOut>("/dividends/status", { params });
+  return data;
+}
+
+export async function getDividendCoverage(params: { display_currency?: string; year?: number } = {}): Promise<DividendStatusOut> {
+  const { data } = await http.get<DividendStatusOut>("/dividends/coverage", { params });
+  return data;
+}
+
+export async function getDividendUpdateRuns(params: { page?: number; page_size?: number } = {}): Promise<DividendUpdateRunPageOut> {
+  const { data } = await http.get<DividendUpdateRunPageOut>("/dividends/update-runs", { params });
+  return data;
+}
+
+export async function upsertAssetProviderIdentifier(payload: AssetProviderIdentifierIn): Promise<AssetProviderIdentifierOut> {
+  const { data } = await http.put<AssetProviderIdentifierOut>("/dividends/identifiers", payload);
+  return data;
+}
+
+export async function updateAssetDividendSetting(assetId: number, payload: AssetDividendSettingUpdateIn): Promise<AssetDividendSettingOut> {
+  const { data } = await http.put<AssetDividendSettingOut>(`/dividends/assets/${assetId}/settings`, payload);
+  return data;
+}
+
+export async function deleteAssetDividendMetadata(assetId: number): Promise<void> {
+  await http.delete(`/dividends/assets/${assetId}/metadata`);
+}
+
+export async function getAssetDividendHistory(assetId: number, params: { year?: number } = {}): Promise<AssetDividendHistoryOut> {
+  const { data } = await http.get<AssetDividendHistoryOut>(`/dividends/assets/${assetId}/history`, { params });
   return data;
 }
 

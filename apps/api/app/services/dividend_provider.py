@@ -389,8 +389,8 @@ def fetch_dividends_for_asset(
     currency = (asset.currency or "").upper()
     exchange_code = (asset.exchange_code or "").upper()
     meta = asset.meta_json or {}
-    if asset.asset_class != "STOCK":
-        raise DividendProviderError("Dividend provider lookup supports STOCK assets only", status_code=400)
+    if asset.asset_class not in {"STOCK", "BOND", "ETC"}:
+        raise DividendProviderError("Dividend provider lookup supports dividend/distribution assets only", status_code=400)
 
     if currency == "KRW" or exchange_code in {"KRX", "KOSPI", "KOSDAQ", "KR"}:
         identifiers = _asset_provider_identifier_map(db, asset_id=asset.id, provider=DATA_GO_KR_PROVIDER)

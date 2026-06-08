@@ -35,6 +35,8 @@ class Portfolio(Base):
         nullable=True,
     )
     memo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dividend_tax_profile: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    dividend_tax_rate_pct: Mapped[Decimal | None] = mapped_column(Numeric(9, 4), nullable=True)
     is_included: Mapped[bool] = mapped_column(nullable=False, server_default=text("1"))
     is_hidden: Mapped[bool] = mapped_column(nullable=False, server_default=text("0"))
     cumulative_deposit_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, server_default=text("0"))

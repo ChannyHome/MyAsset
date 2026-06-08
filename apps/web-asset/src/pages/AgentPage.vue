@@ -79,6 +79,20 @@ import {
   type ReleaseNoteOut,
 } from "../api/releaseNotes";
 import {
+  deleteAssetDividendMetadata,
+  getAssetDividendHistory,
+  getDividendStatus,
+  getDividendUpdateJobStatus,
+  getDividendUpdateRuns,
+  updateAssetDividendSetting,
+  updateDividendsNow,
+  upsertAssetProviderIdentifier,
+  type AssetDividendHistoryOut,
+  type DividendStatusOut,
+  type DividendStatusRowOut,
+  type DividendUpdateRunOut,
+} from "../api/dividends";
+import {
   getEntityHistory,
   revertEntityHistory,
   type EntityHistoryItemOut,
@@ -106,6 +120,8 @@ type CollapseState = {
   portfoliosSectionCollapsed: boolean;
   holdingsSectionCollapsed: boolean;
   liabilitiesSectionCollapsed: boolean;
+  currentDividendStatusCollapsed: boolean;
+  dividendStatusSectionCollapsed: boolean;
 };
 
 const COLLAPSE_STATE_STORAGE_KEY = "myasset.agent.collapse.v1";
@@ -198,6 +214,8 @@ const assetsSectionCollapsed = ref(initialCollapseState.assetsSectionCollapsed ?
 const portfoliosSectionCollapsed = ref(initialCollapseState.portfoliosSectionCollapsed ?? true);
 const holdingsSectionCollapsed = ref(initialCollapseState.holdingsSectionCollapsed ?? true);
 const liabilitiesSectionCollapsed = ref(initialCollapseState.liabilitiesSectionCollapsed ?? true);
+const currentDividendStatusCollapsed = ref(initialCollapseState.currentDividendStatusCollapsed ?? true);
+const dividendStatusSectionCollapsed = ref(initialCollapseState.dividendStatusSectionCollapsed ?? true);
 const quickCreatePortfolioOpen = ref(false);
 const quickCreateHoldingOpen = ref(false);
 const quickCreateLiabilityOpen = ref(false);
@@ -326,6 +344,28 @@ const entityHistoryState = reactive({
   reverting_id: 0,
   items: [] as EntityHistoryItemOut[],
 });
+const dividendStatus = ref<DividendStatusOut | null>(null);
+const dividendUpdateRuns = ref<DividendUpdateRunOut[]>([]);
+const dividendUpdatePolling = ref(false);
+const dividendUpdateJobStatus = ref<QuoteJobStatus>("IDLE");
+const dividendUpdateProgressText = ref("");
+let dividendUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
+const dividendEditModal = reactive({ open: false, loading: false, assetId: 0, assetName: "", symbol: "" });
+const dividendHistoryModal = reactive({ open: false, loading: false, data: null as AssetDividendHistoryOut | null });
+const dividendEditForm = reactive({
+  is_enabled: true,
+  tax_rate_pct: "",
+  tax_country: "",
+  dividend_currency: "",
+  manual_annual_dividend_per_share: "",
+  manual_frequency: "",
+  payment_months: "",
+  note: "",
+  alpha_symbol: "",
+  data_go_kr_stock_name: "",
+  data_go_kr_crno: "",
+  data_go_kr_isin_code: "",
+});
 const secretForm = reactive({
   id: "",
   provider: "DATA_GO_KR",
@@ -344,6 +384,7 @@ const releaseNoteForm = reactive({
 
 const canManageAssets = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageQuotes = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
+const canManageDividends = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageAppSecrets = computed(() => me.value?.role === "ADMIN");
 const canManageReleaseNotes = computed(() => me.value?.role === "ADMIN");
 const canHardEdit = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
@@ -420,6 +461,26 @@ const quoteUpdateStatusLabel = computed(() => {
 });
 const quoteUpdateStatusClass = computed(() => {
   switch (quoteUpdateJobStatus.value) {
+    case "QUEUED":
+      return "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-200 dark:bg-amber-900/20";
+    case "RUNNING":
+      return "border-sky-300 text-sky-700 bg-sky-50 dark:border-sky-800 dark:text-sky-200 dark:bg-sky-900/20";
+    case "COMPLETED":
+      return "border-emerald-300 text-emerald-700 bg-emerald-50 dark:border-emerald-800 dark:text-emerald-200 dark:bg-emerald-900/20";
+    case "FAILED":
+      return "border-rose-300 text-rose-700 bg-rose-50 dark:border-rose-800 dark:text-rose-200 dark:bg-rose-900/20";
+    default:
+      return "border-slate-300 text-slate-600 bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:bg-slate-800/40";
+  }
+});
+const dividendUpdateStatusLabel = computed(() => {
+  if (dividendUpdatePolling.value) {
+    return `${dividendUpdateJobStatus.value}${dividendUpdateProgressText.value ? ` ${dividendUpdateProgressText.value}` : ""}`;
+  }
+  return dividendUpdateJobStatus.value;
+});
+const dividendUpdateStatusClass = computed(() => {
+  switch (dividendUpdateJobStatus.value) {
     case "QUEUED":
       return "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-800 dark:text-amber-200 dark:bg-amber-900/20";
     case "RUNNING":
@@ -569,6 +630,88 @@ function normalizeQuoteJobStatus(value: string | null | undefined): QuoteJobStat
   return "RUNNING";
 }
 
+function dividendStatusBadgeClass(statusValue: string): string {
+  const upper = normalizeUpper(statusValue || "");
+  if (upper === "OK" || upper === "ESTIMATED") {
+    return "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200";
+  }
+  if (upper === "MISSING_IDENTIFIER" || upper === "NO_EVENTS") {
+    return "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200";
+  }
+  if (upper === "DISABLED") {
+    return "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300";
+  }
+  return "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-200";
+}
+
+function dividendPaymentMonthsText(months: number[]): string {
+  return months.length ? months.join(", ") : "-";
+}
+
+function dividendSchedulerLabel(): string {
+  const scheduler = dividendStatus.value?.scheduler;
+  if (!scheduler) return "Dividend scheduler: -";
+  const next = scheduler.next_run_at ? formatDateTime(scheduler.next_run_at) : "-";
+  const success = scheduler.last_success_at ? formatDateTime(scheduler.last_success_at) : "-";
+  return `Dividend scheduler: next ${next} · last success ${success}`;
+}
+
+function resetDividendEditForm(): void {
+  dividendEditForm.is_enabled = true;
+  dividendEditForm.tax_rate_pct = "";
+  dividendEditForm.tax_country = "";
+  dividendEditForm.dividend_currency = "";
+  dividendEditForm.manual_annual_dividend_per_share = "";
+  dividendEditForm.manual_frequency = "";
+  dividendEditForm.payment_months = "";
+  dividendEditForm.note = "";
+  dividendEditForm.alpha_symbol = "";
+  dividendEditForm.data_go_kr_stock_name = "";
+  dividendEditForm.data_go_kr_crno = "";
+  dividendEditForm.data_go_kr_isin_code = "";
+}
+
+function fillDividendEditForm(row: DividendStatusRowOut, history?: AssetDividendHistoryOut): void {
+  resetDividendEditForm();
+  dividendEditModal.assetId = Number(row.asset_id || 0);
+  dividendEditModal.assetName = row.asset_name;
+  dividendEditModal.symbol = row.symbol || "";
+  const setting = history?.setting;
+  if (setting) {
+    dividendEditForm.is_enabled = Boolean(setting.is_enabled);
+    dividendEditForm.tax_rate_pct = setting.tax_rate_pct === null || setting.tax_rate_pct === undefined ? "" : String(setting.tax_rate_pct);
+    dividendEditForm.tax_country = setting.tax_country || "";
+    dividendEditForm.dividend_currency = setting.dividend_currency || "";
+    dividendEditForm.manual_annual_dividend_per_share =
+      setting.manual_annual_dividend_per_share === null || setting.manual_annual_dividend_per_share === undefined
+        ? ""
+        : String(setting.manual_annual_dividend_per_share);
+    dividendEditForm.manual_frequency = setting.manual_frequency || "";
+    dividendEditForm.payment_months = (setting.payment_months || []).join(",");
+    dividendEditForm.note = setting.note || "";
+  } else {
+    dividendEditForm.tax_rate_pct = row.tax_rate_pct === null || row.tax_rate_pct === undefined ? "" : String(row.tax_rate_pct);
+    dividendEditForm.dividend_currency = row.dividend_currency || row.asset_currency || "";
+    dividendEditForm.payment_months = row.payment_months.join(",");
+  }
+  const identifiers = history?.identifiers || row.provider_identifiers || [];
+  for (const ident of identifiers) {
+    const provider = normalizeUpper(ident.provider);
+    const type = normalizeUpper(ident.identifier_type);
+    if (provider === "ALPHA_VANTAGE" && type === "SYMBOL") dividendEditForm.alpha_symbol = ident.identifier_value;
+    if (provider === "DATA_GO_KR" && type === "STOCK_NAME") dividendEditForm.data_go_kr_stock_name = ident.identifier_value;
+    if (provider === "DATA_GO_KR" && type === "CRNO") dividendEditForm.data_go_kr_crno = ident.identifier_value;
+    if (provider === "DATA_GO_KR" && type === "ISIN_CODE") dividendEditForm.data_go_kr_isin_code = ident.identifier_value;
+  }
+}
+
+function parsePaymentMonthsInput(value: string): number[] {
+  return value
+    .split(/[,\s]+/)
+    .map((item) => Number(item.trim()))
+    .filter((item) => Number.isInteger(item) && item >= 1 && item <= 12);
+}
+
 function clearQuoteUpdatePolling(): void {
   if (quoteUpdatePollTimer) {
     clearTimeout(quoteUpdatePollTimer);
@@ -656,6 +799,211 @@ async function pollQuoteUpdateJob(jobId: string, startedAtMs: number): Promise<v
     quoteUpdateJobStatus.value = "FAILED";
     pushLog("Quote Update", "ERROR", getErrorMessage(error));
   }
+}
+
+function clearDividendUpdatePolling(): void {
+  if (dividendUpdatePollTimer) {
+    clearTimeout(dividendUpdatePollTimer);
+    dividendUpdatePollTimer = null;
+  }
+  dividendUpdatePolling.value = false;
+}
+
+async function pollDividendUpdateJob(jobId: string, startedAtMs: number): Promise<void> {
+  try {
+    const result = await getDividendUpdateJobStatus(jobId);
+    dividendUpdateJobStatus.value = normalizeQuoteJobStatus(result.status);
+    const processed = Number(result.processed_assets || 0);
+    const total = Number(result.total_assets || 0);
+    dividendUpdateProgressText.value = total > 0 ? `${processed}/${total}` : "";
+
+    if (result.status === "COMPLETED") {
+      clearDividendUpdatePolling();
+      pushLog(
+        "Dividend Update",
+        "SUCCESS",
+        `updated=${result.updated_count}, skipped=${result.skipped_count}, failed=${result.failed_count}`,
+      );
+      await refreshData({ logRefresh: false });
+      return;
+    }
+
+    if (result.status === "FAILED") {
+      clearDividendUpdatePolling();
+      const message = result.errors.length > 0 ? (result.errors[result.errors.length - 1] ?? "Dividend update job failed") : "Dividend update job failed";
+      pushLog("Dividend Update", "ERROR", message);
+      await refreshData({ logRefresh: false });
+      return;
+    }
+
+    if (Date.now() - startedAtMs > QUOTE_UPDATE_POLL_TIMEOUT_MS) {
+      clearDividendUpdatePolling();
+      dividendUpdateJobStatus.value = "FAILED";
+      pushLog("Dividend Update", "ERROR", "Polling timeout. Check job status manually.");
+      return;
+    }
+
+    dividendUpdatePollTimer = setTimeout(() => {
+      void pollDividendUpdateJob(jobId, startedAtMs);
+    }, QUOTE_UPDATE_POLL_MS);
+  } catch (error) {
+    clearDividendUpdatePolling();
+    dividendUpdateJobStatus.value = "FAILED";
+    pushLog("Dividend Update", "ERROR", getErrorMessage(error));
+  }
+}
+
+async function startDividendUpdateNow(): Promise<void> {
+  if (!canManageDividends.value) {
+    pushLog("Dividend Update", "ERROR", "Admin/Maintainer only");
+    return;
+  }
+  dividendUpdatePolling.value = true;
+  dividendUpdateProgressText.value = "";
+  dividendUpdateJobStatus.value = "QUEUED";
+  try {
+    const started = await updateDividendsNow();
+    dividendUpdateJobStatus.value = normalizeQuoteJobStatus(started.status);
+    pushLog("Dividend Update", "INFO", `job=${started.job_id}, total=${started.total_assets}`);
+    await pollDividendUpdateJob(started.job_id, Date.now());
+  } catch (error) {
+    clearDividendUpdatePolling();
+    dividendUpdateJobStatus.value = "FAILED";
+    pushLog("Dividend Update", "ERROR", getErrorMessage(error));
+  }
+}
+
+function askUpdateDividendsNow(): void {
+  runAction(
+    "Dividend Update",
+    "Update dividends now?",
+    "Fetch provider dividend events and collect dividend snapshots for current holdings.",
+    startDividendUpdateNow,
+    {
+      onStart: () => {
+        dividendUpdatePolling.value = true;
+        dividendUpdateJobStatus.value = "QUEUED";
+      },
+    },
+  );
+}
+
+async function openDividendEdit(row: DividendStatusRowOut): Promise<void> {
+  if (!canManageDividends.value || !row.asset_id) return;
+  dividendEditModal.loading = true;
+  dividendEditModal.open = true;
+  try {
+    const history = await getAssetDividendHistory(row.asset_id);
+    fillDividendEditForm(row, history);
+  } catch {
+    fillDividendEditForm(row);
+  } finally {
+    dividendEditModal.loading = false;
+  }
+}
+
+function closeDividendEdit(): void {
+  if (dividendEditModal.loading || loading.action) return;
+  dividendEditModal.open = false;
+}
+
+async function saveDividendEdit(): Promise<void> {
+  if (!dividendEditModal.assetId) return;
+  loading.action = true;
+  try {
+    await updateAssetDividendSetting(dividendEditModal.assetId, {
+      is_enabled: dividendEditForm.is_enabled,
+      tax_rate_pct: dividendEditForm.tax_rate_pct.trim() ? dividendEditForm.tax_rate_pct.trim() : null,
+      tax_country: dividendEditForm.tax_country.trim() || null,
+      dividend_currency: dividendEditForm.dividend_currency.trim() ? normalizeUpper(dividendEditForm.dividend_currency) : null,
+      manual_annual_dividend_per_share: dividendEditForm.manual_annual_dividend_per_share.trim()
+        ? dividendEditForm.manual_annual_dividend_per_share.trim()
+        : null,
+      manual_frequency: dividendEditForm.manual_frequency.trim() || null,
+      payment_months: parsePaymentMonthsInput(dividendEditForm.payment_months),
+      note: dividendEditForm.note.trim() || null,
+    });
+    const identifierPayloads = [
+      { provider: "ALPHA_VANTAGE", identifier_type: "SYMBOL", identifier_value: dividendEditForm.alpha_symbol.trim(), market: "US" },
+      { provider: "DATA_GO_KR", identifier_type: "STOCK_NAME", identifier_value: dividendEditForm.data_go_kr_stock_name.trim(), market: "KR" },
+      { provider: "DATA_GO_KR", identifier_type: "CRNO", identifier_value: dividendEditForm.data_go_kr_crno.trim(), market: "KR" },
+      { provider: "DATA_GO_KR", identifier_type: "ISIN_CODE", identifier_value: dividendEditForm.data_go_kr_isin_code.trim(), market: "KR" },
+    ];
+    for (const payload of identifierPayloads) {
+      if (!payload.identifier_value) continue;
+      await upsertAssetProviderIdentifier({
+        asset_id: dividendEditModal.assetId,
+        provider: payload.provider,
+        identifier_type: payload.identifier_type,
+        identifier_value: payload.identifier_value,
+        market: payload.market,
+        is_primary: true,
+      });
+    }
+    pushLog("Dividend Setting", "SUCCESS", `${dividendEditModal.assetName} saved`);
+    dividendEditModal.open = false;
+    await refreshData({ logRefresh: false });
+  } catch (error) {
+    pushLog("Dividend Setting", "ERROR", getErrorMessage(error));
+  } finally {
+    loading.action = false;
+  }
+}
+
+async function openDividendHistory(row: DividendStatusRowOut): Promise<void> {
+  if (!row.asset_id) return;
+  dividendHistoryModal.open = true;
+  dividendHistoryModal.loading = true;
+  dividendHistoryModal.data = null;
+  try {
+    dividendHistoryModal.data = await getAssetDividendHistory(row.asset_id);
+  } catch (error) {
+    pushLog("Dividend History", "ERROR", getErrorMessage(error));
+  } finally {
+    dividendHistoryModal.loading = false;
+  }
+}
+
+function closeDividendHistory(): void {
+  if (dividendHistoryModal.loading) return;
+  dividendHistoryModal.open = false;
+  dividendHistoryModal.data = null;
+}
+
+async function toggleDividendEnabled(row: DividendStatusRowOut): Promise<void> {
+  if (!row.asset_id) return;
+  const enable = normalizeUpper(row.status || "") === "DISABLED";
+  loading.action = true;
+  try {
+    await updateAssetDividendSetting(row.asset_id, {
+      is_enabled: enable,
+      tax_rate_pct: row.tax_rate_pct,
+      tax_country: null,
+      dividend_currency: row.dividend_currency || row.asset_currency || null,
+      manual_annual_dividend_per_share: null,
+      manual_frequency: null,
+      payment_months: row.payment_months,
+      note: null,
+    });
+    pushLog("Dividend Setting", "SUCCESS", `${row.asset_name} ${enable ? "included" : "excluded"}`);
+    await refreshData({ logRefresh: false });
+  } catch (error) {
+    pushLog("Dividend Setting", "ERROR", getErrorMessage(error));
+  } finally {
+    loading.action = false;
+  }
+}
+
+function askDeleteDividendMetadata(row: DividendStatusRowOut): void {
+  if (!row.asset_id) return;
+  runAction(
+    "Dividend Metadata Delete",
+    "Delete Dividend Metadata",
+    `${row.asset_name} 배당 설정과 provider identifier를 삭제할까요? 실제 배당 수령 내역과 자산은 삭제하지 않습니다.`,
+    async () => {
+      await deleteAssetDividendMetadata(row.asset_id as number);
+    },
+  );
 }
 
 function applyQuoteToAssetRow(assetId: number, quote: QuoteLatestOut): void {
@@ -1843,7 +2191,19 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
   try {
     const meOut = await getMe();
 
-    const [assetsOut, portfoliosOut, holdingsOut, liabilitiesOut, fxOut, staleOut, secretsOut, releaseNotesOut] = await Promise.all([
+    const canLoadDividendOps = meOut.role === "ADMIN" || meOut.role === "MAINTAINER";
+    const [
+      assetsOut,
+      portfoliosOut,
+      holdingsOut,
+      liabilitiesOut,
+      fxOut,
+      staleOut,
+      secretsOut,
+      releaseNotesOut,
+      dividendStatusOut,
+      dividendRunsOut,
+    ] = await Promise.all([
       getAssetsTable({
         page: assetsQuery.page,
         page_size: assetsQuery.pageSize,
@@ -1881,6 +2241,12 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
       meOut.role === "ADMIN"
         ? getReleaseNotes({ limit: 100, offset: 0, include_unpublished: true })
         : Promise.resolve([] as ReleaseNoteOut[]),
+      canLoadDividendOps
+        ? getDividendStatus({ display_currency: displayCurrency.value })
+        : Promise.resolve(null as DividendStatusOut | null),
+      canLoadDividendOps
+        ? getDividendUpdateRuns({ page: 1, page_size: 5 })
+        : Promise.resolve({ items: [], total: 0 } as { items: DividendUpdateRunOut[]; total: number }),
     ]);
 
     if (refreshId !== refreshSequence) return;
@@ -1897,6 +2263,8 @@ async function refreshData(options?: { logRefresh?: boolean }): Promise<void> {
     }
     appSecrets.value = secretsOut;
     releaseNotes.value = releaseNotesOut;
+    dividendStatus.value = dividendStatusOut;
+    dividendUpdateRuns.value = dividendRunsOut.items;
 
     assetsQuery.total = assetsOut.total;
     portfolioQuery.total = portfoliosOut.total;
@@ -2135,6 +2503,8 @@ watch(
     portfoliosSectionCollapsed,
     holdingsSectionCollapsed,
     liabilitiesSectionCollapsed,
+    currentDividendStatusCollapsed,
+    dividendStatusSectionCollapsed,
   ],
   (values) => {
     const [
@@ -2145,6 +2515,8 @@ watch(
       nextPortfoliosSectionCollapsed,
       nextHoldingsSectionCollapsed,
       nextLiabilitiesSectionCollapsed,
+      nextCurrentDividendStatusCollapsed,
+      nextDividendStatusSectionCollapsed,
     ] = values;
     saveCollapseState({
       quoteActionsCollapsed: nextQuoteActionsCollapsed,
@@ -2154,6 +2526,8 @@ watch(
       portfoliosSectionCollapsed: nextPortfoliosSectionCollapsed,
       holdingsSectionCollapsed: nextHoldingsSectionCollapsed,
       liabilitiesSectionCollapsed: nextLiabilitiesSectionCollapsed,
+      currentDividendStatusCollapsed: nextCurrentDividendStatusCollapsed,
+      dividendStatusSectionCollapsed: nextDividendStatusSectionCollapsed,
     });
   },
 );
@@ -2177,6 +2551,7 @@ onBeforeUnmount(() => {
   clearHoldingSearchDebounce();
   clearLiabilitySearchDebounce();
   clearQuoteUpdatePolling();
+  clearDividendUpdatePolling();
 });
 </script>
 
@@ -2563,6 +2938,95 @@ onBeforeUnmount(() => {
       >
         USER/SUPERUSER는 Asset 생성/수정/삭제 권한이 없습니다. Admin/Maintainer에게 요청하세요.
       </p>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Current Dividend Status</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Expected dividend coverage, scheduler health, and recent update runs.</p>
+        </div>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            v-if="canManageDividends"
+            type="button"
+            class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isBusy || dividendUpdatePolling"
+            @click="askUpdateDividendsNow"
+          >
+            {{ dividendUpdatePolling ? "Update Dividend Running..." : "Update Dividend Now" }}
+          </button>
+          <span
+            v-if="canManageDividends"
+            class="inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold"
+            :class="dividendUpdateStatusClass"
+          >
+            {{ dividendUpdateStatusLabel }}
+          </span>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="currentDividendStatusCollapsed = !currentDividendStatusCollapsed"
+          >
+            {{ currentDividendStatusCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
+      </div>
+      <template v-if="!currentDividendStatusCollapsed">
+        <p v-if="!canManageDividends" class="mt-2 text-xs text-slate-500 dark:text-slate-400">Admin/Maintainer only.</p>
+        <template v-else>
+          <div v-if="dividendStatus" class="mt-3 grid grid-cols-1 gap-2 md:grid-cols-5">
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Expected Net</p>
+              <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {{ formatMoney(dividendStatus.summary.expected_annual_net, dividendStatus.summary.display_currency) }}
+              </p>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Expected Gross</p>
+              <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {{ formatMoney(dividendStatus.summary.expected_annual_gross, dividendStatus.summary.display_currency) }}
+              </p>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Received YTD</p>
+              <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {{ formatMoney(dividendStatus.summary.received_ytd_net, dividendStatus.summary.display_currency) }}
+              </p>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Coverage</p>
+              <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {{ dividendStatus.summary.covered_assets }} / {{ dividendStatus.summary.total_assets }}
+              </p>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Needs Setup</p>
+              <p class="mt-1 text-sm font-semibold text-amber-600 dark:text-amber-300">
+                {{ dividendStatus.summary.missing_identifier_assets + dividendStatus.summary.no_event_assets }}
+              </p>
+            </div>
+          </div>
+          <p v-if="dividendStatus" class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {{ dividendSchedulerLabel() }}
+            <span class="mx-1">·</span>
+            as_of {{ formatDateTime(dividendStatus.summary.as_of) }}
+            <span v-if="dividendUpdateProgressText" class="mx-1">· {{ dividendUpdateProgressText }}</span>
+          </p>
+          <div v-if="dividendUpdateRuns.length > 0" class="mt-3 flex flex-wrap gap-2 text-xs">
+            <span
+              v-for="run in dividendUpdateRuns"
+              :key="run.id"
+              class="rounded-full border border-slate-300 px-2 py-1 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+            >
+              {{ run.run_type }} {{ formatDateTime(run.created_at) }} · {{ run.status }} · updated={{ run.updated_count }}, failed={{ run.failed_count }}
+            </span>
+          </div>
+          <p v-if="!dividendStatus" class="mt-2 text-xs text-slate-500 dark:text-slate-400">Dividend status is not loaded yet.</p>
+        </template>
       </template>
       <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
     </article>
@@ -3344,6 +3808,135 @@ onBeforeUnmount(() => {
     </article>
 
     <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Dividend Status</h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Expected dividend setup and per-asset coverage. Edit identifiers before running dividend update.</p>
+        </div>
+        <div class="ml-auto flex flex-wrap items-center gap-2">
+          <button
+            v-if="canManageDividends"
+            type="button"
+            class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isBusy || dividendUpdatePolling"
+            @click="askUpdateDividendsNow"
+          >
+            {{ dividendUpdatePolling ? "Updating..." : "Update Dividend Now" }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            :disabled="isBusy"
+            @click="dividendStatusSectionCollapsed = !dividendStatusSectionCollapsed"
+          >
+            {{ dividendStatusSectionCollapsed ? "Expand" : "Collapse" }}
+          </button>
+        </div>
+      </div>
+      <template v-if="!dividendStatusSectionCollapsed">
+        <p v-if="!canManageDividends" class="mt-2 text-xs text-slate-500 dark:text-slate-400">Admin/Maintainer only.</p>
+        <template v-else>
+          <div class="mt-3 overflow-x-auto">
+            <table class="w-full min-w-[1680px] text-left text-xs leading-tight">
+              <thead class="bg-slate-50 dark:bg-slate-800">
+                <tr>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Portfolio</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Asset</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Symbol</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Qty</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Div Currency</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Expected Gross</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Tax</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Expected Net</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Received YTD</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Yield</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Months</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Source</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Identifiers</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Events</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Status</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Updated</th>
+                  <th class="px-2 py-1.5 whitespace-nowrap">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in dividendStatus?.rows || []"
+                  :key="`${item.portfolio_id || 'none'}-${item.asset_id || 'none'}-${item.asset_name}`"
+                  class="border-t border-slate-200 dark:border-slate-700"
+                >
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.portfolio_name || "-" }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap font-semibold text-slate-900 dark:text-slate-100">{{ item.asset_name }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.symbol || "-" }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.quantity }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.dividend_currency || item.asset_currency || "-" }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.expected_annual_gross, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.expected_annual_tax, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap font-semibold">{{ formatMoney(item.expected_annual_net, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.received_ytd_net, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.dividend_yield_pct) }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ dividendPaymentMonthsText(item.payment_months) }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.source }}</td>
+                  <td class="max-w-[260px] truncate px-2 py-1.5" :title="item.identifier_summary || ''">{{ item.identifier_summary || "-" }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ item.event_count }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">
+                    <span class="rounded-full border px-2 py-0.5 text-[11px] font-semibold" :class="dividendStatusBadgeClass(item.status)">
+                      {{ item.status }}
+                    </span>
+                  </td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatDateTime(item.last_updated_at) }}</td>
+                  <td class="px-2 py-1.5 whitespace-nowrap">
+                    <div class="flex min-w-max flex-nowrap gap-1">
+                      <button
+                        type="button"
+                        class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                        :disabled="isBusy || !item.asset_id"
+                        @click="openDividendEdit(item)"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                        :disabled="isBusy || !item.asset_id"
+                        @click="openDividendHistory(item)"
+                      >
+                        History
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-slate-300 px-2 py-0.5 transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                        :disabled="isBusy || !item.asset_id"
+                        @click="toggleDividendEnabled(item)"
+                      >
+                        {{ normalizeUpper(item.status) === "DISABLED" ? "Include" : "Exclude" }}
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded border border-rose-300 px-2 py-0.5 text-rose-600 transition hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                        :disabled="isBusy || !item.asset_id"
+                        @click="askDeleteDividendMetadata(item)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="(dividendStatus?.rows || []).length === 0">
+                  <td colspan="17" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No dividend status rows found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Delete removes dividend settings/provider identifiers only. It does not delete assets, receipts, or transactions.
+          </p>
+        </template>
+      </template>
+      <p v-else class="mt-2 text-xs text-slate-500 dark:text-slate-400">섹션이 접혀 있습니다. Expand 버튼으로 열어주세요.</p>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Execution Log</h2>
       <ul class="mt-3 max-h-72 space-y-2 overflow-y-auto">
         <li
@@ -3949,6 +4542,192 @@ onBeforeUnmount(() => {
           Apply
         </button>
       </div>
+	    </section>
+	  </div>
+
+	  <div v-if="dividendEditModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeDividendEdit">
+	    <section class="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+	      <div class="flex flex-wrap items-start justify-between gap-2">
+	        <div>
+	          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Dividend Setting</h3>
+	          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+	            {{ dividendEditModal.assetName }} <span v-if="dividendEditModal.symbol">· {{ dividendEditModal.symbol }}</span>
+	          </p>
+	        </div>
+	        <button
+	          type="button"
+	          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+	          :disabled="loading.action || dividendEditModal.loading"
+	          @click="closeDividendEdit"
+	        >
+	          Close
+	        </button>
+	      </div>
+	      <div v-if="dividendEditModal.loading" class="mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+	        Loading dividend metadata...
+	      </div>
+	      <template v-else>
+	        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+	          <label class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+	            <input v-model="dividendEditForm.is_enabled" type="checkbox" />
+	            Enabled
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Tax Rate %
+	            <input v-model="dividendEditForm.tax_rate_pct" placeholder="15.4 / 15" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Tax Country
+	            <input v-model="dividendEditForm.tax_country" placeholder="KR / US" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Dividend Currency
+	            <input v-model="dividendEditForm.dividend_currency" placeholder="KRW / USD" maxlength="3" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Manual Annual DPS
+	            <input v-model="dividendEditForm.manual_annual_dividend_per_share" placeholder="optional" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Manual Frequency
+	            <input v-model="dividendEditForm.manual_frequency" placeholder="MONTHLY / QUARTERLY / ANNUAL" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300">
+	            Payment Months
+	            <input v-model="dividendEditForm.payment_months" placeholder="3,6,9,12" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	          <label class="text-xs text-slate-600 dark:text-slate-300 md:col-span-2">
+	            Note
+	            <input v-model="dividendEditForm.note" placeholder="optional" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	          </label>
+	        </div>
+	        <div class="mt-4 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+	          <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Provider Identifiers</p>
+	          <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Only filled fields are saved. DATA_GO_KR can use stock name, CRNO, or ISIN. Alpha Vantage usually uses US ticker.</p>
+	          <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+	            <label class="text-xs text-slate-600 dark:text-slate-300">
+	              Alpha Vantage Symbol
+	              <input v-model="dividendEditForm.alpha_symbol" placeholder="VOO / SCHD" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+	            </label>
+	            <label class="text-xs text-slate-600 dark:text-slate-300">
+	              DATA_GO_KR Stock Name
+	              <input v-model="dividendEditForm.data_go_kr_stock_name" placeholder="삼성전자" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	            </label>
+	            <label class="text-xs text-slate-600 dark:text-slate-300">
+	              DATA_GO_KR CRNO
+	              <input v-model="dividendEditForm.data_go_kr_crno" placeholder="법인등록번호" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
+	            </label>
+	            <label class="text-xs text-slate-600 dark:text-slate-300">
+	              DATA_GO_KR ISIN
+	              <input v-model="dividendEditForm.data_go_kr_isin_code" placeholder="KR7005930003" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs uppercase dark:border-slate-700 dark:bg-slate-950" />
+	            </label>
+	          </div>
+	        </div>
+	        <div class="mt-4 flex justify-end gap-2">
+	          <button
+	            type="button"
+	            class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+	            :disabled="loading.action"
+	            @click="closeDividendEdit"
+	          >
+	            Cancel
+	          </button>
+	          <button
+	            type="button"
+	            class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+	            :disabled="loading.action"
+	            @click="saveDividendEdit"
+	          >
+	            Save
+	          </button>
+	        </div>
+	      </template>
+	    </section>
+	  </div>
+
+	  <div v-if="dividendHistoryModal.open" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/55 px-4" @click.self="closeDividendHistory">
+	    <section class="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+	      <div class="flex flex-wrap items-start justify-between gap-2">
+	        <div>
+	          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Dividend History</h3>
+	          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+	            {{ dividendHistoryModal.data?.asset_name || "-" }} <span v-if="dividendHistoryModal.data?.symbol">· {{ dividendHistoryModal.data?.symbol }}</span>
+	          </p>
+	        </div>
+	        <button
+	          type="button"
+	          class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+	          :disabled="dividendHistoryModal.loading"
+	          @click="closeDividendHistory"
+	        >
+	          Close
+	        </button>
+	      </div>
+	      <div v-if="dividendHistoryModal.loading" class="mt-4 rounded-lg border border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+	        Loading dividend history...
+	      </div>
+	      <template v-else-if="dividendHistoryModal.data">
+	        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+	          <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+	            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Provider Events</p>
+	            <div class="mt-2 max-h-72 overflow-auto">
+	              <table class="w-full min-w-[760px] text-left text-xs">
+	                <thead class="bg-slate-50 dark:bg-slate-800">
+	                  <tr>
+	                    <th class="px-2 py-1">Provider</th>
+	                    <th class="px-2 py-1">Symbol</th>
+	                    <th class="px-2 py-1">Payment</th>
+	                    <th class="px-2 py-1">DPS Gross</th>
+	                    <th class="px-2 py-1">Tax %</th>
+	                    <th class="px-2 py-1">Currency</th>
+	                  </tr>
+	                </thead>
+	                <tbody>
+	                  <tr v-for="event in dividendHistoryModal.data.events" :key="`${event.provider}-${event.provider_event_id}`" class="border-t border-slate-200 dark:border-slate-700">
+	                    <td class="px-2 py-1">{{ event.provider }}</td>
+	                    <td class="px-2 py-1">{{ event.symbol || event.asset_name || "-" }}</td>
+	                    <td class="px-2 py-1">{{ event.payment_date || event.ex_dividend_date || event.dividend_base_date || "-" }}</td>
+	                    <td class="px-2 py-1">{{ formatMoney(event.dividend_per_share_gross, event.dividend_currency) }}</td>
+	                    <td class="px-2 py-1">{{ formatPct(event.tax_rate_pct) }}</td>
+	                    <td class="px-2 py-1">{{ event.dividend_currency }}</td>
+	                  </tr>
+	                  <tr v-if="dividendHistoryModal.data.events.length === 0">
+	                    <td colspan="6" class="px-2 py-3 text-center text-slate-500 dark:text-slate-400">No provider events</td>
+	                  </tr>
+	                </tbody>
+	              </table>
+	            </div>
+	          </div>
+	          <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+	            <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Received Dividends</p>
+	            <div class="mt-2 max-h-72 overflow-auto">
+	              <table class="w-full min-w-[620px] text-left text-xs">
+	                <thead class="bg-slate-50 dark:bg-slate-800">
+	                  <tr>
+	                    <th class="px-2 py-1">Date</th>
+	                    <th class="px-2 py-1">Portfolio</th>
+	                    <th class="px-2 py-1">Gross</th>
+	                    <th class="px-2 py-1">Tax</th>
+	                    <th class="px-2 py-1">Net</th>
+	                  </tr>
+	                </thead>
+	                <tbody>
+	                  <tr v-for="receipt in dividendHistoryModal.data.receipts" :key="receipt.id" class="border-t border-slate-200 dark:border-slate-700">
+	                    <td class="px-2 py-1">{{ receipt.received_date }}</td>
+	                    <td class="px-2 py-1">{{ receipt.portfolio_name || "-" }}</td>
+	                    <td class="px-2 py-1">{{ formatMoney(receipt.gross_amount, receipt.currency) }}</td>
+	                    <td class="px-2 py-1">{{ formatMoney(receipt.withholding_tax, receipt.currency) }}</td>
+	                    <td class="px-2 py-1">{{ formatMoney(receipt.net_amount, receipt.currency) }}</td>
+	                  </tr>
+	                  <tr v-if="dividendHistoryModal.data.receipts.length === 0">
+	                    <td colspan="5" class="px-2 py-3 text-center text-slate-500 dark:text-slate-400">No manual receipts</td>
+	                  </tr>
+	                </tbody>
+	              </table>
+	            </div>
+	          </div>
+	        </div>
+	      </template>
 	    </section>
 	  </div>
 
