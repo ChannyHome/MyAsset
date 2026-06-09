@@ -274,6 +274,12 @@ class DividendStatusRowOut(BaseModel):
     dividend_yield_pct: Decimal | None = None
     tax_rate_pct: Decimal | None = None
     tax_profile: str | None = None
+    portfolio_tax_profile: str | None = None
+    asset_tax_profile: str | None = None
+    effective_tax_profile: str | None = None
+    effective_tax_rate_pct: Decimal | None = None
+    taxable_included: bool = True
+    taxable_exclusion_reason: str | None = None
     payment_months: list[int] = Field(default_factory=list)
     estimate_method: str | None = None
     confidence: str | None = None
