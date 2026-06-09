@@ -5,6 +5,8 @@ from app.api.deps import get_current_user_any, require_min_role
 from app.core.db import get_db
 from app.models.user import User
 from app.schemas.app_settings import (
+    FinancialIncomeTaxableLimitOut,
+    FinancialIncomeTaxableLimitUpdate,
     FxStaleMinutesOut,
     FxStaleMinutesUpdate,
     QuoteIntervalOut,
@@ -13,9 +15,11 @@ from app.schemas.app_settings import (
     TokenRefreshEnabledUpdate,
 )
 from app.services.app_settings import (
+    get_financial_income_taxable_limit_krw,
     get_fx_stale_minutes,
     get_quote_interval_minutes,
     get_token_refresh_enabled,
+    set_financial_income_taxable_limit_krw,
     set_fx_stale_minutes,
     set_quote_interval_minutes,
     set_token_refresh_enabled,
@@ -81,3 +85,22 @@ def update_token_refresh_setting(
 ) -> TokenRefreshEnabledOut:
     enabled = set_token_refresh_enabled(db, payload.enabled)
     return TokenRefreshEnabledOut(enabled=enabled, source="db")
+
+
+@router.get("/financial-income-taxable-limit", response_model=FinancialIncomeTaxableLimitOut)
+def get_financial_income_taxable_limit_setting(
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_min_role("ADMIN")),
+) -> FinancialIncomeTaxableLimitOut:
+    amount, source = get_financial_income_taxable_limit_krw(db)
+    return FinancialIncomeTaxableLimitOut(amount_krw=amount, source=source)
+
+
+@router.put("/financial-income-taxable-limit", response_model=FinancialIncomeTaxableLimitOut)
+def update_financial_income_taxable_limit_setting(
+    payload: FinancialIncomeTaxableLimitUpdate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_min_role("ADMIN")),
+) -> FinancialIncomeTaxableLimitOut:
+    amount = set_financial_income_taxable_limit_krw(db, payload.amount_krw)
+    return FinancialIncomeTaxableLimitOut(amount_krw=amount, source="db")

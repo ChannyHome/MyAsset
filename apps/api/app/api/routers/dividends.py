@@ -44,7 +44,12 @@ from app.schemas.dividend import (
     DividendUpdateRunOut,
     DividendUpdateRunPageOut,
 )
-from app.services.dividend_income import create_dividend_receipt_transaction, get_latest_dividend_snapshot
+from app.services.app_settings import get_financial_income_taxable_limit_krw
+from app.services.dividend_income import (
+    create_dividend_receipt_transaction,
+    get_latest_dividend_snapshot,
+    resolve_dividend_tax_context,
+)
 from app.services.dividend_provider import (
     DividendProviderError,
     fetch_alpha_vantage_stock_dividends,
@@ -73,6 +78,19 @@ def _hide_raw(payload: DividendLookupOut, *, include_raw: bool) -> DividendLooku
         return payload
     payload.items = [item.model_copy(update={"raw": None}) for item in payload.items]
     return payload
+
+
+def _is_auto_cash_dividend_asset(asset: Asset | None) -> bool:
+    if asset is None:
+        return False
+    meta = asset.meta_json or {}
+    text = f"{asset.name or ''} {asset.symbol or ''} {meta.get('asset_type', '')}".upper()
+    return asset.asset_class == "CASH" or "CASH_AUTO" in text or "AUTO CASH" in text
+
+
+def _is_auto_cash_dividend_row(row: DividendSnapshotAssetRow) -> bool:
+    text = f"{row.asset_name or ''} {row.symbol or ''}".upper()
+    return "CASH_AUTO" in text or "AUTO CASH" in text
 
 
 def _snapshot_out(snapshot: DividendSnapshot) -> DividendSnapshotSummaryOut:
@@ -156,7 +174,33 @@ def _asset_income_kind(row: DividendSnapshotAssetRow) -> str:
 
 def _default_income_kind_for_asset(asset: Asset) -> str:
     text = f"{asset.name or ''} {asset.symbol or ''} {(asset.meta_json or {}).get('asset_type', '')}".upper()
-    distribution_markers = ("ETF", "KODEX", "TIGER", "ACE", "KBSTAR", "KOSEF", "SOL ", "RISE", "ARIRANG", "PLUS", "VOO", "SCHD", "SPY")
+    distribution_markers = (
+        "ETF",
+        "KODEX",
+        "TIGER",
+        "ACE",
+        "KBSTAR",
+        "KOSEF",
+        "SOL ",
+        "RISE",
+        "ARIRANG",
+        "PLUS",
+        "SMH",
+        "SPYD",
+        "SWAN",
+        "TIP",
+        "TLT",
+        "VIG",
+        "VOO",
+        "VTI",
+        "VTV",
+        "VYM",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "SCHD",
+        "SPY",
+    )
     return "DISTRIBUTION" if asset.asset_class in {"BOND", "ETC"} or any(marker in text for marker in distribution_markers) else "DIVIDEND"
 
 
@@ -467,6 +511,7 @@ def get_dividend_status(
                 )
             ).all()
         )
+        snapshot_rows = [row for row in snapshot_rows if not _is_auto_cash_dividend_row(row)]
 
     held_rows = list(
         db.execute(
@@ -480,9 +525,26 @@ def get_dividend_status(
             )
         ).all()
     )
+    held_rows = [(holding, asset, portfolio) for holding, asset, portfolio in held_rows if not _is_auto_cash_dividend_asset(asset)]
     held_asset_ids = {int(asset.id) for _holding, asset, _portfolio in held_rows}
     snapshot_asset_ids = {int(row.asset_id) for row in snapshot_rows if row.asset_id is not None}
     asset_ids = sorted(held_asset_ids | snapshot_asset_ids)
+    assets_by_id = {
+        int(asset.id): asset
+        for asset in db.scalars(select(Asset).where(Asset.id.in_(asset_ids or [-1]))).all()
+    }
+    portfolio_ids = sorted(
+        {
+            int(portfolio.id)
+            for _holding, _asset, portfolio in held_rows
+            if portfolio is not None
+        }
+        | {int(row.portfolio_id) for row in snapshot_rows if row.portfolio_id is not None}
+    )
+    portfolios_by_id = {
+        int(portfolio.id): portfolio
+        for portfolio in db.scalars(select(Portfolio).where(Portfolio.id.in_(portfolio_ids or [-1]))).all()
+    }
 
     identifiers_by_asset: dict[int, list[AssetProviderIdentifier]] = {asset_id: [] for asset_id in asset_ids}
     for ident in db.scalars(select(AssetProviderIdentifier).where(AssetProviderIdentifier.asset_id.in_(asset_ids or [-1]))).all():
@@ -507,6 +569,14 @@ def get_dividend_status(
         identifiers = identifiers_by_asset.get(asset_id or -1, [])
         setting = settings_by_asset.get(asset_id or -1)
         events = events_by_asset.get(asset_id or -1, [])
+        asset = assets_by_id.get(asset_id or -1)
+        portfolio = portfolios_by_id.get(int(row.portfolio_id or 0))
+        tax_context = resolve_dividend_tax_context(
+            portfolio=portfolio,
+            asset=asset,
+            dividend_currency=row.dividend_currency,
+            setting=setting,
+        )
         warnings: list[str] = []
         if not identifiers:
             warnings.append("Missing provider identifier")
@@ -538,8 +608,14 @@ def get_dividend_status(
                 received_ytd_tax=row.received_ytd_tax_display,
                 received_ytd_net=row.received_ytd_net_display,
                 dividend_yield_pct=row.dividend_yield_pct,
-                tax_rate_pct=row.tax_rate_pct,
-                tax_profile=row.tax_profile,
+                tax_rate_pct=tax_context.effective_tax_rate_pct,
+                tax_profile=tax_context.effective_tax_profile,
+                portfolio_tax_profile=tax_context.portfolio_tax_profile,
+                asset_tax_profile=tax_context.asset_tax_profile,
+                effective_tax_profile=tax_context.effective_tax_profile,
+                effective_tax_rate_pct=tax_context.effective_tax_rate_pct,
+                taxable_included=tax_context.taxable_included,
+                taxable_exclusion_reason=tax_context.taxable_exclusion_reason,
                 payment_months=row.payment_months_json or [],
                 estimate_method=row.estimate_method,
                 confidence=row.confidence,
@@ -572,6 +648,12 @@ def get_dividend_status(
         setting = settings_by_asset.get(int(asset.id))
         events = events_by_asset.get(int(asset.id), [])
         status_value = "DISABLED" if setting is not None and not setting.is_enabled else "MISSING_IDENTIFIER" if not identifiers else "NO_EVENTS"
+        tax_context = resolve_dividend_tax_context(
+            portfolio=portfolio,
+            asset=asset,
+            dividend_currency=(setting.dividend_currency if setting else asset.currency),
+            setting=setting,
+        )
         rows.append(
             DividendStatusRowOut(
                 portfolio_id=holding.portfolio_id,
@@ -590,8 +672,14 @@ def get_dividend_status(
                 received_ytd_tax=Decimal("0"),
                 received_ytd_net=Decimal("0"),
                 dividend_yield_pct=None,
-                tax_rate_pct=setting.tax_rate_pct if setting else None,
-                tax_profile=None,
+                tax_rate_pct=tax_context.effective_tax_rate_pct,
+                tax_profile=tax_context.effective_tax_profile,
+                portfolio_tax_profile=tax_context.portfolio_tax_profile,
+                asset_tax_profile=tax_context.asset_tax_profile,
+                effective_tax_profile=tax_context.effective_tax_profile,
+                effective_tax_rate_pct=tax_context.effective_tax_rate_pct,
+                taxable_included=tax_context.taxable_included,
+                taxable_exclusion_reason=tax_context.taxable_exclusion_reason,
                 payment_months=setting.payment_months_json if setting and setting.payment_months_json else [],
                 estimate_method=None,
                 confidence="NONE",
@@ -617,6 +705,38 @@ def get_dividend_status(
         )
 
     configured_rows = [row for row in rows if row.status != "DISABLED"]
+    taxable_limit_krw, _taxable_limit_source = get_financial_income_taxable_limit_krw(db)
+    taxable_expected_annual_gross = sum(
+        (row.expected_annual_gross for row in configured_rows if row.taxable_included),
+        Decimal("0"),
+    )
+    taxable_expected_annual_net = sum(
+        (row.expected_annual_net for row in configured_rows if row.taxable_included),
+        Decimal("0"),
+    )
+    taxable_received_ytd = sum(
+        (row.received_ytd_net for row in configured_rows if row.taxable_included),
+        Decimal("0"),
+    )
+    excluded_pension_amount = sum(
+        (row.expected_annual_gross for row in configured_rows if row.effective_tax_profile == "PENSION"),
+        Decimal("0"),
+    )
+    excluded_isa_amount = sum(
+        (row.expected_annual_gross for row in configured_rows if row.effective_tax_profile == "ISA"),
+        Decimal("0"),
+    )
+    excluded_tax_exempt_amount = sum(
+        (row.expected_annual_gross for row in configured_rows if row.effective_tax_profile == "TAX_EXEMPT"),
+        Decimal("0"),
+    )
+    taxable_limit_decimal = Decimal(taxable_limit_krw)
+    taxable_remaining_gross = max(Decimal("0"), taxable_limit_decimal - taxable_expected_annual_gross)
+    taxable_usage_ratio_pct = (
+        taxable_expected_annual_gross / taxable_limit_decimal * Decimal("100")
+        if taxable_limit_decimal > 0
+        else None
+    )
     summary = DividendStatusSummaryOut(
         configured=snapshot is not None,
         display_currency=target_currency,
@@ -633,6 +753,15 @@ def get_dividend_status(
         missing_identifier_assets=len([row for row in rows if row.status == "MISSING_IDENTIFIER"]),
         no_event_assets=len([row for row in rows if row.status == "NO_EVENTS"]),
         disabled_assets=len([row for row in rows if row.status == "DISABLED"]),
+        taxable_limit_krw=taxable_limit_decimal,
+        taxable_expected_annual_gross=taxable_expected_annual_gross,
+        taxable_expected_annual_net=taxable_expected_annual_net,
+        taxable_received_ytd=taxable_received_ytd,
+        taxable_remaining_gross=taxable_remaining_gross,
+        taxable_usage_ratio_pct=taxable_usage_ratio_pct,
+        excluded_pension_amount=excluded_pension_amount,
+        excluded_isa_amount=excluded_isa_amount,
+        excluded_tax_exempt_amount=excluded_tax_exempt_amount,
         as_of=snapshot.as_of if snapshot is not None else None,
     )
     return DividendStatusOut(

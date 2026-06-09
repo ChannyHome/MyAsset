@@ -35,3 +35,12 @@ class OpenAIEnabledOut(BaseModel):
 
 class OpenAIEnabledUpdate(BaseModel):
     enabled: bool
+
+
+class FinancialIncomeTaxableLimitOut(BaseModel):
+    amount_krw: int
+    source: str
+
+
+class FinancialIncomeTaxableLimitUpdate(BaseModel):
+    amount_krw: int = Field(ge=0, le=10_000_000_000)

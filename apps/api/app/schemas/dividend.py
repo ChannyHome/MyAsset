@@ -230,6 +230,12 @@ class DividendTableRowOut(BaseModel):
     dividend_yield_pct: Decimal | None = None
     tax_rate_pct: Decimal | None = None
     tax_profile: str | None = None
+    portfolio_tax_profile: str | None = None
+    asset_tax_profile: str | None = None
+    effective_tax_profile: str | None = None
+    effective_tax_rate_pct: Decimal | None = None
+    taxable_included: bool = True
+    taxable_exclusion_reason: str | None = None
     payment_months: list[int] = Field(default_factory=list)
     estimate_method: str | None = None
     confidence: str | None = None
@@ -300,6 +306,15 @@ class DividendStatusSummaryOut(BaseModel):
     missing_identifier_assets: int = 0
     no_event_assets: int = 0
     disabled_assets: int = 0
+    taxable_limit_krw: Decimal = Decimal("20000000")
+    taxable_expected_annual_gross: Decimal = Decimal("0")
+    taxable_expected_annual_net: Decimal = Decimal("0")
+    taxable_received_ytd: Decimal = Decimal("0")
+    taxable_remaining_gross: Decimal = Decimal("0")
+    taxable_usage_ratio_pct: Decimal | None = None
+    excluded_pension_amount: Decimal = Decimal("0")
+    excluded_isa_amount: Decimal = Decimal("0")
+    excluded_tax_exempt_amount: Decimal = Decimal("0")
     as_of: datetime | None = None
 
 

@@ -139,6 +139,12 @@ export type DividendTableRowOut = {
   dividend_yield_pct: string | number | null;
   tax_rate_pct: string | number | null;
   tax_profile: string | null;
+  portfolio_tax_profile: string | null;
+  asset_tax_profile: string | null;
+  effective_tax_profile: string | null;
+  effective_tax_rate_pct: string | number | null;
+  taxable_included: boolean;
+  taxable_exclusion_reason: string | null;
   payment_months: number[];
   estimate_method: string | null;
   confidence: string | null;
@@ -252,6 +258,12 @@ export type DividendStatusRowOut = {
   dividend_yield_pct: string | number | null;
   tax_rate_pct: string | number | null;
   tax_profile: string | null;
+  portfolio_tax_profile: string | null;
+  asset_tax_profile: string | null;
+  effective_tax_profile: string | null;
+  effective_tax_rate_pct: string | number | null;
+  taxable_included: boolean;
+  taxable_exclusion_reason: string | null;
   payment_months: number[];
   estimate_method: string | null;
   confidence: string | null;
@@ -284,6 +296,15 @@ export type DividendStatusSummaryOut = {
   missing_identifier_assets: number;
   no_event_assets: number;
   disabled_assets: number;
+  taxable_limit_krw: string | number;
+  taxable_expected_annual_gross: string | number;
+  taxable_expected_annual_net: string | number;
+  taxable_received_ytd: string | number;
+  taxable_remaining_gross: string | number;
+  taxable_usage_ratio_pct: string | number | null;
+  excluded_pension_amount: string | number;
+  excluded_isa_amount: string | number;
+  excluded_tax_exempt_amount: string | number;
   as_of: string | null;
 };
 

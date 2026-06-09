@@ -18,6 +18,16 @@ class PortfolioCategory(str, Enum):
     ETC = "ETC"
 
 
+class PortfolioTaxProfile(str, Enum):
+    GENERAL = "GENERAL"
+    GENERAL_KR = "GENERAL_KR"
+    GENERAL_US = "GENERAL_US"
+    PENSION = "PENSION"
+    ISA = "ISA"
+    TAX_EXEMPT = "TAX_EXEMPT"
+    CUSTOM = "CUSTOM"
+
+
 class PortfolioTableSortBy(str, Enum):
     ID = "id"
     NAME = "name"
@@ -54,6 +64,8 @@ class PortfolioCreate(BaseModel):
     exchange_code: str | None = Field(default=None, min_length=2, max_length=20)
     category: PortfolioCategory | None = None
     memo: str | None = None
+    tax_profile: PortfolioTaxProfile | None = None
+    dividend_tax_rate_pct: Decimal | None = Field(default=None, ge=0, le=100)
     is_included: bool = True
     is_hidden: bool = False
     cumulative_deposit_amount: Decimal = Decimal("0")
@@ -68,6 +80,8 @@ class PortfolioUpdate(BaseModel):
     exchange_code: str | None = Field(default=None, min_length=2, max_length=20)
     category: PortfolioCategory | None = None
     memo: str | None = None
+    tax_profile: PortfolioTaxProfile | None = None
+    dividend_tax_rate_pct: Decimal | None = Field(default=None, ge=0, le=100)
     is_included: bool | None = None
     is_hidden: bool | None = None
     cumulative_deposit_amount: Decimal | None = None
@@ -86,6 +100,8 @@ class PortfolioOut(BaseModel):
     exchange_code: str | None
     category: PortfolioCategory | None
     memo: str | None
+    tax_profile: PortfolioTaxProfile | None = None
+    dividend_tax_rate_pct: Decimal | None = None
     is_included: bool
     is_hidden: bool
     cumulative_deposit_amount: Decimal

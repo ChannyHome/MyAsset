@@ -2,11 +2,14 @@
 import { onMounted, ref } from "vue";
 
 import {
+  getFinancialIncomeTaxableLimit,
   getOpenAIConfig,
   getTokenRefreshEnabled,
   testOpenAIConnection,
+  updateFinancialIncomeTaxableLimit,
   updateOpenAIConfig,
   updateTokenRefreshEnabled,
+  type FinancialIncomeTaxableLimitOut,
   type OpenAIAdminConfigOut,
   type OpenAIAdminTestOut,
 } from "../api/settings";
@@ -15,12 +18,15 @@ const loading = ref(false);
 const savingTokenRefresh = ref(false);
 const testingOpenAI = ref(false);
 const savingOpenAI = ref(false);
+const savingTaxableLimit = ref(false);
 
 const tokenRefreshEnabled = ref(true);
 const tokenRefreshSource = ref("env");
 
 const openAIConfig = ref<OpenAIAdminConfigOut | null>(null);
 const openAIKeyInput = ref("");
+const taxableLimit = ref<FinancialIncomeTaxableLimitOut | null>(null);
+const taxableLimitInput = ref("20000000");
 
 const message = ref("");
 const error = ref("");
@@ -43,13 +49,35 @@ async function loadAppSettings(): Promise<void> {
       getTokenRefreshEnabled(),
       getOpenAIConfig(),
     ]);
+    const taxableLimitOut = await getFinancialIncomeTaxableLimit();
     tokenRefreshEnabled.value = Boolean(tokenRefreshOut.enabled);
     tokenRefreshSource.value = tokenRefreshOut.source;
     openAIConfig.value = openAIOut;
+    taxableLimit.value = taxableLimitOut;
+    taxableLimitInput.value = String(taxableLimitOut.amount_krw);
   } catch (err) {
     setError(err instanceof Error ? err.message : "Failed to load app settings");
   } finally {
     loading.value = false;
+  }
+}
+
+async function saveTaxableLimit(): Promise<void> {
+  const amount = Number(taxableLimitInput.value.replace(/,/g, "").trim());
+  if (!Number.isFinite(amount) || amount < 0) {
+    setError("Financial income taxable limit must be a non-negative KRW amount");
+    return;
+  }
+  savingTaxableLimit.value = true;
+  try {
+    const out = await updateFinancialIncomeTaxableLimit(Math.round(amount));
+    taxableLimit.value = out;
+    taxableLimitInput.value = String(out.amount_krw);
+    setMessage("Financial income taxable limit saved");
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to update financial income taxable limit");
+  } finally {
+    savingTaxableLimit.value = false;
   }
 }
 
@@ -178,6 +206,40 @@ onMounted(() => {
             {{ savingTokenRefresh ? "Saving..." : tokenRefreshEnabled ? "Turn OFF" : "Turn ON" }}
           </button>
         </div>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100">Dividend Taxable Limit</h2>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        Dividend taxable summary에서 사용할 금융소득 과세 기준 금액입니다. 기본값은 KRW 20,000,000입니다.
+      </p>
+      <div class="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+        <div class="grid gap-3 md:grid-cols-[1fr_auto]">
+          <label class="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Financial income taxable limit (KRW)
+            <input
+              v-model="taxableLimitInput"
+              type="number"
+              min="0"
+              step="100000"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            />
+          </label>
+          <div class="flex items-end gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900/20"
+              :disabled="loading || savingTaxableLimit"
+              @click="saveTaxableLimit"
+            >
+              {{ savingTaxableLimit ? "Saving..." : "Save" }}
+            </button>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          source: {{ taxableLimit?.source ?? "-" }} · portfolio tax profile은 각 Portfolio Edit에서 관리합니다.
+        </p>
       </div>
     </article>
 

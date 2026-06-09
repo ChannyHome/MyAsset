@@ -39,6 +39,100 @@ class DividendUpdateSummary:
     errors: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class DividendTaxContext:
+    portfolio_tax_profile: str
+    asset_tax_profile: str
+    effective_tax_profile: str
+    effective_tax_rate_pct: Decimal
+    taxable_included: bool
+    taxable_exclusion_reason: str | None = None
+
+
+EXCLUDED_TAX_PROFILES = {"PENSION", "ISA", "TAX_EXEMPT"}
+
+
+def infer_portfolio_tax_profile(portfolio: Portfolio | None) -> str:
+    explicit = None
+    if portfolio is not None:
+        explicit = getattr(portfolio, "tax_profile", None) or getattr(portfolio, "dividend_tax_profile", None)
+    if explicit:
+        return str(explicit).upper()
+    name = (portfolio.name if portfolio is not None else "").upper()
+    category = (portfolio.category if portfolio is not None and portfolio.category else "").upper()
+    base_currency = (portfolio.base_currency if portfolio is not None and portfolio.base_currency else "").upper()
+    exchange_code = (portfolio.exchange_code if portfolio is not None and portfolio.exchange_code else "").upper()
+    if any(token in name for token in ("연금", "IRP", "퇴직")):
+        return "PENSION"
+    if "ISA" in name:
+        return "ISA"
+    if category == "US_STOCK" or base_currency == "USD" or exchange_code in {"US", "NYSE", "NASDAQ", "AMEX"}:
+        return "GENERAL_US"
+    return "GENERAL"
+
+
+def infer_asset_tax_profile(asset: Asset | None, dividend_currency: str | None = None) -> str:
+    currency = ((dividend_currency or "") or (asset.currency if asset is not None else "")).upper()
+    exchange_code = (asset.exchange_code if asset is not None and asset.exchange_code else "").upper()
+    text = f"{asset.name if asset is not None else ''} {asset.symbol if asset is not None and asset.symbol else ''}".upper()
+    if currency == "USD" or exchange_code in {"US", "NYSE", "NASDAQ", "AMEX"}:
+        return "GENERAL_US"
+    if any(marker in text for marker in ("KODEX", "TIGER", "SOL", "ACE", "KBSTAR")):
+        return "GENERAL_KR"
+    return "GENERAL_KR"
+
+
+def _default_tax_rate_pct(profile: str) -> Decimal:
+    if profile == "GENERAL_US":
+        return Decimal("15")
+    if profile == "GENERAL_KR":
+        return Decimal("15.4")
+    return Decimal("0")
+
+
+def resolve_dividend_tax_context(
+    *,
+    portfolio: Portfolio | None,
+    asset: Asset | None,
+    dividend_currency: str | None,
+    setting: AssetDividendSetting | None = None,
+) -> DividendTaxContext:
+    portfolio_profile = infer_portfolio_tax_profile(portfolio)
+    asset_profile = infer_asset_tax_profile(asset, dividend_currency)
+
+    if portfolio_profile in EXCLUDED_TAX_PROFILES:
+        return DividendTaxContext(
+            portfolio_tax_profile=portfolio_profile,
+            asset_tax_profile=asset_profile,
+            effective_tax_profile=portfolio_profile,
+            effective_tax_rate_pct=Decimal("0"),
+            taxable_included=False,
+            taxable_exclusion_reason=f"EXCLUDED_{portfolio_profile}",
+        )
+
+    if portfolio_profile == "CUSTOM":
+        rate = Decimal(getattr(portfolio, "dividend_tax_rate_pct", None) or 0)
+        return DividendTaxContext(
+            portfolio_tax_profile=portfolio_profile,
+            asset_tax_profile=asset_profile,
+            effective_tax_profile="CUSTOM",
+            effective_tax_rate_pct=rate,
+            taxable_included=True,
+        )
+
+    effective_profile = portfolio_profile if portfolio_profile in {"GENERAL_KR", "GENERAL_US"} else asset_profile
+    rate = _default_tax_rate_pct(effective_profile)
+    if setting is not None and setting.tax_rate_pct is not None:
+        rate = Decimal(setting.tax_rate_pct)
+    return DividendTaxContext(
+        portfolio_tax_profile=portfolio_profile,
+        asset_tax_profile=asset_profile,
+        effective_tax_profile=effective_profile,
+        effective_tax_rate_pct=rate,
+        taxable_included=True,
+    )
+
+
 @dataclass
 class DividendSnapshotCollectResult:
     snapshot_date: date
@@ -94,37 +188,49 @@ def _event_reference_date(event: AssetDividendEvent) -> date | None:
 def _is_dividend_candidate_asset(asset: Asset | None) -> bool:
     if asset is None:
         return False
-    if asset.asset_class in {"CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING"}:
+    if asset.asset_class in {"CASH", "CRYPTO", "REAL_ESTATE", "DEPOSIT_SAVING"}:
+        return False
+    text = f"{asset.name or ''} {asset.symbol or ''} {(asset.meta_json or {}).get('asset_type', '')}".upper()
+    if "CASH_AUTO" in text or "AUTO CASH" in text:
         return False
     if asset.asset_class == "STOCK":
         return True
-    text = f"{asset.name or ''} {asset.symbol or ''} {(asset.meta_json or {}).get('asset_type', '')}".upper()
     etf_markers = ("ETF", "KODEX", "TIGER", "ACE", "KBSTAR", "KOSEF", "SOL ", "RISE", "ARIRANG", "PLUS")
     return bool(asset.symbol) or any(marker in text for marker in etf_markers)
 
 
 def _income_kind(asset: Asset) -> str:
     text = f"{asset.name or ''} {asset.symbol or ''} {(asset.meta_json or {}).get('asset_type', '')}".upper()
-    distribution_markers = ("ETF", "KODEX", "TIGER", "ACE", "KBSTAR", "KOSEF", "SOL ", "RISE", "ARIRANG", "PLUS", "VOO", "SCHD", "SPY")
+    distribution_markers = (
+        "ETF",
+        "KODEX",
+        "TIGER",
+        "ACE",
+        "KBSTAR",
+        "KOSEF",
+        "SOL ",
+        "RISE",
+        "ARIRANG",
+        "PLUS",
+        "SMH",
+        "SPYD",
+        "SWAN",
+        "TIP",
+        "TLT",
+        "VIG",
+        "VOO",
+        "VTI",
+        "VTV",
+        "VYM",
+        "XLRE",
+        "XLU",
+        "XLV",
+        "SCHD",
+        "SPY",
+    )
     if asset.asset_class in {"BOND", "ETC"} or any(marker in text for marker in distribution_markers):
         return "DISTRIBUTION"
     return "DIVIDEND"
-
-
-def _tax_profile_for_portfolio(portfolio: Portfolio | None, dividend_currency: str) -> tuple[str, Decimal]:
-    if portfolio is not None and portfolio.dividend_tax_profile:
-        profile = portfolio.dividend_tax_profile.upper()
-        if portfolio.dividend_tax_rate_pct is not None:
-            return profile, Decimal(portfolio.dividend_tax_rate_pct)
-    name = (portfolio.name if portfolio is not None else "").upper()
-    category = (portfolio.category if portfolio is not None and portfolio.category else "").upper()
-    if any(token in name for token in ("연금", "IRP", "퇴직")):
-        return "PENSION", Decimal("0")
-    if "ISA" in name:
-        return "ISA", Decimal("0")
-    if (dividend_currency or "").upper() == "USD" or category == "US_STOCK":
-        return "GENERAL_US", Decimal("15")
-    return "GENERAL_KR", Decimal("15.4")
 
 
 def _average_event_amount(events: list[AssetDividendEvent]) -> Decimal | None:
@@ -486,8 +592,14 @@ def collect_dividend_snapshot_for_user(
         for event in relevant_events:
             dividend_currency = (event.dividend_currency or dividend_currency).upper()
         portfolio = portfolios_by_id.get(int(hrow.portfolio_id or 0))
-        tax_profile, profile_rate = _tax_profile_for_portfolio(portfolio, dividend_currency)
-        rate = Decimal(setting.tax_rate_pct) if setting and setting.tax_rate_pct is not None else profile_rate
+        tax_context = resolve_dividend_tax_context(
+            portfolio=portfolio,
+            asset=asset,
+            dividend_currency=dividend_currency,
+            setting=setting,
+        )
+        tax_profile = tax_context.effective_tax_profile
+        rate = tax_context.effective_tax_rate_pct
         confirmed_per_share = Decimal(forecast["confirmed_gross"])
         estimated_per_share = Decimal(forecast["estimated_gross"])
         gross_per_share = Decimal(forecast["expected_gross"])

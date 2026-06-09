@@ -21,6 +21,15 @@ export type PortfolioCategory =
   | "DEPOSIT_SAVING"
   | "ETC";
 
+export type PortfolioTaxProfile =
+  | "GENERAL"
+  | "GENERAL_KR"
+  | "GENERAL_US"
+  | "PENSION"
+  | "ISA"
+  | "TAX_EXEMPT"
+  | "CUSTOM";
+
 export type PortfolioOut = {
   id: number;
   owner_user_id: number;
@@ -30,6 +39,8 @@ export type PortfolioOut = {
   exchange_code: string | null;
   category: PortfolioCategory | null;
   memo: string | null;
+  tax_profile: PortfolioTaxProfile | null;
+  dividend_tax_rate_pct: string | number | null;
   is_included: boolean;
   is_hidden: boolean;
   cumulative_deposit_amount: string | number;
@@ -112,6 +123,8 @@ export type PortfolioCreateIn = {
   exchange_code?: string | null;
   category?: PortfolioCategory | null;
   memo?: string | null;
+  tax_profile?: PortfolioTaxProfile | null;
+  dividend_tax_rate_pct?: string | number | null;
   is_included?: boolean;
   is_hidden?: boolean;
   cumulative_deposit_amount?: string | number;

@@ -15,6 +15,11 @@ export type TokenRefreshEnabledOut = {
   source: string;
 };
 
+export type FinancialIncomeTaxableLimitOut = {
+  amount_krw: number;
+  source: string;
+};
+
 export type OpenAIAdminConfigOut = {
   enabled: boolean;
   enabled_source: string;
@@ -73,6 +78,18 @@ export async function getTokenRefreshEnabled(): Promise<TokenRefreshEnabledOut> 
 
 export async function updateTokenRefreshEnabled(enabled: boolean): Promise<TokenRefreshEnabledOut> {
   const { data } = await http.put<TokenRefreshEnabledOut>("/settings/token-refresh", { enabled });
+  return data;
+}
+
+export async function getFinancialIncomeTaxableLimit(): Promise<FinancialIncomeTaxableLimitOut> {
+  const { data } = await http.get<FinancialIncomeTaxableLimitOut>("/settings/financial-income-taxable-limit");
+  return data;
+}
+
+export async function updateFinancialIncomeTaxableLimit(amountKrw: number): Promise<FinancialIncomeTaxableLimitOut> {
+  const { data } = await http.put<FinancialIncomeTaxableLimitOut>("/settings/financial-income-taxable-limit", {
+    amount_krw: amountKrw,
+  });
   return data;
 }
 

@@ -77,6 +77,21 @@ def _is_maintainer_plus(role: str | None) -> bool:
     return normalized in {"MAINTAINER", "ADMIN"}
 
 
+def _normalize_portfolio_tax_payload(updates: dict) -> None:
+    profile = updates.get("tax_profile")
+    if profile is not None:
+        profile = str(getattr(profile, "value", profile)).upper()
+        updates["tax_profile"] = profile
+        updates["dividend_tax_profile"] = profile
+    rate = updates.get("dividend_tax_rate_pct")
+    if rate is not None:
+        rate_decimal = Decimal(rate)
+        if rate_decimal < 0 or rate_decimal > 100:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dividend tax rate must be between 0 and 100.")
+    if updates.get("tax_profile") == "CUSTOM" and updates.get("dividend_tax_rate_pct") is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CUSTOM tax profile requires dividend_tax_rate_pct.")
+
+
 def _has_posted_portfolio_cashflow_trades(db: Session, *, owner_user_id: int, portfolio_id: int) -> bool:
     existing_id = db.scalar(
         select(Transaction.id).where(
@@ -536,6 +551,7 @@ def create_portfolio(
     portfolio_data["base_currency"] = portfolio_data["base_currency"].upper()
     if portfolio_data.get("exchange_code"):
         portfolio_data["exchange_code"] = portfolio_data["exchange_code"].upper()
+    _normalize_portfolio_tax_payload(portfolio_data)
 
     portfolio = Portfolio(owner_user_id=current_user.id, **portfolio_data)
     db.add(portfolio)
@@ -597,6 +613,7 @@ def update_portfolio(
         updates["base_currency"] = updates["base_currency"].upper()
     if "exchange_code" in updates and updates["exchange_code"] is not None:
         updates["exchange_code"] = updates["exchange_code"].upper()
+    _normalize_portfolio_tax_payload(updates)
 
     ledger_fields = {"cumulative_deposit_amount", "cumulative_withdrawal_amount"}
     touches_ledger_fields = any(field in updates for field in ledger_fields)

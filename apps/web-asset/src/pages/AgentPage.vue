@@ -51,6 +51,7 @@ import {
   type PortfolioOut,
   type PortfolioTableRowOut,
   type PortfolioTableSortBy,
+  type PortfolioTaxProfile,
 } from "../api/portfolios";
 import {
   getLatestUsdKrwFxRate,
@@ -249,6 +250,8 @@ const portfolioForm = reactive({
   base_currency: "KRW",
   exchange_code: "",
   category: "ETC",
+  tax_profile: "GENERAL" as PortfolioTaxProfile,
+  dividend_tax_rate_pct: "",
   cashflow_source_type: "MANUAL",
   memo: "",
 });
@@ -286,6 +289,8 @@ const portfolioEditForm = reactive({
   base_currency: "KRW",
   exchange_code: "",
   category: "",
+  tax_profile: "GENERAL" as PortfolioTaxProfile,
+  dividend_tax_rate_pct: "",
   cashflow_source_type: "MANUAL",
   cumulative_deposit_amount: "0",
   cumulative_withdrawal_amount: "0",
@@ -350,6 +355,10 @@ const dividendUpdatePolling = ref(false);
 const dividendUpdateJobStatus = ref<QuoteJobStatus>("IDLE");
 const dividendUpdateProgressText = ref("");
 let dividendUpdatePollTimer: ReturnType<typeof setTimeout> | null = null;
+const dividendStatusSearch = ref("");
+const dividendStatusFilter = ref("ALL");
+const dividendTypeFilter = ref("ALL");
+const dividendSourceFilter = ref("ALL");
 const dividendEditModal = reactive({ open: false, loading: false, assetId: 0, assetName: "", symbol: "" });
 const dividendHistoryModal = reactive({ open: false, loading: false, data: null as AssetDividendHistoryOut | null });
 const dividendEditForm = reactive({
@@ -390,6 +399,59 @@ const canManageReleaseNotes = computed(() => me.value?.role === "ADMIN");
 const canHardEdit = computed(() => me.value?.role === "ADMIN" || me.value?.role === "MAINTAINER");
 const canManageEntityHistory = computed(() => canHardEdit.value);
 const isBusy = computed(() => loading.data || loading.action || loading.confirm);
+const dividendStatusRows = computed(() => dividendStatus.value?.rows ?? []);
+const filteredDividendStatusRows = computed(() => {
+  const search = dividendStatusSearch.value.trim().toLowerCase();
+  const statusFilter = normalizeUpper(dividendStatusFilter.value);
+  const typeFilter = normalizeUpper(dividendTypeFilter.value);
+  const sourceFilter = normalizeUpper(dividendSourceFilter.value);
+
+  return dividendStatusRows.value.filter((row) => {
+    const rowStatus = normalizeUpper(row.status || "");
+    const rowType = normalizeUpper(row.income_kind || "");
+    const rowSource = normalizeUpper(row.source || "");
+    const rowMissing = normalizeUpper(row.missing_reason || "");
+    const rowMethod = normalizeUpper(row.estimate_method || "");
+
+    if (statusFilter !== "ALL") {
+      if (statusFilter === "MISSING" && !["MISSING_IDENTIFIER", "NO_EVENTS"].includes(rowStatus) && !rowMissing) {
+        return false;
+      } else if (statusFilter === "NEEDS_MANUAL" && !rowMissing.includes("MANUAL") && !rowMethod.includes("MANUAL")) {
+        return false;
+      } else if (!["MISSING", "NEEDS_MANUAL"].includes(statusFilter) && rowStatus !== statusFilter) {
+        return false;
+      }
+    }
+    if (typeFilter !== "ALL" && rowType !== typeFilter) {
+      return false;
+    }
+    if (sourceFilter !== "ALL" && rowSource !== sourceFilter) {
+      return false;
+    }
+    if (!search) {
+      return true;
+    }
+    const haystack = [
+      row.portfolio_name,
+      row.asset_name,
+      row.symbol,
+      row.income_kind,
+      row.dividend_currency,
+      row.tax_profile,
+      row.source,
+      row.identifier_summary,
+      row.status,
+      row.estimate_method,
+      row.confidence,
+      row.missing_reason,
+      ...(row.warnings ?? []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(search);
+  });
+});
 const normalizedSecretProvider = computed(() => normalizeUpper(secretForm.provider));
 const secretKeyNameHint = computed(() => {
   if (normalizedSecretProvider.value === "DATA_GO_KR") {
@@ -407,6 +469,7 @@ const holdingSourceTypeOptions = ["MANUAL", "AUTO"] as const;
 const holdingCurrencyOptions = ["KRW", "USD"] as const;
 const portfolioTypeOptions = ["BROKER", "EXCHANGE", "BANK", "CASH", "ETC"] as const;
 const portfolioCategoryOptions = ["KR_STOCK", "US_STOCK", "CRYPTO", "REAL_ESTATE", "BOND", "CASH", "DEPOSIT_SAVING", "ETC"] as const;
+const portfolioTaxProfileOptions: PortfolioTaxProfile[] = ["GENERAL", "GENERAL_KR", "GENERAL_US", "PENSION", "ISA", "TAX_EXEMPT", "CUSTOM"];
 const portfolioCashflowSourceTypeOptions = ["MANUAL", "AUTO"] as const;
 const liabilityTypeOptions = ["MORTGAGE", "CREDIT_LOAN", "CARD", "ETC"] as const;
 const liabilitySourceTypeOptions = ["MANUAL", "AUTO"] as const;
@@ -519,6 +582,153 @@ function nowDateTimeLocalInput(): string {
 
 function normalizeUpper(value: string): string {
   return value.trim().toUpperCase();
+}
+
+function clearDividendStatusFilters() {
+  dividendStatusSearch.value = "";
+  dividendStatusFilter.value = "ALL";
+  dividendTypeFilter.value = "ALL";
+  dividendSourceFilter.value = "ALL";
+}
+
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = Array.isArray(value) ? value.join("|") : String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCsv(filename: string, headers: string[], rows: unknown[][]): void {
+  const csv = [headers.map(csvCell).join(","), ...rows.map((row) => row.map(csvCell).join(","))].join("\r\n");
+  const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportPortfolioStatusCsv(): void {
+  downloadCsv(
+    "myasset-portfolio-status.csv",
+    ["id", "name", "type", "base_currency", "category", "tax_profile", "dividend_tax_rate_pct", "gross", "liabilities", "net", "included", "hidden", "updated_at"],
+    portfolioRows.value.map((item) => [
+      item.id,
+      item.name,
+      item.type,
+      item.base_currency,
+      item.category,
+      item.tax_profile,
+      item.dividend_tax_rate_pct,
+      item.gross_assets_total,
+      item.liabilities_total,
+      item.net_assets_total,
+      item.is_included ? "Y" : "N",
+      item.is_hidden ? "Y" : "N",
+      item.updated_at,
+    ]),
+  );
+}
+
+function exportHoldingStatusCsv(): void {
+  downloadCsv(
+    "myasset-holdings-status.csv",
+    ["id", "portfolio", "asset", "symbol", "quantity", "avg_cost", "cost_basis", "current_price", "evaluated", "profit_pct", "hidden", "updated_at"],
+    holdingRows.value.map((item) => [
+      item.id,
+      item.portfolio_name,
+      item.asset_name,
+      item.asset_symbol,
+      item.quantity,
+      item.avg_cost ?? item.avg_price,
+      item.cost_basis_total ?? item.invested_amount,
+      item.current_price,
+      item.evaluated_amount,
+      item.pnl_pct,
+      item.is_hidden ? "Y" : "N",
+      item.updated_at,
+    ]),
+  );
+}
+
+function exportLiabilityStatusCsv(): void {
+  downloadCsv(
+    "myasset-liabilities-status.csv",
+    ["id", "portfolio", "name", "type", "balance", "currency", "rate", "monthly_payment", "included", "hidden", "updated_at"],
+    liabilityRows.value.map((item) => [
+      item.id,
+      item.portfolio_name,
+      item.name,
+      item.liability_type,
+      item.outstanding_balance,
+      item.currency,
+      item.interest_rate,
+      item.monthly_payment,
+      item.is_included ? "Y" : "N",
+      item.is_hidden ? "Y" : "N",
+      item.updated_at,
+    ]),
+  );
+}
+
+function exportDividendStatusCsv(): void {
+  downloadCsv(
+    "myasset-dividend-status.csv",
+    [
+      "portfolio",
+      "asset",
+      "symbol",
+      "income_kind",
+      "quantity",
+      "dividend_currency",
+      "expected_gross",
+      "expected_tax",
+      "expected_net",
+      "received_ytd_net",
+      "yield_pct",
+      "portfolio_tax_profile",
+      "asset_tax_profile",
+      "effective_tax_profile",
+      "effective_tax_rate_pct",
+      "taxable_included",
+      "taxable_exclusion_reason",
+      "months",
+      "source",
+      "identifiers",
+      "events",
+      "status",
+      "missing_reason",
+      "updated_at",
+    ],
+    filteredDividendStatusRows.value.map((item) => [
+      item.portfolio_name,
+      item.asset_name,
+      item.symbol,
+      item.income_kind,
+      item.quantity,
+      item.dividend_currency || item.asset_currency,
+      item.expected_annual_gross,
+      item.expected_annual_tax,
+      item.expected_annual_net,
+      item.received_ytd_net,
+      item.dividend_yield_pct,
+      item.portfolio_tax_profile,
+      item.asset_tax_profile,
+      item.effective_tax_profile,
+      item.effective_tax_rate_pct,
+      item.taxable_included ? "Y" : "N",
+      item.taxable_exclusion_reason,
+      item.payment_months,
+      item.source,
+      item.identifier_summary,
+      item.event_count,
+      item.status,
+      item.missing_reason,
+      item.last_updated_at,
+    ]),
+  );
 }
 
 function toPositiveInt(value: string): number {
@@ -1516,6 +1726,9 @@ function submitPortfolioCreate(): void {
     if (!name) throw new Error("Portfolio name is required");
     const baseCurrency = normalizeUpper(portfolioForm.base_currency);
     if (baseCurrency.length !== 3) throw new Error("Base currency must be 3 letters");
+    const taxProfile = normalizeUpper(portfolioForm.tax_profile || "GENERAL") as PortfolioTaxProfile;
+    const taxRate = portfolioForm.dividend_tax_rate_pct.trim();
+    if (taxProfile === "CUSTOM" && !taxRate) throw new Error("CUSTOM tax profile requires Dividend Tax Rate %");
 
     runAction("Portfolio Create", "Create Portfolio", "새 포트폴리오를 생성할까요?", async () => {
       await createPortfolio({
@@ -1534,12 +1747,16 @@ function submitPortfolioCreate(): void {
           | "ETC"
           | null,
         cashflow_source_type: portfolioForm.cashflow_source_type.trim() || "MANUAL",
+        tax_profile: taxProfile,
+        dividend_tax_rate_pct: taxRate || null,
         memo: portfolioForm.memo.trim() || null,
       });
       portfolioForm.name = "";
       portfolioForm.type = "ETC";
       portfolioForm.base_currency = "KRW";
       portfolioForm.category = "ETC";
+      portfolioForm.tax_profile = "GENERAL";
+      portfolioForm.dividend_tax_rate_pct = "";
       portfolioForm.cashflow_source_type = "MANUAL";
       portfolioForm.memo = "";
       portfolioForm.exchange_code = "";
@@ -1557,6 +1774,8 @@ function fillPortfolioEditForm(item: PortfolioTableRowOut): void {
   portfolioEditForm.base_currency = item.base_currency || "KRW";
   portfolioEditForm.exchange_code = item.exchange_code || "";
   portfolioEditForm.category = item.category || "";
+  portfolioEditForm.tax_profile = item.tax_profile || "GENERAL";
+  portfolioEditForm.dividend_tax_rate_pct = item.dividend_tax_rate_pct == null ? "" : String(item.dividend_tax_rate_pct);
   portfolioEditForm.cashflow_source_type = item.cashflow_source_type || "MANUAL";
   portfolioEditForm.cumulative_deposit_amount = String(item.cumulative_deposit_amount ?? "0");
   portfolioEditForm.cumulative_withdrawal_amount = String(item.cumulative_withdrawal_amount ?? "0");
@@ -1596,6 +1815,9 @@ function submitPortfolioEdit(): void {
     if (baseCurrency.length !== 3) throw new Error("Base currency must be 3 letters");
     const deposit = parseRequiredDecimal(portfolioEditForm.cumulative_deposit_amount, "Cumulative deposit");
     const withdrawal = parseRequiredDecimal(portfolioEditForm.cumulative_withdrawal_amount, "Cumulative withdrawal");
+    const taxProfile = normalizeUpper(portfolioEditForm.tax_profile || "GENERAL") as PortfolioTaxProfile;
+    const taxRate = portfolioEditForm.dividend_tax_rate_pct.trim();
+    if (taxProfile === "CUSTOM" && !taxRate) throw new Error("CUSTOM tax profile requires Dividend Tax Rate %");
     const editMode = portfolioEditForm.edit_mode;
     const rebaselineAllHistory = !!portfolioEditForm.rebaseline_all_history;
     if (editMode === "HARD" && !canHardEdit.value) {
@@ -1644,6 +1866,8 @@ function submitPortfolioEdit(): void {
                 | "ETC"
                 | null,
               cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
+              tax_profile: taxProfile,
+              dividend_tax_rate_pct: taxRate || null,
               is_included: portfolioEditForm.is_included,
               is_hidden: portfolioEditForm.is_hidden,
               memo: portfolioEditForm.memo.trim() || null,
@@ -1670,6 +1894,8 @@ function submitPortfolioEdit(): void {
               | "ETC"
               | null,
             cashflow_source_type: portfolioEditForm.cashflow_source_type.trim() || "MANUAL",
+            tax_profile: taxProfile,
+            dividend_tax_rate_pct: taxRate || null,
             cumulative_deposit_amount: deposit,
             cumulative_withdrawal_amount: withdrawal,
             is_included: portfolioEditForm.is_included,
@@ -3262,21 +3488,23 @@ onBeforeUnmount(() => {
           placeholder="Search portfolio name/type/exchange"
           class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950"
           @keyup.enter="applyPortfolioSearch"
-        />
-        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyPortfolioSearch">Search</button>
+	        />
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || portfolioRows.length === 0" @click="exportPortfolioStatusCsv">Export CSV</button>
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyPortfolioSearch">Search</button>
         <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearPortfolioSearch">Clear</button>
       </div>
       <div class="mt-3 overflow-x-auto">
-        <table class="w-full min-w-[1220px] text-left text-xs leading-tight">
+	        <table class="w-full min-w-[1320px] text-left text-xs leading-tight">
           <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('id')">ID <span class="opacity-70">{{ portfolioSortIndicator("id") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('name')">Name <span class="opacity-70">{{ portfolioSortIndicator("name") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('type')">Type <span class="opacity-70">{{ portfolioSortIndicator("type") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('category')">Category <span class="opacity-70">{{ portfolioSortIndicator("category") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('exchange_code')">Exchange <span class="opacity-70">{{ portfolioSortIndicator("exchange_code") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('base_currency')">Currency <span class="opacity-70">{{ portfolioSortIndicator("base_currency") }}</span></button></th>
-              <th class="px-2 py-1.5 whitespace-nowrap">Included</th>
+	              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('exchange_code')">Exchange <span class="opacity-70">{{ portfolioSortIndicator("exchange_code") }}</span></button></th>
+	              <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('base_currency')">Currency <span class="opacity-70">{{ portfolioSortIndicator("base_currency") }}</span></button></th>
+	              <th class="px-2 py-1.5 whitespace-nowrap">Tax Profile</th>
+	              <th class="px-2 py-1.5 whitespace-nowrap">Included</th>
               <th class="px-2 py-1.5 whitespace-nowrap">Hidden</th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_deposit_amount')">Deposit <span class="opacity-70">{{ portfolioSortIndicator("cumulative_deposit_amount") }}</span></button></th>
               <th class="px-2 py-1.5 whitespace-nowrap"><button type="button" class="inline-flex items-center gap-1 hover:underline" @click="togglePortfolioSort('cumulative_withdrawal_amount')">Withdrawal <span class="opacity-70">{{ portfolioSortIndicator("cumulative_withdrawal_amount") }}</span></button></th>
@@ -3301,9 +3529,15 @@ onBeforeUnmount(() => {
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.name }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.type }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.category || "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.exchange_code || "-" }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.base_currency }}</td>
-              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_included ? "Y" : "N" }}</td>
+	              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.exchange_code || "-" }}</td>
+	              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.base_currency }}</td>
+	              <td class="px-2 py-1.5 whitespace-nowrap">
+	                <div>{{ item.tax_profile || "-" }}</div>
+	                <div v-if="item.dividend_tax_rate_pct !== null && item.dividend_tax_rate_pct !== undefined" class="text-[11px] text-slate-500 dark:text-slate-400">
+	                  {{ formatPct(item.dividend_tax_rate_pct) }}
+	                </div>
+	              </td>
+	              <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_included ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ item.is_hidden ? "Y" : "N" }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_deposit_amount, item.base_currency) }}</td>
               <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.cumulative_withdrawal_amount, item.base_currency) }}</td>
@@ -3465,6 +3699,13 @@ onBeforeUnmount(() => {
               <option v-for="opt in portfolioCashflowSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
             </select>
           </label>
+          <label class="text-xs text-slate-600 dark:text-slate-300">
+            Tax Profile
+            <select v-model="portfolioForm.tax_profile" class="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950">
+              <option v-for="opt in portfolioTaxProfileOptions" :key="`portfolio-tax-create-${opt}`" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
+          <input v-model="portfolioForm.dividend_tax_rate_pct" placeholder="Dividend Tax Rate % (CUSTOM)" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" />
           <input v-model="portfolioForm.memo" placeholder="Memo" class="rounded border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950 md:col-span-3" />
         </div>
         <div class="mt-2">
@@ -3495,8 +3736,9 @@ onBeforeUnmount(() => {
       </div>
       <template v-if="!holdingsSectionCollapsed">
       <div class="mt-3 flex flex-wrap items-center gap-2">
-        <input v-model="holdingQuery.q" type="text" placeholder="Search asset/portfolio/symbol" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyHoldingSearch" />
-        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyHoldingSearch">Search</button>
+	        <input v-model="holdingQuery.q" type="text" placeholder="Search asset/portfolio/symbol" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyHoldingSearch" />
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || holdingRows.length === 0" @click="exportHoldingStatusCsv">Export CSV</button>
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyHoldingSearch">Search</button>
         <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearHoldingSearch">Clear</button>
       </div>
       <div class="mt-3 overflow-x-auto">
@@ -3686,8 +3928,9 @@ onBeforeUnmount(() => {
       </div>
       <template v-if="!liabilitiesSectionCollapsed">
       <div class="mt-3 flex flex-wrap items-center gap-2">
-        <input v-model="liabilityQuery.q" type="text" placeholder="Search liability/portfolio/type" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyLiabilitySearch" />
-        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyLiabilitySearch">Search</button>
+	        <input v-model="liabilityQuery.q" type="text" placeholder="Search liability/portfolio/type" class="w-64 rounded-lg border border-slate-300 px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-950" @keyup.enter="applyLiabilitySearch" />
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy || liabilityRows.length === 0" @click="exportLiabilityStatusCsv">Export CSV</button>
+	        <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="applyLiabilitySearch">Search</button>
         <button type="button" class="rounded border border-slate-300 px-2.5 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800" :disabled="isBusy" @click="clearLiabilitySearch">Clear</button>
       </div>
       <div class="mt-3 overflow-x-auto">
@@ -3836,6 +4079,63 @@ onBeforeUnmount(() => {
       <template v-if="!dividendStatusSectionCollapsed">
         <p v-if="!canManageDividends" class="mt-2 text-xs text-slate-500 dark:text-slate-400">Admin/Maintainer only.</p>
         <template v-else>
+          <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+            <div class="grid grid-cols-1 gap-2 md:grid-cols-[minmax(220px,1fr)_170px_170px_150px_auto]">
+              <input
+                v-model="dividendStatusSearch"
+                type="search"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                placeholder="Search portfolio / asset / symbol / identifier"
+              />
+              <select
+                v-model="dividendStatusFilter"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="ALL">All status</option>
+                <option value="OK">OK</option>
+                <option value="MISSING">Missing data</option>
+                <option value="MISSING_IDENTIFIER">Missing identifier</option>
+                <option value="NO_EVENTS">No events</option>
+                <option value="NEEDS_MANUAL">Needs manual</option>
+                <option value="DISABLED">Disabled</option>
+              </select>
+              <select
+                v-model="dividendTypeFilter"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="ALL">All types</option>
+                <option value="DIVIDEND">Dividend</option>
+                <option value="DISTRIBUTION">Distribution</option>
+              </select>
+              <select
+                v-model="dividendSourceFilter"
+                class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-violet-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              >
+                <option value="ALL">All sources</option>
+                <option value="PROVIDER">Provider</option>
+                <option value="MANUAL">Manual</option>
+                <option value="NONE">None</option>
+              </select>
+	              <button
+	                type="button"
+	                class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+	                @click="clearDividendStatusFilters"
+	              >
+	                Clear
+	              </button>
+	              <button
+	                type="button"
+	                class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+	                :disabled="filteredDividendStatusRows.length === 0"
+	                @click="exportDividendStatusCsv"
+	              >
+	                Export CSV
+	              </button>
+	            </div>
+            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Showing {{ filteredDividendStatusRows.length }} / {{ dividendStatusRows.length }} dividend candidates. Auto Cash assets are excluded.
+            </p>
+          </div>
           <div class="mt-3 overflow-x-auto">
             <table class="w-full min-w-[1680px] text-left text-xs leading-tight">
               <thead class="bg-slate-50 dark:bg-slate-800">
@@ -3849,8 +4149,9 @@ onBeforeUnmount(() => {
                   <th class="px-2 py-1.5 whitespace-nowrap">Tax</th>
                   <th class="px-2 py-1.5 whitespace-nowrap">Expected Net</th>
                   <th class="px-2 py-1.5 whitespace-nowrap">Received YTD</th>
-                  <th class="px-2 py-1.5 whitespace-nowrap">Yield</th>
-                  <th class="px-2 py-1.5 whitespace-nowrap">Months</th>
+	                  <th class="px-2 py-1.5 whitespace-nowrap">Yield</th>
+	                  <th class="px-2 py-1.5 whitespace-nowrap">Tax Context</th>
+	                  <th class="px-2 py-1.5 whitespace-nowrap">Months</th>
                   <th class="px-2 py-1.5 whitespace-nowrap">Source</th>
                   <th class="px-2 py-1.5 whitespace-nowrap">Identifiers</th>
                   <th class="px-2 py-1.5 whitespace-nowrap">Events</th>
@@ -3861,7 +4162,7 @@ onBeforeUnmount(() => {
               </thead>
               <tbody>
                 <tr
-                  v-for="item in dividendStatus?.rows || []"
+                  v-for="item in filteredDividendStatusRows"
                   :key="`${item.portfolio_id || 'none'}-${item.asset_id || 'none'}-${item.asset_name}`"
                   class="border-t border-slate-200 dark:border-slate-700"
                 >
@@ -3874,8 +4175,16 @@ onBeforeUnmount(() => {
                   <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.expected_annual_tax, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
                   <td class="px-2 py-1.5 whitespace-nowrap font-semibold">{{ formatMoney(item.expected_annual_net, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
                   <td class="px-2 py-1.5 whitespace-nowrap">{{ formatMoney(item.received_ytd_net, dividendStatus?.summary.display_currency || item.dividend_currency || "KRW") }}</td>
-                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.dividend_yield_pct) }}</td>
-                  <td class="px-2 py-1.5 whitespace-nowrap">{{ dividendPaymentMonthsText(item.payment_months) }}</td>
+	                  <td class="px-2 py-1.5 whitespace-nowrap">{{ formatPct(item.dividend_yield_pct) }}</td>
+	                  <td class="px-2 py-1.5 whitespace-nowrap">
+	                    <div class="space-y-0.5">
+	                      <div>{{ item.effective_tax_profile || item.tax_profile || "-" }} · {{ formatPct(item.effective_tax_rate_pct ?? item.tax_rate_pct) }}</div>
+	                      <div class="text-[11px] text-slate-500 dark:text-slate-400">
+	                        portfolio {{ item.portfolio_tax_profile || "-" }} / asset {{ item.asset_tax_profile || "-" }} / taxable {{ item.taxable_included ? "Y" : "N" }}
+	                      </div>
+	                    </div>
+	                  </td>
+	                  <td class="px-2 py-1.5 whitespace-nowrap">{{ dividendPaymentMonthsText(item.payment_months) }}</td>
                   <td class="px-2 py-1.5 whitespace-nowrap">{{ item.source }}</td>
                   <td class="max-w-[260px] truncate px-2 py-1.5" :title="item.identifier_summary || ''">{{ item.identifier_summary || "-" }}</td>
                   <td class="px-2 py-1.5 whitespace-nowrap">{{ item.event_count }}</td>
@@ -3922,8 +4231,8 @@ onBeforeUnmount(() => {
                     </div>
                   </td>
                 </tr>
-                <tr v-if="(dividendStatus?.rows || []).length === 0">
-                  <td colspan="17" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No dividend status rows found.</td>
+                <tr v-if="filteredDividendStatusRows.length === 0">
+	                  <td colspan="18" class="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">No dividend status rows match the current filters.</td>
                 </tr>
               </tbody>
             </table>
@@ -4161,17 +4470,37 @@ onBeforeUnmount(() => {
             <option v-for="opt in portfolioCategoryOptions" :key="opt" :value="opt">{{ opt }}</option>
           </select>
         </label>
-        <label class="text-xs"
-          >Cashflow Source
-          <select
-            v-model="portfolioEditForm.cashflow_source_type"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	        <label class="text-xs"
+	          >Cashflow Source
+	          <select
+	            v-model="portfolioEditForm.cashflow_source_type"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
           >
-            <option v-for="opt in portfolioCashflowSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-        </label>
-        <label class="text-xs"
-          >Cumulative Deposit
+	            <option v-for="opt in portfolioCashflowSourceTypeOptions" :key="opt" :value="opt">{{ opt }}</option>
+	          </select>
+	        </label>
+	        <label class="text-xs"
+	          >Tax Profile
+	          <select
+	            v-model="portfolioEditForm.tax_profile"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	          >
+	            <option v-for="opt in portfolioTaxProfileOptions" :key="`portfolio-tax-edit-${opt}`" :value="opt">{{ opt }}</option>
+	          </select>
+	          <span class="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">
+	            GENERAL uses asset market/currency. PENSION/ISA/TAX_EXEMPT are excluded from taxable summary.
+	          </span>
+	        </label>
+	        <label class="text-xs"
+	          >Dividend Tax Rate %
+	          <input
+	            v-model="portfolioEditForm.dividend_tax_rate_pct"
+	            placeholder="Required for CUSTOM"
+	            class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+	          />
+	        </label>
+	        <label class="text-xs"
+	          >Cumulative Deposit
           <input
             v-model="portfolioEditForm.cumulative_deposit_amount"
             class="mt-1 w-full rounded-lg border border-slate-300 px-2 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"

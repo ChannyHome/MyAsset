@@ -11,6 +11,8 @@ OPENAI_ENABLED_KEY = "openai_enabled"
 DIVIDEND_AUTO_UPDATE_ENABLED_KEY = "dividend_auto_update_enabled"
 DIVIDEND_UPDATE_INTERVAL_HOURS_KEY = "dividend_update_interval_hours"
 DIVIDEND_SCHEDULER_MISFIRE_GRACE_SECONDS_KEY = "dividend_scheduler_misfire_grace_seconds"
+FINANCIAL_INCOME_TAXABLE_LIMIT_KRW_KEY = "financial_income_taxable_limit_krw"
+DEFAULT_FINANCIAL_INCOME_TAXABLE_LIMIT_KRW = 20_000_000
 
 
 def _parse_bool(value: str | None, fallback: bool) -> bool:
@@ -174,6 +176,31 @@ def set_dividend_scheduler_misfire_grace_seconds(db: Session, seconds: int) -> i
     row = db.scalar(select(AppSetting).where(AppSetting.key == DIVIDEND_SCHEDULER_MISFIRE_GRACE_SECONDS_KEY))
     if row is None:
         row = AppSetting(key=DIVIDEND_SCHEDULER_MISFIRE_GRACE_SECONDS_KEY, value=str(normalized))
+        db.add(row)
+    else:
+        row.value = str(normalized)
+    db.commit()
+    return normalized
+
+
+def get_financial_income_taxable_limit_krw(db: Session) -> tuple[int, str]:
+    row = db.scalar(select(AppSetting).where(AppSetting.key == FINANCIAL_INCOME_TAXABLE_LIMIT_KRW_KEY))
+    if row is None:
+        return DEFAULT_FINANCIAL_INCOME_TAXABLE_LIMIT_KRW, "default"
+
+    try:
+        value = int(row.value)
+    except ValueError:
+        return DEFAULT_FINANCIAL_INCOME_TAXABLE_LIMIT_KRW, "default"
+
+    return max(0, min(10_000_000_000, value)), "db"
+
+
+def set_financial_income_taxable_limit_krw(db: Session, amount: int) -> int:
+    normalized = max(0, min(10_000_000_000, int(amount)))
+    row = db.scalar(select(AppSetting).where(AppSetting.key == FINANCIAL_INCOME_TAXABLE_LIMIT_KRW_KEY))
+    if row is None:
+        row = AppSetting(key=FINANCIAL_INCOME_TAXABLE_LIMIT_KRW_KEY, value=str(normalized))
         db.add(row)
     else:
         row.value = str(normalized)
