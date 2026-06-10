@@ -1,5 +1,17 @@
 # MyAsset
 
+## AI development workflow
+
+Before changing code, read [`AI_DEVELOPMENT.md`](AI_DEVELOPMENT.md).
+
+MyAsset uses a **Rules-first AI Development** workflow:
+- read relevant `docs/*.md` and `rules/*.md`
+- inspect current code structure
+- implement
+- build/test
+- update docs/rules when UX, business logic, style, or operational behavior changes
+- provide commit message and release notes
+
 ## Step-by-step development for beginners
 
 ### Step 1 (done): FastAPI minimal skeleton
