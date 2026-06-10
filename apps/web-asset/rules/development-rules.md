@@ -38,6 +38,11 @@
 - Apply Amount Blur to dividend gross, tax, net, received, and expected money values.
 - Do not blur dividend yield, tax rate, tax profile, source, status, or payment months.
 - `PENSION`, `ISA`, and `TAX_EXEMPT` rows should be visibly distinguishable when showing taxable summaries.
+- Use the word `Profile` for asset-level dividend/distribution master data and provider coverage.
+- Use `Events` for provider/manual dividend history rows.
+- Show `NO_PROVIDER_DATA`, `MANUAL_PROFILE`, and `MANUAL_ESTIMATE_NEEDED` as actionable states, not generic failures.
+- If an asset has manual monthly/quarterly amounts, show it as a manual/profile estimate even when provider identifiers are missing.
+- Keep `Asset Dividend Status` above holding-level `Dividend Status` when both are shown, because profile/provider data explains portfolio-level zeros.
 
 ## Chart Rules
 - Networth Trend uses range, bucket, zoom, and viewport-aware axis behavior.

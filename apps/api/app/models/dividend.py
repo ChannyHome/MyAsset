@@ -51,18 +51,27 @@ class AssetProviderIdentifier(Base):
     )
 
 
-class AssetDividendSetting(Base):
-    __tablename__ = "asset_dividend_settings"
+class AssetDividendProfile(Base):
+    __tablename__ = "asset_dividend_profiles"
 
     id: Mapped[int] = mapped_column(bigint_pk, primary_key=True, autoincrement=True)
     asset_id: Mapped[int] = mapped_column(bigint_fk, ForeignKey("assets.id"), nullable=False, unique=True, index=True)
     is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("1"))
+    income_kind: Mapped[str] = mapped_column(String(20), nullable=False, server_default="DIVIDEND")
+    provider_strategy: Mapped[str] = mapped_column(String(30), nullable=False, server_default="AUTO")
+    primary_provider: Mapped[str | None] = mapped_column(String(50), nullable=True)
     tax_rate_pct: Mapped[Decimal | None] = mapped_column(Numeric(9, 4), nullable=True)
     tax_country: Mapped[str | None] = mapped_column(String(10), nullable=True)
     dividend_currency: Mapped[str | None] = mapped_column(String(3), nullable=True)
     manual_annual_dividend_per_share: Mapped[Decimal | None] = mapped_column(Numeric(24, 8), nullable=True)
     manual_frequency: Mapped[str | None] = mapped_column(String(30), nullable=True)
     payment_months_json: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
+    monthly_amounts_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    forecast_method: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    coverage_status: Mapped[str] = mapped_column(String(50), nullable=False, server_default="NEEDS_REFRESH")
+    last_provider_checked_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at: Mapped[datetime] = mapped_column(
@@ -71,6 +80,9 @@ class AssetDividendSetting(Base):
         server_default=text("CURRENT_TIMESTAMP"),
         server_onupdate=text("CURRENT_TIMESTAMP"),
     )
+
+
+AssetDividendSetting = AssetDividendProfile
 
 
 class AssetDividendEvent(Base):

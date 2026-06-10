@@ -414,9 +414,18 @@ const filteredDividendStatusRows = computed(() => {
     const rowMethod = normalizeUpper(row.estimate_method || "");
 
     if (statusFilter !== "ALL") {
-      if (statusFilter === "MISSING" && !["MISSING_IDENTIFIER", "NO_EVENTS"].includes(rowStatus) && !rowMissing) {
+      if (
+        statusFilter === "MISSING" &&
+        !["MISSING_IDENTIFIER", "NO_EVENTS", "NO_PROVIDER_DATA", "MANUAL_ESTIMATE_NEEDED"].includes(rowStatus) &&
+        !rowMissing
+      ) {
         return false;
-      } else if (statusFilter === "NEEDS_MANUAL" && !rowMissing.includes("MANUAL") && !rowMethod.includes("MANUAL")) {
+      } else if (
+        statusFilter === "NEEDS_MANUAL" &&
+        rowStatus !== "MANUAL_PROFILE" &&
+        !rowMissing.includes("MANUAL") &&
+        !rowMethod.includes("MANUAL")
+      ) {
         return false;
       } else if (!["MISSING", "NEEDS_MANUAL"].includes(statusFilter) && rowStatus !== statusFilter) {
         return false;
@@ -842,11 +851,14 @@ function normalizeQuoteJobStatus(value: string | null | undefined): QuoteJobStat
 
 function dividendStatusBadgeClass(statusValue: string): string {
   const upper = normalizeUpper(statusValue || "");
-  if (upper === "OK" || upper === "ESTIMATED") {
+  if (upper === "OK" || upper === "ESTIMATED" || upper === "READY") {
     return "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200";
   }
-  if (upper === "MISSING_IDENTIFIER" || upper === "NO_EVENTS") {
+  if (upper === "MISSING_IDENTIFIER" || upper === "NO_EVENTS" || upper === "NO_PROVIDER_DATA" || upper === "MANUAL_ESTIMATE_NEEDED") {
     return "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200";
+  }
+  if (upper === "MANUAL_PROFILE" || upper === "MANUAL_ONLY") {
+    return "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200";
   }
   if (upper === "DISABLED") {
     return "border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300";
@@ -4094,10 +4106,12 @@ onBeforeUnmount(() => {
                 <option value="ALL">All status</option>
                 <option value="OK">OK</option>
                 <option value="MISSING">Missing data</option>
-                <option value="MISSING_IDENTIFIER">Missing identifier</option>
-                <option value="NO_EVENTS">No events</option>
-                <option value="NEEDS_MANUAL">Needs manual</option>
-                <option value="DISABLED">Disabled</option>
+	                <option value="MISSING_IDENTIFIER">Missing identifier</option>
+	                <option value="NO_EVENTS">No events</option>
+	                <option value="NO_PROVIDER_DATA">No provider data</option>
+	                <option value="NEEDS_MANUAL">Needs manual</option>
+	                <option value="MANUAL_PROFILE">Manual profile</option>
+	                <option value="DISABLED">Disabled</option>
               </select>
               <select
                 v-model="dividendTypeFilter"

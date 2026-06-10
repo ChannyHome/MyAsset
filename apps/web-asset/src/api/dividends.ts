@@ -221,23 +221,35 @@ export type AssetProviderIdentifierIn = {
   is_primary?: boolean;
 };
 
-export type AssetDividendSettingUpdateIn = {
+export type AssetDividendProfileUpdateIn = {
   is_enabled: boolean;
+  income_kind?: string | null;
+  provider_strategy?: string | null;
+  primary_provider?: string | null;
   tax_rate_pct?: string | number | null;
   tax_country?: string | null;
   dividend_currency?: string | null;
   manual_annual_dividend_per_share?: string | number | null;
   manual_frequency?: string | null;
   payment_months?: number[];
+  monthly_amounts?: Record<string, string | number> | null;
+  forecast_method?: string | null;
+  coverage_status?: string | null;
   note?: string | null;
 };
 
-export type AssetDividendSettingOut = AssetDividendSettingUpdateIn & {
+export type AssetDividendProfileOut = AssetDividendProfileUpdateIn & {
   id: number;
   asset_id: number;
+  last_provider_checked_at?: string | null;
+  last_success_at?: string | null;
+  last_error?: string | null;
   created_at: string;
   updated_at: string;
 };
+
+export type AssetDividendSettingUpdateIn = AssetDividendProfileUpdateIn;
+export type AssetDividendSettingOut = AssetDividendProfileOut;
 
 export type DividendStatusRowOut = {
   portfolio_id: number | null;
@@ -343,6 +355,7 @@ export type AssetDividendHistoryOut = {
   asset_id: number;
   asset_name: string;
   symbol: string | null;
+  profile?: AssetDividendProfileOut | null;
   setting: AssetDividendSettingOut | null;
   identifiers: AssetProviderIdentifierOut[];
   events: DividendEventOut[];

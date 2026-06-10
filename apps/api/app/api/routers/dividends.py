@@ -156,13 +156,22 @@ def _setting_out(row: AssetDividendSetting) -> AssetDividendSettingOut:
         id=row.id,
         asset_id=row.asset_id,
         is_enabled=row.is_enabled,
+        income_kind=getattr(row, "income_kind", None),
+        provider_strategy=getattr(row, "provider_strategy", None),
+        primary_provider=getattr(row, "primary_provider", None),
         tax_rate_pct=row.tax_rate_pct,
         tax_country=row.tax_country,
         dividend_currency=row.dividend_currency,
         manual_annual_dividend_per_share=row.manual_annual_dividend_per_share,
         manual_frequency=row.manual_frequency,
         payment_months=row.payment_months_json or [],
+        monthly_amounts=getattr(row, "monthly_amounts_json", None),
+        forecast_method=getattr(row, "forecast_method", None),
+        coverage_status=getattr(row, "coverage_status", None),
         note=row.note,
+        last_provider_checked_at=getattr(row, "last_provider_checked_at", None),
+        last_success_at=getattr(row, "last_success_at", None),
+        last_error=getattr(row, "last_error", None),
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -202,6 +211,57 @@ def _default_income_kind_for_asset(asset: Asset) -> str:
         "SPY",
     )
     return "DISTRIBUTION" if asset.asset_class in {"BOND", "ETC"} or any(marker in text for marker in distribution_markers) else "DIVIDEND"
+
+
+def _setting_monthly_amounts(row: AssetDividendSetting | None) -> dict | None:
+    if row is None:
+        return None
+    raw = getattr(row, "monthly_amounts_json", None)
+    return raw if isinstance(raw, dict) and raw else None
+
+
+def _has_manual_dividend_profile(row: AssetDividendSetting | None) -> bool:
+    if row is None:
+        return False
+    return row.manual_annual_dividend_per_share is not None or bool(_setting_monthly_amounts(row))
+
+
+def _profile_source(row: AssetDividendSetting | None, events: list[AssetDividendEvent]) -> str:
+    if events:
+        return "PROVIDER"
+    if _has_manual_dividend_profile(row):
+        return "MANUAL"
+    return "NONE"
+
+
+def _profile_status(
+    row: AssetDividendSetting | None,
+    *,
+    identifiers: list[AssetProviderIdentifier],
+    events: list[AssetDividendEvent],
+    fallback: str,
+) -> str:
+    if row is not None and not row.is_enabled:
+        return "DISABLED"
+    if events:
+        return fallback or "READY"
+    if _has_manual_dividend_profile(row):
+        return "MANUAL_PROFILE"
+    coverage_status = str(getattr(row, "coverage_status", "") or "").upper() if row is not None else ""
+    if coverage_status in {"NO_PROVIDER_DATA", "MANUAL_ESTIMATE_NEEDED", "MANUAL_ONLY"}:
+        return coverage_status
+    if not identifiers:
+        return "MISSING_IDENTIFIER"
+    return "NO_EVENTS"
+
+
+def _profile_missing_reason(row: AssetDividendSetting | None, *, identifiers: list[AssetProviderIdentifier]) -> str:
+    if _has_manual_dividend_profile(row):
+        return "PROFILE_MANUAL_ESTIMATE"
+    coverage_status = str(getattr(row, "coverage_status", "") or "").upper() if row is not None else ""
+    if coverage_status in {"NO_PROVIDER_DATA", "MANUAL_ESTIMATE_NEEDED", "MANUAL_ONLY"}:
+        return coverage_status
+    return "MISSING_IDENTIFIER" if not identifiers else "NO_PROVIDER_DATA"
 
 
 def _upsert_dividend_events(db: Session, asset: Asset, items: list[DividendEventOut], *, fallback_year: int) -> int:
@@ -578,18 +638,12 @@ def get_dividend_status(
             setting=setting,
         )
         warnings: list[str] = []
-        if not identifiers:
+        if not identifiers and not _has_manual_dividend_profile(setting):
             warnings.append("Missing provider identifier")
         if not events and setting is None:
-            warnings.append("No provider events or manual dividend setting")
-        status_value = row.status
-        if setting is not None and not setting.is_enabled:
-            status_value = "DISABLED"
-        elif not identifiers:
-            status_value = "MISSING_IDENTIFIER"
-        elif not events and (setting is None or setting.manual_annual_dividend_per_share is None):
-            status_value = "NO_EVENTS"
-        source = "PROVIDER" if events else "MANUAL" if setting and setting.manual_annual_dividend_per_share is not None else "NONE"
+            warnings.append("No provider events or manual dividend profile")
+        status_value = _profile_status(setting, identifiers=identifiers, events=events, fallback=row.status)
+        source = _profile_source(setting, events)
         rows.append(
             DividendStatusRowOut(
                 portfolio_id=row.portfolio_id,
@@ -647,7 +701,7 @@ def get_dividend_status(
         identifiers = identifiers_by_asset.get(int(asset.id), [])
         setting = settings_by_asset.get(int(asset.id))
         events = events_by_asset.get(int(asset.id), [])
-        status_value = "DISABLED" if setting is not None and not setting.is_enabled else "MISSING_IDENTIFIER" if not identifiers else "NO_EVENTS"
+        status_value = _profile_status(setting, identifiers=identifiers, events=events, fallback="NO_EVENTS")
         tax_context = resolve_dividend_tax_context(
             portfolio=portfolio,
             asset=asset,
@@ -680,14 +734,18 @@ def get_dividend_status(
                 effective_tax_rate_pct=tax_context.effective_tax_rate_pct,
                 taxable_included=tax_context.taxable_included,
                 taxable_exclusion_reason=tax_context.taxable_exclusion_reason,
-                payment_months=setting.payment_months_json if setting and setting.payment_months_json else [],
+                payment_months=(
+                    setting.payment_months_json
+                    if setting and setting.payment_months_json
+                    else sorted(int(month) for month in _setting_monthly_amounts(setting) or {})
+                ),
                 estimate_method=None,
                 confidence="NONE",
-                missing_reason="MISSING_IDENTIFIER" if not identifiers else "NO_PROVIDER_DATA",
+                missing_reason=_profile_missing_reason(setting, identifiers=identifiers),
                 confirmed_event_count=0,
                 estimated_event_count=0,
                 status=status_value,
-                source="MANUAL" if setting and setting.manual_annual_dividend_per_share is not None else "NONE",
+                source=_profile_source(setting, events),
                 provider_identifiers=[_identifier_out(ident) for ident in identifiers],
                 identifier_summary=", ".join(f"{ident.provider}/{ident.identifier_type}" for ident in identifiers) or None,
                 event_count=len(events),
@@ -749,9 +807,9 @@ def get_dividend_status(
         received_ytd_tax=snapshot.received_ytd_tax if snapshot is not None else Decimal("0"),
         received_ytd_net=snapshot.received_ytd_net if snapshot is not None else Decimal("0"),
         total_assets=len(rows),
-        covered_assets=len([row for row in configured_rows if row.expected_annual_net > 0 or row.event_count > 0]),
+        covered_assets=len([row for row in configured_rows if row.expected_annual_net > 0 or row.event_count > 0 or row.status == "MANUAL_PROFILE"]),
         missing_identifier_assets=len([row for row in rows if row.status == "MISSING_IDENTIFIER"]),
-        no_event_assets=len([row for row in rows if row.status == "NO_EVENTS"]),
+        no_event_assets=len([row for row in rows if row.status in {"NO_EVENTS", "NO_PROVIDER_DATA", "MANUAL_ESTIMATE_NEEDED"}]),
         disabled_assets=len([row for row in rows if row.status == "DISABLED"]),
         taxable_limit_krw=taxable_limit_decimal,
         taxable_expected_annual_gross=taxable_expected_annual_gross,
@@ -882,12 +940,28 @@ def upsert_asset_dividend_setting(
         row = AssetDividendSetting(asset_id=asset_id)
         db.add(row)
     row.is_enabled = payload.is_enabled
+    row.income_kind = (payload.income_kind or _default_income_kind_for_asset(asset)).strip().upper()
+    row.provider_strategy = (payload.provider_strategy or "AUTO").strip().upper()
+    row.primary_provider = payload.primary_provider.strip().upper() if payload.primary_provider else None
     row.tax_rate_pct = payload.tax_rate_pct
     row.tax_country = payload.tax_country.strip().upper() if payload.tax_country else None
     row.dividend_currency = payload.dividend_currency.upper() if payload.dividend_currency else None
     row.manual_annual_dividend_per_share = payload.manual_annual_dividend_per_share
     row.manual_frequency = payload.manual_frequency.strip().upper() if payload.manual_frequency else None
-    row.payment_months_json = sorted({int(month) for month in payload.payment_months if 1 <= int(month) <= 12}) or None
+    try:
+        row.payment_months_json = sorted({int(month) for month in payload.payment_months if 1 <= int(month) <= 12}) or None
+        monthly_amounts: dict[str, str] = {}
+        for month, amount in (payload.monthly_amounts or {}).items():
+            month_int = int(month)
+            amount_decimal = Decimal(str(amount))
+            if 1 <= month_int <= 12 and amount_decimal >= 0:
+                monthly_amounts[str(month_int)] = str(amount_decimal)
+        row.monthly_amounts_json = monthly_amounts or None
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid dividend payment month or amount") from exc
+    row.forecast_method = payload.forecast_method.strip().upper() if payload.forecast_method else None
+    if payload.coverage_status:
+        row.coverage_status = payload.coverage_status.strip().upper()
     row.note = payload.note
     db.commit()
     db.refresh(row)
@@ -963,6 +1037,7 @@ def get_asset_dividend_history(
         asset_id=asset.id,
         asset_name=asset.name,
         symbol=asset.symbol,
+        profile=_setting_out(setting) if setting is not None else None,
         setting=_setting_out(setting) if setting is not None else None,
         identifiers=[_identifier_out(row) for row in identifiers],
         events=[_event_out(row) for row in events],

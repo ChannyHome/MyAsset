@@ -28,6 +28,7 @@ from app.models.transaction import Transaction
 from app.models.entity_change_log import EntityChangeLog
 from app.models.dividend import (
     AssetDividendEvent,
+    AssetDividendProfile,
     AssetDividendSetting,
     AssetProviderIdentifier,
     DividendReceipt,
@@ -66,6 +67,7 @@ __all__ = [
     "Transaction",
     "EntityChangeLog",
     "AssetProviderIdentifier",
+    "AssetDividendProfile",
     "AssetDividendSetting",
     "AssetDividendEvent",
     "DividendReceipt",

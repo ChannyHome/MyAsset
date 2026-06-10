@@ -233,11 +233,143 @@ def _income_kind(asset: Asset) -> str:
     return "DIVIDEND"
 
 
+def _is_us_dividend_asset(asset: Asset) -> bool:
+    currency = (asset.currency or "").upper()
+    exchange_code = (asset.exchange_code or "").upper()
+    return currency == "USD" or exchange_code in {"US", "NYSE", "NASDAQ", "AMEX"}
+
+
+def _is_kr_dividend_asset(asset: Asset) -> bool:
+    currency = (asset.currency or "").upper()
+    exchange_code = (asset.exchange_code or "").upper()
+    return currency == "KRW" or exchange_code in {"KR", "KRX", "KOSPI", "KOSDAQ"}
+
+
+def _upsert_provider_identifier(
+    db: Session,
+    *,
+    asset_id: int,
+    provider: str,
+    identifier_type: str,
+    identifier_value: str | None,
+    market: str,
+) -> bool:
+    value = (identifier_value or "").strip()
+    if not value:
+        return False
+    provider_name = provider.strip().upper()
+    type_name = identifier_type.strip().upper()
+    row = db.scalar(
+        select(AssetProviderIdentifier).where(
+            AssetProviderIdentifier.asset_id == asset_id,
+            AssetProviderIdentifier.provider == provider_name,
+            AssetProviderIdentifier.identifier_type == type_name,
+        )
+    )
+    if row is None:
+        row = AssetProviderIdentifier(
+            asset_id=asset_id,
+            provider=provider_name,
+            identifier_type=type_name,
+            identifier_value=value,
+            market=market,
+            is_primary=True,
+        )
+        db.add(row)
+        return True
+    if not row.identifier_value:
+        row.identifier_value = value
+        row.market = row.market or market
+        row.is_primary = True
+        return True
+    return False
+
+
+def _ensure_auto_provider_identifiers(db: Session, asset: Asset) -> int:
+    created = 0
+    symbol = (asset.symbol or "").strip()
+    if _is_us_dividend_asset(asset) and symbol:
+        created += int(
+            _upsert_provider_identifier(
+                db,
+                asset_id=int(asset.id),
+                provider="ALPHA_VANTAGE",
+                identifier_type="SYMBOL",
+                identifier_value=symbol,
+                market="US",
+            )
+        )
+    if _is_kr_dividend_asset(asset):
+        created += int(
+            _upsert_provider_identifier(
+                db,
+                asset_id=int(asset.id),
+                provider="DATA_GO_KR",
+                identifier_type="STOCK_NAME",
+                identifier_value=asset.name,
+                market="KR",
+            )
+        )
+        if symbol.isdigit() and len(symbol) == 6:
+            created += int(
+                _upsert_provider_identifier(
+                    db,
+                    asset_id=int(asset.id),
+                    provider="DATA_GO_KR",
+                    identifier_type="STOCK_CODE",
+                    identifier_value=symbol,
+                    market="KR",
+                )
+            )
+    return created
+
+
+def _ensure_dividend_profile(db: Session, asset: Asset) -> AssetDividendSetting:
+    row = db.scalar(select(AssetDividendSetting).where(AssetDividendSetting.asset_id == asset.id))
+    if row is None:
+        row = AssetDividendSetting(
+            asset_id=asset.id,
+            is_enabled=True,
+            income_kind=_income_kind(asset),
+            provider_strategy="AUTO",
+            primary_provider="ALPHA_VANTAGE" if _is_us_dividend_asset(asset) else "DATA_GO_KR" if _is_kr_dividend_asset(asset) else None,
+            dividend_currency=(asset.currency or None),
+            coverage_status="NEEDS_REFRESH",
+        )
+        db.add(row)
+    else:
+        if not getattr(row, "income_kind", None):
+            row.income_kind = _income_kind(asset)
+        if not getattr(row, "provider_strategy", None):
+            row.provider_strategy = "AUTO"
+        if not getattr(row, "primary_provider", None):
+            row.primary_provider = "ALPHA_VANTAGE" if _is_us_dividend_asset(asset) else "DATA_GO_KR" if _is_kr_dividend_asset(asset) else None
+        if not getattr(row, "coverage_status", None):
+            row.coverage_status = "NEEDS_REFRESH"
+    return row
+
+
 def _average_event_amount(events: list[AssetDividendEvent]) -> Decimal | None:
     amounts = [Decimal(event.dividend_per_share_gross or 0) for event in events if Decimal(event.dividend_per_share_gross or 0) > 0]
     if not amounts:
         return None
     return sum(amounts, Decimal("0")) / Decimal(len(amounts))
+
+
+def _monthly_amounts(setting: AssetDividendSetting | None) -> dict[int, Decimal]:
+    result: dict[int, Decimal] = {}
+    raw = getattr(setting, "monthly_amounts_json", None) if setting is not None else None
+    if not isinstance(raw, dict):
+        return result
+    for key, value in raw.items():
+        try:
+            month = int(key)
+            amount = _to_decimal(value)
+        except Exception:
+            continue
+        if 1 <= month <= 12 and amount >= 0:
+            result[month] = amount
+    return result
 
 
 def _forecast_dividend_per_share(
@@ -295,6 +427,11 @@ def _forecast_dividend_per_share(
         estimated_count = len(prior_events)
         method = "FORECAST_FROM_LAST_YEAR"
         confidence = "MEDIUM"
+    elif monthly := _monthly_amounts(setting):
+        estimated_gross = sum(monthly.values(), Decimal("0"))
+        estimated_count = len(monthly)
+        method = "PROFILE_MONTHLY_AMOUNTS"
+        confidence = "MEDIUM"
     elif setting is not None and setting.manual_annual_dividend_per_share is not None:
         estimated_gross = Decimal(setting.manual_annual_dividend_per_share)
         estimated_count = len(setting.payment_months_json or []) or 1
@@ -331,6 +468,8 @@ def _payment_months(events: list[AssetDividendEvent], setting: AssetDividendSett
                 continue
             if 1 <= month <= 12:
                 months.add(month)
+    if not months:
+        months.update(_monthly_amounts(setting).keys())
     return sorted(months)
 
 
@@ -386,8 +525,23 @@ def refresh_dividends_for_supported_assets(
     for asset in assets:
         summary.processed_assets += 1
         setting = settings_by_asset.get(int(asset.id))
+        if setting is None:
+            setting = _ensure_dividend_profile(db, asset)
+            settings_by_asset[int(asset.id)] = setting
+        _ensure_auto_provider_identifiers(db, asset)
+        setting.last_provider_checked_at = _now_utc()
+        db.flush()
         if setting is not None and not bool(setting.is_enabled):
+            setting.coverage_status = "DISABLED"
             summary.skipped_count += 1
+            db.commit()
+            if on_progress is not None:
+                on_progress(summary.processed_assets, summary.total_assets, summary)
+            continue
+        if str(getattr(setting, "provider_strategy", "") or "").upper() == "MANUAL":
+            setting.coverage_status = "MANUAL_ONLY"
+            summary.skipped_count += 1
+            db.commit()
             if on_progress is not None:
                 on_progress(summary.processed_assets, summary.total_assets, summary)
             continue
@@ -403,15 +557,24 @@ def refresh_dividends_for_supported_assets(
                 for year_to_fetch in (target_year, target_year - 1)
             ]
         except DividendProviderError as exc:
+            setting.coverage_status = "NO_PROVIDER_DATA"
+            setting.last_error = exc.message
             summary.failed_count += 1
             summary.errors.append(f"{_display_asset_name(asset)}: {exc.message}")
+            db.commit()
             if on_progress is not None:
                 on_progress(summary.processed_assets, summary.total_assets, summary)
             continue
 
         items = [event for result in results for event in result.items]
         if not items:
+            setting.coverage_status = "NO_PROVIDER_DATA"
+            setting.last_error = "No provider dividend rows returned."
             summary.skipped_count += 1
+        else:
+            setting.coverage_status = "READY"
+            setting.last_success_at = _now_utc()
+            setting.last_error = None
         for event in items:
             row = db.scalar(
                 select(AssetDividendEvent).where(
@@ -447,6 +610,7 @@ def refresh_dividends_for_supported_assets(
             row.status = "ESTIMATED"
             row.raw_json = event.raw
             summary.updated_count += 1
+        setting.forecast_method = "PROVIDER_EVENTS" if items else setting.forecast_method
         db.commit()
         if on_progress is not None:
             on_progress(summary.processed_assets, summary.total_assets, summary)
@@ -582,6 +746,9 @@ def collect_dividend_snapshot_for_user(
         if asset is None:
             continue
         setting = settings_by_asset.get(int(asset.id))
+        if setting is None:
+            setting = _ensure_dividend_profile(db, asset)
+            settings_by_asset[int(asset.id)] = setting
         if setting is not None and not bool(setting.is_enabled):
             continue
         events = events_by_asset.get(int(asset.id), [])
@@ -633,7 +800,14 @@ def collect_dividend_snapshot_for_user(
         missing_reason = forecast["missing_reason"]
         if not events and gross_per_share <= 0:
             identifiers = db.scalars(select(AssetProviderIdentifier).where(AssetProviderIdentifier.asset_id == asset.id)).all()
-            missing_reason = "MISSING_IDENTIFIER" if not identifiers and not asset.symbol else (missing_reason or "NO_PROVIDER_DATA")
+            coverage_status = str(getattr(setting, "coverage_status", "") or "").upper()
+            missing_reason = (
+                "MISSING_IDENTIFIER"
+                if not identifiers and not asset.symbol
+                else coverage_status
+                if coverage_status in {"NO_PROVIDER_DATA", "MANUAL_ESTIMATE_NEEDED", "MANUAL_ONLY"}
+                else (missing_reason or "NO_PROVIDER_DATA")
+            )
 
         db.add(
             DividendSnapshotAssetRow(

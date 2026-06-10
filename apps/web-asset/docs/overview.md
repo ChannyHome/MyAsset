@@ -35,6 +35,10 @@ Amount Blur is a privacy feature and must apply consistently to money values.
 - Received dividends are entered manually and should remain separate from expected dividend forecasts.
 - Dividend rows show portfolio tax profile, inferred asset tax profile, effective tax profile, tax rate, and taxable inclusion.
 - Dividend/distribution naming should be user-friendly: UI may say `Dividend Income`, but internal logic should include ETF distributions.
+- `Asset Dividend Status` should surface `asset_dividend_profiles`, provider identifiers, provider events, source, coverage status, and missing-data reason.
+- `Dividend Status` should surface portfolio, asset, quantity, expected gross/tax/net, received YTD, yield, payment months, and taxable context.
+- Manual monthly/quarterly profile data can be used when provider data is missing. The UI should call this a profile/manual estimate rather than pretending it is provider-confirmed.
+- Domestic ETF/KODEX/TIGER distributions can legitimately show `NO_PROVIDER_DATA` until a richer ETF distribution provider or manual estimate is configured.
 
 ## Current UI Stack Reality
 The current UI is Vue 3 + Tailwind CSS custom components. As of this document, `ant-design-vue` is not installed and current UI components are not Ant Design components.

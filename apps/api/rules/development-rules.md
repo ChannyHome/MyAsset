@@ -38,6 +38,11 @@
 - `PENSION`, `ISA`, and `TAX_EXEMPT` dividend rows must be excluded from taxable summary.
 - Expected dividends/distributions and actual received dividends are separate concepts.
 - Actual received dividends should remain manual-entry source of truth until broker import is explicitly implemented.
+- Use `asset_dividend_profiles` for asset-level dividend/distribution master settings.
+- Do not store profile/settings values in `asset_dividend_events`; events are provider/manual import history only.
+- Use `asset_provider_identifiers` for provider lookup identifiers instead of embedding provider keys in profile rows.
+- `Update Dividend Now` may auto-create missing profiles and provider identifiers, but provider failure should persist a clear coverage status such as `NO_PROVIDER_DATA` or `MANUAL_ESTIMATE_NEEDED`.
+- If manual monthly/quarterly amounts exist in `monthly_amounts_json`, calculate annual DPS from that JSON before falling back to manual annual DPS.
 
 ## Scheduler Rules
 - Quote scheduler and dividend scheduler must remain separate.

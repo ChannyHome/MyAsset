@@ -119,22 +119,35 @@ class AssetProviderIdentifierOut(AssetProviderIdentifierIn):
     updated_at: datetime
 
 
-class AssetDividendSettingUpdateIn(BaseModel):
+class AssetDividendProfileUpdateIn(BaseModel):
     is_enabled: bool = True
+    income_kind: str | None = Field(default=None, max_length=20)
+    provider_strategy: str | None = Field(default=None, max_length=30)
+    primary_provider: str | None = Field(default=None, max_length=50)
     tax_rate_pct: Decimal | None = Field(default=None, ge=0, le=100)
     tax_country: str | None = Field(default=None, max_length=10)
     dividend_currency: str | None = Field(default=None, min_length=3, max_length=3)
     manual_annual_dividend_per_share: Decimal | None = Field(default=None, ge=0)
     manual_frequency: str | None = Field(default=None, max_length=30)
     payment_months: list[int] = Field(default_factory=list)
+    monthly_amounts: dict[str, Decimal] | None = None
+    forecast_method: str | None = Field(default=None, max_length=50)
+    coverage_status: str | None = Field(default=None, max_length=50)
     note: str | None = None
 
 
-class AssetDividendSettingOut(AssetDividendSettingUpdateIn):
+class AssetDividendProfileOut(AssetDividendProfileUpdateIn):
     id: int
     asset_id: int
+    last_provider_checked_at: datetime | None = None
+    last_success_at: datetime | None = None
+    last_error: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+AssetDividendSettingUpdateIn = AssetDividendProfileUpdateIn
+AssetDividendSettingOut = AssetDividendProfileOut
 
 
 class DividendReceiptCreateIn(BaseModel):
@@ -359,7 +372,8 @@ class AssetDividendHistoryOut(BaseModel):
     asset_id: int
     asset_name: str
     symbol: str | None = None
-    setting: AssetDividendSettingOut | None = None
+    profile: AssetDividendProfileOut | None = None
+    setting: AssetDividendProfileOut | None = None
     identifiers: list[AssetProviderIdentifierOut] = Field(default_factory=list)
     events: list[DividendEventOut] = Field(default_factory=list)
     receipts: list[DividendReceiptOut] = Field(default_factory=list)
